@@ -6,7 +6,13 @@
  * reported or unverified hosts are refused. Page text is not recorded: only
  * request hosts, extension blocks, ad-shaped elements and screenshots.
  *
- *   node tests/site-ad-check.cjs chrome https://example.com/page --allow-live-sites
+ *   node tests/site-ad-check.cjs chrome https://example.com/page --allow-live-sites [--visible] [--click]
+ *
+ * --visible uses an ordinary browser window instead of headless mode. Nothing
+ * disguises the browser, and verification challenges are never solved.
+ * --click makes one real click on an empty page area after the screenshots,
+ * to expose click-triggered pop-ups. window.open calls are recorded and
+ * refused instead of opened; any other new tab is recorded and closed.
  */
 'use strict';
 const fs = require('node:fs/promises');
@@ -20,7 +26,7 @@ const root = path.resolve(__dirname, '..');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const within = (host, domain) => host === domain || host.endsWith('.' + domain);
 const EXTENSION_FILES = ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js',
-  'popup.js', 'popup.html', 'popup.css', 'rules', 'icons'];
+  'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons'];
 
 // Runs in the page. Returns element metadata only, never page text.
 const snapshotExpression = `(() => {
@@ -74,7 +80,9 @@ async function main() {
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
   for (const file of EXTENSION_FILES) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
-  const evidence = { startedAt: new Date().toISOString(), browser: browserName, page: url.origin + url.pathname, headless: true,
+  const headless = !process.argv.includes('--visible');
+  const click = process.argv.includes('--click');
+  const evidence = { startedAt: new Date().toISOString(), browser: browserName, page: url.origin + url.pathname, headless,
     policy: 'HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded',
     phases: {} };
 
@@ -138,7 +146,7 @@ async function main() {
   let browser;
   console.log(JSON.stringify({ stage: 'starting', output: temporary, page: evidence.page }));
   try {
-    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless: true });
+    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless });
     evidence.version = browser.version.product;
     await browser.send('Browser.setDownloadBehavior', { behavior: 'deny', eventsEnabled: true });
     const state = await browser.evaluate(`chrome.runtime.sendMessage({type:'GET_STATE'})`);
@@ -150,6 +158,16 @@ async function main() {
     await browser.send('Network.enable', {}, page);
     await browser.send('Page.enable', {}, page);
     await browser.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false }, page);
+    const initialPages = new Set((await browser.send('Target.getTargets')).targetInfos.filter(info => info.type === 'page').map(info => info.targetId));
+    if (click) {
+      // Test instrumentation, installed before page scripts: record pop-up
+      // attempts and refuse them, so the ad destination is never loaded.
+      await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
+        const attempts = [];
+        Object.defineProperty(window, '__blockadsTestOpened', { value: attempts });
+        window.open = new Proxy(window.open, { apply: (_target, _self, args) => { attempts.push(String(args[0] ?? '').slice(0, 300)); return null; } });
+      })()` }, page);
+    }
     for (const enabled of [true, false]) {
       phase = enabled ? 'blockads-on' : 'ads-trackers-cosmetics-off';
       const result = await browser.evaluate(`chrome.runtime.sendMessage({type:'UPDATE_SETTINGS',patch:{enabled:true,
@@ -177,20 +195,57 @@ async function main() {
         clip: { x: 0, y: 0, width: 1280, height: Math.min(Math.ceil(cssContentSize.height), 4000), scale: 0.5 } }, page);
       await fs.writeFile(path.join(temporary, `${phase}-full.png`), Buffer.from(full.data, 'base64'));
 
-      const events = browser.events.slice(eventStart).filter(event => event.sessionId === page.session);
       const hostOf = value => { try { return new URL(value).hostname; } catch { return ''; } };
+      let clicked = null;
+      if (click) {
+        // Pick a point whose element is not a link, control or frame, as a reader's stray click would be.
+        const point = await browser.evaluate(`(() => {
+          for (let y = 300; y < innerHeight - 50; y += 60) for (let x = 100; x < innerWidth - 100; x += 120) {
+            const element = document.elementFromPoint(x, y);
+            if (element && !element.closest('a, button, input, select, textarea, iframe, video, [onclick]')) {
+              return { x, y, target: element.tagName + (element.id ? '#' + element.id : '') };
+            }
+          }
+          return null;
+        })()`, page);
+        const startUrl = (await browser.evaluate('location.href', page)).split('?')[0];
+        if (point) {
+          for (const type of ['mousePressed', 'mouseReleased']) {
+            await browser.send('Input.dispatchMouseEvent', { type, x: point.x, y: point.y, button: 'left', clickCount: 1 }, page);
+          }
+          await pause(5000);
+        }
+        const endUrl = await browser.evaluate('location.href', page).catch(() => '');
+        clicked = { point, windowOpen: await browser.evaluate('window.__blockadsTestOpened ? [...window.__blockadsTestOpened] : []', page)
+          .catch(() => ['(page changed before reading)']), navigatedTo: endUrl.split('?')[0] === startUrl ? null : hostOf(endUrl) };
+        clicked.windowOpen = clicked.windowOpen.map(value => {
+          try { return hostOf(new URL(value, url).href) || value.slice(0, 40); } catch { return value.slice(0, 40); }
+        });
+      }
+
+      const events = browser.events.slice(eventStart).filter(event => event.sessionId === page.session);
       const requests = new Map(events.filter(event => event.method === 'Network.requestWillBeSent')
         .map(event => [event.params.requestId, hostOf(event.params.request.url)]));
+      // Third-party request shapes and the script or document that asked for them.
+      const initiatorOf = initiator => initiator?.url || initiator?.stack?.callFrames?.[0]?.url ||
+        initiator?.stack?.parent?.callFrames?.[0]?.url || '';
+      const siteHost = url.hostname.replace(/^www\./, '');
+      const thirdParty = events.filter(event => event.method === 'Network.requestWillBeSent' &&
+        !within(hostOf(event.params.request.url), siteHost)).map(event => {
+        const request = new URL(event.params.request.url);
+        return { host: request.hostname, path: request.pathname.slice(0, 120), type: event.params.type,
+          initiator: hostOf(initiatorOf(event.params.initiator)) };
+      });
       const blockedByExtension = events.filter(event => event.method === 'Network.loadingFailed' &&
         event.params.errorText === 'net::ERR_BLOCKED_BY_CLIENT').map(event => requests.get(event.params.requestId));
       const count = list => Object.fromEntries([...list.reduce((map, item) => map.set(item, (map.get(item) || 0) + 1), new Map())]
         .sort((a, b) => b[1] - a[1]));
       const matches = await browser.evaluate('liveMatches');
       const { targetInfos } = await browser.send('Target.getTargets');
-      const extraPages = targetInfos.filter(info => info.type === 'page' && info.targetId !== page.id && info.targetId !== browser.popup.id);
+      const extraPages = targetInfos.filter(info => info.type === 'page' && !initialPages.has(info.targetId) && info.targetId !== browser.popup.id);
       for (const info of extraPages) await browser.send('Target.closeTarget', { targetId: info.targetId }).catch(() => {});
       Object.assign(evidence.phases[phase] ??= {}, {
-        top, bottom, requestCount: requests.size, requestHosts: count([...requests.values()]),
+        top, bottom, clicked, thirdParty, requestCount: requests.size, requestHosts: count([...requests.values()]),
         blockedByExtension: count(blockedByExtension), ruleMatches: count(matches.map(item => `${item.ruleset} ${item.host}`)),
         popups: extraPages.map(info => hostOf(info.url) || info.url.slice(0, 40)),
         downloads: browser.events.slice(eventStart).filter(event => event.method === 'Browser.downloadWillBegin').length
@@ -198,7 +253,7 @@ async function main() {
       await fs.writeFile(path.join(temporary, 'evidence.json'), JSON.stringify(evidence, null, 2));
       console.log(JSON.stringify({ stage: 'observed', phase, title: top.title, requests: requests.size,
         blocked: blockedByExtension.length, shownFrames: bottom.shownFrames, adLike: bottom.adLikeCount, overlays: bottom.overlayCount,
-        popups: extraPages.length }));
+        popups: extraPages.length, clicked }));
     }
     evidence.completed = true;
   } catch (error) {

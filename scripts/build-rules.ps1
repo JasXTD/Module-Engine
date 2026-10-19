@@ -4,7 +4,8 @@ param(
     [string]$UrlhausCsvPath,
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\rules'),
     [string]$CatalogPath = (Join-Path $PSScriptRoot '..\lists\reviewed-domains.json'),
-    [string]$ThreatCatalogPath = (Join-Path $PSScriptRoot '..\lists\reported-threats.json')
+    [string]$ThreatCatalogPath = (Join-Path $PSScriptRoot '..\lists\reported-threats.json'),
+    [string]$SiteAdHostsPath = (Join-Path $PSScriptRoot '..\lists\site-ad-hosts.json')
 )
 $ErrorActionPreference = 'Stop'
 # A downloaded URL is not a reviewed domain. Keep legacy switches explicit so an
@@ -53,11 +54,47 @@ try {
             $sets['ads.json'] += ($item.GetRawText() | ConvertFrom-Json -AsHashtable)
         }
     } finally { $patterns.Dispose() }
+    # Ad hosts recorded on named sites by opt-in site checks. Browser-only like the
+    # patterns above, never exported as catalog domains. Pages are included so a
+    # click pop-up to one of these hosts is blocked too. Catalog domains are refused
+    # here, so an unverified observation cannot be activated through this list.
+    $siteHosts = Read-BoundedJson $SiteAdHostsPath 64KB
+    $siteHostCount = 0
+    try {
+        $root = $siteHosts.RootElement
+        Assert-JsonKeys $root @('schemaVersion','reviewKind','hosts')
+        if ($root.GetProperty('schemaVersion').ValueKind -ne 'Number' -or $root.GetProperty('schemaVersion').GetInt32() -ne 1 -or
+            (Get-JsonString $root.GetProperty('reviewKind')) -cne 'observed-site-ad-hosts' -or
+            $root.GetProperty('hosts').ValueKind -ne 'Array' -or $root.GetProperty('hosts').GetArrayLength() -gt 500) {
+            throw 'Invalid site ad host list.'
+        }
+        $catalogDomains = [Collections.Generic.HashSet[string]]::new([string[]]@($catalog.Domains | ForEach-Object domain), [StringComparer]::Ordinal)
+        $siteSeen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        foreach ($item in $root.GetProperty('hosts').EnumerateArray()) {
+            Assert-JsonKeys $item @('domain','observedOnUtc','site','role','evidence')
+            $domain = Get-JsonString $item.GetProperty('domain')
+            $observed = Get-JsonString $item.GetProperty('observedOnUtc') 10
+            $evidencePath = Get-JsonString $item.GetProperty('evidence') 200
+            $null = Get-JsonString $item.GetProperty('role') 200
+            $null = ConvertTo-ReviewedHostname (Get-JsonString $item.GetProperty('site'))
+            $date = [DateTime]::MinValue
+            if ((ConvertTo-ReviewedHostname $domain) -cne $domain -or !$siteSeen.Add($domain) -or $catalogDomains.Contains($domain) -or
+                ![DateTime]::TryParseExact($observed, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$date) -or
+                $date -gt [DateTime]::UtcNow.Date -or $evidencePath -cnotmatch '^verification/[A-Za-z0-9._/-]+\.json$' -or
+                $evidencePath.Contains('..') -or !(Test-Path -LiteralPath (Join-Path $PSScriptRoot "..\$evidencePath") -PathType Leaf)) {
+                throw "Invalid site ad host entry: $domain"
+            }
+            $sets['ads.json'] += [ordered]@{ id = 1001 + $siteHostCount++; priority = 1; action = @{ type = 'block' }; condition = [ordered]@{
+                urlFilter = '||' + $domain + '^'
+                resourceTypes = @('main_frame','sub_frame','script','image','xmlhttprequest','media','ping','websocket','other') } }
+        }
+    } finally { $siteHosts.Dispose() }
     Test-GeneratedRules -RuleSets $sets
     $outputs = @{}
-    foreach ($name in $sets.Keys) { $outputs[$name] = ConvertTo-Json -InputObject @($sets[$name] | Sort-Object id) -Depth 8 }
+    # Rules are dictionaries: sort by the key's value, not a (missing) property.
+    foreach ($name in $sets.Keys) { $outputs[$name] = ConvertTo-Json -InputObject @($sets[$name] | Sort-Object { $_.id }) -Depth 8 }
     $outputs['reviewed-domains.json'] = $catalog.Json
     $outputs['threat-policy.json'] = ConvertTo-Json -InputObject $threats.Policy
     Write-RuleOutputs -Directory $rulesDir -Outputs $outputs
-    Write-Host "Built $($sets['ads.json'].Count) ad rules, $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only."
+    Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only."
 } finally { $buildLock.Dispose() }

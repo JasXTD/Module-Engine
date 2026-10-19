@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlockAds Activity Log</title>
+  <link rel="stylesheet" href="log.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>BlockAds activity log</h1>
+        <p class="muted">Recent blocks and extension events on this computer: up to 1,000 entries, cleared when the browser closes. Nothing is sent anywhere.</p>
+      </div>
+      <div class="actions">
+        <label class="check"><input type="checkbox" id="liveToggle" checked /> Live update</label>
+        <button type="button" id="exportButton">Export JSON</button>
+        <button type="button" id="clearButton" class="danger">Clear log</button>
+      </div>
+    </header>
+
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <section class="card">
+      <h2>Blocked servers <span id="summaryCount" class="muted"></span></h2>
+      <div class="table-wrap">
+        <table id="summaryTable">
+          <thead><tr><th>Server</th><th>Blocks</th><th>Layer</th><th>Seen on sites</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="summaryEmpty" class="muted" hidden>No blocked requests recorded yet.</p>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <h2>All entries <span id="entryCount" class="muted"></span></h2>
+        <select id="kindFilter" aria-label="Entry kind">
+          <option value="">All kinds</option>
+          <option value="blocked">Blocked</option>
+          <option value="event">Events</option>
+          <option value="error">Errors</option>
+        </select>
+        <input type="search" id="textFilter" placeholder="Filter by site, server or text" aria-label="Filter entries" />
+      </div>
+      <div class="table-wrap">
+        <table id="entryTable">
+          <thead><tr><th>Time</th><th>Kind</th><th>Site</th><th>Details</th><th>Layer</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="entryEmpty" class="muted" hidden>No matching entries.</p>
+    </section>
+  </main>
+  <script src="log.js"></script>
+</body>
+</html>

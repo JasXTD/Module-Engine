@@ -131,7 +131,11 @@
     const adShowing = skipAds && player &&
       (player.classList.contains("ad-showing") || player.classList.contains("ad-interrupting"));
     if (adShowing) {
-      if (!restore.has(video)) restore.set(video, { muted: video.muted, rate: video.playbackRate });
+      if (!restore.has(video)) {
+        restore.set(video, { muted: video.muted, rate: video.playbackRate });
+        // Once per ad, for the activity log. Ignore an invalidated extension context.
+        try { api.runtime.sendMessage({ type: "LOG_EVENT", event: "youtube-ad-skipped" }).catch(() => {}); } catch {}
+      }
       video.muted = true;
       video.playbackRate = 16;
       if (Number.isFinite(video.duration) && video.currentTime < video.duration - 0.1) video.currentTime = video.duration;

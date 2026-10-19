@@ -1,0 +1,56 @@
+:root {
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #0b1120;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.page { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
+.header { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; justify-content: space-between; }
+h1 { font-size: 20px; margin-bottom: 4px; }
+h2 { font-size: 14px; }
+.muted { color: var(--text-muted); font-weight: normal; }
+.actions, .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar { margin-bottom: 10px; }
+.toolbar h2 { margin-right: auto; }
+.card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; }
+.card > h2 { margin-bottom: 10px; }
+.notice { border: 1px solid var(--warning); color: var(--warning); border-radius: 8px; padding: 10px 12px; }
+.notice.error { border-color: var(--danger); color: var(--danger); }
+
+button, select, input[type="search"] {
+  background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);
+  border-radius: 6px; padding: 6px 10px; font: inherit;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.danger:hover { border-color: var(--danger); color: var(--danger); }
+input[type="search"] { min-width: 240px; }
+.check { display: flex; gap: 6px; align-items: center; color: var(--text-muted); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+th { color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+td { overflow-wrap: anywhere; }
+td.time, td.count { white-space: nowrap; color: var(--text-muted); }
+.kind { font-weight: 600; }
+.kind-blocked { color: var(--accent); }
+.kind-event { color: var(--text-main); }
+.kind-error { color: var(--danger); }
+.path { color: var(--text-muted); }

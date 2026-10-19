@@ -331,8 +331,17 @@ button:focus-visible, input:focus-visible + .slider { outline: 2px solid #a7f3d0
 
 /* Footer */
 .footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   text-align: center;
   font-size: 10.5px;
   color: var(--text-muted);
   padding-top: 2px;
+}
+
+.footer-link {
+  color: var(--accent);
+  font-size: 12px;
 }

@@ -86,7 +86,7 @@ async function main() {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-live-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const evidence = { startedAt: new Date().toISOString(), browser: browserName, headed: true,

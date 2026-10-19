@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BlockAds Shield — Ad & Tracker Filter",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minimum_chrome_version": "121",
   "description": "Local ad, tracker and dated reported-threat filtering, including YouTube video ads. Exact threat hosts expire for review; no remote list downloads.",
   "permissions": [

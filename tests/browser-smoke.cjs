@@ -288,18 +288,18 @@ async function until(browser, expression, target) {
   throw new Error(`Condition timed out: ${expression}${lastError ? '\n' + lastError : ''}`);
 }
 
-module.exports = { chromium };
+module.exports = { chromium, firefox };
 
 if (require.main === module) (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-verify-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const testedManifest = JSON.parse(await fs.readFile(path.join(extension, 'manifest.json'), 'utf8'));
   const sourceHashes = {};
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'rules/threat-policy.json',
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules/threat-policy.json',
     ...testedManifest.declarative_net_request.rule_resources.map(rule => rule.path)]) {
     sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
@@ -532,6 +532,26 @@ if (require.main === module) (async () => {
     const fetchExpression = `fetch('http://localhost:${server.address().port}/blocked-probe').then(() => false, () => true)`;
     check(await browser.evaluate(fetchExpression, page), 'custom domain blocks a real local network request');
     check(!requests.includes('/blocked-probe'), 'blocked local request never reaches the fixture server');
+    // Firefox has no rule-match feed for extensions, so its log lists events only.
+    if (browserName === 'firefox') {
+      check((await send({ type: 'GET_LOG' })).blockLogging === false, 'Firefox log reports that blocked requests are unavailable');
+    } else {
+      await until(browser, `api.runtime.sendMessage({type:'GET_LOG'}).then(log => log.ok && log.entries.some(entry =>
+        entry.kind === 'blocked' && entry.host === 'localhost' && entry.path === '/blocked-probe' && entry.layer === 'Custom block'))`);
+      check(true, 'activity log records the blocked request with its layer and path');
+    }
+    check((await send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Custom block added localhost'), 'activity log records the settings change');
+    const logPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/log.html`);
+    if (browserName === 'firefox') {
+      await until(browser, `[...document.querySelectorAll('#entryTable tbody td')].some(cell => cell.textContent === 'Custom block added localhost')`, logPage);
+      check(await browser.evaluate(`!document.getElementById('notice').hidden && !document.getElementById('notice').classList.contains('error') &&
+        document.documentElement.scrollWidth <= innerWidth`, logPage), 'Firefox log page lists events and explains missing block entries');
+    } else {
+      await until(browser, `[...document.querySelectorAll('#summaryTable tbody td')].some(cell => cell.textContent === 'localhost')`, logPage);
+      check(await browser.evaluate(`document.getElementById('notice').hidden && document.documentElement.scrollWidth <= innerWidth`, logPage),
+        'activity log page shows the blocked server without errors or horizontal overflow');
+    }
+    check(await browser.evaluate('document.getElementById("logLink").getAttribute("href") === "log.html"'), 'popup links to the activity log');
 
     await send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
     check((await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).length === 0, 'master pause disables all static rules');

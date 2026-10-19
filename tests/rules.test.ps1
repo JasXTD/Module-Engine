@@ -49,7 +49,14 @@ try {
     $trackers = Get-Content (Join-Path $output 'trackers.json') -Raw | ConvertFrom-Json
     $malware = Get-Content (Join-Path $output 'malware.json') -Raw | ConvertFrom-Json
     $catalog = Read-ReviewedDomainCatalog (Join-Path $output 'reviewed-domains.json')
-    Assert-True ($adRules.Count -eq 100) 'reviewed ad domain and browser-only patterns preserved'
+    $siteHostsJson = [IO.File]::ReadAllText((Join-Path $project 'lists/site-ad-hosts.json'))
+    $siteHostCount = ($siteHostsJson | ConvertFrom-Json).hosts.Count
+    Assert-True ($adRules.Count -eq 100 + $siteHostCount) 'reviewed ad domains, browser-only patterns and site ad hosts preserved'
+    $siteRules = @($adRules | Where-Object id -GE 1001)
+    Assert-True ($siteRules.Count -eq $siteHostCount -and @($siteRules | Where-Object { $_.condition.resourceTypes -notcontains 'main_frame' }).Count -eq 0) 'site ad hosts also block pop-up pages'
+    $ids = @($adRules.id)
+    Assert-True (($ids -join ',') -ceq ((@($ids | Sort-Object) -join ','))) 'generated rules are ordered by id'
+    Assert-True ((Get-Content (Join-Path $output 'ads.json') -Raw) -notmatch "`r") 'generated rules use LF line endings'
     Assert-True ($trackers.Count -eq 80) 'tracker rules preserved'
     Assert-True (@($malware).Count -eq 0) 'no unsupported malware blocking'
     Assert-True ($catalog.Domains.Count -eq 247) 'all reviewed domains exported'
@@ -105,6 +112,36 @@ try {
         Write-Fixture $fixture
         Assert-FailedUnchanged { & $builder -OutputDirectory $output -CatalogPath $fixturePath } $fault
     }
+    # Site ad host list: every malformed or unsafe entry is refused without changing outputs.
+    $sitePath = Join-Path $temporary 'site-ad-hosts.json'
+    $validSite = $siteHostsJson | ConvertFrom-Json -AsHashtable
+    $catalogAd = ($catalogJson | ConvertFrom-Json).domains | Where-Object category -CEQ 'ads' | Select-Object -First 1
+    $catalogUnverified = ($catalogJson | ConvertFrom-Json).domains | Where-Object category -CEQ 'unverified' | Select-Object -First 1
+    foreach ($fault in @('domain','uppercase','duplicate','catalog-ad','catalog-unverified','future','date','evidence-path','evidence-missing',
+        'unknown-field','missing-field','kind','site')) {
+        $site = $siteHostsJson | ConvertFrom-Json -AsHashtable
+        switch ($fault) {
+            'domain' { $site.hosts[0].domain = 'ad.fixture-unit.net/path' }
+            'uppercase' { $site.hosts[0].domain = 'A-ADS.com' }
+            'duplicate' { $site.hosts += $site.hosts[0] }
+            'catalog-ad' { $site.hosts[0].domain = $catalogAd.domain }
+            'catalog-unverified' { $site.hosts[0].domain = $catalogUnverified.domain }
+            'future' { $site.hosts[0].observedOnUtc = '2099-01-01' }
+            'date' { $site.hosts[0].observedOnUtc = '2026-02-30' }
+            'evidence-path' { $site.hosts[0].evidence = 'verification/../manifest.json' }
+            'evidence-missing' { $site.hosts[0].evidence = 'verification/missing/none.json' }
+            'unknown-field' { $site.hosts[0].command = 'inert-text' }
+            'missing-field' { $site.hosts[0].Remove('role') }
+            'kind' { $site.reviewKind = 'remote-feed' }
+            'site' { $site.hosts[0].site = 'not a host' }
+        }
+        [IO.File]::WriteAllText($sitePath, (ConvertTo-Json -InputObject $site -Depth 6), [Text.UTF8Encoding]::new($false))
+        Assert-FailedUnchanged { & $builder -OutputDirectory $output -SiteAdHostsPath $sitePath } "site ad host $fault"
+    }
+    $validSite.hosts = @()
+    [IO.File]::WriteAllText($sitePath, (ConvertTo-Json -InputObject $validSite -Depth 6), [Text.UTF8Encoding]::new($false))
+    & $builder -OutputDirectory $output -SiteAdHostsPath $sitePath
+    Assert-True ((Get-Content (Join-Path $output 'ads.json') -Raw | ConvertFrom-Json).Count -eq 100) 'empty site ad host list adds no rules'
     [IO.File]::WriteAllText($fixturePath, $catalogJson.Replace('"schemaVersion": 1', '"schemaVersion": 1, "schemaVersion": 1'))
     Assert-FailedUnchanged { & $builder -OutputDirectory $output -CatalogPath $fixturePath } 'duplicate JSON key'
     [IO.File]::WriteAllBytes($fixturePath, [byte[]](0xff, 0xfe))

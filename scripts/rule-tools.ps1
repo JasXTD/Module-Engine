@@ -27,7 +27,8 @@ function Write-RuleOutputs([string]$Directory, [hashtable]$Outputs) {
             $target = Join-Path $Directory $name
             $originals[$name] = if (Test-Path -LiteralPath $target) { [IO.File]::ReadAllBytes($target) } else { $null }
             $staged[$name] = Join-Path $Directory ('.' + [Guid]::NewGuid().ToString('N') + '.tmp')
-            [IO.File]::WriteAllText($staged[$name], $Outputs[$name] + "`n", [Text.UTF8Encoding]::new($false))
+            # ConvertTo-Json uses the platform newline; keep generated files LF everywhere.
+            [IO.File]::WriteAllText($staged[$name], ($Outputs[$name] -replace "`r`n", "`n") + "`n", [Text.UTF8Encoding]::new($false))
         }
         foreach ($name in ($Outputs.Keys | Sort-Object)) {
             [IO.File]::Move($staged[$name], (Join-Path $Directory $name), $true)

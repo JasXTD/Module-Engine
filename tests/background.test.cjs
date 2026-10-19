@@ -9,9 +9,9 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'u
 const ids = manifest.declarative_net_request.rule_resources.map(rule => rule.id);
 const policyText = fs.readFileSync(path.join(root, 'rules/threat-policy.json'), 'utf8');
 
-function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z') {
+function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}) {
   const listeners = {};
-  const state = { storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], badge: '', faults: {} };
+  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], badge: '', faults: {} };
   Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [] });
   class Clock extends Date { static now() { return state.now; } }
   const event = name => ({ addListener(fn) { listeners[name] = fn; } });
@@ -21,7 +21,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z') {
     if (state.faults[key]) { state.faults[key]--; throw new Error(`Injected ${key} failure`); }
   }
   const api = {
-    runtime: { id: 'test', getURL: value => `chrome-extension://test/${value}`,
+    runtime: { id: 'test', getURL: value => `chrome-extension://test/${value}`, getManifest: () => manifest,
       onInstalled: event('installed'), onStartup: event('startup'), onMessage: event('message') },
     alarms: {
       onAlarm: event('alarm'),
@@ -32,9 +32,14 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z') {
     storage: { local: {
       async get(keys) { await tick(); return clone(Object.fromEntries(keys.filter(k => k in state.storage).map(k => [k, state.storage[k]]))); },
       async set(value) { await fault('save'); Object.assign(state.storage, clone(value)); }
+    }, session: {
+      async get(key) { await tick(); return key in state.session ? clone({ [key]: state.session[key] }) : {}; },
+      async set(value) { await fault('session'); Object.assign(state.session, clone(value)); },
+      async remove(key) { await tick(); delete state.session[key]; }
     } },
     declarativeNetRequest: {
       MAX_NUMBER_OF_DYNAMIC_RULES: limit,
+      onRuleMatchedDebug: event('ruleMatched'),
       async getEnabledRulesets() { await tick(); return clone(state.enabled); },
       async getDynamicRules() {
         await tick();
@@ -77,7 +82,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z') {
     },
     action: { async setBadgeBackgroundColor() {}, async setBadgeText({ text }) { state.badge = text; } }
   };
-  const context = vm.createContext({ chrome: api, URL, console, Date: Clock, fetch: async url => {
+  const context = vm.createContext({ chrome: api, URL, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
     assert.equal(url, 'chrome-extension://test/rules/threat-policy.json', 'only a packaged local file may be read');
     state.fetches.push(url);
     await fault('policy');
@@ -422,4 +427,90 @@ test('page filter verification accepts full extension URLs in readback', async (
   const result = await h.send({ type: 'GET_STATE' });
   assert.equal(result.ok, true);
   assert.equal(h.state.scripts.length, 1);
+});
+
+const settle = async () => { for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve)); };
+const youtubeTab = { id: 'test', url: 'https://www.youtube.com/watch?v=x', tab: { id: 7, url: 'https://www.youtube.com/watch?v=x' } };
+
+test('activity log records blocks with layer, server, path and site, but not site-pause allows', async () => {
+  const h = harness({ customBlockedDomains: ['custom.example'], whitelistedDomains: ['paused.example'] });
+  await h.ready;
+  const allow = h.state.dynamic.find(rule => rule.action.type !== 'block');
+  const block = h.state.dynamic.find(rule => rule.action.type === 'block');
+  h.listeners.ruleMatched({ rule: { ruleId: 1005, rulesetId: 'ads_ruleset' },
+    request: { url: 'https://political-effort.com/a/b.js?token=secret', type: 'script', tabId: 3, initiator: 'https://uukanshu.cc' } });
+  // Firefox reports the page as documentUrl rather than initiator.
+  h.listeners.ruleMatched({ rule: { ruleId: block.id, rulesetId: '_dynamic' },
+    request: { url: 'https://custom.example/x.png', type: 'image', tabId: 3, documentUrl: 'https://news.example/page' } });
+  h.listeners.ruleMatched({ rule: { ruleId: allow.id, rulesetId: '_dynamic' }, request: { url: 'https://paused.example/', type: 'main_frame', tabId: 4 } });
+  await settle();
+  const { entries } = await h.send({ type: 'GET_LOG' });
+  const blocked = entries.filter(entry => entry.kind === 'blocked').map(({ time, ...entry }) => entry);
+  assert.deepEqual(blocked, [
+    { kind: 'blocked', layer: 'Ads', ruleId: 1005, host: 'political-effort.com', path: '/a/b.js', type: 'script', site: 'uukanshu.cc', tabId: 3 },
+    { kind: 'blocked', layer: 'Custom block', ruleId: block.id, host: 'custom.example', path: '/x.png', type: 'image', site: 'news.example', tabId: 3 }
+  ]);
+  assert.ok(!JSON.stringify(entries).includes('secret'), 'query strings are not stored');
+  assert.equal(h.state.session.activityLog.length, entries.length, 'log is saved to session storage');
+});
+
+test('settings changes and failures are logged as events, and only the newest 1000 entries are kept', async () => {
+  const h = harness();
+  await h.ready;
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false }, cosmeticFiltering: false } });
+  await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'shady.example' });
+  await h.send({ type: 'SET_SITE_PAUSED', domain: 'www.news.example', paused: true });
+  h.state.faults.dynamic = 1;
+  await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'fails.example' });
+  await settle();
+  let { entries } = await h.send({ type: 'GET_LOG' });
+  assert.deepEqual(entries.slice(0, 4).map(entry => entry.message),
+    ['Ads layer turned off', 'Cosmetic hiding turned off', 'Custom block added shady.example', 'Paused on news.example']);
+  assert.equal(entries[4].kind, 'error');
+  assert.match(entries[4].message, /not applied.*Injected dynamic failure/);
+  for (let i = 0; i < 1005; i++) {
+    h.listeners.ruleMatched({ rule: { ruleId: 1, rulesetId: 'trackers_ruleset' }, request: { url: `https://t.example/${i}.js`, type: 'script', tabId: 1 } });
+  }
+  await settle();
+  entries = (await h.send({ type: 'GET_LOG' })).entries;
+  assert.equal(entries.length, 1000);
+  assert.equal(entries.at(-1).path, '/1004.js');
+  assert.equal(entries[0].path, '/5.js');
+});
+
+test('only extension pages read or clear the log; content scripts add only fixed events', async () => {
+  const h = harness();
+  await h.ready;
+  for (const type of ['GET_LOG', 'CLEAR_LOG']) assert.equal((await h.send({ type }, youtubeTab)).ok, false);
+  await h.send({ type: 'LOG_EVENT', event: 'youtube-ad-skipped' }, youtubeTab);
+  await h.send({ type: 'LOG_EVENT', event: 'free-text', message: 'injected' }, youtubeTab);
+  await h.send({ type: 'LOG_EVENT', event: 'toString' }, youtubeTab);
+  await h.send({ type: 'LOG_EVENT', event: 'youtube-ad-skipped' }, { ...youtubeTab, id: 'other-extension' });
+  await h.send({ type: 'LOG_EVENT', event: 'youtube-ad-skipped' });
+  await settle();
+  const { entries } = await h.send({ type: 'GET_LOG' });
+  assert.deepEqual(entries.map(entry => [entry.message, entry.site]), [['Skipped a YouTube video ad that reached the player', 'www.youtube.com']]);
+  assert.deepEqual((await h.send({ type: 'CLEAR_LOG' })).entries, []);
+  assert.equal('activityLog' in h.state.session, false);
+  assert.deepEqual((await h.send({ type: 'GET_LOG' })).entries, []);
+});
+
+test('the log survives a service-worker restart within the browser session', async () => {
+  const first = harness();
+  await first.ready;
+  await first.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'kept.example' });
+  await settle();
+  const restarted = harness(first.state.storage, 5000, undefined, first.state.session);
+  await restarted.ready;
+  assert.deepEqual((await restarted.send({ type: 'GET_LOG' })).entries.map(entry => entry.message), ['Custom block added kept.example']);
+});
+
+test('a log storage failure never affects protection changes', async () => {
+  const h = harness();
+  await h.ready;
+  h.state.faults.session = 100;
+  const result = await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'still.example' });
+  assert.equal(result.ok, true);
+  assert.deepEqual(h.state.storage.customBlockedDomains, ['still.example']);
+  assert.equal(h.state.dynamic.length, 1);
 });

@@ -25,6 +25,101 @@ const YOUTUBE_SCRIPT_ID = "youtube-ads";
 const YOUTUBE_DOMAINS = ["youtube.com", "youtube-nocookie.com"];
 let operationQueue = Promise.resolve();
 
+// Activity log: recent blocks and extension events for tracing. Kept in session
+// storage (cleared when the browser closes), capped, local only. A logging
+// failure must never affect protection, so every path here catches its errors.
+const LOG_KEY = "activityLog";
+const LOG_LIMIT = 1000;
+const LAYER_NAMES = { ads_ruleset: "Ads", trackers_ruleset: "Trackers", threats_ruleset: "Reported threat", _dynamic: "Custom block" };
+// Fixed messages that content scripts may add; they never supply free text.
+const CONTENT_EVENTS = { "youtube-ad-skipped": "Skipped a YouTube video ad that reached the player" };
+let logLoad = null;
+let logSaveTimer = null;
+let dynamicBlockIds = null;
+
+function loadLog() {
+  logLoad ??= (async () => {
+    try {
+      const stored = (await api.storage.session.get(LOG_KEY))[LOG_KEY];
+      return Array.isArray(stored) ? stored.slice(-LOG_LIMIT) : [];
+    } catch {
+      return [];
+    }
+  })();
+  return logLoad;
+}
+
+async function addLog(entry) {
+  try {
+    const entries = await loadLog();
+    entries.push({ time: Date.now(), ...entry });
+    if (entries.length > LOG_LIMIT) entries.splice(0, entries.length - LOG_LIMIT);
+    // Batch writes: a busy page can produce many blocks per second.
+    logSaveTimer ??= setTimeout(async () => {
+      logSaveTimer = null;
+      try { await api.storage.session.set({ [LOG_KEY]: await loadLog() }); }
+      catch (error) { console.warn("[BlockAds] Could not save the activity log:", error); }
+    }, 500);
+  } catch (error) {
+    console.warn("[BlockAds] Could not record a log entry:", error);
+  }
+}
+
+async function clearLog() {
+  (await loadLog()).length = 0;
+  await api.storage.session.remove(LOG_KEY);
+}
+
+function urlParts(value) {
+  try {
+    const url = new URL(value);
+    return { host: url.hostname, path: url.pathname.slice(0, 150) };
+  } catch {
+    return { host: "", path: "" };
+  }
+}
+
+// Dynamic rules include site-pause allow rules; only custom blocks are logged.
+async function isDynamicBlock(ruleId) {
+  dynamicBlockIds ??= api.declarativeNetRequest.getDynamicRules()
+    .then(rules => new Set(rules.filter(rule => rule.action.type === "block").map(rule => rule.id)))
+    .catch(error => { dynamicBlockIds = null; throw error; });
+  return (await dynamicBlockIds).has(ruleId);
+}
+
+// Chrome and Edge report rule matches while the extension is loaded unpacked.
+// Firefox has no such event, so only events are logged there.
+async function logRuleMatch({ rule, request }) {
+  try {
+    if (rule.rulesetId === "_dynamic" && !(await isDynamicBlock(rule.ruleId))) return;
+    const { host, path } = urlParts(request.url);
+    const source = request.initiator || request.documentUrl || request.originUrl || "";
+    await addLog({
+      kind: "blocked", layer: LAYER_NAMES[rule.rulesetId] || rule.rulesetId, ruleId: rule.ruleId,
+      host, path, type: request.type, site: urlParts(source).host, tabId: request.tabId
+    });
+  } catch (error) {
+    console.warn("[BlockAds] Could not log a blocked request:", error);
+  }
+}
+
+function describeChanges(before, after) {
+  const changes = [];
+  const onOff = value => value ? "on" : "off";
+  if (before.enabled !== after.enabled) changes.push(`Protection turned ${onOff(after.enabled)}`);
+  for (const id of RULESET_IDS) {
+    if (before.rulesets[id] !== after.rulesets[id]) changes.push(`${LAYER_NAMES[id]} layer turned ${onOff(after.rulesets[id])}`);
+  }
+  if (before.cosmeticFiltering !== after.cosmeticFiltering) changes.push(`Cosmetic hiding turned ${onOff(after.cosmeticFiltering)}`);
+  const lists = [["customBlockedDomains", "Custom block added", "Custom block removed"],
+    ["whitelistedDomains", "Paused on", "Resumed on"]];
+  for (const [key, added, removed] of lists) {
+    for (const domain of after[key].filter(item => !before[key].includes(item))) changes.push(`${added} ${domain}`);
+    for (const domain of before[key].filter(item => !after[key].includes(item))) changes.push(`${removed} ${domain}`);
+  }
+  return changes;
+}
+
 async function loadThreatStatus() {
   try {
     // This is a packaged extension file, never a network feed or candidate host.
@@ -212,6 +307,7 @@ async function readRules() {
 async function applyRules(target, threatStatus) {
   const current = await readRules();
   if (!same(current.dynamic, target.dynamic)) {
+    dynamicBlockIds = null;
     await api.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: current.dynamic.map(rule => rule.id), addRules: target.dynamic
     });
@@ -306,6 +402,7 @@ async function processRequest(message) {
       await api.storage.local.set(commit);
     }
     await updateBadge(desired, Boolean(threatStatus.error));
+    for (const change of describeChanges(loaded.settings, desired)) await addLog({ kind: "event", message: change });
     return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus };
   } catch (error) {
     let rollbackFailed = false;
@@ -322,17 +419,40 @@ async function processRequest(message) {
     try { await api.storage.local.set({ protectionError: problem }); }
     catch (storageError) { console.error("[BlockAds] Could not save failure status:", storageError); }
     await updateBadge(loaded?.settings || DEFAULT_SETTINGS, true);
+    await addLog({ kind: "error", message: problem });
     return { ok: false, error: problem, settings: loaded?.settings, quarantinedDomains: loaded?.quarantined || [], threatStatus };
   }
 }
 
 const reconcile = () => enqueue(() => processRequest({ type: "GET_STATE" }));
-api.runtime.onInstalled.addListener(reconcile);
+api.runtime.onInstalled.addListener(details => {
+  void addLog({ kind: "event", message: `BlockAds ${api.runtime.getManifest?.().version ?? ""} ${details?.reason === "update" ? "updated or reloaded" : "installed"}` });
+  return reconcile();
+});
 api.runtime.onStartup.addListener(reconcile);
 api.alarms.onAlarm.addListener(alarm => {
   if ([THREAT_CHECK_ALARM, THREAT_EXPIRY_ALARM].includes(alarm.name)) return reconcile();
 });
+api.declarativeNetRequest.onRuleMatchedDebug?.addListener(info => { void logRuleMatch(info); });
+const fromExtensionPage = sender => sender.id === api.runtime.id && Boolean(sender.url?.startsWith(api.runtime.getURL("")));
 api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "GET_LOG" || message?.type === "CLEAR_LOG") {
+    if (!fromExtensionPage(sender)) {
+      sendResponse({ ok: false, error: "The log is only available to the extension interface." });
+      return false;
+    }
+    const work = message.type === "CLEAR_LOG" ? clearLog().then(() => []) : loadLog().then(entries => entries.slice());
+    work.then(entries => sendResponse({ ok: true, entries, blockLogging: Boolean(api.declarativeNetRequest.onRuleMatchedDebug) }))
+      .catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+    return true;
+  }
+  if (message?.type === "LOG_EVENT") {
+    // Content scripts report only fixed event names; the site comes from the browser.
+    if (sender.id === api.runtime.id && Number.isInteger(sender.tab?.id) && Object.hasOwn(CONTENT_EVENTS, message.event)) {
+      void addLog({ kind: "event", message: CONTENT_EVENTS[message.event], site: urlParts(sender.tab.url).host, tabId: sender.tab.id });
+    }
+    return false;
+  }
   if (message?.type === "GET_COSMETIC_STATE") {
     // A frame cannot read its cross-origin top page directly. Use browser-provided
     // sender metadata, never a page-supplied hostname, for the parent exception.
@@ -350,7 +470,7 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (!message || !["GET_STATE", "UPDATE_SETTINGS", "ADD_CUSTOM_DOMAIN", "REMOVE_CUSTOM_DOMAIN", "SET_SITE_PAUSED"].includes(message.type)) return false;
-  if (sender.id !== api.runtime.id || !sender.url?.startsWith(api.runtime.getURL(""))) {
+  if (!fromExtensionPage(sender)) {
     sendResponse({ ok: false, error: "Settings can only be changed from the extension interface." });
     return false;
   }
