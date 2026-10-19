@@ -1,0 +1,6 @@
+Built 100 ad rules, 80 tracker rules; 73 unverified domains are observation only.
+Built 100 ad rules, 80 tracker rules; 73 unverified domains are observation only.
+Built 7 ad rules, 1 tracker rules; 1 unverified domains are observation only.
+Imported 247 observation-only domains into source. Backup: C:\Users\Tommy\AppData\Local\Temp\blockads-rules-test-47df5e0c44b84f0183053e87fdb36aa5\CyberAssist\.artifacts\domain-imports\75329ec560da475caccd032a67657988. Build required; no running application was changed.
+PASS: CyberAssist catalog matches all 247 reviewed domains.
+PASS: 173 offline rule/import assertions. No fetching branch, DNS or external requests executed.

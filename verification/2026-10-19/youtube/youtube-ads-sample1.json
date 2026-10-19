@@ -1,0 +1,661 @@
+{
+  "startedAt": "2026-10-19T15:27:10.771Z",
+  "browser": "chrome",
+  "headed": true,
+  "sites": [
+    {
+      "name": "youtube-ads",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "media": true
+    }
+  ],
+  "sourceHashes": {
+    "manifest.json": "bdeee0b7e31175c1d6ad78caa4df754d18230730ea0eb5ddea1cf535c3d3237c",
+    "shared.js": "9ef4317d7986b1b795b49e939cd89b168c96b81ebf80981105403c1e366127af",
+    "background.js": "5b531def3128f22b16e94e7577ff401055a4689314ad9e8406d5d95571f96fad",
+    "content.js": "3239a0aca6942d9009031bbae85a6612a26516a8dceb99928712c4fa8a925d92",
+    "youtube.js": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "popup.js": "6ce00d707e471ce60f2348490ee2bc3a8fae66d36ac7bcdf31b3e674d14aaaf7",
+    "popup.html": "b82e34e58b6113acf4913a2f217e4414b64a0d7f005cbf5331bdcc447ec195a6",
+    "popup.css": "9ce3a6325ab7e486be721625cf2fd7ecc6666f1801865a6c5eabe8abf72c752d",
+    "rules/ads.json": "8bb83c2e3d80bb6631fb901753913794e9e8900440f02835b4d16411ddcae71f",
+    "rules/trackers.json": "f404b2408b8323021e6c25e0fb24c623d773cad50cc5398637b568a1bf9559b0",
+    "rules/threats.json": "4f7ddc5820c5c1adddb67816cdbf7a7a7cd1b7798bbffebd6d6854d8cd5c71ae",
+    "rules/threat-policy.json": "9d5aca4d0975ba90d5bfe650d7ab8443dde47054a76b411c847253102927d039"
+  },
+  "observations": [
+    {
+      "site": "youtube-ads",
+      "phase": "enabled",
+      "first": {
+        "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "ready": "complete",
+        "text": "MY\nSkip navigation\nSign in\n0:00 / 3:33\nRick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)\nRick Astley\n4.55m subscribers\nSubscribe\n19m\nShare\nDownload\nSave\n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n.\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \nbn\n \n views  \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n yr ago  \n#RickAstley #NeverGonnaGiveYouUp #OfficialMusicVideo\nThe official video for “Never Gonna Give You Up” by Rick Astley. \n\nNever: The Autobiography 📚 OUT NOW!  …\nmore\n\n2,460,041 Comments\nSort by\nAdd a comment…\n@candycake9531\n6 years ago\nIs everyone going to ignore the fact that Rick Astley looks like a twelve year old boy but has a uniquely deep voice?\n291k\nReply\n683 replies\n@GabrielsEpicLifeofGoals\n6 years ago (edited)\nThey should turn off ads so that the rickroll happens by surprise...\n\nWOW! I can't believe it! One billion views!! This is a very special moment for me. God bless you all, and hope there's more billions of views in the future!\n\nOK, guys, I have a confesion: I was just copying what some memes from Reddit and YouTube already said, since it was a good idea. This is not an original comment...\nRead more\n72k\nReply\n454 replies\n@grustache4569\n6 years ago (edited)\nI Rick rolled my entire French class because we had to study a city in France and make a quiz about it as well as a presentation, I decided to make a Kahoot quiz beca",
+        "cosmeticStyle": true,
+        "youtube": {
+          "initialAdKeys": [],
+          "playerAdKeys": [],
+          "adShowing": false
+        },
+        "videos": [
+          {
+            "currentTime": 0,
+            "duration": 213.061,
+            "paused": true,
+            "ended": false,
+            "readyState": 4,
+            "width": 854,
+            "height": 480,
+            "error": null,
+            "srcHost": ""
+          }
+        ],
+        "labels": [],
+        "candidateContainers": []
+      },
+      "second": {
+        "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "ready": "complete",
+        "text": "MY\nSkip navigation\nSign in\n0:02 / 3:33\nRick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)\nRick Astley\n4.55m subscribers\nSubscribe\n19m\nShare\nDownload\nSave\n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n.\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \nbn\n \n views  \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n yr ago  \n#RickAstley #NeverGonnaGiveYouUp #OfficialMusicVideo\nThe official video for “Never Gonna Give You Up” by Rick Astley. \n\nNever: The Autobiography 📚 OUT NOW!  …\nmore\n\n2,460,041 Comments\nSort by\nAdd a comment…\n@candycake9531\n6 years ago\nIs everyone going to ignore the fact that Rick Astley looks like a twelve year old boy but has a uniquely deep voice?\n291k\nReply\n683 replies\n@GabrielsEpicLifeofGoals\n6 years ago (edited)\nThey should turn off ads so that the rickroll happens by surprise...\n\nWOW! I can't believe it! One billion views!! This is a very special moment for me. God bless you all, and hope there's more billions of views in the future!\n\nOK, guys, I have a confesion: I was just copying what some memes from Reddit and YouTube already said, since it was a good idea. This is not an original comment...\nRead more\n72k\nReply\n454 replies\n@grustache4569\n6 years ago (edited)\nI Rick rolled my entire French class because we had to study a city in France and make a quiz about it as well as a presentation, I decided to make a Kahoot quiz beca",
+        "cosmeticStyle": true,
+        "youtube": {
+          "initialAdKeys": [],
+          "playerAdKeys": [],
+          "adShowing": false
+        },
+        "videos": [
+          {
+            "currentTime": 9.975562,
+            "duration": 213.061,
+            "paused": false,
+            "ended": false,
+            "readyState": 4,
+            "width": 854,
+            "height": 480,
+            "error": null,
+            "srcHost": ""
+          }
+        ],
+        "labels": [],
+        "candidateContainers": []
+      },
+      "play": "playing",
+      "matches": [
+        {
+          "rule": {
+            "ruleId": 1,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "xmlhttprequest",
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/id",
+          "tabId": 613099537,
+          "time": 1792423635334
+        },
+        {
+          "rule": {
+            "ruleId": 1,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "script",
+          "host": "static.doubleclick.net",
+          "path": "/instream/ad_status.js",
+          "tabId": 613099537,
+          "time": 1792423635491
+        },
+        {
+          "rule": {
+            "ruleId": 97,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "image",
+          "host": "www.google.com",
+          "path": "/pagead/lvz",
+          "tabId": 613099537,
+          "time": 1792423635716
+        },
+        {
+          "rule": {
+            "ruleId": 97,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "image",
+          "host": "www.google.com.my",
+          "path": "/pagead/lvz",
+          "tabId": 613099537,
+          "time": 1792423635717
+        },
+        {
+          "rule": {
+            "ruleId": 1,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "xmlhttprequest",
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/id",
+          "tabId": 613099537,
+          "time": 1792423636745
+        },
+        {
+          "rule": {
+            "ruleId": 97,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "image",
+          "host": "www.google.com",
+          "path": "/pagead/1p-user-list/962985656/",
+          "tabId": 613099537,
+          "time": 1792423645399
+        },
+        {
+          "rule": {
+            "ruleId": 1,
+            "rulesetId": "ads_ruleset"
+          },
+          "type": "xmlhttprequest",
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/viewthroughconversion/962985656/",
+          "tabId": 613099537,
+          "time": 1792423645432
+        }
+      ],
+      "failures": [
+        {
+          "url": "https://fonts.googleapis.com/css2",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://googleads.g.doubleclick.net/pagead/id",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "XHR"
+        },
+        {
+          "url": "https://static.doubleclick.net/instream/ad_status.js",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "Script"
+        },
+        {
+          "url": "https://www.google.com/pagead/lvz",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "Image"
+        },
+        {
+          "url": "https://www.google.com.my/pagead/lvz",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "Image"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://googleads.g.doubleclick.net/pagead/id",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "XHR"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr3---sn-q4flrne7.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr1---sn-q4flrnez.googlevideo.com/videoplayback",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.google.com/pagead/1p-user-list/962985656/",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "Image"
+        },
+        {
+          "url": "https://www.youtube.com/ptracking",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/962985656/",
+          "error": "net::ERR_BLOCKED_BY_CLIENT",
+          "blockedReason": "other",
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        }
+      ],
+      "requestCount": 205,
+      "screenshot": "youtube-ads-enabled.png",
+      "time": "2026-10-19T15:27:35.499Z"
+    },
+    {
+      "site": "youtube-ads",
+      "phase": "ads-trackers-cosmetics-off",
+      "first": {
+        "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "ready": "complete",
+        "text": "MY\nSkip navigation\nSign in\n0:00 / 1:24\nRick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)\nRick Astley\n4.55m subscribers\nSubscribe\n19m\nShare\nSave\nDownload\n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n.\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \nbn\n \n views  \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n yr ago  \n#RickAstley #NeverGonnaGiveYouUp #OfficialMusicVideo\nThe official video for “Never Gonna Give You Up” by Rick Astley. \n\nNever: The Autobiography 📚 OUT NOW!  …\nmore\n\n2,460,041 Comments\nSort by\nAdd a comment…\n@candycake9531\n6 years ago\nIs everyone going to ignore the fact that Rick Astley looks like a twelve year old boy but has a uniquely deep voice?\n291k\nReply\n683 replies\n@LK-ht7qz\n6 years ago\nLet’s put the meme aside, this is actually a banging song.\n219k\nReply\n592 replies\n@Oatman69\n6 years ago\nGonna flag this for nudity so I can rick roll the YouTube staff\n568k\nReply\n715 replies\n@IFsbRUIN2Consequence\n5 days ago\n1rst ever rickroll gif on yt\n1.3k\nReply\n47 replies\n@bdr8823\n7 years ago\nMy algebra teacher said that this was a link to the test answers\n69k\nReply\n619 replies\n@GabrielsEpicLifeofGoals\n6 years ago (edited)\nThey should turn off ads so that the rickroll happens by surprise...\n\nWOW! I can't believe it! One billion views!! This is a very special moment for me. God bless you all, and hope there's more billions of views in the fu",
+        "cosmeticStyle": false,
+        "youtube": {
+          "initialAdKeys": [
+            "adPlacements",
+            "adSlots",
+            "playerAds"
+          ],
+          "playerAdKeys": [
+            "adPlacements",
+            "adSlots",
+            "playerAds"
+          ],
+          "adShowing": true
+        },
+        "videos": [
+          {
+            "currentTime": 0,
+            "duration": 84.441,
+            "paused": true,
+            "ended": false,
+            "readyState": 4,
+            "width": 1280,
+            "height": 720,
+            "error": null,
+            "srcHost": ""
+          }
+        ],
+        "labels": [],
+        "candidateContainers": []
+      },
+      "second": {
+        "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "ready": "complete",
+        "text": "MY\nSkip navigation\nSign in\nVisitSeoul TV\nyoutube.com\nLearn more\nSponsored\nyoutube.com\nSkip\n0:02 / 1:24\nRick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)\nRick Astley\n4.55m subscribers\nSubscribe\n19m\nShare\nSave\nDownload\n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n.\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \nbn\n \n views  \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n \n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n \n yr ago  \n#RickAstley #NeverGonnaGiveYouUp #OfficialMusicVideo\nThe official video for “Never Gonna Give You Up” by Rick Astley. \n\nNever: The Autobiography 📚 OUT NOW!  …\nmore\n\n2,460,041 Comments\nSort by\nAdd a comment…\n@candycake9531\n6 years ago\nIs everyone going to ignore the fact that Rick Astley looks like a twelve year old boy but has a uniquely deep voice?\n291k\nReply\n683 replies\n@LK-ht7qz\n6 years ago\nLet’s put the meme aside, this is actually a banging song.\n219k\nReply\n592 replies\n@Oatman69\n6 years ago\nGonna flag this for nudity so I can rick roll the YouTube staff\n568k\nReply\n715 replies\n@IFsbRUIN2Consequence\n5 days ago\n1rst ever rickroll gif on yt\n1.3k\nReply\n47 replies\n@bdr8823\n7 years ago\nMy algebra teacher said that this was a link to the test answers\n69k\nReply\n619 replies\n@GabrielsEpicLifeofGoals\n6 years ago (edited)\nThey should turn off ads so that the rickroll happens by surprise...\n\nWOW! I can't believe it! One billion views!! This is a very special moment for me. God ",
+        "cosmeticStyle": false,
+        "youtube": {
+          "initialAdKeys": [
+            "adPlacements",
+            "adSlots",
+            "playerAds"
+          ],
+          "playerAdKeys": [
+            "adPlacements",
+            "adSlots",
+            "playerAds"
+          ],
+          "adShowing": true
+        },
+        "videos": [
+          {
+            "currentTime": 10.001594,
+            "duration": 84.441,
+            "paused": false,
+            "ended": false,
+            "readyState": 4,
+            "width": 1280,
+            "height": 720,
+            "error": null,
+            "srcHost": ""
+          }
+        ],
+        "labels": [
+          "Sponsored",
+          "Sponsored"
+        ],
+        "candidateContainers": [
+          {
+            "tag": "DIV",
+            "id": "ad-simple-attributed-string:9",
+            "className": "ad-simple-attributed-string ytp-ad-badge__text--clean-player",
+            "visible": true,
+            "text": "Sponsored",
+            "attributes": [
+              [
+                "class",
+                "ad-simple-attributed-string ytp-ad-badge__text--clean-player"
+              ],
+              [
+                "id",
+                "ad-simple-attributed-string:9"
+              ],
+              [
+                "aria-label",
+                "Sponsored"
+              ]
+            ]
+          }
+        ]
+      },
+      "play": "playing",
+      "matches": [],
+      "failures": [
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://rr4---sn-5hne6nzk.googlevideo.com/videoplayback",
+          "error": "net::ERR_EMPTY_RESPONSE",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.google.com.my/pagead/lvz",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Image"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css",
+          "error": "net::ERR_TUNNEL_CONNECTION_FAILED",
+          "blockedReason": null,
+          "type": "Stylesheet"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/timedtext",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "XHR"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/ptracking",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        },
+        {
+          "url": "https://www.youtube.com/api/stats/qoe",
+          "error": "net::ERR_ABORTED",
+          "blockedReason": null,
+          "type": "Fetch"
+        }
+      ],
+      "requestCount": 226,
+      "screenshot": "youtube-ads-ads-trackers-cosmetics-off.png",
+      "time": "2026-10-19T15:27:57.811Z"
+    }
+  ],
+  "checks": [
+    " : initial ad fields , player ad fields , ad showing ",
+    " : initial ad fields , player ad fields , ad showing "
+  ],
+  "networkGuard": {
+    "allowedServiceDomains": [
+      "youtube.com",
+      "youtube-nocookie.com",
+      "ytimg.com",
+      "googlevideo.com",
+      "ggpht.com",
+      "gstatic.com",
+      "google.com",
+      "googleusercontent.com",
+      "googleadservices.com",
+      "googlesyndication.com",
+      "doubleclick.net",
+      "twitch.tv",
+      "ttvnw.net",
+      "jtvnw.net",
+      "twitchcdn.net",
+      "fandom.com",
+      "wikia.com",
+      "nocookie.net"
+    ],
+    "allowed": {
+      "www.gstatic.com": 3,
+      "www.google.com": 2,
+      "accounts.google.com": 2,
+      "www.youtube.com": 2,
+      "i.ytimg.com": 2,
+      "rr4---sn-uphxqvujvh-30az.googlevideo.com": 2,
+      "rr2---sn-2o30a5-5a.c.youtube.com": 1,
+      "yt3.ggpht.com": 1,
+      "rr3---sn-q4flrne7.googlevideo.com": 6,
+      "fonts.gstatic.com": 3,
+      "android.clients.google.com": 1,
+      "youtube.com": 1,
+      "rr1---sn-q4flrnez.googlevideo.com": 6,
+      "tpc.googlesyndication.com": 2,
+      "rr3---sn-uphxqvujvh-30aes.googlevideo.com": 1,
+      "i1.ytimg.com": 1,
+      "rr4---sn-5hne6nzk.googlevideo.com": 6,
+      "googleads.g.doubleclick.net": 1,
+      "pagead2.googlesyndication.com": 1,
+      "static.doubleclick.net": 1,
+      "mtalk.google.com": 1,
+      "rr1---sn-uphxqvujvh-30aee.googlevideo.com": 1
+    },
+    "denied": {
+      "clients2.google.com": 1,
+      "update.googleapis.com": 2,
+      "fonts.googleapis.com": 6,
+      "content-autofill.googleapis.com": 12,
+      "invalid-connect": 1,
+      "optimizationguide-pa.googleapis.com": 1,
+      "www.google.com.my": 1
+    },
+    "errors": [
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      },
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      },
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      },
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      },
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      },
+      {
+        "host": "rr4---sn-5hne6nzk.googlevideo.com",
+        "error": "ENOTFOUND"
+      }
+    ],
+    "policy": "HTTPS CONNECT to named service domains only; no forwarding or DNS for other hosts; downloads denied",
+    "limitation": "Third-party providers outside the allowlist are denied in both phases. Missing ads alone do not prove extension effectiveness."
+  },
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/155.0.8059.85",
+    "revision": "@0e66b94549a8bd85f03fbdf189b752d6e7b63c32",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "jsVersion": "15.5.35.25"
+  },
+  "launch": {
+    "transport": "pipe",
+    "launcherPid": 348400,
+    "browserPid": 348400,
+    "relaunched": false
+  },
+  "completed": true,
+  "cleanup": {
+    "browserPid": 348400,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finishedAt": "2026-10-19T15:27:58.031Z"
+}

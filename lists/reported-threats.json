@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "reviewKind": "passive-dated-threat-reports",
+  "reviewedOn": "2026-10-18",
+  "maxAgeDays": 90,
+  "sources": [
+    {
+      "id": "proofpoint-bluemoon",
+      "publisher": "Proofpoint",
+      "url": "https://www.proofpoint.com/us/blog/threat-insight/once-bluemoon-multiple-state-aligned-threat-actors-rapidly-adopt-novel-exploit",
+      "publishedOn": "2026-09-09"
+    },
+    {
+      "id": "volexity-patch-gap",
+      "publisher": "Volexity",
+      "url": "https://www.volexity.com/blog/2026/09/09/mind-the-patch-gap-multiple-chinese-threat-actors-chain-0-day-exploits-in-chrome-windows/",
+      "publishedOn": "2026-09-09"
+    }
+  ],
+  "domains": [
+    {
+      "host": "msbenefit.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-delivery",
+      "section": "TA412"
+    },
+    {
+      "host": "attcdn.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-delivery",
+      "section": "TA412"
+    },
+    {
+      "host": "evidence.msbenefit.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "TA412"
+    },
+    {
+      "host": "data.attcdn.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "TA412"
+    },
+    {
+      "host": "extension-management-portal.kmjukilo-lkjh.workers.dev",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-c2",
+      "section": "TA412"
+    },
+    {
+      "host": "airproducts.ink",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "precipart.ink",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "epsilonsystems.net",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "rocketlabusa.ink",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "spectrolab.fit",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "ms.checrity.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-c2",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "checrity.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-c2",
+      "section": "UNK_LateNight"
+    },
+    {
+      "host": "yhv41nji.workers.dev",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_QuietRacket"
+    },
+    {
+      "host": "wcce.joinmacket.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_QuietRacket"
+    },
+    {
+      "host": "joinmacket.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_QuietRacket"
+    },
+    {
+      "host": "openlumakora.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_QuietRacket"
+    },
+    {
+      "host": "publish.openlumakora.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_QuietRacket"
+    },
+    {
+      "host": "mailtbox.workers.dev",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_DoubleCheck"
+    },
+    {
+      "host": "vncdc.mailtbox.workers.dev",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "exploit-delivery",
+      "section": "UNK_DoubleCheck"
+    },
+    {
+      "host": "brianwilli.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-delivery",
+      "section": "UNK_DoubleCheck"
+    },
+    {
+      "host": "homepage.brianwilli.com",
+      "match": "exact",
+      "sourceId": "proofpoint-bluemoon",
+      "observedOn": "2026-09",
+      "role": "malware-delivery",
+      "section": "UNK_DoubleCheck"
+    },
+    {
+      "host": "cloud.shinewrist.net",
+      "match": "exact",
+      "sourceId": "volexity-patch-gap",
+      "observedOn": "2026-09-01",
+      "role": "exploit-delivery",
+      "section": "Network Indicators; September campaign"
+    },
+    {
+      "host": "photos.msbenefit.com",
+      "match": "exact",
+      "sourceId": "volexity-patch-gap",
+      "observedOn": "2026-09-01",
+      "role": "exploit-delivery",
+      "section": "Network Indicators; September campaign"
+    },
+    {
+      "host": "proof.gitprogram.com",
+      "match": "exact",
+      "sourceId": "volexity-patch-gap",
+      "observedOn": "2026-09-02",
+      "role": "exploit-delivery",
+      "section": "Network Indicators; September campaign"
+    }
+  ]
+}

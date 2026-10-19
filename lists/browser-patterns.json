@@ -1,0 +1,98 @@
+[
+  {
+    "id": 95,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/ads/*.js",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  },
+  {
+    "id": 96,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/adserver/*",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  },
+  {
+    "id": 97,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/pagead/*",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  },
+  {
+    "id": 98,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/banner_ads/*",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  },
+  {
+    "id": 99,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/popunder*.js",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  },
+  {
+    "id": 100,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*/prebid*.js",
+      "resourceTypes": [
+        "script",
+        "sub_frame",
+        "image"
+      ]
+    }
+  }
+]

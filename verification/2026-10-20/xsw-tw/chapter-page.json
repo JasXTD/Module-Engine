@@ -1,0 +1,383 @@
+{
+  "startedAt": "2026-10-19T16:54:05.865Z",
+  "browser": "chrome",
+  "page": "https://m.xsw.tw/17300981/256319819.html",
+  "headless": true,
+  "policy": "HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded",
+  "phases": {
+    "startup": {
+      "proxy": {
+        "allowed": {
+          "www.google.com": 2,
+          "www.gstatic.com": 1,
+          "accounts.google.com": 1,
+          "update.googleapis.com": 1,
+          "edgedl.me.gvt1.com": 1
+        },
+        "denied": {
+          "http:clients2.google.com": 1,
+          "http:edgedl.me.gvt1.com": 1
+        }
+      }
+    },
+    "blockads-on": {
+      "proxy": {
+        "allowed": {
+          "m.xsw.tw": 6,
+          "android.clients.google.com": 1,
+          "optimizationguide-pa.googleapis.com": 3
+        },
+        "denied": {
+          "invalid-connect": 1
+        }
+      },
+      "top": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 5797
+      },
+      "bottom": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 5797
+      },
+      "requestCount": 11,
+      "requestHosts": {
+        "m.xsw.tw": 10,
+        "pagead2.googlesyndication.com": 1
+      },
+      "blockedByExtension": {
+        "pagead2.googlesyndication.com": 1
+      },
+      "ruleMatches": {
+        "ads_ruleset pagead2.googlesyndication.com": 1
+      },
+      "popups": [
+        "about:blank"
+      ],
+      "downloads": 0
+    },
+    "ads-trackers-cosmetics-off": {
+      "proxy": {
+        "allowed": {
+          "pagead2.googlesyndication.com": 4,
+          "m.xsw.tw": 4,
+          "googleads.g.doubleclick.net": 4,
+          "ep1.adtrafficquality.google": 2,
+          "fundingchoicesmessages.google.com": 2,
+          "ep2.adtrafficquality.google": 2,
+          "fonts.googleapis.com": 2,
+          "tpc.googlesyndication.com": 6,
+          "www.google.com": 1,
+          "www.gstatic.com": 3,
+          "fonts.gstatic.com": 1,
+          "mtalk.google.com": 1
+        },
+        "denied": {}
+      },
+      "top": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1200,
+              280
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "m.xsw.tw",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "www.google.com",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1005,
+              124
+            ]
+          }
+        ],
+        "shownFrames": 2,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 6271
+      },
+      "bottom": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1200,
+              280
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "m.xsw.tw",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "www.google.com",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1005,
+              124
+            ]
+          }
+        ],
+        "shownFrames": 2,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 6271
+      },
+      "requestCount": 49,
+      "requestHosts": {
+        "fundingchoicesmessages.google.com": 16,
+        "m.xsw.tw": 10,
+        "googleads.g.doubleclick.net": 10,
+        "pagead2.googlesyndication.com": 8,
+        "ep1.adtrafficquality.google": 2,
+        "ep2.adtrafficquality.google": 2,
+        "www.google.com": 1
+      },
+      "blockedByExtension": {},
+      "ruleMatches": {},
+      "popups": [],
+      "downloads": 0
+    }
+  },
+  "version": "Chrome/155.0.8059.85",
+  "completed": true,
+  "cleanup": {
+    "browserPid": 406548,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finishedAt": "2026-10-19T16:54:51.221Z"
+}

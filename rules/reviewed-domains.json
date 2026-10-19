@@ -1,0 +1,5338 @@
+{
+  "schemaVersion": 1,
+  "reviewKind": "offline-structure-only",
+  "reviewedAtUtc": "2026-10-18T03:15:31Z",
+  "sources": [
+    {
+      "id": "blockads-ads",
+      "path": "rules/ads.json",
+      "sha256": "ef7f44c5961e7b04209c3124f1d4dd7e677ede079db36ba8972d201abf68bfbe",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    },
+    {
+      "id": "blockads-trackers",
+      "path": "rules/trackers.json",
+      "sha256": "b26b0a46df1134d12a11f6af66f03e94129e26ef0708b3830b519c79ed3fdbf9",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    },
+    {
+      "id": "blockads-malware",
+      "path": "rules/malware.json",
+      "sha256": "6e2f33980c152f53568e564d31ce72ad4b37f761fc6e70c49c5fa34a4a9dfd77",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    }
+  ],
+  "domains": [
+    {
+      "domain": "2giga.link",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 15,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "2mdn.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 8,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "2o7.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 13,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "33across.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 28,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "3lift.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 32,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "aax.amazon-adsystem.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 15,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "actionteaser.ru",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 58,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adblade.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 63,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adcash.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 79,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ade.googlesyndication.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 7,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adf.ly",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 84,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adfoc.us",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 73,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adfocus.us",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 72,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adform.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 33,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adition.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 43,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adjust.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 67,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "admaven.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 88,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "admeld.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 9,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adnxs.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 10,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adprofex.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 60,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adroll.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 34,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ads-twitter.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 57,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adservice.google.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 4,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adskeeper.co.uk",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 46,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adskeeper.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 47,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adsrvr.org",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 12,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adsterra.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 68,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adsterratools.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 69,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "adsymptotic.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 24,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "advertising.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 13,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "afminer.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 17,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "aftrk.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 36,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "agkn.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 20,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "aimtell.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 24,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "alb.reddit.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 64,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "amazon-adsystem.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 14,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "amplitude.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 48,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "analytics.tiktok.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 56,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "api.amplitude.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 49,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "api.mixpanel.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 47,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "app.link",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 69,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "appsflyer.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 66,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "authedmine.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 3,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bam.nr-data.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 79,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bc.vc",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 87,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "betrad.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 40,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bidswitch.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 35,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bidvertiser.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 80,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bkrtx.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 18,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bluekai.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 17,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bodyclick.net",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 56,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "branch.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 68,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "braze.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 72,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "bugsnag.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 80,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "casalemedia.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 23,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "cdn.segment.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 52,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "chartbeat.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 9,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "clarity.ms",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 39,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "clevertap.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 73,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "clickadu.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 71,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "clksite.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 38,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "coin-hive.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 2,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "coinhive.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 1,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "coinimp.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 16,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "connect.facebook.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 55,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "content.ad",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 60,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "contextual.media.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 22,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "conversantmedia.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 48,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "crazyegg.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 37,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "criteo.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 16,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "criteo.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 17,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "crwdcntrl.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 30,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "crypto-loot.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 5,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "cryptoloot.pro",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 4,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ct.pinterest.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 62,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "daopush.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 31,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "deloplen.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 19,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "demdex.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 14,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "dianomi.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 64,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "directadvert.ru",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 53,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "doubleclick.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 1,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ero-advertising.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 77,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "evadav.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 91,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "events.redditmedia.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 65,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "everesttech.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 15,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "exelator.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 19,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "exoclick.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 72,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "exponential.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 52,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "eyeota.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 28,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "fastclick.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 49,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "flashtalking.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 46,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "fpjs.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 53,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "fullstory.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 34,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "galaksion.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 93,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "go.mobisla.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 21,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "google-analytics.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 1,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "googleadservices.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 3,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "googlesyndication.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 2,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "googletagmanager.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 3,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "googletagservices.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 4,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "gravitec.net",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 26,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "gumgum.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 39,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "heap.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 44,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "heapanalytics.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 45,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "hilltopads.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 70,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "hotjar.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 32,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ib.adnxs.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 11,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "indexexchange.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 24,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "infolinks.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 81,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "inspectlet.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 43,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "inwemo.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 13,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "izooto.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 23,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "jsecoin.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 6,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "juicyads.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 76,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "kadam.net",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 55,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "kargo.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 40,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "kochava.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 70,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "krxd.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 16,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "lasrv.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 67,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "leanplum.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 74,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "lentainform.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 50,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "lijit.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 26,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "linkvertise.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 68,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "logrocket.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 41,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "logrocket.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 40,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "lotame.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 29,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "luckyads.pro",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 61,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "luckyorange.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 38,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "magsrv.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 66,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "marketgid.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 49,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mathtag.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 25,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mc.yandex.ru",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 76,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "media.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 21,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mediavenus.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 59,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "megapush.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 30,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mgid.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 57,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "miner.pr0gramm.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 10,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "minero.cc",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 9,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mixpanel.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 46,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mondiad.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 92,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mookie1.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 26,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "mouseflow.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 36,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "nativo.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 61,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "newrelic.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 77,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "nr-data.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 78,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "octo-click.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 63,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "octoclick.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 62,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "omtrdc.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 12,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "onclasrv.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 20,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "onclickads.net",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 34,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "onclkds.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 35,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "onesignal.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 75,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "openfpcdn.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 54,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "openx.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 20,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ouo.io",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 86,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "outbrain.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 55,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pagead2.googlesyndication.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 5,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "papoto.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 18,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "parsely.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 11,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "permutive.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 31,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pippio.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 22,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pixel.quantserve.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 8,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "plista.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 62,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "plugrush.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 78,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "popads.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 66,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "popcash.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 67,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ppoi.org",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 11,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "projectpoi.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 12,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "propeller-tracking.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 32,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "propellerads.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 65,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pubmatic.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 18,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushame.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 42,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushengage.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 22,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushground.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 90,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushlat.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 44,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushmono.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 43,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushno.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 45,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushtiger.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 29,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "pushwhy.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 41,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "px.ads.linkedin.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 61,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "quantserve.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 7,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "realsrv.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 65,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "redtram.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 52,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "revcontent.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 58,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "richpush.co",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 89,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "rlcdn.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 21,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "rocks.io",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 14,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "rollerads.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 94,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "roost.me",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 28,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "rs.fullstory.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 35,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "rubiconproject.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 19,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sb.scorecardresearch.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 6,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "scorecardresearch.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 5,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "segment.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 51,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "segment.io",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 50,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sendpulse.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 25,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "serving-sys.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 45,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sharethrough.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 30,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "shorte.st",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 85,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "singular.net",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 71,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "skimresources.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 83,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "smartadserver.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 25,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "smartlook.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 42,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "snap.licdn.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 60,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sonobi.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 42,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sovrn.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 27,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "spotx.tv",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 37,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "spotxchange.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 36,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "springserve.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 38,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "ssl.google-analytics.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 2,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "static.ads-twitter.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 58,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "static.chartbeat.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 10,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "static.hotjar.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 33,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "static.linkvertise.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 69,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sub2unlock.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 70,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "sub2unlock.net",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 71,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "subscribers.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 27,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "syndication.exoclick.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 73,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "t.co",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 59,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "taboola.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 53,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "tapad.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 23,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "teads.tv",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 29,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "teasernet.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 54,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "terraclicks.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 39,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "tovarro.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 48,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "tpc.googlesyndication.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 6,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trafficfactory.biz",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 64,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trafficjunky.net",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 74,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trafficstars.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 75,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trafmag.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 51,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trc.taboola.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 54,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "tribalfusion.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 51,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "triplelift.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 31,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trk.pinterest.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 63,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "trklnks.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 37,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "turn.com",
+      "match": "subdomains",
+      "category": "trackers",
+      "sourceId": "blockads-trackers",
+      "sourceRuleId": 27,
+      "browser": {
+        "priority": 1,
+        "domainType": "thirdParty",
+        "resourceTypes": [
+          "script",
+          "xmlhttprequest",
+          "ping",
+          "image",
+          "sub_frame",
+          "websocket",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "undertone.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 47,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "valueclick.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 50,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "velocecdn.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 33,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "viglink.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 82,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "visitweb.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 57,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "webmine.pro",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 8,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "webminepool.com",
+      "match": "subdomains",
+      "category": "unverified",
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 7,
+      "browser": {
+        "priority": 2,
+        "domainType": "any",
+        "resourceTypes": [
+          "main_frame",
+          "sub_frame",
+          "stylesheet",
+          "font",
+          "object",
+          "script",
+          "image",
+          "xmlhttprequest",
+          "ping",
+          "websocket",
+          "media",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "widgets.outbrain.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 56,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "yieldmo.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 41,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "zedo.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 44,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    },
+    {
+      "domain": "zergnet.com",
+      "match": "subdomains",
+      "category": "ads",
+      "sourceId": "blockads-ads",
+      "sourceRuleId": 59,
+      "browser": {
+        "priority": 1,
+        "domainType": "any",
+        "resourceTypes": [
+          "script",
+          "image",
+          "sub_frame",
+          "xmlhttprequest",
+          "media",
+          "ping",
+          "other"
+        ]
+      }
+    }
+  ]
+}

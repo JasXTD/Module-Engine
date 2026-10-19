@@ -1,0 +1,18 @@
+# Dated backup copies made before earlier changes (git history replaces these)
+.artifacts/
+
+# Packed extensions and their signing keys
+*.crx
+*.xpi
+*.pem
+
+# Dependencies, local secrets, editor and OS files
+node_modules/
+.env
+.env.*
+.vscode/
+.idea/
+.vs/
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,89 @@
+{
+  "reviewKind": "offline-structure-only",
+  "baselineSources": [
+    {
+      "id": "blockads-ads",
+      "path": "rules/ads.json",
+      "sha256": "ef7f44c5961e7b04209c3124f1d4dd7e677ede079db36ba8972d201abf68bfbe",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    },
+    {
+      "id": "blockads-trackers",
+      "path": "rules/trackers.json",
+      "sha256": "b26b0a46df1134d12a11f6af66f03e94129e26ef0708b3830b519c79ed3fdbf9",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    },
+    {
+      "id": "blockads-malware",
+      "path": "rules/malware.json",
+      "sha256": "6e2f33980c152f53568e564d31ce72ad4b37f761fc6e70c49c5fa34a4a9dfd77",
+      "evidence": "unverified-local-list",
+      "lastVerifiedUtc": null,
+      "expiresUtc": null
+    }
+  ],
+  "counts": {
+    "ads": 94,
+    "trackers": 80,
+    "unverified": 73,
+    "evidencedMalware": 0,
+    "browserOnlyAdPatterns": 6
+  },
+  "decisions": [
+    "Retain ads and trackers as inherited local filtering categories, not independently verified reputation.",
+    "Move every former malware domain to unverified, observation only; preserve original rule scope and provenance.",
+    "Remove the malware browser layer; no independently evidenced malicious domains are available locally.",
+    "Keep six ad URL heuristics browser-only with third-party and resource-type limits.",
+    "The earlier handoff described 84 malware rules; the actual pre-edit snapshot contains 75. Already-absent placeholders and broad TLD rules are not attributed to this change."
+  ],
+  "exclusions": [
+    {
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 74,
+      "rule": {
+        "id": 74,
+        "priority": 2,
+        "action": {
+          "type": "block"
+        },
+        "condition": {
+          "domainType": "thirdParty",
+          "urlFilter": "*/cryptonight*.wasm",
+          "resourceTypes": [
+            "script",
+            "sub_frame",
+            "websocket",
+            "xmlhttprequest"
+          ]
+        }
+      },
+      "reason": "Filename heuristic without individual evidence; excluded from browser rules and domain observations."
+    },
+    {
+      "sourceId": "blockads-malware",
+      "sourceRuleId": 75,
+      "rule": {
+        "id": 75,
+        "priority": 2,
+        "action": {
+          "type": "block"
+        },
+        "condition": {
+          "domainType": "thirdParty",
+          "urlFilter": "*/coinhive*.js",
+          "resourceTypes": [
+            "script",
+            "sub_frame",
+            "websocket",
+            "xmlhttprequest"
+          ]
+        }
+      },
+      "reason": "Filename heuristic without individual evidence; excluded from browser rules and domain observations."
+    }
+  ]
+}

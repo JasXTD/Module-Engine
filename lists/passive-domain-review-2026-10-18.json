@@ -1,0 +1,1528 @@
+{
+  "schemaVersion": 1,
+  "reviewKind": "passive-published-report-review",
+  "reviewedAtUtc": "2026-10-18T03:43:12Z",
+  "sourceCatalog": {
+    "path": "lists/reviewed-domains.json",
+    "sha256": "C71FD950C7A39A00D6D27BF88CB67BC1D710A37F9214D781D999161A6B4FA5EC"
+  },
+  "userDecision": "Require recent dated evidence before blocking; do not promote four undated vendor reports.",
+  "policy": {
+    "recentWindowDays": 90,
+    "recentFromUtc": "2026-07-20T00:00:00Z",
+    "recentThroughUtc": "2026-10-18T03:43:12Z",
+    "requiredEvidence": "A primary provider's explicitly dated malicious observation or current verdict within the window, tied to the exact hostname or justified domain scope, with no unresolved contradictory evidence.",
+    "notEvidenceOfFreshness": [
+      "Search crawl date",
+      "Page retrieval or review date",
+      "Copyright year",
+      "An updated page containing only old incidents",
+      "An undated statement that a vendor blocks a domain"
+    ],
+    "unknownIsNotSafe": true,
+    "automaticEnforcement": false
+  },
+  "method": {
+    "mode": "Passive search and reading of existing third-party pages only",
+    "candidateDnsQueries": 0,
+    "candidateRequests": 0,
+    "activeScanSubmissions": 0,
+    "downloadedFiles": 0,
+    "limitations": [
+      "Public indexed searches are not exhaustive reputation-database coverage.",
+      "No authenticated live reputation API was queried.",
+      "Four URLhaus existing-report search pages were unavailable through the web tool; this was not counted as a clean or negative verdict.",
+      "Web-hosted text files and list mirrors surfaced by search were discarded and not used.",
+      "No vendor detection page supplied a recent last-seen date for the four explicit threat candidates."
+    ],
+    "sourcePools": {
+      "initial": [
+        "malwarebytes.com",
+        "microsoft.com",
+        "unit42.paloaltonetworks.com",
+        "securelist.com",
+        "welivesecurity.com",
+        "trendmicro.com",
+        "proofpoint.com",
+        "zscaler.com"
+      ],
+      "primary": [
+        "malwarebytes.com",
+        "microsoft.com",
+        "unit42.paloaltonetworks.com",
+        "securelist.com",
+        "welivesecurity.com",
+        "trendmicro.com",
+        "proofpoint.com",
+        "zscaler.com",
+        "sophos.com"
+      ],
+      "secondarySearch": [
+        "talosintelligence.com",
+        "fortinet.com",
+        "sucuri.net",
+        "forcepoint.com",
+        "mcafee.com",
+        "broadcom.com",
+        "bitdefender.com",
+        "sentinelone.com",
+        "trellix.com",
+        "cisa.gov"
+      ]
+    },
+    "recentSearch": {
+      "recencyDays": 90,
+      "sourcePools": [
+        "primary",
+        "secondarySearch"
+      ],
+      "groups": [
+        [
+          "2giga.link",
+          "actionteaser.ru",
+          "adfoc.us",
+          "adfocus.us",
+          "adprofex.com",
+          "adskeeper.co.uk",
+          "adskeeper.com",
+          "afminer.com",
+          "aftrk.com",
+          "aimtell.com",
+          "authedmine.com",
+          "betrad.com",
+          "bodyclick.net",
+          "clksite.com",
+          "coin-hive.com",
+          "coinhive.com",
+          "coinimp.com",
+          "crypto-loot.com",
+          "cryptoloot.pro"
+        ],
+        [
+          "daopush.com",
+          "deloplen.com",
+          "directadvert.ru",
+          "go.mobisla.com",
+          "gravitec.net",
+          "inwemo.com",
+          "izooto.com",
+          "jsecoin.com",
+          "kadam.net",
+          "lasrv.com",
+          "lentainform.com",
+          "linkvertise.com",
+          "luckyads.pro",
+          "magsrv.com",
+          "marketgid.com",
+          "mediavenus.com",
+          "megapush.com",
+          "miner.pr0gramm.com"
+        ],
+        [
+          "minero.cc",
+          "octo-click.com",
+          "octoclick.com",
+          "onclasrv.com",
+          "onclickads.net",
+          "onclkds.com",
+          "papoto.com",
+          "ppoi.org",
+          "projectpoi.com",
+          "propeller-tracking.com",
+          "pushame.com",
+          "pushengage.com",
+          "pushlat.com",
+          "pushmono.com",
+          "pushno.com",
+          "pushtiger.com",
+          "pushwhy.com",
+          "realsrv.com"
+        ],
+        [
+          "redtram.com",
+          "rocks.io",
+          "roost.me",
+          "sendpulse.com",
+          "static.linkvertise.com",
+          "sub2unlock.com",
+          "sub2unlock.net",
+          "subscribers.com",
+          "teasernet.com",
+          "terraclicks.com",
+          "tovarro.com",
+          "trafficfactory.biz",
+          "trafmag.com",
+          "trklnks.com",
+          "velocecdn.com",
+          "visitweb.com",
+          "webmine.pro",
+          "webminepool.com"
+        ]
+      ],
+      "result": "No indexed result returned; not a clean verdict."
+    },
+    "urlhausExistingReportLookups": [
+      {
+        "url": "https://urlhaus.abuse.ch/browse.php?search=pushame.com",
+        "result": "unavailable"
+      },
+      {
+        "url": "https://urlhaus.abuse.ch/browse.php?search=pushno.com",
+        "result": "unavailable"
+      },
+      {
+        "url": "https://urlhaus.abuse.ch/browse.php?search=pushwhy.com",
+        "result": "unavailable"
+      },
+      {
+        "url": "https://urlhaus.abuse.ch/browse.php?search=webmine.pro",
+        "result": "unavailable"
+      }
+    ]
+  },
+  "counts": {
+    "reviewed": 73,
+    "confirmedRecentMalicious": 0,
+    "newBlockingRules": 0,
+    "remainingUnverified": 73,
+    "evidenceStatus": {
+      "insufficient-evidence": 54,
+      "context-not-malware-verdict": 4,
+      "undated-adware-or-riskware": 2,
+      "historical-context": 9,
+      "undated-vendor-threat": 4
+    }
+  },
+  "evidenceSources": [
+    {
+      "id": "MB-PUSHAME",
+      "publisher": "Malwarebytes",
+      "title": "pushame.com threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/pushame-com",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "direct-vendor-threat-description",
+      "assessment": "Reports association with Trojan.Downloader and a domain block; no observation or update date supplied."
+    },
+    {
+      "id": "MB-PUSHNO",
+      "publisher": "Malwarebytes",
+      "title": "pushno.com threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/pushno-com",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "direct-vendor-threat-description",
+      "assessment": "Reports Trojan.BitCoinMiner association and miner hosting; no last-seen date supplied."
+    },
+    {
+      "id": "MB-PUSHWHY",
+      "publisher": "Malwarebytes",
+      "title": "pushwhy.com threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/pushwhy-com",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "direct-vendor-threat-description",
+      "assessment": "Reports fraudulent notification and ad-rotation behavior; no last-seen date supplied."
+    },
+    {
+      "id": "MB-WEBMINE",
+      "publisher": "Malwarebytes",
+      "title": "webmine.pro threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/webmine-pro",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "direct-vendor-threat-description",
+      "assessment": "Describes malicious browser mining and hosting CryptoLoot JavaScript; no last-seen date supplied."
+    },
+    {
+      "id": "MB-ADSKEEPER",
+      "publisher": "Malwarebytes",
+      "title": "adskeeper.co.uk threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/adskeeper-co-uk",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "adware-description",
+      "assessment": "Describes redirects to adware, without dated observations. This does not establish malware at every host or at adskeeper.com."
+    },
+    {
+      "id": "MB-VISITWEB",
+      "publisher": "Malwarebytes",
+      "title": "visitweb.com threat description",
+      "url": "https://www.malwarebytes.com/blog/detections/visitweb-com",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "riskware-description",
+      "assessment": "Classifies the domain as associated with riskware, without a last-seen date. Riskware is not equivalent to confirmed malware."
+    },
+    {
+      "id": "MB-COINHIVE",
+      "publisher": "Malwarebytes",
+      "title": "Why is Malwarebytes blocking Coinhive?",
+      "url": "https://www.malwarebytes.com/blog/security-world/2017/10/why-is-malwarebytes-blocking-coinhive?Offer=ab_ss_reeng_plt_var1",
+      "publishedDate": "2017-10-18",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Discusses mining abuse and lists crypto-loot.com; explicitly distinguishes the Coinhive service itself from malicious use."
+    },
+    {
+      "id": "PAN-COINHIVE",
+      "publisher": "Palo Alto Networks Unit 42",
+      "title": "Unauthorized Coin Mining in the Browser",
+      "url": "https://unit42.paloaltonetworks.com/unit42-unauthorized-coin-mining-browser/",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "The report describes 2017 Coinhive activity, including coin-hive.com script URLs, and distinguishes voluntary use from compromise. No recent observation was established."
+    },
+    {
+      "id": "ZS-MINING",
+      "publisher": "Zscaler ThreatLabZ",
+      "title": "Cryptomining is Here to Stay in the Enterprise",
+      "url": "https://www.zscaler.com/blogs/security-research/cryptomining-here-stay-enterprise",
+      "publishedDate": "2018-04-10",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Discusses Crypto-Loot and JSE-Coin in 2017-2018 mining telemetry, including both voluntary mining and abuse. This is historical context."
+    },
+    {
+      "id": "SOPHOS-MINING",
+      "publisher": "Sophos",
+      "title": "Cryptojacking is almost conquered - crushed along with Coinhive",
+      "url": "https://www.sophos.com/en-us/blog/cryptojacking-is-almost-conquered-crushed-along-with-coinhive-com",
+      "publishedDate": "2020-03-19",
+      "lastSeenUtc": null,
+      "kind": "secondary-historical-lead",
+      "assessment": "Summarizes another research team's work and mentions minero.cc and webminepool.com. Excluded as proof of recent activity or as an independent primary finding."
+    },
+    {
+      "id": "ESET-GLUPTEBA",
+      "publisher": "ESET",
+      "title": "Glupteba is no longer part of Windigo",
+      "url": "https://www.welivesecurity.com/2018/03/22/glupteba-no-longer-windigo/",
+      "publishedDate": "2018-03-22",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Lists adfoc.us as a target of password-reuse attacks, not as the malware's command server. The mention does not justify a malicious-domain label."
+    },
+    {
+      "id": "MS-DEFRU",
+      "publisher": "Microsoft Security Intelligence",
+      "title": "Rogue:Win32/Defru",
+      "url": "https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=Rogue%3AWin32%2FDefru",
+      "publishedDate": "2014-08-06",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Updated 2017-09-15. Lists directadvert.ru and onclickads.net among destinations the malware redirects users away from. Those names are not automatically malicious."
+    },
+    {
+      "id": "ESET-DNSBIRTHDAY",
+      "publisher": "ESET",
+      "title": "Birthday Reminder looks benign but the malware is anything but",
+      "url": "https://www.welivesecurity.com/2017/06/22/got-birthday-reminder/",
+      "publishedDate": "2017-06-22",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Shows onclkds.com in an ad-redirection chain that sometimes led to drive-by downloads. This is a 2017 observation, not current domain-wide confirmation."
+    },
+    {
+      "id": "MB-MAGNITUDE",
+      "publisher": "Malwarebytes",
+      "title": "Magnitude Exploit Kit Activity Increases Via Malvertising Attacks",
+      "url": "https://www.malwarebytes.com/?p=68096",
+      "publishedDate": "2015-11-13",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Documents onclickads.net as an advertising intermediary in a campaign. No recent observation or whole-domain scope was established."
+    },
+    {
+      "id": "MB-AUTHEDMINE",
+      "publisher": "Malwarebytes",
+      "title": "The state of malicious cryptomining",
+      "url": "https://www.malwarebytes.com/blog/news/2018/02/state-malicious-cryptomining",
+      "publishedDate": "2018-02-26",
+      "lastSeenUtc": null,
+      "kind": "historical-vendor-research",
+      "assessment": "Describes AuthedMine as an opt-in API and contrasts it with silent mining. Service identity alone does not confirm a malicious domain."
+    },
+    {
+      "id": "MS-IZOOTO",
+      "publisher": "Microsoft Marketplace / Datability",
+      "title": "iZooto - Owned Audience Marketing Platform",
+      "url": "https://marketplace.microsoft.com/uk-ua/product/databilitytechnologiespvtltd1585898779587.izooto_owned_audience_marketing",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "publisher-service-description",
+      "assessment": "Publisher listing describes a notification marketing service. This is context, not a malware verdict or a clean bill of health."
+    },
+    {
+      "id": "EDGE-FASTFORWARD",
+      "publisher": "FastForward Team / Microsoft Edge Add-ons",
+      "title": "FastForward listing",
+      "url": "https://microsoftedge.microsoft.com/addons/detail/fastforward/ldcclmkclhomnpcnccgbgleikchbnecl",
+      "publishedDate": null,
+      "lastSeenUtc": null,
+      "kind": "publisher-service-description",
+      "assessment": "Listing updated 2024-04-01 describes sub2unlock.com as an action-gated link service. This does not establish malware."
+    },
+    {
+      "id": "MONETAG-PUSHNO",
+      "publisher": "Monetag",
+      "title": "Instructions for Blogger/Blogspot: push notification code",
+      "url": "https://help.monetag.com/en/articles/6745928-instructions-for-blogger-blogspot-how-do-i-insert-the-push-notification-code",
+      "publishedDate": "2025-08-18",
+      "lastSeenUtc": null,
+      "kind": "operator-context",
+      "assessment": "Publisher instructions use pushno.com for notifications. Service use is not proof of safety or malware; it also does not refresh the undated threat report."
+    },
+    {
+      "id": "GRIDIN-PUSHAME",
+      "publisher": "Gridinsoft",
+      "title": "Pushame.com reputation report",
+      "url": "https://gridinsoft.com/online-virus-scanner/url/pushame-com",
+      "publishedDate": "2024-12-18",
+      "lastSeenUtc": null,
+      "kind": "automated-old-reputation",
+      "assessment": "Existing report says last checked 2024-12-18 and gives a suspicious-shop warning based on automated signals. It lacks current malware confirmation and content analysis."
+    }
+  ],
+  "domains": [
+    {
+      "domain": "2giga.link",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"2giga.link\" -site:forums.malwarebytes.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "actionteaser.ru",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"actionteaser.ru\" -site:forums.malwarebytes.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "adfoc.us",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "context-not-malware-verdict",
+      "evidenceIds": [
+        "ESET-GLUPTEBA"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "The ESET report identifies it as an attack target, not malicious infrastructure. Community complaints are not confirmation.",
+      "search": {
+        "exactDomainQuery": "\"adfoc.us\" -site:forums.malwarebytes.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "adfocus.us",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"adfocus.us\" -site:forums.malwarebytes.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "adprofex.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"adprofex.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "adskeeper.co.uk",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-adware-or-riskware",
+      "evidenceIds": [
+        "MB-ADSKEEPER"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Undated adware-redirect warning does not meet the recent confirmed-malicious threshold; do not extend it to adskeeper.com.",
+      "search": {
+        "exactDomainQuery": "\"adskeeper.co.uk\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "adskeeper.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"adskeeper.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "afminer.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"afminer.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "aftrk.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"aftrk.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "aimtell.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"aimtell.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "authedmine.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "MB-AUTHEDMINE"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "The 2018 report describes an opt-in mining API; no recent domain-specific malicious observation.",
+      "search": {
+        "exactDomainQuery": "\"authedmine.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "betrad.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Community configuration/log references appeared, but no primary malicious-domain finding sufficient for blocking was located.",
+      "search": {
+        "exactDomainQuery": "\"betrad.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "bodyclick.net",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"bodyclick.net\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "clksite.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"clksite.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "coin-hive.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "PAN-COINHIVE"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Historical Coinhive script URL appears in 2017 research; no current confirmation or basis to expand scope.",
+      "search": {
+        "exactDomainQuery": "\"coin-hive.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "coinhive.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "MB-COINHIVE",
+        "PAN-COINHIVE"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Historical mining abuse is documented, but the vendor distinguishes the service itself from malicious use; no recent confirmation.",
+      "search": {
+        "exactDomainQuery": "\"coinhive.com\" malware shutdown",
+        "sourcePoolId": "initial",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "coinimp.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"coinimp.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "crypto-loot.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "MB-COINHIVE",
+        "ZS-MINING"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Mining and abuse discussed in 2017-2018 reports; no recent dated malicious observation.",
+      "search": {
+        "exactDomainQuery": "\"crypto-loot.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "cryptoloot.pro",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"cryptoloot.pro\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 1
+      }
+    },
+    {
+      "domain": "daopush.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"daopush.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "deloplen.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "An old community support log appeared, but no recent primary vendor finding sufficient for blocking was located.",
+      "search": {
+        "exactDomainQuery": "\"deloplen.com\" malware",
+        "sourcePoolId": "initial",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "directadvert.ru",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "context-not-malware-verdict",
+      "evidenceIds": [
+        "MS-DEFRU"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Microsoft lists it among legitimate destinations redirected away from by a rogue. A mention in a threat report is not a malicious verdict.",
+      "search": {
+        "exactDomainQuery": "\"directadvert.ru\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "go.mobisla.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"go.mobisla.com\" malware",
+        "sourcePoolId": "initial",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "gravitec.net",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"gravitec.net\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "inwemo.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"inwemo.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "izooto.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "context-not-malware-verdict",
+      "evidenceIds": [
+        "MS-IZOOTO"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Notification-platform context only; no recent primary malicious-domain evidence located.",
+      "search": {
+        "exactDomainQuery": "\"izooto.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "jsecoin.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "ZS-MINING"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Mentioned in 2018 mining telemetry. Mining-service membership alone does not confirm current malicious activity.",
+      "search": {
+        "exactDomainQuery": "\"jsecoin.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "kadam.net",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"kadam.net\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "lasrv.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"lasrv.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "lentainform.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"lentainform.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "linkvertise.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"linkvertise.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "luckyads.pro",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"luckyads.pro\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "magsrv.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"magsrv.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "marketgid.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"marketgid.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "mediavenus.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"mediavenus.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "megapush.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"megapush.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "miner.pr0gramm.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"miner.pr0gramm.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 2
+      }
+    },
+    {
+      "domain": "minero.cc",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "SOPHOS-MINING"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Only an old secondary research lead found; it is not current primary evidence for blocking.",
+      "search": {
+        "exactDomainQuery": "\"minero.cc\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "octo-click.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"octo-click.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "octoclick.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"octoclick.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "onclasrv.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"onclasrv.com\" malware",
+        "sourcePoolId": "initial",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "onclickads.net",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "MB-MAGNITUDE",
+        "MS-DEFRU"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Old malvertising-intermediary evidence exists; another report lists it as a redirect victim. Neither establishes current whole-domain maliciousness.",
+      "search": {
+        "exactDomainQuery": "\"onclickads.net\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "onclkds.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "ESET-DNSBIRTHDAY"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "2017 ad-redirection evidence is too old for this review's blocking threshold.",
+      "search": {
+        "exactDomainQuery": "\"onclkds.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "papoto.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"papoto.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "ppoi.org",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"ppoi.org\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "projectpoi.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"projectpoi.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "propeller-tracking.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"propeller-tracking.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushame.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-vendor-threat",
+      "evidenceIds": [
+        "MB-PUSHAME",
+        "GRIDIN-PUSHAME"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Explicit Trojan report is undated; the separate automated shop warning was last checked in 2024. No recent dated malicious observation.",
+      "search": {
+        "exactDomainQuery": "\"pushame.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushengage.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"pushengage.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushlat.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"pushlat.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushmono.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"pushmono.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushno.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-vendor-threat",
+      "evidenceIds": [
+        "MB-PUSHNO",
+        "MONETAG-PUSHNO"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Explicit miner-Trojan report is undated. Newer notification integration instructions are not a dated malware finding.",
+      "search": {
+        "exactDomainQuery": "\"pushno.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushtiger.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"pushtiger.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "pushwhy.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-vendor-threat",
+      "evidenceIds": [
+        "MB-PUSHWHY"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Explicit fraud report has no last-seen date. Do not equate the date this page was read or crawled with a new incident.",
+      "search": {
+        "exactDomainQuery": "\"pushwhy.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "realsrv.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"realsrv.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 3
+      }
+    },
+    {
+      "domain": "redtram.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"redtram.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "rocks.io",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"rocks.io\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "roost.me",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"roost.me\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "sendpulse.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"sendpulse.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "static.linkvertise.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"static.linkvertise.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "sub2unlock.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "context-not-malware-verdict",
+      "evidenceIds": [
+        "EDGE-FASTFORWARD"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Link-gating context only; no recent primary malicious-domain evidence located.",
+      "search": {
+        "exactDomainQuery": "\"sub2unlock.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "sub2unlock.net",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"sub2unlock.net\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "subscribers.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"subscribers.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "teasernet.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"teasernet.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "terraclicks.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"terraclicks.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "tovarro.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"tovarro.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "trafficfactory.biz",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"trafficfactory.biz\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "trafmag.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"trafmag.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "trklnks.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"trklnks.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "velocecdn.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "insufficient-evidence",
+      "evidenceIds": [],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "No suitable primary report establishing recent malicious activity was located in the bounded searches. This is not evidence that the domain is safe.",
+      "search": {
+        "exactDomainQuery": "\"velocecdn.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "visitweb.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-adware-or-riskware",
+      "evidenceIds": [
+        "MB-VISITWEB"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Undated riskware classification alone is insufficient to confirm recent malware.",
+      "search": {
+        "exactDomainQuery": "\"visitweb.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "webmine.pro",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "undated-vendor-threat",
+      "evidenceIds": [
+        "MB-WEBMINE"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Explicit malicious-mining report has no last-seen date. No recent dated observation established.",
+      "search": {
+        "exactDomainQuery": "\"webmine.pro\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    },
+    {
+      "domain": "webminepool.com",
+      "currentVerdict": "unverified",
+      "evidenceStatus": "historical-context",
+      "evidenceIds": [
+        "SOPHOS-MINING"
+      ],
+      "lastVerifiedMaliciousUtc": null,
+      "blockingAction": "do-not-promote",
+      "reason": "Only an old secondary research lead found; it is not current primary evidence for blocking.",
+      "search": {
+        "exactDomainQuery": "\"webminepool.com\" -site:forums.malwarebytes.com -site:learn.microsoft.com -site:community.sophos.com",
+        "sourcePoolId": "primary",
+        "completed": true,
+        "recentSearchGroup": 4
+      }
+    }
+  ]
+}

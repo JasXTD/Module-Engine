@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlockAds Shield</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <img src="icons/icon48.png" alt="Shield" class="brand-icon" />
+        <div>
+          <h1 class="brand-title">BlockAds Shield</h1>
+          <span class="brand-subtitle" id="statusText" role="status" aria-live="polite">Checking protection…</span>
+        </div>
+      </div>
+      <label class="switch" title="Master Protection Switch">
+        <input type="checkbox" id="masterToggle" aria-label="Enable protection" disabled />
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <p id="errorPanel" class="notice error-notice" role="alert" hidden></p>
+    <button id="retryButton" type="button" class="btn-site" hidden>Retry protection check</button>
+    <p id="savedWarning" class="notice" role="status" hidden></p>
+
+    <!-- Current Site Card -->
+    <section class="card site-card" id="siteSection">
+      <div class="site-info">
+        <span class="site-label">Current Website</span>
+        <span class="site-domain" id="currentDomain">Loading...</span>
+      </div>
+      <button type="button" class="btn-site" id="siteWhitelistBtn" disabled>
+        Pause on this site
+      </button>
+    </section>
+    <p id="siteScope" class="scope-note"></p>
+
+    <!-- Protection Layers -->
+    <section class="card">
+      <h2 class="section-title">Protection Layers</h2>
+
+      <p class="scope-note">Local filters. Reported threats use dated security reports; ad and tracker membership is not a malware verdict.</p>
+
+      <div class="layer-row">
+        <div class="layer-info">
+          <span class="layer-name">Ad Networks &amp; Pop-unders</span>
+          <span class="layer-desc">Blocks banner ads, video ads &amp; pop-up scripts</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="toggleAds" aria-label="Block ad networks" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-info">
+          <span class="layer-name">Trackers &amp; Fingerprinting</span>
+          <span class="layer-desc">Blocks cross-site analytics &amp; session recorders</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="toggleTrackers" aria-label="Block trackers" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-info">
+          <span class="layer-name">Reported Threats</span>
+          <span class="layer-desc" id="threatStatus" role="status">Checking dated evidence…</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="toggleThreats" aria-label="Block reported threats" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-info">
+          <span class="layer-name">Cosmetic Element Hiding</span>
+          <span class="layer-desc">Hides elements matching the cosmetic filters</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="toggleCosmetic" aria-label="Hide matching ad elements" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Custom Domain Blocker -->
+    <section class="card">
+      <h2 class="section-title">Custom Blocked Domains</h2>
+      <form id="customBlockForm" class="custom-form">
+        <input
+          type="text"
+          id="customDomainInput"
+          aria-label="Hostname or URL to block"
+          maxlength="2048"
+          disabled
+          placeholder="e.g. shady-ads.example.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit" class="btn-add" disabled>Block</button>
+      </form>
+      <ul id="customDomainList" class="domain-list"></ul>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>100% Local &bull; Zero Telemetry &bull; Manifest V3</span>
+    </footer>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

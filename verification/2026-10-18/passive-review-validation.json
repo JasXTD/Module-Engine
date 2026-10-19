@@ -1,0 +1,22 @@
+{
+  "checkedAtUtc": "2026-10-18T03:46:33Z",
+  "result": "passed",
+  "reviewedDomains": 73,
+  "uniqueDomains": 73,
+  "evidenceSources": 19,
+  "allSourceReferencesValid": true,
+  "allExactNameSearchesRecorded": true,
+  "allRecentSearchGroupsCoverTheirEntries": true,
+  "evidenceLinksAvoidCandidateDomainsAndTextFiles": true,
+  "noInventedLastSeenDates": true,
+  "summaryCountsMatchEntries": true,
+  "protectedFilesUnchanged": 18,
+  "protectedFileSnapshot": ".artifacts/passive-review-20261018-114312/protected-files.json",
+  "catalogSha256": "C71FD950C7A39A00D6D27BF88CB67BC1D710A37F9214D781D999161A6B4FA5EC",
+  "newBlockingRules": 0,
+  "remainingUnverified": 73,
+  "offlineCatalogAssertions": 173,
+  "offlineCatalogLog": "verification/2026-10-18/passive-review-catalog-tests.log",
+  "runtimeChecksRerun": false,
+  "runtimeChecksReason": "Only authored review data and documentation changed."
+}
