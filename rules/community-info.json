@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "lists": [
+    {
+      "id": "easylist",
+      "title": "EasyList",
+      "version": "202610191756",
+      "lastModified": "19 Oct 2026 17:56 UTC",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "license": "EasyList licence, https://easylist.to/pages/licence.html (GPL-3.0-or-later or CC BY-SA 3.0)",
+      "downloadedAtUtc": "2026-10-19T18:08:35Z",
+      "sha256": "9d9ea0a3417ea98f84db067a8a41586b0e01ecb96349ef61200608dd50b611ff"
+    },
+    {
+      "id": "easylist-china",
+      "title": "EasyList China",
+      "version": "202610191803",
+      "lastModified": "19 Oct 2026 18:03 UTC",
+      "source": "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+      "license": "EasyList licence, https://easylist.to/pages/licence.html (GPL-3.0-or-later or CC BY-SA 3.0)",
+      "downloadedAtUtc": "2026-10-19T18:08:35Z",
+      "sha256": "55a2258d61a88f70c2bdad7cb8b365e722a563100f96d5f748e8abd7371f6d17"
+    }
+  ],
+  "networkRules": 9223,
+  "groupedDomains": 60731,
+  "cosmeticSites": 9684,
+  "cosmeticSelectors": 22449,
+  "exceptionsLimitedForBlockAdsRules": 228,
+  "skipped": {
+    "cosmetic: generic (all sites)": 14409,
+    "cosmetic: negated, wildcard or invalid domain": 324,
+    "cosmetic: procedural or unsafe selector": 46,
+    "cosmetic: scriptlet, procedural or HTML filter": 429,
+    "network: exception for a BlockAds-blocked domain": 111,
+    "network: pattern too short or broad": 19,
+    "network: regular expression": 26,
+    "network: unsupported option csp": 1,
+    "network: unsupported option csp=": 4,
+    "network: unsupported option document": 4,
+    "network: unsupported option elemhide": 4,
+    "network: unsupported option genericblock": 8,
+    "network: unsupported option generichide": 363,
+    "network: unsupported option rewrite=": 16,
+    "network: unsupported option syntax": 10,
+    "network: unsupported pattern syntax": 2,
+    "network: wildcard or invalid domain option": 2
+  }
+}

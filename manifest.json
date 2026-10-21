@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BlockAds Shield — Ad & Tracker Filter",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "minimum_chrome_version": "121",
   "description": "Local ad, tracker and dated reported-threat filtering, including YouTube video ads. Exact threat hosts expire for review; no remote list downloads.",
   "permissions": [
@@ -13,8 +13,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "*://*.youtube.com/*",
-    "*://*.youtube-nocookie.com/*"
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -50,6 +49,11 @@
         "id": "threats_ruleset",
         "enabled": false,
         "path": "rules/threats.json"
+      },
+      {
+        "id": "community_ruleset",
+        "enabled": false,
+        "path": "rules/community.json"
       }
     ]
   },

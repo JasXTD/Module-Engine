@@ -16,9 +16,17 @@ const toggleTrackers = byId("toggleTrackers");
 const toggleThreats = byId("toggleThreats");
 const threatStatusEl = byId("threatStatus");
 const toggleCosmetic = byId("toggleCosmetic");
+const togglePopups = byId("togglePopups");
+const toggleCommunity = byId("toggleCommunity");
+const communityStatusEl = byId("communityStatus");
+let communityInfo = null;
+const popupScopeEl = byId("popupScope");
 const customBlockForm = byId("customBlockForm");
 const customDomainInput = byId("customDomainInput");
 const customDomainList = byId("customDomainList");
+const allowForm = byId("allowForm");
+const allowDomainInput = byId("allowDomainInput");
+const allowDomainList = byId("allowDomainList");
 let currentSettings = null;
 let activeHostname = "";
 let busy = false;
@@ -61,12 +69,24 @@ function renderUI() {
     ? "Evidence expired — update required"
     : `${threatStatus.count} exact hosts · expires ${threatStatus.expiresAt.slice(0, 10)} UTC`;
   toggleCosmetic.checked = settings.cosmeticFiltering;
-  for (const input of [toggleAds, toggleTrackers, toggleCosmetic]) {
+  toggleCommunity.checked = settings.rulesets.community_ruleset;
+  const lists = communityInfo?.lists || [];
+  communityStatusEl.textContent = !communityInfo ? "Snapshot details unavailable" : !lists.length ? "No list snapshot is built"
+    : `${lists.map(list => list.title).join(" + ")} · ${communityInfo.networkRules.toLocaleString()} rules · ${(lists[0].lastModified || "").replace(/ \d\d:\d\d.*$/, "")}`;
+  for (const input of [toggleAds, toggleTrackers, toggleCommunity, toggleCosmetic]) {
     input.disabled = busy || !settings.enabled;
   }
   const scope = activeHostname ? whitelistScope(activeHostname, settings.whitelistedDomains) : "";
+  // The same "covered by this domain or a parent" lookup as site pauses.
+  const popupScope = activeHostname ? whitelistScope(activeHostname, settings.popupBlockedDomains) : "";
+  togglePopups.checked = Boolean(popupScope);
+  togglePopups.disabled = busy || !settings.enabled || !activeHostname;
+  popupScopeEl.textContent = !activeHostname ? "Available on HTTP(S) pages"
+    : scope ? "Inactive while this site is paused"
+    : popupScope ? `On for ${popupScope} and its subdomains. Reload the page after changing.`
+    : "Stops new windows and disguised links to other sites";
   const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 ||
-    settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
+    settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || settings.rulesets.community_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
   statusText.textContent = lastError ? "Check protection status" : busy ? "Applying changes…" :
     !settings.enabled ? "Protection paused" : scope ? "Paused on this site" :
     anyFilters ? "Filtering enabled" : "No filters enabled";
@@ -80,8 +100,13 @@ function renderUI() {
   siteScope.textContent = scope
     ? `Paused for ${scope} and its subdomains. Resume removes the matching exceptions for this whole scope. Reload the page after changing this setting.`
     : activeHostname ? "Site settings include subdomains. Reload the page after changing them." : "Site controls are available on supported HTTP(S) pages.";
-  customDomainList.replaceChildren();
-  for (const domain of settings.customBlockedDomains) {
+  renderDomainList(customDomainList, settings.customBlockedDomains, "Unblock", "REMOVE_CUSTOM_DOMAIN");
+  renderDomainList(allowDomainList, settings.allowedDomains, "Stop always allowing", "REMOVE_ALLOWED_DOMAIN");
+}
+
+function renderDomainList(list, domains, removeLabel, removeType) {
+  list.replaceChildren();
+  for (const domain of domains) {
     const li = document.createElement("li");
     li.className = "domain-item";
     const span = document.createElement("span");
@@ -90,12 +115,12 @@ function renderUI() {
     button.type = "button";
     button.className = "btn-remove";
     button.textContent = "✕";
-    button.title = `Unblock ${domain}`;
-    button.setAttribute("aria-label", `Unblock ${domain}`);
+    button.title = `${removeLabel} ${domain}`;
+    button.setAttribute("aria-label", `${removeLabel} ${domain}`);
     button.disabled = busy;
-    button.addEventListener("click", () => runCommand({ type: "REMOVE_CUSTOM_DOMAIN", domain }));
+    button.addEventListener("click", () => runCommand({ type: removeType, domain }));
     li.append(span, button);
-    customDomainList.appendChild(li);
+    list.appendChild(li);
   }
 }
 
@@ -132,6 +157,11 @@ toggleAds.addEventListener("change", () => updateSettings({ rulesets: { ads_rule
 toggleTrackers.addEventListener("change", () => updateSettings({ rulesets: { trackers_ruleset: toggleTrackers.checked } }));
 toggleThreats.addEventListener("change", () => updateSettings({ rulesets: { threats_ruleset: toggleThreats.checked } }));
 toggleCosmetic.addEventListener("change", () => updateSettings({ cosmeticFiltering: toggleCosmetic.checked }));
+toggleCommunity.addEventListener("change", () => updateSettings({ rulesets: { community_ruleset: toggleCommunity.checked } }));
+togglePopups.addEventListener("change", () => {
+  if (!currentSettings || !activeHostname) return;
+  runCommand({ type: "SET_SITE_POPUPS", domain: activeHostname, blocked: togglePopups.checked });
+});
 siteWhitelistBtn.addEventListener("click", () => {
   if (!currentSettings || !activeHostname) return;
   runCommand({
@@ -145,9 +175,15 @@ customBlockForm.addEventListener("submit", async event => {
     customDomainInput.value = "";
   }
 });
+allowForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (await runCommand({ type: "ADD_ALLOWED_DOMAIN", domain: allowDomainInput.value })) {
+    allowDomainInput.value = "";
+  }
+});
 retryButton.addEventListener("click", () => runCommand({ type: "GET_STATE" }));
 api.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "whitelistedDomains", "customBlockedDomains", "threatStatus"].some(key => key in changes)) return;
+  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus"].some(key => key in changes)) return;
   if (busy) refreshPending = true;
   else void runCommand({ type: "GET_STATE" }, true);
 });
@@ -155,5 +191,7 @@ api.storage.onChanged.addListener((changes, area) => {
   renderUI();
   try { await detectActiveTabDomain(); }
   catch { currentDomainEl.textContent = "Current page unavailable"; }
+  try { communityInfo = await (await fetch(api.runtime.getURL("rules/community-info.json"))).json(); }
+  catch { communityInfo = null; }
   await runCommand({ type: "GET_STATE" });
 })();

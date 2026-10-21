@@ -54,3 +54,20 @@ td.time, td.count { white-space: nowrap; color: var(--text-muted); }
 .kind-event { color: var(--text-main); }
 .kind-error { color: var(--danger); }
 .path { color: var(--text-muted); }
+
+/* Lists page */
+input[type="text"] {
+  background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);
+  border-radius: 6px; padding: 6px 10px; font: inherit; flex: 1; min-width: 0;
+}
+.add-form { display: flex; gap: 8px; margin: 10px 0; max-width: 560px; }
+.card > p.muted { margin-bottom: 4px; }
+.button-link {
+  color: var(--accent); text-decoration: none; border: 1px solid var(--border-color);
+  border-radius: 6px; padding: 6px 10px;
+}
+.button-link:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: default; }
+section[data-list] table { table-layout: fixed; }
+section[data-list] th:nth-child(1) { width: 45%; }
+section[data-list] th:nth-child(3) { width: 140px; }

@@ -4,7 +4,7 @@
 if (!globalThis.BlockAds && typeof importScripts === "function") importScripts("shared.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const { normalizeDomain, normalizeDomains, domainMatches } = BlockAds;
-const RULESET_IDS = ["ads_ruleset", "trackers_ruleset", "threats_ruleset"];
+const RULESET_IDS = ["ads_ruleset", "trackers_ruleset", "threats_ruleset", "community_ruleset"];
 const THREAT_CHECK_ALARM = "reported-threats-check";
 const THREAT_EXPIRY_ALARM = "reported-threats-expiry";
 const DEFAULT_SETTINGS = {
@@ -12,8 +12,14 @@ const DEFAULT_SETTINGS = {
   rulesets: Object.fromEntries(RULESET_IDS.map(id => [id, true])),
   cosmeticFiltering: true,
   whitelistedDomains: [],
-  customBlockedDomains: []
+  customBlockedDomains: [],
+  popupBlockedDomains: [],
+  allowedDomains: []
 };
+const DOMAIN_LIST_KEYS = ["whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains"];
+// Always-allowed domains override every list rule (1-3, including community
+// $important) but not reported threats (5) or custom blocks (50).
+const ALLOWED_DOMAIN_PRIORITY = 4;
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 const ALL_RESOURCE_TYPES = [
   "main_frame", "sub_frame", "stylesheet", "script", "image", "font", "object",
@@ -23,6 +29,8 @@ const ALL_RESOURCE_TYPES = [
 // them from player responses with a page-world script on these sites.
 const YOUTUBE_SCRIPT_ID = "youtube-ads";
 const YOUTUBE_DOMAINS = ["youtube.com", "youtube-nocookie.com"];
+// Pop-up blocking runs only on sites the person selected in the popup.
+const POPUP_SCRIPT_ID = "popup-blocker";
 let operationQueue = Promise.resolve();
 
 // Activity log: recent blocks and extension events for tracing. Kept in session
@@ -30,9 +38,19 @@ let operationQueue = Promise.resolve();
 // failure must never affect protection, so every path here catches its errors.
 const LOG_KEY = "activityLog";
 const LOG_LIMIT = 1000;
-const LAYER_NAMES = { ads_ruleset: "Ads", trackers_ruleset: "Trackers", threats_ruleset: "Reported threat", _dynamic: "Custom block" };
+const LAYER_NAMES = { ads_ruleset: "Ads", trackers_ruleset: "Trackers", threats_ruleset: "Reported threat", community_ruleset: "Community lists", _dynamic: "Custom block" };
 // Fixed messages that content scripts may add; they never supply free text.
-const CONTENT_EVENTS = { "youtube-ad-skipped": "Skipped a YouTube video ad that reached the player" };
+const CONTENT_EVENTS = {
+  "youtube-ad-skipped": () => "Skipped a YouTube video ad that reached the player",
+  "popup-blocked": message => {
+    let host = "";
+    try { host = normalizeDomain(message.host); } catch {}
+    return host ? `Blocked a pop-up to ${host}` : "Blocked a pop-up";
+  }
+};
+// Site-specific hiding rules from the community lists, loaded once per worker.
+const SITE_SELECTOR_LIMIT = 2000;
+let communityCosmetic = null;
 let logLoad = null;
 let logSaveTimer = null;
 let dynamicBlockIds = null;
@@ -68,6 +86,34 @@ async function addLog(entry) {
 async function clearLog() {
   (await loadLog()).length = 0;
   await api.storage.session.remove(LOG_KEY);
+}
+
+function loadCommunityCosmetic() {
+  communityCosmetic ??= fetch(api.runtime.getURL("rules/community-cosmetic.json"))
+    .then(response => {
+      if (!response.ok) throw new Error("The bundled site hiding rules could not be read.");
+      return response.json();
+    })
+    .then(data => ({ hide: data?.hide ?? {}, allow: data?.allow ?? {} }))
+    .catch(error => {
+      communityCosmetic = null;
+      console.warn("[BlockAds] Site hiding rules unavailable:", error);
+      return { hide: {}, allow: {} };
+    });
+  return communityCosmetic;
+}
+
+// Rules for a host apply to its subdomains; an exception on any level removes a selector.
+function siteSelectors(cosmetic, host) {
+  const hide = new Set();
+  const allow = new Set();
+  const labels = host.split(".");
+  for (let i = 0; i < labels.length - 1; i++) {
+    const suffix = labels.slice(i).join(".");
+    if (Object.hasOwn(cosmetic.hide, suffix)) for (const selector of cosmetic.hide[suffix]) hide.add(selector);
+    if (Object.hasOwn(cosmetic.allow, suffix)) for (const selector of cosmetic.allow[suffix]) allow.add(selector);
+  }
+  return [...hide].filter(selector => !allow.has(selector)).slice(0, SITE_SELECTOR_LIMIT);
 }
 
 function urlParts(value) {
@@ -112,7 +158,9 @@ function describeChanges(before, after) {
   }
   if (before.cosmeticFiltering !== after.cosmeticFiltering) changes.push(`Cosmetic hiding turned ${onOff(after.cosmeticFiltering)}`);
   const lists = [["customBlockedDomains", "Custom block added", "Custom block removed"],
-    ["whitelistedDomains", "Paused on", "Resumed on"]];
+    ["whitelistedDomains", "Paused on", "Resumed on"],
+    ["popupBlockedDomains", "Pop-up blocking turned on for", "Pop-up blocking turned off for"],
+    ["allowedDomains", "Always allowed", "No longer always allowed"]];
   for (const [key, added, removed] of lists) {
     for (const domain of after[key].filter(item => !before[key].includes(item))) changes.push(`${added} ${domain}`);
     for (const domain of before[key].filter(item => !after[key].includes(item))) changes.push(`${removed} ${domain}`);
@@ -191,13 +239,22 @@ function validateSettings(settings) {
   for (const id of RULESET_IDS) {
     if (typeof settings.rulesets?.[id] !== "boolean") throw new Error(`Invalid setting for ${id}.`);
   }
-  return {
+  const valid = {
     enabled: settings.enabled,
     rulesets: Object.fromEntries(RULESET_IDS.map(id => [id, settings.rulesets[id]])),
     cosmeticFiltering: settings.cosmeticFiltering,
-    whitelistedDomains: normalizeDomains(settings.whitelistedDomains),
-    customBlockedDomains: normalizeDomains(settings.customBlockedDomains)
+    ...Object.fromEntries(DOMAIN_LIST_KEYS.map(key => [key, normalizeDomains(settings[key])]))
   };
+  // A custom block always wins, so allowing a domain it covers would have no effect.
+  for (const domain of valid.allowedDomains) {
+    const blocker = valid.customBlockedDomains.find(blocked => domainMatches(domain, blocked));
+    if (blocker) {
+      throw new Error(blocker === domain
+        ? `${domain} is in both Custom Blocked Domains and Always Allowed Domains. Remove it from one list first.`
+        : `${domain} is covered by the custom block on ${blocker}, which always wins. Remove that block first.`);
+    }
+  }
+  return valid;
 }
 
 async function loadSettings() {
@@ -209,7 +266,7 @@ async function loadSettings() {
   const quarantined = Array.isArray(stored.quarantinedDomains) ? stored.quarantinedDomains.map(String) : [];
   // Older versions saved invalid entries before DNR rejected them. Preserve them
   // separately and visibly so one entry cannot poison every future update.
-  for (const key of ["whitelistedDomains", "customBlockedDomains"]) {
+  for (const key of DOMAIN_LIST_KEYS) {
     const entries = Array.isArray(settings[key]) ? settings[key] : [settings[key]];
     settings[key] = [];
     for (const entry of entries) {
@@ -247,25 +304,51 @@ function makeDynamicRules(settings) {
       condition: { requestDomains: [domain], resourceTypes: ALL_RESOURCE_TYPES }
     });
   }
+  for (const domain of settings.allowedDomains) {
+    add({
+      priority: ALLOWED_DOMAIN_PRIORITY, action: { type: "allow" },
+      condition: { requestDomains: [domain], resourceTypes: ALL_RESOURCE_TYPES }
+    });
+  }
   const limit = api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
     api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
   if (rules.length > limit) throw new Error(`Too many domain rules for this browser (limit ${limit}).`);
   return rules;
 }
 
+// Match patterns cannot put a wildcard before an IPv4 address or bare name.
+const sitePatterns = domain => /^[0-9.]+$/.test(domain) || !domain.includes(".")
+  ? [`*://${domain}/*`] : [`*://*.${domain}/*`];
+
 function makePageScripts(settings) {
-  if (!settings.enabled || !settings.rulesets.ads_ruleset) return [];
-  // A paused YouTube scope is excluded from injection, like its network exception.
-  const paused = settings.whitelistedDomains.filter(domain => YOUTUBE_DOMAINS.some(site => domainMatches(domain, site)));
-  return [{
-    id: YOUTUBE_SCRIPT_ID,
-    matches: YOUTUBE_DOMAINS.map(site => `*://*.${site}/*`),
-    excludeMatches: paused.map(domain => `*://*.${domain}/*`),
-    js: ["youtube.js"],
-    runAt: "document_start",
-    world: "MAIN",
-    allFrames: true
-  }];
+  if (!settings.enabled) return [];
+  // A paused scope is excluded from injection, like its network exception.
+  const pausedWithin = sites => settings.whitelistedDomains.filter(paused =>
+    sites.some(site => domainMatches(paused, site) || domainMatches(site, paused)));
+  const scripts = [];
+  if (settings.rulesets.ads_ruleset) {
+    scripts.push({
+      id: YOUTUBE_SCRIPT_ID,
+      matches: YOUTUBE_DOMAINS.flatMap(sitePatterns),
+      excludeMatches: pausedWithin(YOUTUBE_DOMAINS).flatMap(sitePatterns),
+      js: ["youtube.js"],
+      runAt: "document_start",
+      world: "MAIN",
+      allFrames: true
+    });
+  }
+  if (settings.popupBlockedDomains.length) {
+    scripts.push({
+      id: POPUP_SCRIPT_ID,
+      matches: settings.popupBlockedDomains.flatMap(sitePatterns),
+      excludeMatches: pausedWithin(settings.popupBlockedDomains).flatMap(sitePatterns),
+      js: ["popups.js"],
+      runAt: "document_start",
+      world: "MAIN",
+      allFrames: true
+    });
+  }
+  return scripts;
 }
 
 // Browsers differ in which defaults and URL forms they echo back.
@@ -369,6 +452,23 @@ function editSettings(current, message) {
   } else if (message.type === "REMOVE_CUSTOM_DOMAIN") {
     const domain = normalizeDomain(message.domain);
     next.customBlockedDomains = current.customBlockedDomains.filter(item => item !== domain);
+  } else if (message.type === "REMOVE_PAUSED_SITE" || message.type === "REMOVE_POPUP_SITE") {
+    // Exact removal for the lists page; the popup's Resume/switch also removes covering parents.
+    const key = message.type === "REMOVE_PAUSED_SITE" ? "whitelistedDomains" : "popupBlockedDomains";
+    const domain = normalizeDomain(message.domain);
+    next[key] = current[key].filter(item => item !== domain);
+  } else if (message.type === "ADD_ALLOWED_DOMAIN") {
+    next.allowedDomains = [...current.allowedDomains, normalizeDomain(message.domain)];
+  } else if (message.type === "REMOVE_ALLOWED_DOMAIN") {
+    const domain = normalizeDomain(message.domain);
+    next.allowedDomains = current.allowedDomains.filter(item => item !== domain);
+  } else if (message.type === "SET_SITE_POPUPS") {
+    const domain = normalizeDomain(message.domain);
+    if (typeof message.blocked !== "boolean") throw new Error("Invalid pop-up blocking setting.");
+    // Turning it off removes every entry that covers this site, like Resume.
+    next.popupBlockedDomains = message.blocked
+      ? [...current.popupBlockedDomains, domain]
+      : current.popupBlockedDomains.filter(item => !domainMatches(domain, item));
   } else if (message.type === "SET_SITE_PAUSED") {
     const domain = normalizeDomain(message.domain);
     if (typeof message.paused !== "boolean") throw new Error("Invalid site pause setting.");
@@ -442,14 +542,24 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return false;
     }
     const work = message.type === "CLEAR_LOG" ? clearLog().then(() => []) : loadLog().then(entries => entries.slice());
-    work.then(entries => sendResponse({ ok: true, entries, blockLogging: Boolean(api.declarativeNetRequest.onRuleMatchedDebug) }))
+    work.then(async entries => sendResponse({ ok: true, entries, blockLogging: Boolean(api.declarativeNetRequest.onRuleMatchedDebug),
+      // The log must stay readable even when settings cannot be loaded.
+      allowedDomains: await loadSettings().then(({ settings }) => settings.allowedDomains, () => []) }))
       .catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
     return true;
   }
   if (message?.type === "LOG_EVENT") {
     // Content scripts report only fixed event names; the site comes from the browser.
     if (sender.id === api.runtime.id && Number.isInteger(sender.tab?.id) && Object.hasOwn(CONTENT_EVENTS, message.event)) {
-      void addLog({ kind: "event", message: CONTENT_EVENTS[message.event], site: urlParts(sender.tab.url).host, tabId: sender.tab.id });
+      const site = urlParts(sender.tab.url).host;
+      void (async () => {
+        // Any page can fire the pop-up event; accept it only where pop-up blocking is on.
+        if (message.event === "popup-blocked") {
+          const { settings } = await loadSettings();
+          if (!settings.popupBlockedDomains.some(domain => domainMatches(site, domain))) return;
+        }
+        await addLog({ kind: "event", message: CONTENT_EVENTS[message.event](message), site, tabId: sender.tab.id });
+      })().catch(() => {});
     }
     return false;
   }
@@ -460,16 +570,23 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ ok: false, error: "A content-script context is required." });
       return false;
     }
-    loadSettings().then(({ settings }) => {
+    loadSettings().then(async ({ settings }) => {
       const hosts = [sender.url, sender.tab.url].filter(url => /^https?:\/\//i.test(url || ""))
         .map(url => { try { return normalizeDomain(url); } catch { return ""; } });
       const paused = hosts.some(host => settings.whitelistedDomains.some(domain => domainMatches(host, domain)));
       const active = settings.enabled && !paused;
-      sendResponse({ ok: true, enabled: active && settings.cosmeticFiltering, ads: active && settings.rulesets.ads_ruleset });
+      const enabled = active && settings.cosmeticFiltering;
+      // Site rules follow this frame's own host, including a leading "www.".
+      const frameHost = /^https?:\/\//i.test(sender.url || "") ? urlParts(sender.url).host : "";
+      const selectors = enabled && settings.rulesets.community_ruleset && frameHost
+        ? siteSelectors(await loadCommunityCosmetic(), frameHost) : [];
+      sendResponse({ ok: true, enabled, ads: active && settings.rulesets.ads_ruleset, siteSelectors: selectors });
     }).catch(() => sendResponse({ ok: false, error: "Could not read cosmetic filtering settings." }));
     return true;
   }
-  if (!message || !["GET_STATE", "UPDATE_SETTINGS", "ADD_CUSTOM_DOMAIN", "REMOVE_CUSTOM_DOMAIN", "SET_SITE_PAUSED"].includes(message.type)) return false;
+  if (!message || !["GET_STATE", "UPDATE_SETTINGS", "ADD_CUSTOM_DOMAIN", "REMOVE_CUSTOM_DOMAIN",
+    "ADD_ALLOWED_DOMAIN", "REMOVE_ALLOWED_DOMAIN", "SET_SITE_PAUSED", "SET_SITE_POPUPS",
+    "REMOVE_PAUSED_SITE", "REMOVE_POPUP_SITE"].includes(message.type)) return false;
   if (!fromExtensionPage(sender)) {
     sendResponse({ ok: false, error: "Settings can only be changed from the extension interface." });
     return false;

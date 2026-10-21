@@ -55,6 +55,24 @@ Run `pwsh -NoProfile -File tests/rules.test.ps1` for synthetic offline import, r
 scope, rollback, export and drift checks. These checks do not resolve or request any
 catalog hostname and do not establish live browser enforcement or reputation.
 
+## Community list snapshots, browser-only layer
+
+`community-lists.json` (`reviewKind: community-filter-snapshots`) records each EasyList-format
+snapshot stored under `community/`: `id`, `title`, `file`, HTTPS `source`, `license`,
+`downloadedAtUtc` and `sha256`. The builder refuses unknown or missing fields, duplicate ids,
+files outside `community/`, non-HTTPS sources, future download times, files over 8 MiB, and
+any file whose SHA-256 differs from its record. It never downloads anything: a new snapshot is
+placed there by a person, and its record is updated deliberately.
+
+`scripts/community-list-tools.ps1` converts the snapshots into `rules/community.json` (the
+switchable `community_ruleset`), `rules/community-cosmetic.json` (site-specific hiding rules
+and their exceptions) and `rules/community-info.json` (versions, counts and skipped filters by
+reason). Blocks get priority 1, exceptions 2 and `$important` blocks 3; the allow list is 4, reported threats 5, custom blocks 50 and site pauses 10000.
+Exceptions for domains on BlockAds' own ad, tracker or site-check lists are dropped, and path
+exceptions exclude those domains. The build fails if the snapshots would exceed 29,000
+rules, which keeps room in Chrome's guaranteed 30,000-rule budget. The lists are third-party
+data under the EasyList licence; see the main README for attribution.
+
 ## Site ad hosts, browser-only list
 
 `site-ad-hosts.json` (`reviewKind: observed-site-ad-hosts`) records ad hosts seen on a

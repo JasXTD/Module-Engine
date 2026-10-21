@@ -5,7 +5,8 @@ param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\rules'),
     [string]$CatalogPath = (Join-Path $PSScriptRoot '..\lists\reviewed-domains.json'),
     [string]$ThreatCatalogPath = (Join-Path $PSScriptRoot '..\lists\reported-threats.json'),
-    [string]$SiteAdHostsPath = (Join-Path $PSScriptRoot '..\lists\site-ad-hosts.json')
+    [string]$SiteAdHostsPath = (Join-Path $PSScriptRoot '..\lists\site-ad-hosts.json'),
+    [string]$CommunityListsPath = (Join-Path $PSScriptRoot '..\lists\community-lists.json')
 )
 $ErrorActionPreference = 'Stop'
 # A downloaded URL is not a reviewed domain. Keep legacy switches explicit so an
@@ -16,6 +17,7 @@ if ($FetchOnlineLists -or $UrlhausCsvPath) {
 . (Join-Path $PSScriptRoot 'reviewed-domain-tools.ps1')
 . (Join-Path $PSScriptRoot 'rule-tools.ps1')
 . (Join-Path $PSScriptRoot 'threat-report-tools.ps1')
+. (Join-Path $PSScriptRoot 'community-list-tools.ps1')
 $catalog = Read-ReviewedDomainCatalog $CatalogPath
 $threats = Read-ThreatReportCatalog $ThreatCatalogPath
 $rulesDir = [IO.Path]::GetFullPath($OutputDirectory)
@@ -60,6 +62,8 @@ try {
     # here, so an unverified observation cannot be activated through this list.
     $siteHosts = Read-BoundedJson $SiteAdHostsPath 64KB
     $siteHostCount = 0
+    $siteHostDomains = @()
+    $siteHostInfo = @()
     try {
         $root = $siteHosts.RootElement
         Assert-JsonKeys $root @('schemaVersion','reviewKind','hosts')
@@ -75,8 +79,8 @@ try {
             $domain = Get-JsonString $item.GetProperty('domain')
             $observed = Get-JsonString $item.GetProperty('observedOnUtc') 10
             $evidencePath = Get-JsonString $item.GetProperty('evidence') 200
-            $null = Get-JsonString $item.GetProperty('role') 200
-            $null = ConvertTo-ReviewedHostname (Get-JsonString $item.GetProperty('site'))
+            $role = Get-JsonString $item.GetProperty('role') 200
+            $siteName = ConvertTo-ReviewedHostname (Get-JsonString $item.GetProperty('site'))
             $date = [DateTime]::MinValue
             if ((ConvertTo-ReviewedHostname $domain) -cne $domain -or !$siteSeen.Add($domain) -or $catalogDomains.Contains($domain) -or
                 ![DateTime]::TryParseExact($observed, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$date) -or
@@ -84,6 +88,8 @@ try {
                 $evidencePath.Contains('..') -or !(Test-Path -LiteralPath (Join-Path $PSScriptRoot "..\$evidencePath") -PathType Leaf)) {
                 throw "Invalid site ad host entry: $domain"
             }
+            $siteHostDomains += $domain
+            $siteHostInfo += [ordered]@{ domain = $domain; site = $siteName; role = $role; observedOnUtc = $observed }
             $sets['ads.json'] += [ordered]@{ id = 1001 + $siteHostCount++; priority = 1; action = @{ type = 'block' }; condition = [ordered]@{
                 urlFilter = '||' + $domain + '^'
                 resourceTypes = @('main_frame','sub_frame','script','image','xmlhttprequest','media','ping','websocket','other') } }
@@ -95,6 +101,16 @@ try {
     foreach ($name in $sets.Keys) { $outputs[$name] = ConvertTo-Json -InputObject @($sets[$name] | Sort-Object { $_.id }) -Depth 8 }
     $outputs['reviewed-domains.json'] = $catalog.Json
     $outputs['threat-policy.json'] = ConvertTo-Json -InputObject $threats.Policy
+    # Read-only display data for the extension's lists page (no rules).
+    $outputs['site-ad-hosts-info.json'] = ConvertTo-Json -InputObject @($siteHostInfo) -Depth 4
+    # EasyList-format snapshots: a separate, switchable layer. Their exceptions may
+    # undo their own blocks only, never BlockAds' ad, tracker or site-check domains.
+    $protected = @($catalog.Domains | Where-Object { $_.category -cne 'unverified' } | ForEach-Object domain) + $siteHostDomains
+    $community = ConvertFrom-CommunityLists (Read-CommunityListCatalog $CommunityListsPath) $protected
+    Test-CommunityRules $community.Rules
+    $outputs['community.json'] = ConvertTo-LineJson $community.Rules
+    $outputs['community-cosmetic.json'] = ConvertTo-CosmeticJson $community.Cosmetic
+    $outputs['community-info.json'] = ConvertTo-Json -InputObject $community.Info -Depth 6
     Write-RuleOutputs -Directory $rulesDir -Outputs $outputs
-    Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only."
+    Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only; $($community.Rules.Count) community rules and $($community.Info.cosmeticSelectors) site hiding rules from $(@($community.Info.lists).Count) list(s)."
 } finally { $buildLock.Dispose() }

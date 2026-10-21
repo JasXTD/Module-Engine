@@ -14,6 +14,7 @@
         <p class="muted">Recent blocks and extension events on this computer: up to 1,000 entries, cleared when the browser closes. Nothing is sent anywhere.</p>
       </div>
       <div class="actions">
+        <a class="button-link" href="lists.html">My lists</a>
         <label class="check"><input type="checkbox" id="liveToggle" checked /> Live update</label>
         <button type="button" id="exportButton">Export JSON</button>
         <button type="button" id="clearButton" class="danger">Clear log</button>
@@ -21,12 +22,13 @@
     </header>
 
     <p id="notice" class="notice" role="status" hidden></p>
+    <p id="actionNotice" class="notice" role="status" hidden></p>
 
     <section class="card">
       <h2>Blocked servers <span id="summaryCount" class="muted"></span></h2>
       <div class="table-wrap">
         <table id="summaryTable">
-          <thead><tr><th>Server</th><th>Blocks</th><th>Layer</th><th>Seen on sites</th></tr></thead>
+          <thead><tr><th>Server</th><th>Blocks</th><th>Layer</th><th>Seen on sites</th><th>Action</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -53,6 +55,7 @@
       <p id="entryEmpty" class="muted" hidden>No matching entries.</p>
     </section>
   </main>
+  <script src="shared.js"></script>
   <script src="log.js"></script>
 </body>
 </html>

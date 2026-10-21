@@ -86,7 +86,7 @@ async function main() {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-live-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const evidence = { startedAt: new Date().toISOString(), browser: browserName, headed: true,
@@ -94,7 +94,7 @@ async function main() {
     networkGuard: { allowedServiceDomains: serviceDomains, allowed: {}, denied: {}, errors: [],
       policy: 'HTTPS CONNECT to named service domains only; no forwarding or DNS for other hosts; downloads denied',
       limitation: 'Third-party providers outside the allowlist are denied in both phases. Missing ads alone do not prove extension effectiveness.' } };
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css',
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css',
     'rules/ads.json', 'rules/trackers.json', 'rules/threats.json', 'rules/threat-policy.json']) {
     evidence.sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }

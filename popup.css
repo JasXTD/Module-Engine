@@ -345,3 +345,8 @@ button:focus-visible, input:focus-visible + .slider { outline: 2px solid #a7f3d0
   color: var(--accent);
   font-size: 12px;
 }
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}

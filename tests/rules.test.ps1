@@ -57,6 +57,8 @@ try {
     $ids = @($adRules.id)
     Assert-True (($ids -join ',') -ceq ((@($ids | Sort-Object) -join ','))) 'generated rules are ordered by id'
     Assert-True ((Get-Content (Join-Path $output 'ads.json') -Raw) -notmatch "`r") 'generated rules use LF line endings'
+    $realCommunity = @(Get-Content (Join-Path $output 'community.json') -Raw | ConvertFrom-Json)
+    Assert-True ($realCommunity.Count -gt 0 -and $realCommunity.Count -le 29000) 'community snapshot rules fit the guaranteed browser rule budget'
     Assert-True ($trackers.Count -eq 80) 'tracker rules preserved'
     Assert-True (@($malware).Count -eq 0) 'no unsupported malware blocking'
     Assert-True ($catalog.Domains.Count -eq 247) 'all reviewed domains exported'
@@ -142,6 +144,105 @@ try {
     [IO.File]::WriteAllText($sitePath, (ConvertTo-Json -InputObject $validSite -Depth 6), [Text.UTF8Encoding]::new($false))
     & $builder -OutputDirectory $output -SiteAdHostsPath $sitePath
     Assert-True ((Get-Content (Join-Path $output 'ads.json') -Raw | ConvertFrom-Json).Count -eq 100) 'empty site ad host list adds no rules'
+    # Community lists: convert a synthetic EasyList-format snapshot (inert strings only).
+    $communityRoot = Join-Path $temporary 'community-lists'
+    New-Item -ItemType Directory -Path (Join-Path $communityRoot 'community') -Force | Out-Null
+    $protectedAd = (($catalogJson | ConvertFrom-Json).domains | Where-Object category -CEQ 'ads' | Select-Object -First 1).domain
+    $listText = @"
+[Adblock Plus 2.0]
+! Title: Fixture list
+! Version: 7
+||ads-one.fixture-unit.net^
+||ads-two.fixture-unit.net^
+||tp-only.fixture-unit.net^`$third-party
+||scripts.fixture-unit.net^`$third-party,script
+/banner-ad/*`$image,domain=news.fixture-unit.net|~shop.news.fixture-unit.net
+||imp.fixture-unit.net/track^`$important
+@@||ads-one.fixture-unit.net/allowed.js`$script,domain=partner.fixture-unit.net
+@@/ad-loader.js`$domain=video.fixture-unit.net
+@@||$protectedAd/x.js
+||popunder.fixture-unit.net^`$popup
+/popclick?zone=`$popup
+/^https?:\/\/regex\.fixture-unit\.net/`$script
+||csp.fixture-unit.net^`$csp=script-src 'none'
+||rewrite.fixture-unit.net^`$rewrite=abp-resource:blank-js
+##.generic-ad
+news.fixture-unit.net##.side-ad
+news.fixture-unit.net,blog.fixture-unit.net###top-banner
+shop.news.fixture-unit.net#@#.side-ad
+~skip.fixture-unit.net##.skip-ad
+news.fixture-unit.net##div:has-text(Sponsored)
+news.fixture-unit.net##.evil { background: red }
+news.fixture-unit.net#`$#abort-on-property-read ads
+"@
+    $communityPath = Join-Path $communityRoot 'community-lists.json'
+    function Write-CommunityList([string]$Name, [string]$Text) {
+        $path = Join-Path $communityRoot "community/$Name"
+        [IO.File]::WriteAllText($path, $Text, [Text.UTF8Encoding]::new($false))
+        return [ordered]@{ id = 'fixture'; title = 'Fixture list'; file = "community/$Name"; source = 'https://lists.fixture-unit.net/fixture.txt'
+            license = 'Test fixture'; downloadedAtUtc = '2026-10-19T00:00:00Z'; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() }
+    }
+    function Write-CommunityCatalog($Lists, [string]$Kind = 'community-filter-snapshots') {
+        [IO.File]::WriteAllText($communityPath, (ConvertTo-Json -InputObject ([ordered]@{ schemaVersion = 1; reviewKind = $Kind; lists = @($Lists) }) -Depth 6), [Text.UTF8Encoding]::new($false))
+    }
+    $fixtureList = Write-CommunityList 'fixture.txt' $listText
+    Write-CommunityCatalog @($fixtureList)
+    & $builder -OutputDirectory $output -CommunityListsPath $communityPath
+    $community = @(Get-Content (Join-Path $output 'community.json') -Raw | ConvertFrom-Json)
+    $cosmetic = Get-Content (Join-Path $output 'community-cosmetic.json') -Raw | ConvertFrom-Json -AsHashtable
+    $info = Get-Content (Join-Path $output 'community-info.json') -Raw | ConvertFrom-Json
+    $byFilter = { param($filter) @($community | Where-Object { $_.condition.urlFilter -ceq $filter }) }
+    $byHost = { param($hostName) @($community | Where-Object { $_.condition.requestDomains -contains $hostName }) }
+    $plain = & $byHost 'ads-one.fixture-unit.net'
+    Assert-True ($plain.Count -eq 1 -and (@($plain[0].condition.requestDomains) -join ',') -ceq 'ads-one.fixture-unit.net,ads-two.fixture-unit.net' -and
+        !$plain[0].condition.domainType -and !$plain[0].condition.resourceTypes) 'plain domain filters merge into one domain-list rule'
+    $tp = & $byHost 'tp-only.fixture-unit.net'
+    Assert-True ($tp[0].condition.domainType -ceq 'thirdParty' -and !$tp[0].condition.resourceTypes) 'third-party option is preserved'
+    $scriptRule = & $byHost 'scripts.fixture-unit.net'
+    Assert-True ($scriptRule[0].condition.domainType -ceq 'thirdParty' -and (@($scriptRule[0].condition.resourceTypes) -join ',') -ceq 'script') 'resource type option is preserved'
+    $banner = & $byFilter '/banner-ad/*'
+    Assert-True ((@($banner[0].condition.initiatorDomains) -join ',') -ceq 'news.fixture-unit.net' -and
+        (@($banner[0].condition.excludedInitiatorDomains) -join ',') -ceq 'shop.news.fixture-unit.net' -and
+        (@($banner[0].condition.resourceTypes) -join ',') -ceq 'image') 'domain= option becomes included and excluded sites'
+    Assert-True ((& $byFilter '||imp.fixture-unit.net/track^')[0].priority -eq 3) 'important filters outrank exceptions'
+    $partner = & $byFilter '||ads-one.fixture-unit.net/allowed.js'
+    Assert-True ($partner[0].action.type -ceq 'allow' -and $partner[0].priority -eq 2) 'exceptions become allow rules below reported threats'
+    Assert-True ((& $byFilter '/ad-loader.js')[0].condition.excludedRequestDomains -contains $protectedAd) 'path exceptions exclude BlockAds-blocked domains'
+    Assert-True (!(& $byFilter "||$protectedAd/x.js").Count) 'exceptions for BlockAds-blocked domains are dropped'
+    $pop = & $byHost 'popunder.fixture-unit.net'
+    Assert-True ((@($pop[0].condition.resourceTypes) -join ',') -ceq 'main_frame' -and !$pop[0].condition.domainType) 'host pop-up filters block page loads to that host'
+    Assert-True ((& $byFilter '/popclick?zone=')[0].condition.domainType -ceq 'thirdParty') 'site-agnostic pop-up patterns apply only to loads from another site'
+    Assert-True (!@($community | Where-Object { "$($_.condition.urlFilter) $($_.condition.requestDomains)" -match 'regex|csp|rewrite' }).Count -and
+        $info.skipped.'network: regular expression' -eq 1 -and $info.skipped.'network: unsupported option syntax' -eq 1 -and
+        $info.skipped.'network: unsupported option rewrite=' -eq 1) 'regex and unsupported-option filters are skipped and counted'
+    $allSelectors = @($cosmetic.hide.Values | ForEach-Object { $_ })
+    Assert-True ((@($cosmetic.hide['news.fixture-unit.net']) -join ',') -ceq '#top-banner,.side-ad' -and
+        (@($cosmetic.hide['blog.fixture-unit.net']) -join ',') -ceq '#top-banner' -and
+        (@($cosmetic.allow['shop.news.fixture-unit.net']) -join ',') -ceq '.side-ad') 'site hiding rules and exceptions are grouped by site'
+    Assert-True (!$cosmetic.hide.ContainsKey('skip.fixture-unit.net') -and $allSelectors -notcontains '.generic-ad' -and
+        !($allSelectors -match 'has-text|evil|abort')) 'generic, negated, procedural, unsafe and scriptlet hiding rules are skipped'
+    Assert-True ($info.lists[0].version -ceq '7' -and $info.networkRules -eq $community.Count -and $info.cosmeticSelectors -eq 3) 'snapshot version and counts are recorded'
+    foreach ($fault in @('hash','unknown-field','path','source','future','duplicate-id','kind')) {
+        $bad = $fixtureList | ConvertTo-Json | ConvertFrom-Json -AsHashtable
+        $lists = @($bad)
+        $kind = 'community-filter-snapshots'
+        switch ($fault) {
+            'hash' { $bad.sha256 = '0' * 64 }
+            'unknown-field' { $bad.command = 'inert-text' }
+            'path' { $bad.file = 'community/../../outside.txt' }
+            'source' { $bad.source = 'http://lists.fixture-unit.net/fixture.txt' }
+            'future' { $bad.downloadedAtUtc = '2099-01-01T00:00:00Z' }
+            'duplicate-id' { $lists = @($bad, $bad) }
+            'kind' { $kind = 'remote-feed' }
+        }
+        Write-CommunityCatalog $lists $kind
+        Assert-FailedUnchanged { & $builder -OutputDirectory $output -CommunityListsPath $communityPath } "community list $fault"
+    }
+    Write-CommunityCatalog @(Write-CommunityList 'too-many.txt' ((1..29001 | ForEach-Object { "/fixture-path-$_/*" }) -join "`n"))
+    Assert-FailedUnchanged { & $builder -OutputDirectory $output -CommunityListsPath $communityPath } 'community rule budget'
+    Write-CommunityCatalog @()
+    & $builder -OutputDirectory $output -CommunityListsPath $communityPath
+    Assert-True ((Get-Content (Join-Path $output 'community.json') -Raw).Trim() -ceq '[]') 'no snapshots build an empty community ruleset'
     [IO.File]::WriteAllText($fixturePath, $catalogJson.Replace('"schemaVersion": 1', '"schemaVersion": 1, "schemaVersion": 1'))
     Assert-FailedUnchanged { & $builder -OutputDirectory $output -CatalogPath $fixturePath } 'duplicate JSON key'
     [IO.File]::WriteAllBytes($fixturePath, [byte[]](0xff, 0xfe))

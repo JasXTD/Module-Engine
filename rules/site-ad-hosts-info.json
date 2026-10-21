@@ -1,0 +1,44 @@
+[
+  {
+    "domain": "a-ads.com",
+    "site": "uukanshu.cc",
+    "role": "210x150 ad frame (acceptable.a-ads.com, static.a-ads.com) inserted by the pubadx.one tag",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "aotter.net",
+    "site": "uukanshu.cc",
+    "role": "ad requests and ID syncs (bb8, r2d2) from the aotter ad SDK",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "aottercdn.com",
+    "site": "uukanshu.cc",
+    "role": "aotter ad SDK script (static.aottercdn.com/trek/sdk) loaded through Google Tag Manager",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "insecure-brief.com",
+    "site": "uukanshu.cc",
+    "role": "script loaded by the political-effort.com pop-up script",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "political-effort.com",
+    "site": "uukanshu.cc",
+    "role": "script loaded by the page that opens a pop-up on any click and shows a 300x250 ad frame",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "pubadx.one",
+    "site": "uukanshu.cc",
+    "role": "ad loader (platform.pubadx.one/v2/tag.js) loaded by the page, with impression pings from imp9",
+    "observedOnUtc": "2026-10-19"
+  },
+  {
+    "domain": "zealous-deposit.pro",
+    "site": "uukanshu.cc",
+    "role": "contacted from inside the ad frames (proxy log)",
+    "observedOnUtc": "2026-10-19"
+  }
+]

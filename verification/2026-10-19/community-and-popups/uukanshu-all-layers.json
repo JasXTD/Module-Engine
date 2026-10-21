@@ -1,0 +1,392 @@
+{
+  "startedAt": "2026-10-19T18:33:14.422Z",
+  "browser": "chrome",
+  "page": "https://uukanshu.cc/book/25059/16049776.html",
+  "headless": false,
+  "policy": "HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded",
+  "phases": {
+    "startup": {
+      "proxy": {
+        "allowed": {
+          "update.googleapis.com": 1,
+          "www.gstatic.com": 1,
+          "www.google.com": 1,
+          "accounts.google.com": 1,
+          "edgedl.me.gvt1.com": 1
+        },
+        "denied": {
+          "http:clients2.google.com": 1,
+          "http:edgedl.me.gvt1.com": 1
+        }
+      }
+    },
+    "blockads-on": {
+      "proxy": {
+        "allowed": {
+          "uukanshu.cc": 2,
+          "android.clients.google.com": 1,
+          "optimizationguide-pa.googleapis.com": 3,
+          "mtalk.google.com": 1
+        },
+        "denied": {
+          "invalid-connect": 1
+        }
+      },
+      "top": {
+        "title": "第1章 永夜 - UU看書",
+        "finalUrl": "https://uukanshu.cc/book/25059/16049776.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 4768
+      },
+      "bottom": {
+        "title": "第1章 永夜 - UU看書",
+        "finalUrl": "https://uukanshu.cc/book/25059/16049776.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 4768
+      },
+      "clicked": {
+        "point": {
+          "x": 100,
+          "y": 300,
+          "target": "DIV"
+        },
+        "windowOpen": [],
+        "navigatedTo": null,
+        "blockedByPopupBlocker": []
+      },
+      "thirdParty": [
+        {
+          "host": "platform.pubadx.one",
+          "path": "/v2/tag.js",
+          "type": "Script",
+          "initiator": "uukanshu.cc"
+        },
+        {
+          "host": "www.googletagmanager.com",
+          "path": "/gtm.js",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "political-effort.com",
+          "path": "/bjXWV.s/dRGOlb0/YtWndQi/YlWI5xubZoXDIJ/PeWm/9LuSZ/U_lykUPzT/Ul3CMQDhYHyMMoT/AZtpNHTvcrwkNPjVIXxKMnQN",
+          "type": "Script",
+          "initiator": ""
+        }
+      ],
+      "requestCount": 11,
+      "requestHosts": {
+        "uukanshu.cc": 8,
+        "platform.pubadx.one": 1,
+        "www.googletagmanager.com": 1,
+        "political-effort.com": 1
+      },
+      "blockedByExtension": {
+        "platform.pubadx.one": 1,
+        "www.googletagmanager.com": 1,
+        "political-effort.com": 1
+      },
+      "ruleMatches": {
+        "community_ruleset platform.pubadx.one": 1,
+        "trackers_ruleset www.googletagmanager.com": 1,
+        "community_ruleset political-effort.com": 1
+      },
+      "popups": [],
+      "downloads": 0
+    },
+    "filters-off": {
+      "proxy": {
+        "allowed": {
+          "platform.pubadx.one": 2,
+          "www.googletagmanager.com": 1,
+          "political-effort.com": 2,
+          "static.aottercdn.com": 1,
+          "www.insecure-brief.com": 1,
+          "acceptable.a-ads.com": 1,
+          "imp9.pubadx.one": 1,
+          "bb8.aotter.net": 5,
+          "r2d2.aotter.net": 4,
+          "www.zealous-deposit.pro": 1,
+          "match.adsrvr.org": 1,
+          "u.openx.net": 1,
+          "fonts.googleapis.com": 1,
+          "fonts.gstatic.com": 1,
+          "static.a-ads.com": 3
+        },
+        "denied": {}
+      },
+      "top": {
+        "title": "第1章 永夜 - UU看書",
+        "finalUrl": "https://uukanshu.cc/book/25059/16049776.html",
+        "frames": [
+          {
+            "host": "political-effort.com",
+            "shown": true,
+            "size": [
+              300,
+              250
+            ]
+          },
+          {
+            "host": "acceptable.a-ads.com",
+            "shown": true,
+            "size": [
+              210,
+              150
+            ]
+          }
+        ],
+        "shownFrames": 2,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 5301
+      },
+      "bottom": {
+        "title": "第1章 永夜 - UU看書",
+        "finalUrl": "https://uukanshu.cc/book/25059/16049776.html",
+        "frames": [
+          {
+            "host": "political-effort.com",
+            "shown": true,
+            "size": [
+              300,
+              250
+            ]
+          },
+          {
+            "host": "acceptable.a-ads.com",
+            "shown": true,
+            "size": [
+              210,
+              150
+            ]
+          }
+        ],
+        "shownFrames": 2,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 5301
+      },
+      "clicked": {
+        "point": {
+          "x": 100,
+          "y": 300,
+          "target": "DIV"
+        },
+        "windowOpen": [
+          "political-effort.com"
+        ],
+        "navigatedTo": null,
+        "blockedByPopupBlocker": []
+      },
+      "thirdParty": [
+        {
+          "host": "platform.pubadx.one",
+          "path": "/v2/tag.js",
+          "type": "Script",
+          "initiator": "uukanshu.cc"
+        },
+        {
+          "host": "www.googletagmanager.com",
+          "path": "/gtm.js",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "political-effort.com",
+          "path": "/bjXWV.s/dRGOlb0/YtWndQi/YlWI5xubZoXDIJ/PeWm/9LuSZ/U_lykUPzT/Ul3CMQDhYHyMMoT/AZtpNHTvcrwkNPjVIXxKMnQN",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "platform.pubadx.one",
+          "path": "/async-v3.json",
+          "type": "Fetch",
+          "initiator": "platform.pubadx.one"
+        },
+        {
+          "host": "static.aottercdn.com",
+          "path": "/trek/sdk/3.5.4/sdk.js",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "political-effort.com",
+          "path": "/avW-ZxyyP.2zQA9_MCTDcE5FM-jHQIzJNKD_gMyNNOzPc-1RNSjTAUz_NWTXkY3ZM-CbZcpdce2_1g1hbiHjR-pldmGnFon_PqTrhsjtN-WvJwixZyD_IAw",
+          "type": "Document",
+          "initiator": "political-effort.com"
+        },
+        {
+          "host": "www.insecure-brief.com",
+          "path": "/ecc874/5aaddb8b3be5.js",
+          "type": "XHR",
+          "initiator": "political-effort.com"
+        },
+        {
+          "host": "www.insecure-brief.com",
+          "path": "/ecc874/5aaddb8b3be5.js",
+          "type": "Script",
+          "initiator": "political-effort.com"
+        },
+        {
+          "host": "political-effort.com",
+          "path": "/Yw2xx-p.ZzWA5B0CZ_GEFF0GYHT-9JyKcLmMl_kOPPTQhRj-NTWUJViWZ_DYIZwaMbT-Ed4eZfTgZ_miYjWkUl1-YnTogp0qM_TsAt1uOvT-cxzyZzDAc_z",
+          "type": "Ping",
+          "initiator": "political-effort.com"
+        },
+        {
+          "host": "acceptable.a-ads.com",
+          "path": "/2453155/",
+          "type": "Document",
+          "initiator": "platform.pubadx.one"
+        },
+        {
+          "host": "imp9.pubadx.one",
+          "path": "/ad",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "bb8.aotter.net",
+          "path": "/dr/tm.js",
+          "type": "Script",
+          "initiator": "static.aottercdn.com"
+        },
+        {
+          "host": "bb8.aotter.net",
+          "path": "/collect",
+          "type": "Ping",
+          "initiator": "static.aottercdn.com"
+        },
+        {
+          "host": "r2d2.aotter.net",
+          "path": "/web/fetch",
+          "type": "Fetch",
+          "initiator": "static.aottercdn.com"
+        },
+        {
+          "host": "bb8.aotter.net",
+          "path": "/collect",
+          "type": "Ping",
+          "initiator": "static.aottercdn.com"
+        },
+        {
+          "host": "r2d2.aotter.net",
+          "path": "/web/fetch",
+          "type": "Fetch",
+          "initiator": "static.aottercdn.com"
+        },
+        {
+          "host": "r2d2.aotter.net",
+          "path": "/web/fetch",
+          "type": "Other",
+          "initiator": "r2d2.aotter.net"
+        },
+        {
+          "host": "r2d2.aotter.net",
+          "path": "/web/fetch",
+          "type": "Other",
+          "initiator": "r2d2.aotter.net"
+        },
+        {
+          "host": "imp9.pubadx.one",
+          "path": "/event",
+          "type": "Ping",
+          "initiator": "platform.pubadx.one"
+        },
+        {
+          "host": "political-effort.com",
+          "path": "/adW.1ewfcgm_Vizjck2ll-vnbojp9qh_ZsGtlukvP-TxUyzzNAT_cCzDMEiFZ-iHdIGJ4K9_QM2NdOKPT-lRdSSTSUU_pWZXbYkZp-2bWcVddeS_agVhliX",
+          "type": "Script",
+          "initiator": "political-effort.com"
+        },
+        {
+          "host": "match.adsrvr.org",
+          "path": "/track/cmf/generic",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "u.openx.net",
+          "path": "/w/1.0/cm",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "u.openx.net",
+          "path": "/w/1.0/cm",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "match.adsrvr.org",
+          "path": "/track/cmb/generic",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "bb8.aotter.net",
+          "path": "/sync/opx",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "bb8.aotter.net",
+          "path": "/sync/ttd",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "imp9.pubadx.one",
+          "path": "/event",
+          "type": "Ping",
+          "initiator": "platform.pubadx.one"
+        }
+      ],
+      "requestCount": 31,
+      "requestHosts": {
+        "uukanshu.cc": 8,
+        "bb8.aotter.net": 5,
+        "political-effort.com": 4,
+        "r2d2.aotter.net": 4,
+        "imp9.pubadx.one": 3,
+        "platform.pubadx.one": 2,
+        "www.insecure-brief.com": 2,
+        "www.googletagmanager.com": 1,
+        "static.aottercdn.com": 1,
+        "acceptable.a-ads.com": 1
+      },
+      "blockedByExtension": {},
+      "ruleMatches": {},
+      "popups": [],
+      "downloads": 0
+    }
+  },
+  "version": "Chrome/155.0.8059.85",
+  "completed": true,
+  "cleanup": {
+    "browserPid": 195404,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finishedAt": "2026-10-19T18:34:17.474Z"
+}

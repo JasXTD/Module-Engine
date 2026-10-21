@@ -5,7 +5,9 @@ const api = typeof browser !== "undefined" ? browser : chrome;
 const byId = id => document.getElementById(id);
 const KIND_LABELS = { blocked: "Blocked", event: "Event", error: "Error" };
 let entries = [];
+let allowedDomains = [];
 let loading = false;
+const isAllowed = host => allowedDomains.some(domain => BlockAds.domainMatches(host, domain));
 
 function addCell(row, text, className) {
   const cell = document.createElement("td");
@@ -15,8 +17,9 @@ function addCell(row, text, className) {
   return cell;
 }
 
-function showNotice(text, isError = false) {
-  const notice = byId("notice");
+// "notice" reflects the latest refresh; "actionNotice" keeps the result of a button.
+function showNotice(text, isError = false, id = "notice") {
+  const notice = byId(id);
   notice.textContent = text;
   notice.classList.toggle("error", isError);
   notice.hidden = !text;
@@ -45,6 +48,19 @@ function render() {
     addCell(row, String(item.count), "count");
     addCell(row, [...item.layers].join(", "));
     addCell(row, [...item.sites].sort().join(", ") || "(unknown)");
+    // An allowed domain does not override reported threats or the person's own blocks.
+    const action = addCell(row, "");
+    if (item.layers.has("Reported threat")) action.textContent = "Reported threat: stays blocked";
+    else if (item.layers.has("Custom block")) action.textContent = "Remove it from Custom Blocked Domains";
+    else if (item.host && isAllowed(item.host)) action.textContent = "Always allowed now";
+    else if (item.host) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Allow";
+      button.title = `Never block ${item.host} with the ad, tracker or community lists`;
+      button.addEventListener("click", () => allowServer(item.host, button));
+      action.append(button);
+    }
     summary.append(row);
   }
   byId("summaryCount").textContent = servers.size ? `(${servers.size})` : "";
@@ -72,10 +88,23 @@ function render() {
   byId("entryEmpty").hidden = shown.length > 0;
 }
 
-async function request(type) {
-  const response = await api.runtime.sendMessage({ type });
-  if (!response?.ok) throw new Error(response?.error || "The extension did not return the log.");
+async function request(type, details = {}) {
+  const response = await api.runtime.sendMessage({ type, ...details });
+  if (!response?.ok) throw new Error(response?.error || "The extension did not complete the request.");
   return response;
+}
+
+async function allowServer(host, button) {
+  if (!confirm(`Always allow ${host}? The ad, tracker and community lists will no longer block it on any site.`)) return;
+  button.disabled = true;
+  try {
+    await request("ADD_ALLOWED_DOMAIN", { domain: host });
+    showNotice(`${host} is now always allowed. Reload the page that needed it. You can undo this in the popup under Always Allowed Domains.`, false, "actionNotice");
+    await refresh();
+  } catch (error) {
+    showNotice(`Could not allow ${host}: ${error.message || error}`, true, "actionNotice");
+    button.disabled = false;
+  }
 }
 
 async function refresh() {
@@ -84,6 +113,7 @@ async function refresh() {
   try {
     const response = await request("GET_LOG");
     entries = response.entries;
+    allowedDomains = Array.isArray(response.allowedDomains) ? response.allowedDomains : [];
     showNotice(response.blockLogging ? "" :
       "This browser does not report individual blocked requests to extensions, so only events are listed. " +
       "Chrome and Edge report them while BlockAds is loaded unpacked; Firefox does not provide this.");

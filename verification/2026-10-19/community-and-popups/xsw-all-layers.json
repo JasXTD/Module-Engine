@@ -1,0 +1,627 @@
+{
+  "startedAt": "2026-10-19T18:34:17.981Z",
+  "browser": "chrome",
+  "page": "https://m.xsw.tw/17300981/256319819.html",
+  "headless": false,
+  "policy": "HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded",
+  "phases": {
+    "startup": {
+      "proxy": {
+        "allowed": {
+          "www.gstatic.com": 1,
+          "update.googleapis.com": 1,
+          "www.google.com": 1,
+          "accounts.google.com": 1,
+          "android.clients.google.com": 1
+        },
+        "denied": {
+          "http:clients2.google.com": 1,
+          "invalid-connect": 1
+        }
+      }
+    },
+    "blockads-on": {
+      "proxy": {
+        "allowed": {
+          "m.xsw.tw": 6,
+          "edgedl.me.gvt1.com": 1,
+          "optimizationguide-pa.googleapis.com": 3,
+          "mtalk.google.com": 1
+        },
+        "denied": {
+          "http:edgedl.me.gvt1.com": 1
+        }
+      },
+      "top": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 5797
+      },
+      "bottom": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [],
+        "shownFrames": 0,
+        "adLike": [],
+        "adLikeCount": 0,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": true,
+        "height": 5797
+      },
+      "clicked": {
+        "point": {
+          "x": 100,
+          "y": 300,
+          "target": "DIV#nr1"
+        },
+        "windowOpen": [],
+        "navigatedTo": null,
+        "blockedByPopupBlocker": []
+      },
+      "thirdParty": [
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/js/adsbygoogle.js",
+          "type": "Script",
+          "initiator": "m.xsw.tw"
+        }
+      ],
+      "requestCount": 11,
+      "requestHosts": {
+        "m.xsw.tw": 10,
+        "pagead2.googlesyndication.com": 1
+      },
+      "blockedByExtension": {
+        "pagead2.googlesyndication.com": 1
+      },
+      "ruleMatches": {
+        "community_ruleset pagead2.googlesyndication.com": 1
+      },
+      "popups": [],
+      "downloads": 0
+    },
+    "filters-off": {
+      "proxy": {
+        "allowed": {
+          "pagead2.googlesyndication.com": 7,
+          "m.xsw.tw": 3,
+          "googleads.g.doubleclick.net": 2,
+          "fundingchoicesmessages.google.com": 2,
+          "ep2.adtrafficquality.google": 2,
+          "tpc.googlesyndication.com": 4,
+          "s0.2mdn.net": 1,
+          "fonts.googleapis.com": 1,
+          "www.gstatic.com": 1,
+          "cm.g.doubleclick.net": 2,
+          "dsum-sec.casalemedia.com": 1,
+          "ib.adnxs.com": 1,
+          "fonts.gstatic.com": 1,
+          "www.google.com": 1,
+          "ep1.adtrafficquality.google": 3
+        },
+        "denied": {}
+      },
+      "top": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1200,
+              280
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "m.xsw.tw",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "www.google.com",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          }
+        ],
+        "shownFrames": 1,
+        "adLike": [
+          {
+            "label": "INS.adsbygoogle",
+            "size": [
+              1265,
+              280
+            ]
+          }
+        ],
+        "adLikeCount": 1,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 6081
+      },
+      "bottom": {
+        "title": "第849章 道尊之路【下】-夜無疆-台灣小說網手機閱讀",
+        "finalUrl": "https://m.xsw.tw/17300981/256319819.html",
+        "frames": [
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": true,
+            "size": [
+              1200,
+              280
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              1200,
+              0
+            ]
+          },
+          {
+            "host": "m.xsw.tw",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "www.google.com",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          },
+          {
+            "host": "googleads.g.doubleclick.net",
+            "shown": false,
+            "size": [
+              0,
+              0
+            ]
+          }
+        ],
+        "shownFrames": 1,
+        "adLike": [
+          {
+            "label": "INS.adsbygoogle",
+            "size": [
+              1265,
+              280
+            ]
+          }
+        ],
+        "adLikeCount": 1,
+        "overlays": [],
+        "overlayCount": 0,
+        "cosmeticStyle": false,
+        "height": 6081
+      },
+      "clicked": {
+        "point": {
+          "x": 100,
+          "y": 600,
+          "target": "DIV#nr1"
+        },
+        "windowOpen": [],
+        "navigatedTo": null,
+        "blockedByPopupBlocker": []
+      },
+      "thirdParty": [
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/js/adsbygoogle.js",
+          "type": "Script",
+          "initiator": "m.xsw.tw"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/managed/js/adsense/m202610140101/show_ads_impl_fy2021.js",
+          "type": "Script",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/html/r20261015/r20190131/zrt_lookup_fy2021.html",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/ads",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/ads",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/managed/js/adsense/m202610140101/reactive_library_fy2021.js",
+          "type": "Script",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/ping",
+          "type": "Fetch",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/i/ca-pub-8015058972529139",
+          "type": "Script",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/ping",
+          "type": "Fetch",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/f/AGSKWxVFGfaocCfykroAJ1CRIAHiqTSMEJqm2mBqKpm3ldu1af8VlW4DoNInQ061X0oU3sdR8Ue92S91huzAwBgT5dlMdlVZk47t1mKkCH8DZcRz3nN2u",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/html/r20261015/r20190131/zrt_lookup_fy2021.html",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/html/r20261015/r20190131/zrt_lookup_fy2021.html",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxUdkIk6uyqYBc35y--_R3-f6Du4pcd00fbraPmOtS2ATNZoyjrIe_t088hk1q1Ns0cvpsTkv0KqqDwac-ZtUh8gNgDTceLQiYqAawuJcVd6uVli",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/f/AGSKWxXnpcr8P_6k3XNTPtzJrzGz5w7G8p-nrq7tLLNXe38dUD4Kw6DnpSlZuifSpKY-kRCUxPbSyVVlxuZxeVQ_juO0wxbKp5USoP-HOPKjo7GBAzSk3",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/f/AGSKWxWCWXe5buIsIsLwElwH2OqbClGV85olHxnPTlkF22dyaKGh_tUOW1c-kkpxkueHhmeC1vS7EYYtOzFn6WenTIpKyIUk-4nWMFGiIxLwI9oJhwyK9",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/js/rum.js",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/f/AGSKWxWaCmZbzi9MzIHz8FICMR0NKJkNlJZH3ySOGAm4Bsx6gL2U5LrpU3hE1lfZoSfKxrXWk5TUeOi0nQ8OU_tTRWeObyIFXSrS6bm0UsRXWEt3GomvH",
+          "type": "Script",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxVDmYmrPYvqAr8exR0HkQm7jvDRoSFKs0vWCuTfEJFZ3YvPxaqbZQfMhtNsK9mdL4f6iJeLOqP5c5lh96NV_lqtZ8YcDIZxg0iiliypZAWgAvx7",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "fundingchoicesmessages.google.com",
+          "path": "/el/AGSKWxXwOKwHuBsPZcakqy7btcxbFM5WxvTvHfRml6YcJRrvhcp4xWfzklOMZJsV_z_nRjrY_xP6HOe6Kn3pbigVkzwkTVCVgzlU2czVHymSXhm-reqG",
+          "type": "XHR",
+          "initiator": ""
+        },
+        {
+          "host": "ep1.adtrafficquality.google",
+          "path": "/getconfig/sodar",
+          "type": "XHR",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "ep2.adtrafficquality.google",
+          "path": "/sodar/sodar2.js",
+          "type": "Script",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "ep2.adtrafficquality.google",
+          "path": "/sodar/sodar2/255/runner.html",
+          "type": "Document",
+          "initiator": "ep2.adtrafficquality.google"
+        },
+        {
+          "host": "www.google.com",
+          "path": "/recaptcha/api2/aframe",
+          "type": "Document",
+          "initiator": "ep2.adtrafficquality.google"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/ads",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/ads",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/ping",
+          "type": "Fetch",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/ping",
+          "type": "Fetch",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "ep1.adtrafficquality.google",
+          "path": "/pagead/sodar",
+          "type": "Image",
+          "initiator": ""
+        },
+        {
+          "host": "googleads.g.doubleclick.net",
+          "path": "/pagead/ads",
+          "type": "Document",
+          "initiator": "pagead2.googlesyndication.com"
+        },
+        {
+          "host": "pagead2.googlesyndication.com",
+          "path": "/pagead/ping",
+          "type": "Fetch",
+          "initiator": "pagead2.googlesyndication.com"
+        }
+      ],
+      "requestCount": 48,
+      "requestHosts": {
+        "fundingchoicesmessages.google.com": 16,
+        "m.xsw.tw": 10,
+        "pagead2.googlesyndication.com": 9,
+        "googleads.g.doubleclick.net": 8,
+        "ep1.adtrafficquality.google": 2,
+        "ep2.adtrafficquality.google": 2,
+        "www.google.com": 1
+      },
+      "blockedByExtension": {},
+      "ruleMatches": {},
+      "popups": [],
+      "downloads": 0
+    }
+  },
+  "version": "Chrome/155.0.8059.85",
+  "completed": true,
+  "cleanup": {
+    "browserPid": 333340,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finishedAt": "2026-10-19T18:35:17.098Z"
+}

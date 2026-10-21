@@ -106,19 +106,41 @@
     }
   `;
 
-  function applyCosmeticShield(shouldEnable) {
+  // Community list rules for this site. The builder already refused braces and
+  // comments; a selector this browser cannot parse would void the whole rule, so
+  // each is parsed first (querySelector also accepts "a, b" selector lists).
+  // The result is cached: the same list arrives on every settings refresh.
+  const probe = document.createDocumentFragment();
+  let lastSelectors = null;
+  let lastCss = "";
+  function siteListCss(selectors) {
+    const list = Array.isArray(selectors) ? selectors : [];
+    const key = list.join("\n");
+    if (key === lastSelectors) return lastCss;
+    const valid = list.filter(selector => {
+      try { probe.querySelector(selector); return typeof selector === "string"; } catch { return false; }
+    });
+    lastSelectors = key;
+    lastCss = valid.length ? `\n${valid.join(",\n")} { display: none !important; }` : "";
+    return lastCss;
+  }
+
+  function applyCosmeticShield(shouldEnable, selectors) {
     const existing = document.getElementById(STYLE_ID);
-    if (shouldEnable) {
-      if (!existing) {
-        const style = document.createElement("style");
-        style.id = STYLE_ID;
-        style.textContent = COSMETIC_CSS + SITE_COSMETIC_CSS;
-        const parent = document.head || document.documentElement;
-        if (parent) parent.appendChild(style);
-      }
-    } else if (existing) {
-      existing.remove();
+    if (!shouldEnable) {
+      existing?.remove();
+      return;
     }
+    const css = COSMETIC_CSS + SITE_COSMETIC_CSS + siteListCss(selectors);
+    if (existing) {
+      if (existing.textContent !== css) existing.textContent = css;
+      return;
+    }
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = css;
+    const parent = document.head || document.documentElement;
+    if (parent) parent.appendChild(style);
   }
 
   // Fallback for YouTube video ads that still reach the player (for example if
@@ -166,7 +188,7 @@
       const state = await api.runtime.sendMessage({ type: "GET_COSMETIC_STATE" });
       if (version !== evaluation) return;
       if (!state?.ok) throw new Error(state?.error || "No cosmetic filtering state returned.");
-      applyCosmeticShield(state.enabled);
+      applyCosmeticShield(state.enabled, state.siteSelectors);
       setVideoAdSkipping(Boolean(state.ads));
     } catch (error) {
       // Existing tabs may retain an invalidated context after extension reload.
@@ -174,6 +196,20 @@
       console.warn("[BlockAds] Cosmetic settings unavailable; reload this page:", error.message);
     }
   }
+
+  // popups.js (page world, only on sites with pop-up blocking) reports each block
+  // as a hostname. Forward a limited number to the activity log; the background
+  // ignores reports from sites without pop-up blocking.
+  let popupReports = 0;
+  let lastPopupReport = 0;
+  document.addEventListener("blockads-popup-blocked", event => {
+    const now = Date.now();
+    if (popupReports >= 20 || now - lastPopupReport < 1000) return;
+    popupReports++;
+    lastPopupReport = now;
+    const host = typeof event.detail === "string" ? event.detail.slice(0, 253) : "";
+    try { api.runtime.sendMessage({ type: "LOG_EVENT", event: "popup-blocked", host }).catch(() => {}); } catch {}
+  });
 
   evaluateAndApply();
   document.addEventListener("DOMContentLoaded", evaluateAndApply, { once: true });

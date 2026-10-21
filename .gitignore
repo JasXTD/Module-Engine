@@ -19,3 +19,6 @@ desktop.ini
 
 # Claude Code's per-user settings for this project
 .claude/settings.local.json
+
+# Chrome writes compiled rulesets here when the folder is loaded unpacked
+_metadata/

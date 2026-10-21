@@ -25,8 +25,8 @@ const { chromium } = require('./browser-smoke.cjs');
 const root = path.resolve(__dirname, '..');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const within = (host, domain) => host === domain || host.endsWith('.' + domain);
-const EXTENSION_FILES = ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js',
-  'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons'];
+const EXTENSION_FILES = ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js',
+  'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons'];
 
 // Runs in the page. Returns element metadata only, never page text.
 const snapshotExpression = `(() => {
@@ -81,7 +81,10 @@ async function main() {
   await fs.mkdir(extension);
   for (const file of EXTENSION_FILES) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const headless = !process.argv.includes('--visible');
-  const click = process.argv.includes('--click');
+  // --popups-only: every filter layer off, then one pass with only per-site
+  // pop-up blocking on and one with it off. Implies --click.
+  const popupsOnly = process.argv.includes('--popups-only');
+  const click = popupsOnly || process.argv.includes('--click');
   const evidence = { startedAt: new Date().toISOString(), browser: browserName, page: url.origin + url.pathname, headless,
     policy: 'HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded',
     phases: {} };
@@ -159,20 +162,28 @@ async function main() {
     await browser.send('Page.enable', {}, page);
     await browser.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false }, page);
     const initialPages = new Set((await browser.send('Target.getTargets')).targetInfos.filter(info => info.type === 'page').map(info => info.targetId));
-    if (click) {
-      // Test instrumentation, installed before page scripts: record pop-up
-      // attempts and refuse them, so the ad destination is never loaded.
-      await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
+    // Test instrumentation, installed before page scripts: record pop-up attempts
+    // and refuse them, so the ad destination is never loaded. In --popups-only it
+    // guards only the comparison pass, so BlockAds' own pop-up blocker is what is
+    // measured in the first pass.
+    const installRecorder = () => browser.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
         const attempts = [];
         Object.defineProperty(window, '__blockadsTestOpened', { value: attempts });
         window.open = new Proxy(window.open, { apply: (_target, _self, args) => { attempts.push(String(args[0] ?? '').slice(0, 300)); return null; } });
       })()` }, page);
-    }
+    if (click && !popupsOnly) await installRecorder();
     for (const enabled of [true, false]) {
-      phase = enabled ? 'blockads-on' : 'ads-trackers-cosmetics-off';
+      phase = popupsOnly ? (enabled ? 'popup-blocker-on' : 'popup-blocker-off') : (enabled ? 'blockads-on' : 'filters-off');
+      const layers = popupsOnly ? false : enabled;
       const result = await browser.evaluate(`chrome.runtime.sendMessage({type:'UPDATE_SETTINGS',patch:{enabled:true,
-        cosmeticFiltering:${enabled},rulesets:{ads_ruleset:${enabled},trackers_ruleset:${enabled},threats_ruleset:true}}})`);
+        cosmeticFiltering:${layers},rulesets:{ads_ruleset:${layers},trackers_ruleset:${layers},community_ruleset:${layers},threats_ruleset:true}}})`);
       if (!result.ok) throw new Error(result.error);
+      if (popupsOnly) {
+        const popups = await browser.evaluate(`chrome.runtime.sendMessage(${JSON.stringify({ type: 'SET_SITE_POPUPS', domain: url.hostname, blocked: enabled })})`);
+        if (!popups.ok) throw new Error(popups.error);
+        if (!enabled) await installRecorder();
+      }
+      const phaseStart = Date.now();
       await browser.send('Network.clearBrowserCache', {}, page);
       await browser.send('Network.clearBrowserCookies', {}, page);
       await browser.evaluate('liveMatches = []');
@@ -221,6 +232,10 @@ async function main() {
         clicked.windowOpen = clicked.windowOpen.map(value => {
           try { return hostOf(new URL(value, url).href) || value.slice(0, 40); } catch { return value.slice(0, 40); }
         });
+        // BlockAds' own pop-up blocker reports to the activity log.
+        const log = await browser.evaluate(`chrome.runtime.sendMessage({type:'GET_LOG'})`);
+        clicked.blockedByPopupBlocker = (log.entries || []).filter(entry => entry.time >= phaseStart &&
+          String(entry.message).startsWith('Blocked a pop-up')).map(entry => entry.message);
       }
 
       const events = browser.events.slice(eventStart).filter(event => event.sessionId === page.session);

@@ -12,7 +12,9 @@ const policyText = fs.readFileSync(path.join(root, 'rules/threat-policy.json'), 
 function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}) {
   const listeners = {};
   const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], badge: '', faults: {} };
-  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [] });
+  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [],
+    cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
+      allow: { 'shop.example.com': ['.ad-box'] } }) });
   class Clock extends Date { static now() { return state.now; } }
   const event = name => ({ addListener(fn) { listeners[name] = fn; } });
   const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -83,6 +85,11 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     action: { async setBadgeBackgroundColor() {}, async setBadgeText({ text }) { state.badge = text; } }
   };
   const context = vm.createContext({ chrome: api, URL, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
+    if (url === 'chrome-extension://test/rules/community-cosmetic.json') {
+      state.fetches.push(url);
+      await fault('cosmetic');
+      return { ok: true, json: async () => JSON.parse(state.cosmeticText) };
+    }
     assert.equal(url, 'chrome-extension://test/rules/threat-policy.json', 'only a packaged local file may be read');
     state.fetches.push(url);
     await fault('policy');
@@ -131,7 +138,7 @@ test('overlapping independent switches and domain additions are not lost', async
     h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'two.example' })
   ]);
   assert.ok(responses.every(r => r.ok));
-  assert.deepEqual(h.state.enabled, ['threats_ruleset']);
+  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'threats_ruleset']);
   assert.deepEqual(h.state.storage.customBlockedDomains, ['one.example', 'two.example']);
   assert.equal(h.state.dynamic.length, 2);
 });
@@ -224,7 +231,7 @@ test('master pause clears network rules, restart reconciliation restores saved s
   h.state.enabled = [];
   h.state.dynamic = [];
   await h.listeners.startup();
-  assert.deepEqual(h.state.enabled.sort(), ['threats_ruleset', 'trackers_ruleset']);
+  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'threats_ruleset', 'trackers_ruleset']);
   assert.equal(h.state.dynamic.length, 1);
 });
 
@@ -245,13 +252,13 @@ test('untrusted callers, malformed patches and quota violations cannot change se
 test('cosmetic state respects a cross-origin top-page exception using browser sender metadata', async () => {
   const h = harness({ whitelistedDomains: ['parent.example'] });
   const frame = { id: 'test', url: 'https://child.example/frame', tab: { id: 1, url: 'https://shop.parent.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [] });
   const other = { ...frame, tab: { id: 1, url: 'https://unrelated.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [] });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [] });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: true, rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [] });
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, id: 'external' })).ok, false);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }, frame)).ok, false);
 });
@@ -260,8 +267,8 @@ test('upgrading to the reviewed catalog retires the old malware toggle and prese
   const h = harness({ rulesets: { ads_ruleset: false, trackers_ruleset: true, malware_ruleset: true } });
   const result = await h.send({ type: 'GET_STATE' });
   assert.equal(result.ok, true);
-  assert.deepEqual(result.settings.rulesets, { ads_ruleset: false, trackers_ruleset: true, threats_ruleset: true });
-  assert.deepEqual(h.state.enabled, ['trackers_ruleset', 'threats_ruleset']);
+  assert.deepEqual(result.settings.rulesets, { ads_ruleset: false, trackers_ruleset: true, threats_ruleset: true, community_ruleset: true });
+  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'threats_ruleset', 'trackers_ruleset']);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { malware_ruleset: true } } })).ok, false);
 });
 
@@ -311,7 +318,7 @@ test('expiry alarm disables reported threats at the boundary without changing sa
   assert.ok(h.state.enabled.includes('threats_ruleset'));
   h.state.now = Date.parse('2026-11-30T00:00:00Z');
   await h.listeners.alarm({ name: 'reported-threats-expiry' });
-  assert.deepEqual(h.state.enabled, ['ads_ruleset', 'trackers_ruleset']);
+  assert.deepEqual(h.state.enabled.sort(), ['ads_ruleset', 'community_ruleset', 'trackers_ruleset']);
   assert.equal(h.state.dynamic.length, 1);
   assert.equal(h.state.storage.rulesets.threats_ruleset, true);
   assert.equal(h.state.storage.threatStatus.available, false);
@@ -326,7 +333,7 @@ test('an expired bundle cannot be re-enabled by startup, upgrade or a settings r
   const result = await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
   assert.equal(result.ok, true);
   assert.equal(result.threatStatus.available, false);
-  assert.deepEqual(h.state.enabled, ['ads_ruleset', 'trackers_ruleset']);
+  assert.deepEqual(h.state.enabled.sort(), ['ads_ruleset', 'community_ruleset', 'trackers_ruleset']);
 });
 
 test('explicit threat-layer pause survives a worker restart and later reconciliation', async () => {
@@ -351,7 +358,7 @@ test('malformed, missing and future evidence disables only the threat layer and 
     const result = await h.send({ type: 'GET_STATE' });
     assert.equal(result.threatStatus.available, false);
     assert.match(result.threatStatus.error, /inactive/);
-    assert.deepEqual(h.state.enabled, ['ads_ruleset', 'trackers_ruleset']);
+    assert.deepEqual(h.state.enabled.sort(), ['ads_ruleset', 'community_ruleset', 'trackers_ruleset']);
     assert.equal(h.state.dynamic.length, 1);
     assert.equal(h.state.badge, '!');
   }
@@ -513,4 +520,151 @@ test('a log storage failure never affects protection changes', async () => {
   assert.equal(result.ok, true);
   assert.deepEqual(h.state.storage.customBlockedDomains, ['still.example']);
   assert.equal(h.state.dynamic.length, 1);
+});
+
+test('per-site pop-up blocking registers the page script only for chosen sites, respecting pauses and the master switch', async () => {
+  const h = harness();
+  await h.ready;
+  const popupScript = () => h.state.scripts.find(script => script.id === 'popup-blocker');
+  assert.equal(popupScript(), undefined);
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'https://www.uukanshu.cc/book/1.html', blocked: true })).ok, true);
+  await h.send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: true });
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'localhost', blocked: true });
+  assert.deepEqual(popupScript().matches, ['*://127.0.0.1/*', '*://localhost/*', '*://*.uukanshu.cc/*']);
+  assert.deepEqual([popupScript().js, popupScript().world, popupScript().runAt], [['popups.js'], 'MAIN', 'document_start']);
+  // The pop-up blocker does not depend on the ad layer.
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false } } });
+  assert.deepEqual(h.state.scripts.map(script => script.id), ['popup-blocker']);
+  await h.send({ type: 'SET_SITE_PAUSED', domain: 'm.uukanshu.cc', paused: true });
+  assert.deepEqual(popupScript().excludeMatches, ['*://*.m.uukanshu.cc/*']);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
+  assert.deepEqual(h.state.scripts, []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: true } });
+  assert.ok(popupScript());
+  // Turning it off from a subdomain removes the parent entry that covered it.
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'read.uukanshu.cc', blocked: false });
+  assert.deepEqual(h.state.storage.popupBlockedDomains, ['127.0.0.1', 'localhost']);
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'x.example', blocked: 'yes' })).ok, false);
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'bad^host', blocked: true })).ok, false);
+});
+
+test('pop-up block reports are logged only from sites with pop-up blocking', async () => {
+  const h = harness({ popupBlockedDomains: ['uukanshu.cc'] });
+  await h.ready;
+  const tab = url => ({ id: 'test', url, tab: { id: 9, url } });
+  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: 'Political-Effort.com' }, tab('https://www.uukanshu.cc/book/1.html'));
+  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: 'spoof.example' }, tab('https://other.example/'));
+  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: '<b>not a host</b>' }, tab('https://www.uukanshu.cc/'));
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'shady.example', blocked: true });
+  await settle();
+  const { entries } = await h.send({ type: 'GET_LOG' });
+  assert.deepEqual(entries.map(entry => [entry.message, entry.site ?? '']), [
+    ['Blocked a pop-up to political-effort.com', 'www.uukanshu.cc'],
+    ['Blocked a pop-up', 'www.uukanshu.cc'],
+    ['Pop-up blocking turned on for shady.example', '']
+  ]);
+});
+
+test('community site hiding rules follow the frame host, its parents and exceptions, and the layer switches', async () => {
+  const h = harness();
+  await h.ready;
+  const frame = url => ({ id: 'test', url, tab: { id: 1, url } });
+  const state = async url => (await h.send({ type: 'GET_COSMETIC_STATE' }, frame(url))).siteSelectors;
+  assert.deepEqual((await state('https://www.example.com/a')).sort(), ['#banner', '.ad-box']);
+  assert.deepEqual(await state('https://shop.example.com/'), ['#banner'], 'an exception on a subdomain removes that selector');
+  assert.deepEqual(await state('https://news.example/'), ['.promo']);
+  assert.deepEqual(await state('https://example.org/'), []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: false } } });
+  assert.deepEqual(await state('https://www.example.com/a'), []);
+  assert.equal(h.state.enabled.includes('community_ruleset'), false);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: true }, cosmeticFiltering: false } });
+  assert.deepEqual(await state('https://www.example.com/a'), [], 'cosmetic switch also governs list hiding rules');
+  assert.ok(h.state.enabled.includes('community_ruleset'));
+});
+
+test('an unreadable site hiding file disables only list hiding rules, and a later request retries', async () => {
+  const h = harness();
+  await h.ready;
+  const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
+  h.state.faults.cosmetic = 1;
+  const failed = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.deepEqual([failed.ok, failed.enabled, failed.siteSelectors], [true, true, []]);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.length, 2);
+});
+
+test('always-allowed domains become allow rules that outrank list blocks but not reported threats or custom blocks', async () => {
+  const h = harness();
+  await h.ready;
+  assert.equal((await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'https://translate.googleapis.com/translate_a/element.js' })).ok, true);
+  const allow = h.state.dynamic.find(rule => rule.action.type === 'allow');
+  assert.deepEqual(allow.condition.requestDomains, ['translate.googleapis.com']);
+  assert.equal(allow.condition.resourceTypes.length, 12);
+  // Above every list rule (1-3, including community $important), below reported threats (5) and custom blocks (50).
+  assert.equal(allow.priority, 4);
+  const threatPriority = JSON.parse(fs.readFileSync(path.join(root, 'rules/threats.json'), 'utf8'))[0].priority;
+  assert.ok(allow.priority < threatPriority);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
+  assert.deepEqual(h.state.dynamic, []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: true } });
+  assert.equal(h.state.dynamic.length, 1);
+  await h.send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'translate.googleapis.com' });
+  assert.deepEqual(h.state.dynamic, []);
+  await settle();
+  const { entries, allowedDomains } = await h.send({ type: 'GET_LOG' });
+  assert.deepEqual(allowedDomains, []);
+  assert.deepEqual(entries.map(entry => entry.message).filter(message => /allowed/.test(message)),
+    ['Always allowed translate.googleapis.com', 'No longer always allowed translate.googleapis.com']);
+});
+
+test('the same domain cannot be both custom-blocked and always allowed', async () => {
+  const h = harness();
+  await h.ready;
+  await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'both.example' });
+  const rejected = await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'www.both.example' });
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error, /both\.example is in both/);
+  assert.deepEqual(h.state.storage.allowedDomains ?? [], []);
+  await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'other.example' });
+  assert.equal((await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'other.example' })).ok, false);
+  assert.deepEqual(h.state.storage.customBlockedDomains, ['both.example']);
+  assert.deepEqual((await h.send({ type: 'GET_LOG' })).allowedDomains, ['other.example']);
+  assert.equal((await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'bad^host' })).ok, false);
+});
+
+test('lists-page removals are exact, unlike Resume which also removes covering parents', async () => {
+  const h = harness({ whitelistedDomains: ['example.com', 'shop.example.com', 'other.example'],
+    popupBlockedDomains: ['uukanshu.cc', 'm.uukanshu.cc'] });
+  await h.ready;
+  await h.send({ type: 'REMOVE_PAUSED_SITE', domain: 'shop.example.com' });
+  assert.deepEqual(h.state.storage.whitelistedDomains, ['example.com', 'other.example']);
+  await h.send({ type: 'REMOVE_POPUP_SITE', domain: 'm.uukanshu.cc' });
+  assert.deepEqual(h.state.storage.popupBlockedDomains, ['uukanshu.cc']);
+  // The popup's Resume on a subdomain still removes the parent that covers it.
+  await h.send({ type: 'SET_SITE_PAUSED', domain: 'news.example.com', paused: false });
+  assert.deepEqual(h.state.storage.whitelistedDomains, ['other.example']);
+  assert.equal((await h.send({ type: 'REMOVE_POPUP_SITE', domain: 'bad^host' })).ok, false);
+  assert.equal((await h.send({ type: 'REMOVE_PAUSED_SITE', domain: 'x.example' }, youtubeTab)).ok, false, 'only extension pages may edit lists');
+});
+
+test('allowing a domain covered by a custom-blocked parent is refused, but allowing a parent of a blocked child is fine', async () => {
+  const h = harness({ customBlockedDomains: ['blocked-parent.example', 'ads.allowed-parent.example'] });
+  await h.ready;
+  const covered = await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'cdn.blocked-parent.example' });
+  assert.equal(covered.ok, false);
+  assert.match(covered.error, /covered by the custom block on blocked-parent\.example/);
+  assert.equal((await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'allowed-parent.example' })).ok, true);
+  // Reported threats (5) still outrank the allow list (4).
+  const threatPriority = JSON.parse(fs.readFileSync(path.join(root, 'rules/threats.json'), 'utf8'))[0].priority;
+  const community = JSON.parse(fs.readFileSync(path.join(root, 'rules/community.json'), 'utf8'));
+  assert.ok(Math.max(...community.map(rule => rule.priority)) < 4 && threatPriority === 5);
+});
+
+test('the activity log stays readable when settings cannot be loaded', async () => {
+  const h = harness();
+  await h.ready;
+  h.state.storage.allowedDomains = ['same.example'];
+  h.state.storage.customBlockedDomains = ['same.example'];
+  const response = await h.send({ type: 'GET_LOG' });
+  assert.equal(response.ok, true);
+  assert.deepEqual(response.allowedDomains, []);
 });

@@ -39,6 +39,20 @@
     </section>
     <p id="siteScope" class="scope-note"></p>
 
+    <!-- Per-site pop-up blocking -->
+    <section class="card">
+      <div class="layer-row">
+        <div class="layer-info">
+          <span class="layer-name">Block pop-ups on this site</span>
+          <span class="layer-desc" id="popupScope">Stops new windows and disguised links to other sites</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="togglePopups" aria-label="Block pop-ups on this site" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
     <!-- Protection Layers -->
     <section class="card">
       <h2 class="section-title">Protection Layers</h2>
@@ -80,6 +94,17 @@
 
       <div class="layer-row">
         <div class="layer-info">
+          <span class="layer-name">Community Lists</span>
+          <span class="layer-desc" id="communityStatus">EasyList snapshots</span>
+        </div>
+        <label class="switch switch-sm">
+          <input type="checkbox" id="toggleCommunity" aria-label="Use community filter lists" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="layer-row">
+        <div class="layer-info">
           <span class="layer-name">Cosmetic Element Hiding</span>
           <span class="layer-desc">Hides elements matching the cosmetic filters</span>
         </div>
@@ -109,9 +134,32 @@
       <ul id="customDomainList" class="domain-list"></ul>
     </section>
 
+    <!-- Always Allowed Domains -->
+    <section class="card">
+      <h2 class="section-title">Always Allowed Domains</h2>
+      <p class="scope-note">Never blocked by the ad, tracker or community lists. Reported threats and custom blocks still apply.</p>
+      <form id="allowForm" class="custom-form">
+        <input
+          type="text"
+          id="allowDomainInput"
+          aria-label="Hostname or URL to always allow"
+          maxlength="2048"
+          disabled
+          placeholder="e.g. translate.googleapis.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit" class="btn-add" disabled>Allow</button>
+      </form>
+      <ul id="allowDomainList" class="domain-list"></ul>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
-      <a id="logLink" class="footer-link" href="log.html" target="_blank">Open activity log</a>
+      <span class="footer-links">
+        <a id="listsLink" class="footer-link" href="lists.html" target="_blank">My lists</a>
+        <a id="logLink" class="footer-link" href="log.html" target="_blank">Activity log</a>
+      </span>
       <span>100% Local &bull; Zero Telemetry &bull; Manifest V3</span>
     </footer>
   </div>

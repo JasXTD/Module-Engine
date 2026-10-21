@@ -64,7 +64,8 @@ function Read-ThreatReportCatalog([string]$Path, [DateTimeOffset]$Now = [DateTim
             }
             if ($observed -lt $earliest) { $earliest = $observed }
             $rules += [ordered]@{
-                id=$rules.Count + 1; priority=3; action=@{type='block'}
+                # Above every list rule and the person's allow list (4); below custom blocks and site pauses.
+                id=$rules.Count + 1; priority=5; action=@{type='block'}
                 condition=[ordered]@{
                     regexFilter='^(http|https|ws|wss)://([^/@]*@)?' + [regex]::Escape($hostName) + '\.?(:[0-9]+)?/'
                     resourceTypes=@('main_frame','sub_frame','stylesheet','script','image','font','object','xmlhttprequest','ping','media','websocket','other')

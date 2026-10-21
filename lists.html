@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlockAds My Lists</title>
+  <link rel="stylesheet" href="log.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>BlockAds lists</h1>
+        <p class="muted">Your own allow, block, pause and pop-up lists. Each entry covers the domain and its subdomains. Reload affected pages after a change.</p>
+      </div>
+      <div class="actions">
+        <input type="search" id="filter" placeholder="Filter all lists" aria-label="Filter all lists" />
+        <a class="button-link" href="log.html">Activity log</a>
+      </div>
+    </header>
+
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <section class="card" data-list="allowedDomains">
+      <h2>Always allowed domains <span class="muted count"></span></h2>
+      <p class="muted">Never blocked by the ad, tracker, site-check or community lists, on any site. Reported threats and custom blocks still apply.</p>
+      <form class="add-form">
+        <input type="text" maxlength="2048" placeholder="Hostname or URL, e.g. translate.googleapis.com" aria-label="Domain to always allow" autocomplete="off" spellcheck="false" />
+        <button type="submit">Allow</button>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+      <p class="muted empty" hidden>No always-allowed domains.</p>
+    </section>
+
+    <section class="card" data-list="customBlockedDomains">
+      <h2>Custom blocked domains <span class="muted count"></span></h2>
+      <p class="muted">Always blocked, on every site and for every request type, including page loads. Overrides the allow list.</p>
+      <form class="add-form">
+        <input type="text" maxlength="2048" placeholder="Hostname or URL, e.g. shady-ads.example.com" aria-label="Domain to block" autocomplete="off" spellcheck="false" />
+        <button type="submit">Block</button>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+      <p class="muted empty" hidden>No custom blocked domains.</p>
+    </section>
+
+    <section class="card" data-list="whitelistedDomains">
+      <h2>Paused sites <span class="muted count"></span></h2>
+      <p class="muted">All filtering is off on these sites' pages, including network rules, hiding and page scripts.</p>
+      <form class="add-form">
+        <input type="text" maxlength="2048" placeholder="Site to pause, e.g. example.com" aria-label="Site to pause" autocomplete="off" spellcheck="false" />
+        <button type="submit">Pause</button>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+      <p class="muted empty" hidden>No paused sites.</p>
+    </section>
+
+    <section class="card" data-list="popupBlockedDomains">
+      <h2>Pop-up blocking sites <span class="muted count"></span></h2>
+      <p class="muted">Script-opened windows and disguised links to other sites are refused on these sites.</p>
+      <form class="add-form">
+        <input type="text" maxlength="2048" placeholder="Site, e.g. uukanshu.cc" aria-label="Site to block pop-ups on" autocomplete="off" spellcheck="false" />
+        <button type="submit">Block pop-ups</button>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+      <p class="muted empty" hidden>No pop-up blocking sites.</p>
+    </section>
+
+    <section class="card" id="siteHosts">
+      <h2>Blocked from site checks <span class="muted count"></span></h2>
+      <p class="muted">Ad servers added after testing a named site. Built into the Ads layer; change them in lists/site-ad-hosts.json and rebuild.</p>
+      <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Found on</th><th>What it did</th><th>Date (UTC)</th></tr></thead><tbody></tbody></table></div>
+      <p class="muted empty" hidden>No hosts from site checks.</p>
+    </section>
+  </main>
+  <script src="lists.js"></script>
+</body>
+</html>

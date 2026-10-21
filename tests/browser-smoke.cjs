@@ -294,12 +294,12 @@ if (require.main === module) (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-verify-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const testedManifest = JSON.parse(await fs.readFile(path.join(extension, 'manifest.json'), 'utf8'));
   const sourceHashes = {};
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'rules/threat-policy.json',
+  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/threat-policy.json',
     ...testedManifest.declarative_net_request.rule_resources.map(rule => rule.path)]) {
     sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
@@ -373,6 +373,24 @@ if (require.main === module) (async () => {
     check((await match('https://customer.azioncdn.net/app.js')).matchedRules.length === 0, 'shared CDN customer is allowed');
     check((await match('https://legitimate.example.tk/app.js')).matchedRules.length === 0, 'country-code TLD is not blanket blocked');
     check((await match('https://fixture.example/ordinary.js')).matchedRules.length === 0, 'ordinary resource is allowed');
+
+    // Community lists: a domain from the built snapshot is blocked by its own switchable ruleset.
+    const communityRules = JSON.parse(await fs.readFile(path.join(root, 'rules/community.json'), 'utf8'));
+    const plainRule = communityRules.find(rule => rule.action.type === 'block' && rule.condition.requestDomains &&
+      Object.keys(rule.condition).length === 1);
+    check(Boolean(plainRule), 'community snapshot contains plain domain-list rules');
+    const communityHost = plainRule.condition.requestDomains[0];
+    const communityHit = async () => (await match(`https://${communityHost}/fixture.js`)).matchedRules.some(rule => rule.rulesetId === 'community_ruleset');
+    check((await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).includes('community_ruleset'), 'community ruleset is enabled by default');
+    check(await communityHit(), 'community list domain is blocked');
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: false } } });
+    check(!(await communityHit()), 'community switch disables its rules');
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: true } } });
+    check(await communityHit(), 'community switch re-enables its rules');
+    check(await browser.evaluate(`fetch(api.runtime.getURL('rules/community-cosmetic.json')).then(r => r.json()).then(data => Object.keys(data.hide).length > 0)`),
+      'packaged site hiding rules are readable by the extension');
+    await until(browser, `/EasyList.*rules/.test(document.getElementById('communityStatus').textContent)`);
+    check(true, 'popup describes the community snapshot');
     const pageScripts = () => browser.evaluate('api.scripting.getRegisteredContentScripts()');
     const [youtubeScript] = await pageScripts();
     evidence.youtubeScript = youtubeScript;
@@ -430,6 +448,18 @@ if (require.main === module) (async () => {
     await send({ type: 'UPDATE_SETTINGS', patch: defaults });
     check(!denied.some(request => threatHosts.some(host => request.destination?.includes(host))), 'no reported-host request reached the deny proxy');
 
+    // Always-allowed domains, judged by the browser's own rule engine.
+    const winners = async url => (await match(url)).matchedRules.map(rule => rule.rulesetId);
+    check((await winners('https://doubleclick.net/test.js')).includes('ads_ruleset'), 'ad list blocks the domain before it is allowed');
+    for (const domain of ['doubleclick.net', communityHost, threatHosts[0]]) {
+      check((await send({ type: 'ADD_ALLOWED_DOMAIN', domain })).ok, `domain can be always allowed: ${domain}`);
+    }
+    check(String(await winners('https://doubleclick.net/test.js')) === '_dynamic', 'always-allowed domain overrides the ad list');
+    check(String(await winners(`https://${communityHost}/fixture.js`)) === '_dynamic', 'always-allowed domain overrides the community lists');
+    check((await winners('https://' + threatHosts[0] + '/fixture')).includes('threats_ruleset'), 'reported threats stay blocked even when always allowed');
+    for (const domain of ['doubleclick.net', communityHost, threatHosts[0]]) await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain });
+    check((await winners('https://doubleclick.net/test.js')).includes('ads_ruleset'), 'removing the allowed domain restores blocking');
+
     evidence.dnrRoundTrip = await browser.evaluate(`(async () => {
       const rule = {id:1,priority:50,action:{type:'block'},condition:{requestDomains:['roundtrip.example'],resourceTypes:['script']}};
       await api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[],addRules:[rule]});
@@ -472,6 +502,12 @@ if (require.main === module) (async () => {
     await browser.screenshot(path.join(temporary, 'popup-error.png'));
     await browser.evaluate('(retryButton.click(), true)');
     await until(browser, '!busy && errorPanel.hidden');
+    await browser.evaluate('(allowDomainInput.value = "https://translate.googleapis.com/translate_a/element.js", allowForm.requestSubmit(), true)');
+    await until(browser, '!busy && currentSettings.allowedDomains.includes("translate.googleapis.com") && allowDomainList.textContent.includes("translate.googleapis.com") && allowDomainInput.value === ""');
+    check(true, 'popup adds an always-allowed domain from a URL');
+    await browser.evaluate('(allowDomainList.querySelector("button").click(), true)');
+    await until(browser, '!busy && currentSettings.allowedDomains.length === 0 && !allowDomainList.children.length');
+    check(true, 'popup removes an always-allowed domain');
 
     const longDomain = 'a'.repeat(63) + '.' + 'b'.repeat(63) + '.example';
     await send({ type: 'UPDATE_SETTINGS', patch: { whitelistedDomains: [longDomain], customBlockedDomains: [longDomain] } });
@@ -527,6 +563,39 @@ if (require.main === module) (async () => {
     check(!(await socketProbe('ws-blocked')) && !socketUpgrades.includes('/ws-blocked'), 'reported-rule regex blocks a real loopback WebSocket before handshake');
     await browser.evaluate('api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[9001],addRules:[]})');
     check(await socketProbe('ws-blocked'), 'removing the isolated regex rule restores the WebSocket handshake');
+
+    // Per-site pop-up blocking. The browser's own pop-up blocker also refuses
+    // windows opened without a click, so count BlockAds' own block reports.
+    await send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: true });
+    check((await pageScripts()).some(script => script.id === 'popup-blocker' && script.matches.includes('*://127.0.0.1/*')),
+      'pop-up blocker is registered for the chosen site');
+    const popupPage = await browser.open(fixtureUrl);
+    await until(browser, 'document.readyState === "complete"', popupPage);
+    const popupTarget = `http://localhost:${server.address().port}/popup-`;
+    const popupResult = await browser.evaluate(`(async () => {
+      let reports = 0;
+      document.addEventListener('blockads-popup-blocked', () => reports++);
+      const opened = window.open('${popupTarget}open');
+      const clicked = document.createElement('a');
+      clicked.href = '${popupTarget}click'; clicked.target = '_blank'; clicked.click();
+      const dispatched = document.createElement('a');
+      dispatched.href = '${popupTarget}dispatch'; dispatched.target = '_blank'; document.body.append(dispatched);
+      dispatched.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      const sameSite = document.createElement('a');
+      sameSite.href = '#same-site'; document.body.append(sameSite); sameSite.click();
+      // Firefox updates the fragment after the click task finishes.
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return { opened: opened === null, reports, sameSite: location.hash === '#same-site' };
+    })()`, popupPage);
+    evidence.popupBlocking = popupResult;
+    check(popupResult.opened && popupResult.reports === 3, 'window.open, link.click() and synthetic link clicks to another site are refused');
+    check(popupResult.sameSite, 'same-site links still work on a pop-up-blocked site');
+    await pause(1000);
+    check(!requests.some(url => url.startsWith('/popup-')), 'refused pop-ups never load');
+    await until(browser, `api.runtime.sendMessage({type:'GET_LOG'}).then(log => log.entries.some(entry => entry.message === 'Blocked a pop-up to localhost'))`);
+    check(true, 'blocked pop-up is recorded in the activity log');
+    await send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: false });
+    check(!(await pageScripts()).some(script => script.id === 'popup-blocker'), 'turning pop-up blocking off unregisters its script');
     evidence.socketUpgrades = socketUpgrades;
     await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' });
     const fetchExpression = `fetch('http://localhost:${server.address().port}/blocked-probe').then(() => false, () => true)`;
@@ -550,8 +619,39 @@ if (require.main === module) (async () => {
       await until(browser, `[...document.querySelectorAll('#summaryTable tbody td')].some(cell => cell.textContent === 'localhost')`, logPage);
       check(await browser.evaluate(`document.getElementById('notice').hidden && document.documentElement.scrollWidth <= innerWidth`, logPage),
         'activity log page shows the blocked server without errors or horizontal overflow');
+      check(await browser.evaluate(`[...document.querySelectorAll('#summaryTable tbody tr')].some(row =>
+        row.textContent.includes('localhost') && row.textContent.includes('Remove it from Custom Blocked Domains') && !row.querySelector('button'))`, logPage),
+        'log page does not offer Allow for a custom-blocked server');
     }
     check(await browser.evaluate('document.getElementById("logLink").getAttribute("href") === "log.html"'), 'popup links to the activity log');
+    check(await browser.evaluate('document.getElementById("listsLink").getAttribute("href") === "lists.html"'), 'popup links to the lists page');
+
+    // My lists page: tables show, add and exactly remove entries, and follow changes made elsewhere.
+    const siteHostInfo = JSON.parse(await fs.readFile(path.join(root, 'rules/site-ad-hosts-info.json'), 'utf8'));
+    const listsPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/lists.html`);
+    const rowsOf = key => `document.querySelectorAll('section[data-list="${key}"] tbody tr').length`;
+    await until(browser, `document.querySelectorAll('#siteHosts tbody tr').length === ${siteHostInfo.length}`, listsPage);
+    check(siteHostInfo.length > 0, 'lists page shows the site-check hosts with their sites');
+    // The page disables its forms until its first verified state arrives.
+    await until(browser, `!document.querySelector('section[data-list="allowedDomains"] input').disabled`, listsPage);
+    await browser.evaluate(`(() => { const form = document.querySelector('section[data-list="allowedDomains"] form');
+      form.querySelector('input').value = 'https://www.lists-allow.example/path'; form.requestSubmit(); return true; })()`, listsPage);
+    await until(browser, `[...document.querySelectorAll('section[data-list="allowedDomains"] tbody td')].some(cell => cell.textContent === 'lists-allow.example')`, listsPage);
+    check((await state()).settings.allowedDomains.includes('lists-allow.example'), 'lists page adds an always-allowed domain');
+    await send({ type: 'SET_SITE_PAUSED', domain: 'paused-parent.example', paused: true });
+    await send({ type: 'SET_SITE_PAUSED', domain: 'shop.paused-parent.example', paused: true });
+    await until(browser, `${rowsOf('whitelistedDomains')} === 2`, listsPage);
+    check(true, 'lists page follows changes made elsewhere');
+    await browser.evaluate(`[...document.querySelectorAll('section[data-list="whitelistedDomains"] tbody tr')]
+      .find(row => row.cells[0].textContent === 'shop.paused-parent.example').querySelector('button').click()`, listsPage);
+    await until(browser, `${rowsOf('whitelistedDomains')} === 1`, listsPage);
+    check(JSON.stringify((await state()).settings.whitelistedDomains) === '["paused-parent.example"]', 'lists page removes exactly one entry, not its parent');
+    await browser.evaluate(`(document.getElementById('filter').value = 'a-ads', document.getElementById('filter').dispatchEvent(new Event('input')), true)`, listsPage);
+    check(await browser.evaluate(`document.querySelectorAll('#siteHosts tbody tr').length === 1 && ${rowsOf('allowedDomains')} === 0 &&
+      document.getElementById('notice').hidden && document.documentElement.scrollWidth <= innerWidth`, listsPage),
+      'lists page filter narrows every table, with no error or horizontal overflow');
+    await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'lists-allow.example' });
+    await send({ type: 'REMOVE_PAUSED_SITE', domain: 'paused-parent.example' });
 
     await send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
     check((await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).length === 0, 'master pause disables all static rules');
