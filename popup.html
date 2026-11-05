@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlockAds Shield</title>
+  <title>Module Engine</title>
+  <link rel="stylesheet" href="ui.css" />
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
@@ -11,160 +12,203 @@
     <!-- Header -->
     <header class="header">
       <div class="brand">
-        <img src="icons/icon48.png" alt="Shield" class="brand-icon" />
+        <img src="icons/icon48.png" alt="" class="brand-icon" />
         <div>
-          <h1 class="brand-title">BlockAds Shield</h1>
+          <h1 class="brand-title">Module Engine</h1>
           <span class="brand-subtitle" id="statusText" role="status" aria-live="polite">Checking protection…</span>
         </div>
       </div>
-      <label class="switch" title="Master Protection Switch">
-        <input type="checkbox" id="masterToggle" aria-label="Enable protection" disabled />
-        <span class="slider"></span>
+      <label class="master" for="masterToggle">
+        <span id="masterState" class="master-state" aria-hidden="true"></span>
+        <input type="checkbox" id="masterToggle" class="switch-lg" title="Ad-blocking module switch" aria-label="Enable ad blocking" disabled />
       </label>
     </header>
 
-    <p id="errorPanel" class="notice error-notice" role="alert" hidden></p>
-    <button id="retryButton" type="button" class="btn-site" hidden>Retry protection check</button>
-    <p id="savedWarning" class="notice" role="status" hidden></p>
+    <div class="messages">
+      <p id="errorPanel" class="notice error-notice" role="alert" hidden></p>
+      <button id="retryButton" type="button" hidden>Retry protection check</button>
+      <p id="savedWarning" class="notice" role="status" hidden></p>
+    </div>
 
-    <!-- Current Site Card -->
-    <section class="card site-card" id="siteSection">
-      <div class="site-info">
-        <span class="site-label">Current Website</span>
-        <span class="site-domain" id="currentDomain">Loading...</span>
-      </div>
-      <button type="button" class="btn-site" id="siteWhitelistBtn" disabled>
-        Pause on this site
-      </button>
-    </section>
-    <p id="siteScope" class="scope-note"></p>
-
-    <!-- Per-site pop-up blocking -->
-    <section class="card">
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Block pop-ups on this site</span>
-          <span class="layer-desc" id="popupScope">Stops new windows and disguised links to other sites</span>
+    <div class="scroll">
+      <!-- Current site -->
+      <section class="site" id="siteSection" aria-label="Current website">
+        <div class="site-top">
+          <div class="site-name">
+            <span class="eyebrow">This site</span>
+            <span class="site-domain" id="currentDomain">Loading...</span>
+          </div>
+          <span id="siteBadge" class="badge" hidden></span>
         </div>
-        <label class="switch switch-sm">
+        <div class="site-actions">
+          <!-- No whitespace between the parts: tests and scripts read the button text. -->
+          <button type="button" class="btn-site" id="siteWhitelistBtn" disabled><span class="ic ic-pause" aria-hidden="true"></span><span class="ic ic-play" aria-hidden="true"></span><span id="siteWhitelistLabel">Pause on this site</span></button>
+          <button type="button" class="btn-site" id="pickElement" disabled><span class="ic ic-target" aria-hidden="true"></span><span>Pick an element to hide</span></button>
+        </div>
+        <p id="pickerError" class="notice error-notice" role="alert" hidden></p>
+        <div class="layer-row">
+          <div class="layer-info">
+            <span class="layer-name">Block pop-ups on this site</span>
+            <span class="layer-desc" id="popupScope">Stops new windows and disguised links to other sites</span>
+          </div>
           <input type="checkbox" id="togglePopups" aria-label="Block pop-ups on this site" disabled />
-          <span class="slider"></span>
-        </label>
-      </div>
-    </section>
-
-    <!-- Protection Layers -->
-    <section class="card">
-      <h2 class="section-title">Protection Layers</h2>
-
-      <p class="scope-note">Local filters. Reported threats use dated security reports; ad and tracker membership is not a malware verdict.</p>
-
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Ad Networks &amp; Pop-unders</span>
-          <span class="layer-desc">Blocks banner ads, video ads &amp; pop-up scripts</span>
         </div>
-        <label class="switch switch-sm">
-          <input type="checkbox" id="toggleAds" aria-label="Block ad networks" disabled />
-          <span class="slider"></span>
-        </label>
-      </div>
+        <p id="siteScope" class="scope-note"></p>
+      </section>
 
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Trackers &amp; Fingerprinting</span>
-          <span class="layer-desc">Blocks cross-site analytics &amp; session recorders</span>
+      <div class="tabs">
+        <div class="tab-track" role="tablist" aria-label="Popup sections">
+          <button type="button" role="tab" id="tabFilters" aria-controls="panelFilters" aria-selected="true">Filters</button>
+          <button type="button" role="tab" id="tabDomains" aria-controls="panelDomains" aria-selected="false" tabindex="-1">Domains <span id="domainCount" class="tab-count"></span></button>
         </div>
-        <label class="switch switch-sm">
-          <input type="checkbox" id="toggleTrackers" aria-label="Block trackers" disabled />
-          <span class="slider"></span>
-        </label>
       </div>
 
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Reported Threats</span>
-          <span class="layer-desc" id="threatStatus" role="status">Checking dated evidence…</span>
-        </div>
-        <label class="switch switch-sm">
-          <input type="checkbox" id="toggleThreats" aria-label="Block reported threats" disabled />
-          <span class="slider"></span>
-        </label>
+      <!-- Filters -->
+      <div class="panel" id="panelFilters" role="tabpanel" aria-labelledby="tabFilters">
+        <section class="group">
+          <h2 class="eyebrow">Network</h2>
+          <div class="rows">
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Ad Networks &amp; Pop-unders</span>
+                <span class="layer-desc">Blocks banner ads, video ads &amp; pop-up scripts</span>
+              </div>
+              <input type="checkbox" id="toggleAds" aria-label="Block ad networks" disabled />
+            </div>
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Trackers &amp; Fingerprinting</span>
+                <span class="layer-desc">Blocks cross-site analytics &amp; session recorders</span>
+              </div>
+              <input type="checkbox" id="toggleTrackers" aria-label="Block trackers" disabled />
+            </div>
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Reported Threats</span>
+                <span class="layer-desc" id="threatStatus" role="status">Checking dated evidence…</span>
+              </div>
+              <input type="checkbox" id="toggleThreats" aria-label="Block reported threats" disabled />
+            </div>
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Community Lists</span>
+                <span class="layer-desc" id="communityStatus">EasyList snapshots</span>
+              </div>
+              <input type="checkbox" id="toggleCommunity" aria-label="Use community filter lists" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="eyebrow">Page</h2>
+          <div class="rows">
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Cosmetic Element Hiding</span>
+                <a class="layer-desc layer-link" href="lists.html#pageHiding" target="_blank">Manage hiding rules and site exceptions</a>
+              </div>
+              <input type="checkbox" id="toggleCosmetic" aria-label="Hide matching ad elements" disabled />
+            </div>
+            <div class="layer-row sub">
+              <div class="layer-info">
+                <span class="layer-name">Generic Cosmetic Filters</span>
+                <span class="layer-desc">Common ad containers across sites</span>
+              </div>
+              <input type="checkbox" id="toggleGenericCosmetic" aria-label="Use generic cosmetic filters" disabled />
+            </div>
+            <div class="layer-row sub">
+              <div class="layer-info">
+                <span class="layer-name">Advanced Page Hiding</span>
+                <span class="layer-desc">Finds ads by text and page structure</span>
+              </div>
+              <input type="checkbox" id="toggleProcedural" aria-label="Use advanced page hiding" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="eyebrow">Review</h2>
+          <div class="rows">
+            <div class="layer-row">
+              <div class="layer-info">
+                <span class="layer-name">Flag Suspected Ads</span>
+                <a class="layer-desc layer-link" id="flagStatus" href="lists.html#flags" target="_blank">Flags ad-like servers that got through, for you to review</a>
+              </div>
+              <input type="checkbox" id="toggleFlags" aria-label="Flag suspected ads for review" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="eyebrow">Other modules</h2>
+          <a class="module-link" href="manager.html" target="_blank">
+            <span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>
+            <span class="layer-info">
+              <span class="layer-name">Userscripts</span>
+              <span class="layer-desc" id="scriptStatus">Run your own scripts on the sites you choose</span>
+            </span>
+            <span class="go" aria-hidden="true">Manage<span class="ic ic-chevron"></span></span>
+          </a>
+        </section>
+
+        <p class="scope-note">Local filters. Reported threats use dated security reports; ad and tracker membership is not a malware verdict.</p>
       </div>
 
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Community Lists</span>
-          <span class="layer-desc" id="communityStatus">EasyList snapshots</span>
-        </div>
-        <label class="switch switch-sm">
-          <input type="checkbox" id="toggleCommunity" aria-label="Use community filter lists" disabled />
-          <span class="slider"></span>
-        </label>
+      <!-- Domains -->
+      <div class="panel" id="panelDomains" role="tabpanel" aria-labelledby="tabDomains" hidden>
+        <section class="group">
+          <h2 class="eyebrow">Custom blocked domains</h2>
+          <form id="customBlockForm" class="custom-form">
+            <input
+              type="text"
+              id="customDomainInput"
+              aria-label="Hostname or URL to block"
+              maxlength="2048"
+              disabled
+              placeholder="e.g. shady-ads.example.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="submit" class="btn-add" disabled>Block</button>
+          </form>
+          <ul id="customDomainList" class="domain-list"></ul>
+        </section>
+
+        <section class="group">
+          <h2 class="eyebrow">Always allowed domains</h2>
+          <p class="scope-note">Never blocked by the ad, tracker or community lists. Reported threats and custom blocks still apply.</p>
+          <form id="allowForm" class="custom-form">
+            <input
+              type="text"
+              id="allowDomainInput"
+              aria-label="Hostname or URL to always allow"
+              maxlength="2048"
+              disabled
+              placeholder="e.g. translate.googleapis.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="submit" class="btn-add" disabled>Allow</button>
+          </form>
+          <ul id="allowDomainList" class="domain-list"></ul>
+        </section>
       </div>
-
-      <div class="layer-row">
-        <div class="layer-info">
-          <span class="layer-name">Cosmetic Element Hiding</span>
-          <span class="layer-desc">Hides elements matching the cosmetic filters</span>
-        </div>
-        <label class="switch switch-sm">
-          <input type="checkbox" id="toggleCosmetic" aria-label="Hide matching ad elements" disabled />
-          <span class="slider"></span>
-        </label>
-      </div>
-    </section>
-
-    <!-- Custom Domain Blocker -->
-    <section class="card">
-      <h2 class="section-title">Custom Blocked Domains</h2>
-      <form id="customBlockForm" class="custom-form">
-        <input
-          type="text"
-          id="customDomainInput"
-          aria-label="Hostname or URL to block"
-          maxlength="2048"
-          disabled
-          placeholder="e.g. shady-ads.example.com"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button type="submit" class="btn-add" disabled>Block</button>
-      </form>
-      <ul id="customDomainList" class="domain-list"></ul>
-    </section>
-
-    <!-- Always Allowed Domains -->
-    <section class="card">
-      <h2 class="section-title">Always Allowed Domains</h2>
-      <p class="scope-note">Never blocked by the ad, tracker or community lists. Reported threats and custom blocks still apply.</p>
-      <form id="allowForm" class="custom-form">
-        <input
-          type="text"
-          id="allowDomainInput"
-          aria-label="Hostname or URL to always allow"
-          maxlength="2048"
-          disabled
-          placeholder="e.g. translate.googleapis.com"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button type="submit" class="btn-add" disabled>Allow</button>
-      </form>
-      <ul id="allowDomainList" class="domain-list"></ul>
-    </section>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
-      <span class="footer-links">
-        <a id="listsLink" class="footer-link" href="lists.html" target="_blank">My lists</a>
-        <a id="logLink" class="footer-link" href="log.html" target="_blank">Activity log</a>
-      </span>
-      <span>100% Local &bull; Zero Telemetry &bull; Manifest V3</span>
+      <!-- The page buttons. Each opens its page in a new tab. -->
+      <nav class="launch" aria-label="Module Engine pages">
+        <a id="managerLink" class="button-link" href="manager.html" target="_blank" title="Modules &amp; scripts" aria-label="Modules &amp; scripts"><span class="ic ic-grid" aria-hidden="true"></span>Modules</a>
+        <a id="listsLink" class="button-link" href="lists.html" target="_blank" title="My lists"><span class="ic ic-list" aria-hidden="true"></span>My lists</a>
+        <a id="logLink" class="button-link" href="log.html" target="_blank" title="Activity log"><span class="ic ic-activity" aria-hidden="true"></span>Activity log</a>
+      </nav>
+      <span class="footer-note">Runs on this computer &middot; No Module Engine telemetry</span>
     </footer>
   </div>
 
   <script src="shared.js"></script>
+  <script src="network.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

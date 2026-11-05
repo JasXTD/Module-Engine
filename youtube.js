@@ -1,4 +1,4 @@
-/* BlockAds Shield: YouTube player-response filter (page world).
+/* Module Engine: YouTube player-response filter (page world).
  * YouTube serves video ads from the same hosts as the video itself, so network
  * rules cannot separate them. The player instead reads an ad schedule from its
  * player response; this removes that schedule before the player sees it.

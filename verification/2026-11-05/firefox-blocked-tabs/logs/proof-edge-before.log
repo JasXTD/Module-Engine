@@ -1,0 +1,54 @@
+✖ Firefox rule proof: only the final separator may match URL end (115.328ms)
+✖ Firefox rule precedence: excluded-only resource scope can allow navigation (34.1612ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 605.3259
+
+✖ failing tests:
+
+test at tests\background.test.cjs:946:4
+✖ Firefox rule proof: only the final separator may match URL end (115.328ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   20
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\background.test.cjs:950:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 20 ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\background.test.cjs:966:4
+✖ Firefox rule precedence: excluded-only resource scope can allow navigation (34.1612ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   20
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\background.test.cjs:971:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 20 ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

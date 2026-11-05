@@ -1,0 +1,186 @@
+{
+  "task": "Automatically close confirmed blocked blank pop-up tabs in Firefox, preserving ad blocking and testing offline",
+  "date": "2026-11-05",
+  "version": "1.9.0",
+  "status": "verified",
+  "changedFiles": [
+    "background.js",
+    "README.md",
+    "tests/background.test.cjs",
+    "tests/blocked-tabs-browser.cjs",
+    "tests/browser-smoke.cjs"
+  ],
+  "preExistingChangesPreserved": true,
+  "taskOnlyPatch": "task.patch",
+  "manifestAndPermissionsUnchanged": true,
+  "implementation": {
+    "firefox": "Native first-navigation NS_ERROR_ABORT plus a conservative check of enabled static, dynamic and session DNR rules; disabled rules, priority, possible exceptions and earlier redirect hops are considered.",
+    "chromium": "Existing native matched-rule/error correlation remains active for unpacked Chrome and Edge.",
+    "safeguards": "Native opener required; first HTTP(S) navigation only; pin, loaded response, repurposed tab, new request, expiry or rule update cancels cleanup. At most 64 candidates, ten seconds lifetime, eight prior redirect hops on Firefox. No page message can authorize closure.",
+    "matching": "Bounded wildcard/separator/URL-anchor matching with a shared 500000-cell work budget. Unknown conditions cannot prove a block; possible overriding actions prevent closure."
+  },
+  "verification": {
+    "node": {
+      "version": "v24.22.1",
+      "passed": 258,
+      "newRegressionCases": 66,
+      "failed": 0,
+      "log": "logs/all-unit.log"
+    },
+    "native": [
+      {
+        "browser": "firefox",
+        "suite": "cleanup",
+        "passed": 28,
+        "version": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "159.0.1",
+          "platformName": "windows",
+          "setWindowRect": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:159.0) Gecko/20100101 Firefox/159.0",
+          "moz:buildID": "20261102144711",
+          "moz:headless": true,
+          "moz:platformVersion": "10.0",
+          "moz:processID": 59028,
+          "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-waFGhp\\profile",
+          "moz:shutdownTimeout": 73000
+        },
+        "artifact": "firefox-cleanup.json",
+        "sha256": "395744998f1bda5b12574ba8bc49f12cd6a3d5fd8e287bb24aa3df72f9f0a03c",
+        "sourceHashesVerified": 28,
+        "debuggingFeedbackDisabled": true,
+        "nativeMatchEventUnavailable": true
+      },
+      {
+        "browser": "firefox",
+        "suite": "blocker",
+        "passed": 533,
+        "version": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "159.0.1",
+          "platformName": "windows",
+          "setWindowRect": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:159.0) Gecko/20100101 Firefox/159.0",
+          "moz:buildID": "20261102144711",
+          "moz:headless": true,
+          "moz:platformVersion": "10.0",
+          "moz:processID": 49904,
+          "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-L2VrT2\\profile",
+          "moz:shutdownTimeout": 73000
+        },
+        "artifact": "firefox-blocker.json",
+        "sha256": "fdc627f8c8b5c596df10e57bf88280b485cb67b48619fc63a1699daae502baa6",
+        "sourceHashesVerified": 35
+      },
+      {
+        "browser": "chrome",
+        "suite": "cleanup",
+        "passed": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/156.0.8078.80",
+          "revision": "@fb096c0011f9d50f0a264a9376420cdea9c421e3",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "jsVersion": "15.6.75.27"
+        },
+        "artifact": "chrome-cleanup.json",
+        "sha256": "f064090b6d721063ad0689bc84b9a51a2d68a83cccb9621c31d6cca88bbbf16e",
+        "sourceHashesVerified": 28
+      },
+      {
+        "browser": "chrome",
+        "suite": "blocker",
+        "passed": 539,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/156.0.8078.80",
+          "revision": "@fb096c0011f9d50f0a264a9376420cdea9c421e3",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "jsVersion": "15.6.75.27"
+        },
+        "artifact": "chrome-blocker.json",
+        "sha256": "e49ed623b4f81dccaf238fde5e2e00d8d55abbccf07b3a284543737c4872c1f3",
+        "sourceHashesVerified": 35
+      },
+      {
+        "browser": "edge",
+        "suite": "cleanup",
+        "passed": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/156.0.4314.58",
+          "revision": "@7806b68d20d1c1273d5b07b4f4de18e8f5852581",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+          "jsVersion": "15.6.12.10"
+        },
+        "artifact": "edge-cleanup.json",
+        "sha256": "56fb6078430cf57d0bcca83ad24990b974a2f34d28be85de3fad25eb200fcb8b",
+        "sourceHashesVerified": 28
+      },
+      {
+        "browser": "edge",
+        "suite": "blocker",
+        "passed": 539,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/156.0.4314.58",
+          "revision": "@7806b68d20d1c1273d5b07b4f4de18e8f5852581",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+          "jsVersion": "15.6.12.10"
+        },
+        "artifact": "edge-blocker.json",
+        "sha256": "3cfafecc2ca1746600771c9115ee2e23339b18e1944acbc1afb487efb53d7cf7",
+        "sourceHashesVerified": 35
+      }
+    ],
+    "syntaxChecks": [
+      "background.js",
+      "tests/blocked-tabs-browser.cjs",
+      "tests/browser-smoke.cjs"
+    ],
+    "diffWhitespaceCheckPassed": true,
+    "finalSourceHashes": {
+      "background.js": "94f05c561253a6c169511f0e7196f3b0a14e42779847b3421d68d5b9c78b9fcc",
+      "README.md": "1fb501a90492fe1cab8e01a81cbcf7de683752bb4452376e8872168c7372b10d",
+      "tests/background.test.cjs": "f5fb3e12996dafe83a7355b0de6d79bcf216dfa4a59ecbd9c8b854d958a1eaac",
+      "tests/blocked-tabs-browser.cjs": "b8840e4fc836919d12e40e22f092d385a13a35be6e069b99f1b16e6dbec42d9b",
+      "tests/browser-smoke.cjs": "493a7edaf6fa17f2976ee05cee8fc440a4de64292f301815820441ebc63d9191",
+      "manifest.json": "2e2f49e7a24117c1c5c3547cebe954d7396be7cb935febc39081df8adaedaf90"
+    }
+  },
+  "offlineSafety": {
+    "profiles": "Fresh disposable profiles only; personal browser profiles were not used or changed.",
+    "traffic": "Owned 127.0.0.1/localhost fixtures; outbound proxy denies without forwarding; speculative networking disabled. No suspicious site was opened or contacted.",
+    "fixtureRules": "Cleanup tests add one loopback block and one loopback exception only to disposable community.json. General blocker tests use the unmodified packaged rules.",
+    "reportedDomain": "s.pemsrv.com was used only as inert unit-test input against the local packaged parent-domain rule, with no DNS or network request.",
+    "installedToolsOrDependencies": [],
+    "firefoxPreferences": "The cleanup suite explicitly disables extensions.dnr.feedback. The existing general blocker suite enables it only inside its disposable profile for rule simulation."
+  },
+  "retainedFailuresAndCorrections": [
+    "Before implementation, the custom-domain and packaged parent-domain Firefox cleanup regressions failed; logs/before-regression.log.",
+    "The first native Firefox harness run failed to locate its already-loaded source tab using tabs.query URL filtering. Polling the native tab list by exact URL resolved it; its unsuccessful evidence is retained.",
+    "Review tests exposed non-final separator end-matching and exclusion-only allow scopes; logs/proof-edge-before.log. Both were corrected before final native validation.",
+    "The first rules-change race test allowed cleanup to finish before the update began. It now deliberately holds the native session-rule read until a successful rule update, then releases it and verifies preservation.",
+    "Edge encountered an EBUSY startup-file read, then a 10-second Windows process-inventory timeout. The harness now retries only ENOENT/EBUSY inside the existing startup bound, permits 30 seconds for inventory, and records cleanup failures without abandoning its fixture shutdown. A read-only native inventory confirmed the timed-out run browser was closed before only its verified hung test runner was stopped. Final Edge cleanup and blocker suites passed."
+  ],
+  "limitations": [
+    "Firefox cleanup is deliberately partial. Regex, initiator/party, response-header and unknown constraints cannot establish a block. Possible overrides, unusual credential/root-dot URLs, matching-budget exhaustion and long redirect chains leave tabs open.",
+    "An earlier redirect exception is conservatively preserved even if the final destination was blocked.",
+    "Existing/no-opener/pinned/loaded tabs are preserved. A blocked link deliberately opened with an opener may also close; native opener data cannot distinguish it from a scripted popup.",
+    "Browser APIs provide no atomic conditional tab removal. Native event invalidation and a final tabs.get check narrow asynchronous races.",
+    "No live-site ad-coverage or malware-classification claim is made. Signed/store installations and a personal Firefox installation were not tested."
+  ],
+  "references": [
+    "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/declarativeNetRequest/RuleCondition",
+    "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/declarativeNetRequest/testMatchOutcome"
+  ],
+  "cleanup": {
+    "pending": false,
+    "success": true,
+    "deletedDirectories": 20,
+    "activeOwnedProfiles": 0,
+    "evidence": "cleanup.json"
+  }
+}

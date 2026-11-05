@@ -1,23 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "BlockAds Shield — Ad & Tracker Filter",
-  "version": "1.3.0",
+  "name": "Module Engine",
+  "version": "1.9.0",
   "minimum_chrome_version": "121",
-  "description": "Local ad, tracker and dated reported-threat filtering, including YouTube video ads. Exact threat hosts expire for review; no remote list downloads.",
+  "description": "Modular local ad and tracker blocking, plus a userscript manager with explicit site scopes and independent controls.",
   "permissions": [
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
     "storage",
     "activeTab",
     "alarms",
-    "scripting"
+    "scripting",
+    "webRequest"
   ],
+  "optional_permissions": ["userScripts"],
+  "options_ui": { "page": "manager.html", "open_in_tab": true },
   "host_permissions": [
     "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "BlockAds Shield",
+    "default_title": "Module Engine",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -31,7 +34,7 @@
   },
   "background": {
     "service_worker": "background.js",
-    "scripts": ["shared.js", "background.js"]
+    "scripts": ["shared.js", "flags.js", "cosmetic.js", "network.js", "modules.js", "userscripts-core.js", "userscripts-runtime.js", "background.js"]
   },
   "declarative_net_request": {
     "rule_resources": [
@@ -60,7 +63,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["cosmetic.js", "procedural.js", "content.js"],
       "run_at": "document_start",
       "all_frames": true
     }

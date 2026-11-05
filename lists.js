@@ -1,4 +1,4 @@
-/* BlockAds lists page: view and edit the person's own domain lists in tables.
+/* Module Engine lists page: view and edit the person's own domain lists in tables.
  * Every change goes through the background's verified settings update; values
  * are only ever set as text. */
 "use strict";
@@ -6,6 +6,7 @@ const api = typeof browser !== "undefined" ? browser : chrome;
 const byId = id => document.getElementById(id);
 // Removal is exact here: one row removes one entry, never a covering parent.
 const LISTS = {
+  cosmeticPausedDomains: { add: domain => ({ type: "SET_SITE_COSMETICS", domain, paused: true }), remove: domain => ({ type: "REMOVE_COSMETIC_SITE", domain }), removeLabel: "Enable hiding" },
   allowedDomains: { add: domain => ({ type: "ADD_ALLOWED_DOMAIN", domain }), remove: domain => ({ type: "REMOVE_ALLOWED_DOMAIN", domain }), removeLabel: "Remove" },
   customBlockedDomains: { add: domain => ({ type: "ADD_CUSTOM_DOMAIN", domain }), remove: domain => ({ type: "REMOVE_CUSTOM_DOMAIN", domain }), removeLabel: "Unblock" },
   whitelistedDomains: { add: domain => ({ type: "SET_SITE_PAUSED", domain, paused: true }), remove: domain => ({ type: "REMOVE_PAUSED_SITE", domain }), removeLabel: "Resume" },
@@ -13,8 +14,65 @@ const LISTS = {
 };
 let settings = null;
 let siteHosts = [];
+let flags = [];
+let reasonText = {};
 let busy = false;
-let refreshPending = false;
+let filterDraftDirty = false;
+let filterDraftBase = "";
+let networkDraftDirty = false;
+let networkDraftBase = "";
+let networkDraftValid = true;
+let threatEvidence = null;
+let threatEvidenceError = '';
+let threatStatus = null;
+let protectionVerified = false;
+
+function renderThreatEvidence(filter) {
+  const section=byId('threatEvidence'), body=section.querySelector('tbody');
+  body.replaceChildren();
+  const status=byId('threatEvidenceStatus');
+  if (!threatEvidence) {
+    status.textContent=threatEvidenceError || 'Reading bundled evidence…';
+    section.querySelector('details').hidden=true;
+    return;
+  }
+  section.querySelector('details').hidden=false;
+  const {catalog,policy}=threatEvidence;
+  section.querySelector('.count').textContent=`(${catalog.domains.length})`;
+  const expired=Date.parse(policy.expiresAt) <= Date.now();
+  if (expired) status.textContent=protectionVerified && threatStatus && !threatStatus.available
+    ? 'Evidence expired. Reported-threat filtering is inactive.'
+    : 'Evidence expired. The reported-threat layer is retired at the next protection check.';
+  else if (!protectionVerified || !threatStatus || threatStatus.error || threatStatus.expiresAt !== policy.expiresAt) status.textContent='Protection status is unavailable or not verified. Evidence remains visible for review.';
+  else if (!settings.enabled || !settings.rulesets.threats_ruleset || !threatStatus.available) status.textContent='Reported-threat filtering is inactive. Evidence remains visible for review.';
+  else status.textContent='Reported-threat rules are enabled; individual site pauses still apply.';
+  byId('threatEvidenceDates').textContent=`Reviewed ${catalog.reviewedOn} · expires ${policy.expiresAt.replace('T',' ').replace('Z',' UTC')}. Observation dates retain the precision of the reports.`;
+  const sources=new Map(catalog.sources.map(source=>[source.id,source]));
+  const shown=catalog.domains.filter(item=>matches([item.host,item.host.replaceAll('.','[.]'),item.observedOn,item.role,item.section,sources.get(item.sourceId).publisher],filter));
+  for (const item of shown) {
+    const row=document.createElement('tr'), source=sources.get(item.sourceId);
+    addCell(row,item.host.replaceAll('.','[.]'));
+    addCell(row,item.observedOn); addCell(row,item.role);
+    const cell=addCell(row,''), link=document.createElement('a');
+    link.textContent=source.publisher; link.href=source.url; link.target='_blank'; link.rel='noopener noreferrer';
+    cell.append(link,document.createTextNode(' · '+source.publishedOn));
+    addCell(row,item.section); body.append(row);
+  }
+  section.querySelector('.empty').hidden=shown.length > 0;
+}
+
+function validateNetworkDraft() {
+  try {
+    const rules = BlockAdsNetwork.parse(byId("networkFilters").value);
+    const blocks = rules.filter(rule => rule.action.type === "block").length;
+    byId("networkStatus").textContent = `Unsaved draft: ${blocks} block rules and ${rules.length - blocks} request exceptions. Save to apply to future requests.`;
+    networkDraftValid = true;
+  } catch (error) {
+    byId("networkStatus").textContent = error.message;
+    networkDraftValid = false;
+  }
+  byId("networkStatus").classList.toggle("filter-error", !networkDraftValid);
+}
 
 function showNotice(text, isError = false) {
   const notice = byId("notice");
@@ -33,8 +91,99 @@ function addCell(row, text) {
   return cell;
 }
 
+function decisionButton(label, title, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.title = title;
+  button.disabled = busy;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+// Block and Allow change the person's lists, then drop the flag they answered.
+async function decide(site, list) {
+  const question = list === "block"
+    ? `Block ${site} and its subdomains on every site?`
+    : `Always allow ${site}? It will not be flagged again.`;
+  if (!confirm(question)) return;
+  const added = await run({ type: list === "block" ? "ADD_CUSTOM_DOMAIN" : "ADD_ALLOWED_DOMAIN", domain: site });
+  if (added) await run({ type: "FLAG_ACTION", site, action: "remove" });
+}
+
+function serverCell(row, flag) {
+  const cell = addCell(row, flag.site);
+  const others = flag.hosts.filter(host => host !== flag.site);
+  if (others.length) {
+    const hosts = document.createElement("div");
+    hosts.className = "muted";
+    hosts.textContent = others.join(", ");
+    cell.append(hosts);
+  }
+  cell.title = flag.samples.length ? `Examples:\n${flag.samples.join("\n")}` : "";
+}
+
+function renderFlags(filter) {
+  const section = byId("flags");
+  const why = flag => flag.reasons.map(reason => reasonText[reason] || reason).join("; ");
+  const visible = flags.filter(flag => matches([flag.site, why(flag), ...flag.hosts, ...flag.pages], filter));
+  const pending = visible.filter(flag => flag.status !== "ignored").sort((a, b) => b.lastSeen - a.lastSeen);
+  const ignored = visible.filter(flag => flag.status === "ignored");
+  const body = byId("flagTable").querySelector("tbody");
+  body.replaceChildren();
+  for (const flag of pending) {
+    const row = document.createElement("tr");
+    serverCell(row, flag);
+    addCell(row, why(flag));
+    addCell(row, flag.pages.join(", "));
+    addCell(row, String(flag.count));
+    addCell(row, new Date(flag.lastSeen).toLocaleString());
+    addCell(row, "").append(
+      decisionButton("Block", `Add ${flag.site} to Custom Blocked Domains`, () => decide(flag.site, "block")),
+      decisionButton("Allow", `Add ${flag.site} to Always Allowed Domains`, () => decide(flag.site, "allow")),
+      decisionButton("Ignore", `Stop flagging ${flag.site} without blocking it`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "ignore" })));
+    body.append(row);
+  }
+  const ignoredBody = byId("ignoredFlags").querySelector("tbody");
+  ignoredBody.replaceChildren();
+  for (const flag of ignored) {
+    const row = document.createElement("tr");
+    serverCell(row, flag);
+    addCell(row, why(flag));
+    addCell(row, flag.pages.join(", "));
+    addCell(row, "").append(decisionButton("Unignore", `Flag ${flag.site} again`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "unignore" })));
+    ignoredBody.append(row);
+  }
+  const waiting = flags.filter(flag => flag.status !== "ignored").length;
+  section.querySelector(".count").textContent = filter ? `(${pending.length} of ${waiting})` : `(${waiting})`;
+  section.querySelector(".empty").hidden = pending.length > 0;
+  byId("ignoredFlags").querySelector(".ignored-count").textContent = `(${ignored.length})`;
+  byId("clearFlags").disabled = busy || !flags.length;
+}
+
 function render() {
   const filter = byId("filter").value.trim().toLowerCase();
+  renderThreatEvidence(filter);
+  if (settings && !networkDraftDirty) {
+    networkDraftBase = settings.customNetworkFilters;
+    if (byId("networkFilters").value !== networkDraftBase) byId("networkFilters").value = networkDraftBase;
+  }
+  byId("networkCount").textContent = settings ? `(${BlockAdsNetwork.parse(settings.customNetworkFilters).length})` : "";
+  byId("networkActivity").textContent = !settings ? "Reading saved filters…" : settings.enabled
+    ? "Saved filters apply to future requests. Reload a page to apply them to resources already loaded."
+    : "Custom request filters are paused with the master switch.";
+  byId("networkFilters").disabled = busy || !settings;
+  byId("saveNetworkFilters").disabled = busy || !settings || !networkDraftDirty || !networkDraftValid;
+  byId("discardNetworkFilters").disabled = busy || !settings || !networkDraftDirty;
+  if (settings && !filterDraftDirty) {
+    filterDraftBase = settings.customCosmeticFilters;
+    if (byId("customFilters").value !== filterDraftBase) byId("customFilters").value = filterDraftBase;
+  }
+  byId("genericCosmetics").checked = Boolean(settings?.genericCosmeticFiltering);
+  byId("proceduralFiltering").checked = Boolean(settings?.proceduralFiltering);
+  for (const id of ["genericCosmetics", "proceduralFiltering", "customFilters"]) byId(id).disabled = busy || !settings;
+  for (const id of ["saveFilters", "discardFilters"]) byId(id).disabled = busy || !settings || !filterDraftDirty;
+  renderFlags(filter);
   for (const section of document.querySelectorAll("section[data-list]")) {
     const key = section.dataset.list;
     const entries = settings?.[key] || [];
@@ -71,28 +220,59 @@ function render() {
   hostSection.querySelector(".empty").hidden = shownHosts.length > 0;
 }
 
-async function run(message) {
-  if (busy) return false;
+// Commands run one at a time, in order. They queue rather than being dropped, so
+// a two-step decision (block, then remove the flag) survives a refresh that a
+// list change triggers in between.
+let pending = 0;
+let queue = Promise.resolve();
+function run(message) {
+  pending++;
   busy = true;
   render();
-  let ok = false;
+  const result = queue.then(() => execute(message)).finally(() => {
+    busy = --pending > 0;
+    render();
+  });
+  queue = result.catch(() => {});
+  return result;
+}
+
+async function execute(message) {
   try {
     const response = await api.runtime.sendMessage(message);
     if (response?.settings) settings = response.settings;
+    if (response?.threatStatus) threatStatus = response.threatStatus;
+    if (response?.threatStatus || !response?.ok) protectionVerified = Boolean(response?.ok);
+    if (response?.flags) {
+      flags = response.flags;
+      flagRefresh++; // a refresh started before this change would be stale
+    }
+    if (response?.reasons) reasonText = response.reasons;
     if (!response?.ok) throw new Error(response?.error || "The extension did not return a verified state.");
     showNotice("");
-    ok = true;
+    return true;
   } catch (error) {
+    protectionVerified = false;
     showNotice(error.message || String(error), true);
-  } finally {
-    busy = false;
-    render();
-    if (refreshPending) {
-      refreshPending = false;
-      void run({ type: "GET_STATE" });
-    }
+    return false;
   }
-  return ok;
+}
+
+// Flags change about once a second while browsing. Refresh them without the busy
+// state, so buttons never flicker disabled and swallow a click; newest result wins.
+let flagRefresh = 0;
+async function refreshFlags() {
+  const id = ++flagRefresh;
+  try {
+    const response = await api.runtime.sendMessage({ type: "GET_FLAGS" });
+    if (!response?.ok) throw new Error(response?.error || "The extension did not return the flags.");
+    if (id !== flagRefresh) return;
+    flags = response.flags;
+    reasonText = response.reasons;
+    render();
+  } catch (error) {
+    if (id === flagRefresh) showNotice(`Could not read the flags: ${error.message || error}`, true);
+  }
 }
 
 for (const section of document.querySelectorAll("section[data-list]")) {
@@ -104,14 +284,94 @@ for (const section of document.querySelectorAll("section[data-list]")) {
   });
 }
 byId("filter").addEventListener("input", render);
-// Changes made in the popup or another page appear here too.
+byId("networkFilters").addEventListener("input", () => {
+  networkDraftDirty = true;
+  validateNetworkDraft(); render();
+});
+byId("discardNetworkFilters").addEventListener("click", () => {
+  networkDraftDirty = false; networkDraftValid = true;
+  byId("networkStatus").classList.remove("filter-error");
+  byId("networkStatus").textContent = "Loaded the saved network filters.";
+  render();
+});
+byId("saveNetworkFilters").addEventListener("click", async () => {
+  if (busy || !settings || !networkDraftDirty) return;
+  validateNetworkDraft();
+  if (!networkDraftValid) { render(); return; }
+  const text = byId("networkFilters").value;
+  if (await run({ type: "SAVE_NETWORK_FILTERS", text, previous: networkDraftBase })) {
+    networkDraftDirty = false;
+    byId("networkStatus").textContent = "Network filters saved and verified. Reload affected pages.";
+    byId("networkStatus").classList.remove("filter-error");
+    render();
+  } else {
+    byId("networkStatus").textContent = byId("notice").textContent;
+    byId("networkStatus").classList.add("filter-error");
+  }
+});
+byId("genericCosmetics").addEventListener("change", () => run({ type: "UPDATE_SETTINGS", patch: { genericCosmeticFiltering: byId("genericCosmetics").checked } }));
+byId("proceduralFiltering").addEventListener("change", () => run({ type: "UPDATE_SETTINGS", patch: { proceduralFiltering: byId("proceduralFiltering").checked } }));
+byId("customFilters").addEventListener("input", () => {
+  filterDraftDirty = true;
+  byId("filterStatus").textContent = "Unsaved draft. Save to apply it to open pages.";
+  render();
+});
+byId("discardFilters").addEventListener("click", () => {
+  filterDraftDirty = false;
+  byId("filterStatus").textContent = "Loaded the saved filters.";
+  render();
+});
+byId("saveFilters").addEventListener("click", async () => {
+  const text = byId("customFilters").value;
+  try {
+    const probe = document.createDocumentFragment();
+    const rules = BlockAdsCosmetic.parse(text, selector => {
+      try { probe.querySelector(selector); return true; } catch { return false; }
+    });
+    if (await run({ type: "SAVE_COSMETIC_FILTERS", text, previous: filterDraftBase })) {
+      filterDraftDirty = false;
+      byId("filterStatus").textContent = `Saved ${rules.length} rules. Open pages update automatically.`;
+      render();
+    } else byId("filterStatus").textContent = byId("notice").textContent;
+  } catch (error) { byId("filterStatus").textContent = error.message; }
+});
+byId("clearFlags").addEventListener("click", () => {
+  if (confirm("Clear every flag, including ignored servers? Nothing is blocked or allowed by this.")) void run({ type: "FLAG_ACTION", action: "clear" });
+});
+// Changes made in the popup, another page or by browsing appear here too.
 api.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !Object.keys(LISTS).some(key => key in changes)) return;
-  if (busy) refreshPending = true;
-  else void run({ type: "GET_STATE" });
+  if (area !== "local") return;
+  if ("adFlags" in changes) void refreshFlags();
+  if (changes.protectionError?.newValue) { protectionVerified=false; render(); }
+  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
 });
 (async () => {
   render();
+  try {
+    const files=await Promise.all(['threat-evidence.json','threats.json','threat-policy.json'].map(async file=>{
+      const response=await fetch(api.runtime.getURL('rules/'+file));
+      if (!response.ok) throw new Error(`Could not read ${file}.`);
+      return new Uint8Array(await response.arrayBuffer());
+    }));
+    threatEvidence=await BlockAdsEvidence.verify(...files);
+  } catch (error) { threatEvidenceError='Evidence details unavailable: '+error.message; }
+  render();
+  // Refresh the display at the evidence deadline, even while this page is idle.
+  const expiry=Date.parse(threatEvidence?.policy.expiresAt);
+  if (Number.isFinite(expiry) && expiry > Date.now()) {
+    const refreshExpiry=()=>{
+      const delay=expiry-Date.now();
+      if (delay <= 0) { render(); void run({type:'GET_STATE'}); }
+      else setTimeout(refreshExpiry,Math.min(delay,2147483647));
+    };
+    refreshExpiry();
+  }
+  try {
+    const response = await fetch(api.runtime.getURL("rules/community-info.json"));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const info = await response.json();
+    byId("cosmeticSummary").textContent = `${(info.genericCosmeticSelectors || 0).toLocaleString()} generic selectors · ${(info.cosmeticSelectors || 0).toLocaleString()} site selectors · ${(info.proceduralCosmeticRules || 0).toLocaleString()} advanced rules. Site exceptions are respected.`;
+  } catch { byId("cosmeticSummary").textContent = "Bundled coverage details are unavailable. Rebuild the rules and reload Module Engine."; }
   try {
     const response = await fetch(api.runtime.getURL("rules/site-ad-hosts-info.json"));
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -121,7 +381,8 @@ api.storage.onChanged.addListener((changes, area) => {
   } catch (error) {
     siteHosts = [];
     // Say so, rather than presenting a read failure as an empty list.
-    byId("siteHosts").querySelector(".empty").textContent = `Could not read the site-check hosts (${error.message || error}). Rebuild the rules and reload BlockAds.`;
+    byId("siteHosts").querySelector(".empty").textContent = `Could not read the site-check hosts (${error.message || error}). Rebuild the rules and reload Module Engine.`;
   }
   await run({ type: "GET_STATE" });
+  await refreshFlags();
 })();

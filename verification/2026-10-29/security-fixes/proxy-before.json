@@ -1,0 +1,69 @@
+{
+  "browser": "chrome",
+  "startedAt": "2026-10-29T15:58:22.417Z",
+  "checks": [],
+  "canaryHits": [
+    "/certificate.cer"
+  ],
+  "canaryConnections": 2,
+  "denied": [
+    "http:clients2.google.com",
+    "www.gstatic.com",
+    "www.google.com",
+    "update.googleapis.com",
+    "http:update.googleapis.com",
+    "accounts.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com",
+    "www.google.com"
+  ],
+  "unexpectedAllowed": [],
+  "upstreamAttempts": [],
+  "dnsQueries": [
+    "www.gstatic.com.",
+    "www.google.com.",
+    "update.googleapis.com.",
+    "accounts.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com.",
+    "www.google.com."
+  ],
+  "policy": "Offline test of live-public routing: local canaries only, fake DNS returns loopback, every upstream connection forbidden",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/156.0.8078.48",
+    "revision": "@d0c02bfad08ec92a6ffcf989e53cd995e6381a4c",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "jsVersion": "15.6.75.19"
+  },
+  "launch": {
+    "transport": "pipe",
+    "launcherPid": 157848,
+    "browserPid": 157848,
+    "relaunched": false
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Live launcher bypassed its proxy for 127.0.0.1\n\n1 !== 0\n\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\live-network-browser.cjs:50:14\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "cleanup": {
+    "browserPid": 157848,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finishedAt": "2026-10-29T15:58:24.046Z"
+}

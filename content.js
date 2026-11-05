@@ -1,5 +1,5 @@
 /**
- * BlockAds Shield — Cosmetic Filter & Malvertising Overlay Blocker
+ * Module Engine — Cosmetic Filter & Malvertising Overlay Blocker
  * Hides leftover ad containers, sponsored widgets, and deceptive ad overlays.
  * Respects per-site whitelist and global toggle immediately.
  */
@@ -8,6 +8,17 @@
   const api = typeof browser !== "undefined" ? browser : chrome;
   const STYLE_ID = "blockads-cosmetic-shield";
   let evaluation = 0;
+  let popupGuardRequested = false;
+  let popupGuardRequesting = false;
+  const proceduralShield = BlockAdsProcedural.create({
+    document,
+    isAlive: () => { try { return Boolean(api.runtime.id); } catch { return false; } },
+    onProblem: (kind, error) => {
+      if (kind === 'error') console.error('[Module Engine] Advanced page hiding failed:', error);
+      else console.warn('[Module Engine] Advanced page hiding:', kind === 'limit' ? 'Stopped for this page after reaching a scan limit; ordinary CSS and network filtering remain active.' : 'Some filters are unsupported by this browser.');
+      try { api.runtime.sendMessage({ type: 'LOG_EVENT', event: `procedural-filter-${kind}` }).catch(() => {}); } catch {}
+    }
+  });
 
   // Site-specific selectors apply only on their own site, so another site's
   // similarly named content is safe.
@@ -125,13 +136,22 @@
     return lastCss;
   }
 
-  function applyCosmeticShield(shouldEnable, selectors) {
+  function applyCosmeticShield(state) {
     const existing = document.getElementById(STYLE_ID);
-    if (!shouldEnable) {
+    if (!state.enabled) {
       existing?.remove();
       return;
     }
-    const css = COSMETIC_CSS + SITE_COSMETIC_CSS + siteListCss(selectors);
+    const exceptions = new Set(state.exceptions || []);
+    // These bundled CSS blocks contain only a selector list and one declaration
+    // block. Split the lists so site exceptions also cover our built-in selectors.
+    const selectorsOf = css => css.replace(/\/\*[\s\S]*?\*\//g, "").split("{")[0].split(",").map(s => s.trim()).filter(Boolean);
+    const base = state.disableGeneric ? [] : selectorsOf(COSMETIC_CSS).filter(selector => !exceptions.has(selector));
+    // Retain the built-in visibility/size/pointer protections as well as display.
+    // A site's own display rule must not undo the existing extra safeguards.
+    const baseCss = base.length ? base.join(",\n") + COSMETIC_CSS.slice(COSMETIC_CSS.indexOf("{")) : "";
+    const selectors = [...selectorsOf(SITE_COSMETIC_CSS), ...state.siteSelectors || [], ...state.genericSelectors || []];
+    const css = baseCss + siteListCss([...new Set(selectors)].filter(selector => !exceptions.has(selector)));
     if (existing) {
       if (existing.textContent !== css) existing.textContent = css;
       return;
@@ -184,40 +204,103 @@
 
   async function evaluateAndApply() {
     const version = ++evaluation;
+    const installPopupGuard = !popupGuardRequested && !popupGuardRequesting;
+    if (installPopupGuard) popupGuardRequesting = true;
     try {
-      const state = await api.runtime.sendMessage({ type: "GET_COSMETIC_STATE" });
+      const state = await api.runtime.sendMessage({
+        type: "GET_COSMETIC_STATE", installPopupGuard
+      });
+      if (state?.popupGuard) popupGuardRequested = true;
       if (version !== evaluation) return;
       if (!state?.ok) throw new Error(state?.error || "No cosmetic filtering state returned.");
-      applyCosmeticShield(state.enabled, state.siteSelectors);
+      applyCosmeticShield(state);
+      proceduralShield.setRules(state.enabled && !state.disableAll && state.procedural !== false ? state.proceduralRules || [] : []);
       setVideoAdSkipping(Boolean(state.ads));
+      setAdSignScanning(Boolean(state.flag));
     } catch (error) {
       // Existing tabs may retain an invalidated context after extension reload.
       // Leave their current style intact and make the unavailable refresh visible.
-      console.warn("[BlockAds] Cosmetic settings unavailable; reload this page:", error.message);
+      console.warn("[Module Engine] Cosmetic settings unavailable; reload this page:", error.message);
+    } finally {
+      if (installPopupGuard) popupGuardRequesting = false;
     }
   }
 
-  // popups.js (page world, only on sites with pop-up blocking) reports each block
-  // as a hostname. Forward a limited number to the activity log; the background
-  // ignores reports from sites without pop-up blocking.
-  let popupReports = 0;
-  let lastPopupReport = 0;
-  document.addEventListener("blockads-popup-blocked", event => {
-    const now = Date.now();
-    if (popupReports >= 20 || now - lastPopupReport < 1000) return;
-    popupReports++;
-    lastPopupReport = now;
-    const host = typeof event.detail === "string" ? event.detail.slice(0, 253) : "";
-    try { api.runtime.sendMessage({ type: "LOG_EVENT", event: "popup-blocked", host }).catch(() => {}); } catch {}
-  });
+  // Flagging: report ad-looking page elements that were not hidden or blocked.
+  // Runs once per page, in the top frame, a few seconds after load. The background
+  // keeps only third-party addresses and decides nothing is blocked.
+  const AD_SIZES = [[300, 250], [336, 280], [728, 90], [970, 90], [970, 250], [160, 600], [120, 600],
+    [300, 600], [320, 50], [320, 100], [300, 50], [468, 60], [250, 250], [200, 200]];
+  const AD_LABEL = /^(ad|ads|advertisement|sponsored|promoted|广告|廣告|赞助|贊助|推广|推廣)$/i;
+  let flagScanDone = false;
+  function scanForAdSigns() {
+    if (flagScanDone || window !== window.top || !document.body) return;
+    flagScanDone = true;
+    const items = [];
+    for (const frame of document.querySelectorAll("iframe[src]")) {
+      const { width, height } = frame.getBoundingClientRect();
+      if (AD_SIZES.some(([w, h]) => Math.abs(width - w) <= 2 && Math.abs(height - h) <= 2)) items.push({ url: frame.src, reason: "ad-size-frame" });
+    }
+    let checked = 0;
+    for (const element of document.body.querySelectorAll("span, div, p, small, a, b, i, em, strong, label, ins")) {
+      if (++checked > 3000 || items.length >= 20) break;
+      if (element.childElementCount || !AD_LABEL.test(element.textContent.trim())) continue;
+      // The labelled ad is usually a frame, link or image within a few levels.
+      let box = element.parentElement;
+      for (let depth = 0; box && depth < 3; depth++, box = box.parentElement) {
+        const target = box.querySelector("iframe[src], a[href^='http'], img[src^='http']");
+        if (target) { items.push({ url: target.src || target.href, reason: "ad-label" }); break; }
+      }
+    }
+    if (items.length) {
+      try { api.runtime.sendMessage({ type: "FLAG_CANDIDATES", items: items.slice(0, 20) }).catch(() => {}); } catch {}
+    }
+  }
+  let flagScanScheduled = false;
+  let flagScanTimer = null;
+  let flagScanLoadListener = null;
+  function armAdSignScan() {
+    flagScanLoadListener = null;
+    flagScanTimer = setTimeout(() => {
+      flagScanTimer = null;
+      flagScanScheduled = false;
+      scanForAdSigns();
+    }, 3000);
+  }
+  function scheduleAdSignScan() {
+    // Settings are re-evaluated several times per page; schedule the scan once.
+    if (flagScanDone || flagScanScheduled) return;
+    flagScanScheduled = true;
+    if (document.readyState === "complete") armAdSignScan();
+    else {
+      flagScanLoadListener = armAdSignScan;
+      window.addEventListener("load", flagScanLoadListener, { once: true });
+    }
+  }
+  function cancelAdSignScan() {
+    if (flagScanTimer !== null) clearTimeout(flagScanTimer);
+    if (flagScanLoadListener) window.removeEventListener("load", flagScanLoadListener);
+    flagScanTimer = null;
+    flagScanLoadListener = null;
+    flagScanScheduled = false;
+  }
+  function setAdSignScanning(enabled) {
+    if (enabled) scheduleAdSignScan();
+    else cancelAdSignScan();
+  }
 
   evaluateAndApply();
   document.addEventListener("DOMContentLoaded", evaluateAndApply, { once: true });
+  window.addEventListener('pagehide', event => {
+    if (event.isTrusted) { evaluation++; proceduralShield.clear(); }
+  });
+  window.addEventListener('pageshow', event => { if (event.isTrusted) void evaluateAndApply(); });
 
   // React immediately when user toggles settings in the popup
   if (api.storage && api.storage.onChanged) {
     api.storage.onChanged.addListener((changes, area) => {
-      if (area === "local" && ["enabled", "rulesets", "cosmeticFiltering", "whitelistedDomains"].some(key => key in changes)) evaluateAndApply();
+      if (area === "local" && ["enabled", "rulesets", "cosmeticFiltering", "flagSuspects",
+        "whitelistedDomains", "popupBlockedDomains", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "cosmeticPausedDomains"].some(key => key in changes)) evaluateAndApply();
     });
   }
 })();

@@ -8,12 +8,11 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const http = require('node:http');
-const net = require('node:net');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const { createHash } = require('node:crypto');
 const { chromium } = require('./browser-smoke.cjs');
+const { createLiveProxy, NETWORK_POLICY } = require('./live-network.cjs');
 const root = path.resolve(__dirname, '..');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sites = [
@@ -86,56 +85,28 @@ async function main() {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-live-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const evidence = { startedAt: new Date().toISOString(), browser: browserName, headed: true,
     sites: selected, sourceHashes: {}, observations: [], checks: [],
     networkGuard: { allowedServiceDomains: serviceDomains, allowed: {}, denied: {}, errors: [],
-      policy: 'HTTPS CONNECT to named service domains only; no forwarding or DNS for other hosts; downloads denied',
+      policy: NETWORK_POLICY + '; named service domains only; no forwarding or DNS for other hosts; downloads denied',
       limitation: 'Third-party providers outside the allowlist are denied in both phases. Missing ads alone do not prove extension effectiveness.' } };
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css',
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'rules/community-cosmetic.json', 'rules/threat-evidence.json',
     'rules/ads.json', 'rules/trackers.json', 'rules/threats.json', 'rules/threat-policy.json']) {
     evidence.sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
-  const sockets = new Set();
-  const track = socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); return socket; };
   const count = (group, key) => { group[key] = (group[key] || 0) + 1; };
-  const proxy = http.createServer((request, response) => {
-    count(evidence.networkGuard.denied, request.headers.host || 'invalid-http');
-    response.writeHead(403); response.end();
-  });
-  proxy.on('connection', socket => { track(socket); socket.on('error', () => {}); });
-  proxy.on('clientError', (_error, socket) => socket.destroy());
-  proxy.on('connect', (request, client, head) => {
-    const match = /^([a-z0-9.-]+):443$/i.exec(request.url || '');
-    const host = match?.[1].toLowerCase().replace(/\.$/, '');
-    if (!host || prohibited.some(domain => within(host, domain)) || !serviceDomains.some(domain => within(host, domain))) {
-      count(evidence.networkGuard.denied, host || 'invalid-connect');
-      client.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
-      return;
-    }
-    count(evidence.networkGuard.allowed, host);
-    const upstream = track(net.connect({ host, port: 443 }));
-    const timer = setTimeout(() => upstream.destroy(new Error('Upstream connection timeout')), 15000);
-    upstream.once('connect', () => {
-      clearTimeout(timer);
-      client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-      if (head.length) upstream.write(head);
-      client.pipe(upstream); upstream.pipe(client);
-    });
-    upstream.on('error', error => {
-      if (error.code !== 'ECONNRESET') evidence.networkGuard.errors.push({ host, error: error.code || error.message });
-      client.destroy();
-    });
-    upstream.on('close', () => { clearTimeout(timer); client.destroy(); });
-    client.on('close', () => { clearTimeout(timer); upstream.destroy(); });
-  });
+  const guard = createLiveProxy({ prohibited, allowedDomains: serviceDomains,
+    record: (kind, host) => count(evidence.networkGuard[kind], host),
+    onError: (host, error) => evidence.networkGuard.errors.push({ host, error: error.code || error.message }) });
+  const { proxy } = guard;
   proxy.listen(0, '127.0.0.1'); await once(proxy, 'listening');
   let browser;
   console.log(JSON.stringify({ stage: 'starting', output: temporary, sites: selected.map(site => site.name) }));
   try {
-    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless: false });
+    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless: false, networkMode: 'live-public' });
     evidence.version = browser.version; evidence.launch = browser.launch;
     await browser.send('Browser.setDownloadBehavior', { behavior: 'deny', eventsEnabled: true });
     const state = await browser.evaluate(`chrome.runtime.sendMessage({type:'GET_STATE'})`);
@@ -221,8 +192,7 @@ async function main() {
       try { evidence.cleanup = await browser.close(); if (!evidence.cleanup.closed) throw new Error('Isolated browser cleanup failed'); }
       catch (error) { evidence.cleanupError = error.stack; process.exitCode = 1; }
     }
-    for (const socket of sockets) socket.destroy();
-    await new Promise(resolve => proxy.close(resolve));
+    await guard.close();
     evidence.finishedAt = new Date().toISOString();
     await fs.writeFile(path.join(temporary, 'evidence.json'), JSON.stringify(evidence, null, 2));
     console.log(JSON.stringify({ stage: 'finished', completed: evidence.completed || false,

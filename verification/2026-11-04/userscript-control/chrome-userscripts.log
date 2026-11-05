@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 0,
+  "error": "Error: Command failed: taskkill.exe /PID 24184 /T /F\nERROR: Access denied\r\r\n\n    at genericNodeError (node:internal/errors:986:15)\n    at wrappedFn (node:internal/errors:540:14)\n    at ChildProcess.exithandler (node:child_process:417:12)\n    at ChildProcess.emit (node:events:514:28)\n    at maybeClose (node:internal/child_process:1172:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:335:5)",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-Xh1ZsL\\evidence.json"
+}

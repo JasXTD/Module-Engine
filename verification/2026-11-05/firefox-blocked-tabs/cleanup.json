@@ -1,0 +1,29 @@
+{
+  "time": "2026-11-05T13:31:39.2626483Z",
+  "checkedBy": "Native Win32_Process inventory, exact private-profile paths, absolute temp containment and extension identity validation",
+  "activeOwnedProfiles": 0,
+  "deletedCount": 20,
+  "deletedDirectories": [
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-JkZ8Pt",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-GIQEqB",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-grGTTa",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-oc1prV",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-8UrC8u",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-Y5sjgu",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ZfumSm",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-tsWpTa",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-exlFqE",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-KaU2gI",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-s3H8eq",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-W791Iq",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-PMpLii",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-op8x2L",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-mFNCHW",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-waFGhp",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-5qzGG9",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-L2VrT2",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-ff-tabs-probe-AMf2S4",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-ire8S5"
+  ],
+  "success": true
+}

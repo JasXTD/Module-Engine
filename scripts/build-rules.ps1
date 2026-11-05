@@ -101,10 +101,19 @@ try {
     foreach ($name in $sets.Keys) { $outputs[$name] = ConvertTo-Json -InputObject @($sets[$name] | Sort-Object { $_.id }) -Depth 8 }
     $outputs['reviewed-domains.json'] = $catalog.Json
     $outputs['threat-policy.json'] = ConvertTo-Json -InputObject $threats.Policy
+    $evidenceHashes = @{}
+    foreach ($file in @('threats.json','threat-policy.json')) {
+        # Exactly the LF/UTF-8 bytes published by Write-RuleOutputs, including its final newline.
+        $bytes = [Text.Encoding]::UTF8.GetBytes(($outputs[$file] -replace "`r`n", "`n") + "`n")
+        $evidenceHashes[$file] = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+    }
+    $outputs['threat-evidence.json'] = ConvertTo-Json -Depth 8 -InputObject ([ordered]@{
+        schemaVersion=1; rulesSha256=$evidenceHashes['threats.json']; policySha256=$evidenceHashes['threat-policy.json']; catalog=$threats.Evidence
+    })
     # Read-only display data for the extension's lists page (no rules).
     $outputs['site-ad-hosts-info.json'] = ConvertTo-Json -InputObject @($siteHostInfo) -Depth 4
     # EasyList-format snapshots: a separate, switchable layer. Their exceptions may
-    # undo their own blocks only, never BlockAds' ad, tracker or site-check domains.
+    # undo their own blocks only, never Module Engine's ad, tracker or site-check domains.
     $protected = @($catalog.Domains | Where-Object { $_.category -cne 'unverified' } | ForEach-Object domain) + $siteHostDomains
     $community = ConvertFrom-CommunityLists (Read-CommunityListCatalog $CommunityListsPath) $protected
     Test-CommunityRules $community.Rules

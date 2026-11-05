@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 349,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-wWC91B\\evidence.json",
+  "error": "Error: Condition timed out: !document.querySelector(\"[data-blockads-picker]\")?.shadowRoot.getElementById(\"editor\").hidden\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:334:9)\n    at async verifyPicker (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\picker-browser.cjs:113:41)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:706:5"
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "B905C2ABD715A5E966B2945B4BC2E3BDD0939330FFFB1CE5EA78D144CA988120",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\background.js"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "42BB1A5737C8556203A1874B00FE7B2099E5EB5181B0EC2C05F554F39FC7C378",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\README.md"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "378647659EF79E750B4C442B1077E7D77AAE4C8105488DC2480A69FED6F2D29C",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "F7B4C4C9AE8670BE97DCAD4E23D6479EABB68EC1895BDD3F2BDE6C31B858E2EA",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\blocked-tabs-browser.cjs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "2555F921549766ADB38751F5D56DA16CEE59490170E3C2B317152275FA2128C7",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "2E2F49E7A24117C1C5C3547CEBE954D7396BE7CB935FEBC39081DF8ADAEDAF90",
+    "Path": "C:\\Users\\Tommy\\Desktop\\BlockAds\\manifest.json"
+  }
+]

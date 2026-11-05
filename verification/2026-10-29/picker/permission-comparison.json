@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "unchanged": true,
+    "value": [
+      "declarativeNetRequest",
+      "declarativeNetRequestFeedback",
+      "storage",
+      "activeTab",
+      "alarms",
+      "scripting",
+      "webRequest"
+    ]
+  },
+  "optional_permissions": {
+    "unchanged": true,
+    "value": null
+  },
+  "host_permissions": {
+    "unchanged": true,
+    "value": [
+      "<all_urls>"
+    ]
+  },
+  "optional_host_permissions": {
+    "unchanged": true,
+    "value": null
+  },
+  "content_scripts": {
+    "unchanged": true,
+    "value": [
+      {
+        "matches": [
+          "<all_urls>"
+        ],
+        "js": [
+          "cosmetic.js",
+          "procedural.js",
+          "content.js"
+        ],
+        "run_at": "document_start",
+        "all_frames": true
+      }
+    ]
+  },
+  "web_accessible_resources": {
+    "unchanged": true,
+    "value": null
+  }
+}

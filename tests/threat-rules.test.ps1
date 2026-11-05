@@ -25,6 +25,11 @@ $catalog = $original | ConvertFrom-Json -AsHashtable
 $result = Read-ThreatReportCatalog (Join-Path $root 'lists/reported-threats.json') ([DateTimeOffset]'2026-10-18T04:00:00Z')
 Assert-True ($result.Rules.Count -eq 24) '24 independently dated exact hosts'
 Assert-True ($result.Policy.expiresAt -ceq '2026-11-30T00:00:00Z') '90 days from conservative September 1 floor'
+$display = Get-Content -LiteralPath (Join-Path $output 'threat-evidence.json') -Raw | ConvertFrom-Json -AsHashtable
+Assert-True ($display.schemaVersion -eq 1 -and $display.catalog.domains.Count -eq 24) 'display bundle contains only validated reported hosts'
+Assert-True ($display.rulesSha256 -ceq (Get-FileHash -LiteralPath (Join-Path $output 'threats.json')).Hash.ToLowerInvariant()) 'display bundle binds the exact published rule bytes'
+Assert-True ($display.policySha256 -ceq (Get-FileHash -LiteralPath (Join-Path $output 'threat-policy.json')).Hash.ToLowerInvariant()) 'display bundle binds the exact published policy bytes'
+Assert-True ($display.catalog.domains[0].observedOn -ceq $catalog.domains[0].observedOn) 'display retains month-only precision'
 $unverified = (Read-ReviewedDomainCatalog (Join-Path $root 'lists/reviewed-domains.json')).Domains | Where-Object category -CEQ 'unverified'
 foreach ($entry in $unverified) { Assert-True ($entry.domain -cnotin $catalog.domains.host) 'legacy unverified records remain excluded' }
 for ($i = 0; $i -lt $result.Rules.Count; $i++) {

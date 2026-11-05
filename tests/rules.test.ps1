@@ -220,7 +220,9 @@ news.fixture-unit.net#`$#abort-on-property-read ads
         (@($cosmetic.hide['blog.fixture-unit.net']) -join ',') -ceq '#top-banner' -and
         (@($cosmetic.allow['shop.news.fixture-unit.net']) -join ',') -ceq '.side-ad') 'site hiding rules and exceptions are grouped by site'
     Assert-True (!$cosmetic.hide.ContainsKey('skip.fixture-unit.net') -and $allSelectors -notcontains '.generic-ad' -and
-        !($allSelectors -match 'has-text|evil|abort')) 'generic, negated, procedural, unsafe and scriptlet hiding rules are skipped'
+        !($allSelectors -match 'has-text|evil|abort')) 'generic, excluded-scope and procedural rules stay outside the site map; unsafe selectors are skipped'
+    Assert-True ($cosmetic.procedural.Count -eq 1 -and $cosmetic.procedural[0].procedure.ops[0].value -ceq 'Sponsored') 'supported procedures are compiled separately without broadening the CSS map'
+    Assert-True ($cosmetic.generic -contains '.generic-ad' -and $cosmetic.scoped[0].exclude -contains 'skip.fixture-unit.net') 'generic and negated filters retain their proper scopes'
     Assert-True ($info.lists[0].version -ceq '7' -and $info.networkRules -eq $community.Count -and $info.cosmeticSelectors -eq 3) 'snapshot version and counts are recorded'
     foreach ($fault in @('hash','unknown-field','path','source','future','duplicate-id','kind')) {
         $bad = $fixtureList | ConvertTo-Json | ConvertFrom-Json -AsHashtable

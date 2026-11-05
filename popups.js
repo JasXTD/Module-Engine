@@ -1,31 +1,27 @@
-/* BlockAds Shield: pop-up blocker for sites the person selected (page world).
- * background.js registers this file only for those sites. It refuses windows
- * opened by script, synthetic clicks on links to other sites, and clicks on
- * disguised links (invisible or page-covering overlays) to other sites.
- * Ordinary visible links still work. Each block is reported to the isolated
- * content script as a hostname only; nothing leaves the browser.
+/* Module Engine: pop-up blocker for sites the person selected (page world).
+ * background.js registers this file on matching pages and injects it into their
+ * cross-origin child frames. It refuses windows opened by script, synthetic
+ * clicks on links to other hosts, and clicks on disguised links (invisible or
+ * page-covering overlays) to other hosts. Ordinary visible links still work.
  */
 (() => {
   "use strict";
   const patched = new WeakSet();
 
-  function report(url) {
-    let host = "";
-    try { host = new URL(String(url ?? ""), location.href).hostname; } catch {}
-    try { document.dispatchEvent(new CustomEvent("blockads-popup-blocked", { detail: host })); } catch {}
-  }
-
-  // Same site: the registrable name, approximated without a public suffix list.
-  // Two-part suffixes such as com.tw, com.cn, co.uk need a third label.
-  const siteOf = host => {
-    const labels = host.split(".");
-    const twoPart = labels.length > 2 && /^(com|net|org|edu|gov|co|ac|or|ne|go|gob|mil|idv)$/.test(labels.at(-2)) && labels.at(-1).length === 2;
-    return labels.slice(twoPart ? -3 : -2).join(".");
+  // Without a bundled public-suffix list, only an exact host and its parents or
+  // children share a trusted scope. Independent sibling tenants on github.io,
+  // pages.dev and similar platforms must remain separate.
+  const cleanHost = host => String(host).toLowerCase().replace(/\.$/, "");
+  const within = (host, domain) => host === domain || host.endsWith(`.${domain}`);
+  const sameSite = (left, right) => {
+    const first = cleanHost(left);
+    const second = cleanHost(right);
+    return Boolean(first && second && (within(first, second) || within(second, first)));
   };
   function otherSite(href) {
     try {
       const url = new URL(href, location.href);
-      return /^https?:$/.test(url.protocol) && siteOf(url.hostname) !== siteOf(location.hostname);
+      return /^https?:$/.test(url.protocol) && !sameSite(url.hostname, location.hostname);
     } catch {
       return false;
     }
@@ -34,10 +30,11 @@
   function blockOpen(win) {
     try {
       if (!win || patched.has(win) || typeof win.open !== "function") return;
-      win.open = new Proxy(win.open, { apply: (_target, _self, args) => { report(args[0]); return null; } });
+      win.open = new Proxy(win.open, { apply: () => null });
       patched.add(win);
     } catch {
-      // Cross-origin frames cannot be patched (or used by this page's scripts).
+      // Inaccessible window-like objects are ignored. Cross-origin frames receive
+      // their own copy from the extension background.
     }
   }
   blockOpen(window);
@@ -58,12 +55,12 @@
 
   // Script-made clicks on links to another site (link.click() or dispatchEvent).
   HTMLElement.prototype.click = new Proxy(HTMLElement.prototype.click, { apply(target, self, args) {
-    if (self instanceof HTMLAnchorElement && otherSite(self.href)) { report(self.href); return undefined; }
+    if (self instanceof HTMLAnchorElement && otherSite(self.href)) return undefined;
     return Reflect.apply(target, self, args);
   } });
   EventTarget.prototype.dispatchEvent = new Proxy(EventTarget.prototype.dispatchEvent, { apply(target, self, args) {
     const event = args[0];
-    if (self instanceof HTMLAnchorElement && event?.type === "click" && otherSite(self.href)) { report(self.href); return false; }
+    if (self instanceof HTMLAnchorElement && event?.type === "click" && otherSite(self.href)) return false;
     return Reflect.apply(target, self, args);
   } });
 
@@ -84,7 +81,6 @@
     if (!event.isTrusted || disguised(anchor)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      report(anchor.href);
     }
   }, true);
 })();

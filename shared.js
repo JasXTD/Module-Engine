@@ -45,7 +45,29 @@
       .sort((a, b) => a.length - b.length)[0] || "";
   }
 
+  // Security decisions must not collapse independent sibling hosts. Without a
+  // bundled public-suffix list, treat only an exact host and its parents or
+  // children as the same scope. This is deliberately conservative: sibling
+  // subdomains may produce an extra flag, but one tenant can never stand in for
+  // another tenant on a shared host such as github.io or pages.dev.
+  function sameSite(left, right) {
+    const first = String(left).toLowerCase().replace(/\.$/, "");
+    const second = String(right).toLowerCase().replace(/\.$/, "");
+    return Boolean(first && second && (domainMatches(first, second) || domainMatches(second, first)));
+  }
+
+  // Approximation used only for non-authoritative pattern scoring. Never use it
+  // to choose a host to block, allow, ignore or classify as first-party.
+  function siteOf(hostname) {
+    const host = String(hostname).toLowerCase().replace(/\.$/, "");
+    if (/^[0-9.]+$/.test(host) || !host.includes(".")) return host;
+    const labels = host.split(".");
+    const twoPart = labels.length > 2 && labels.at(-1).length === 2 &&
+      /^(com|net|org|edu|gov|co|ac|or|ne|go|gob|mil|idv)$/.test(labels.at(-2));
+    return labels.slice(twoPart ? -3 : -2).join(".");
+  }
+
   globalThis.BlockAds = Object.freeze({
-    normalizeDomain, normalizeDomains, domainMatches, whitelistScope
+    normalizeDomain, normalizeDomains, domainMatches, whitelistScope, sameSite, siteOf
   });
 })();

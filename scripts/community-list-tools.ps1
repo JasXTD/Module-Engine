@@ -10,13 +10,44 @@ $CommunityTypeMap = @{
     ping = 'ping'; beacon = 'ping'; media = 'media'; font = 'font'; websocket = 'websocket'; other = 'other'
 }
 # Chrome guarantees each extension 30,000 enabled static rules; leave room for
-# BlockAds' own ad, tracker and threat rulesets.
+# Module Engine's own ad, tracker and threat rulesets.
 $CommunityMaxRules = 29000
 $CommunityDomainChunk = 1000
 $CommunityProcedural = [regex]'(?i):(-abp-|has-text|contains|xpath|matches-|upward|min-text-length|watch-attr|others|remove|style|if\(|if-not|nth-ancestor|matches-path|matches-media)'
 $CommunityCosmetic = [regex]'^(?<domains>[^\s/|^$@#]*)(?<sep>#@?[?$%]?#|\$@?\$)(?<body>.+)$'
 $CommunityDomainOnly = [regex]'^\|\|(?<host>[^/^*|:?=&]+)\^\|?$'
 $CommunityOptions = [regex]'^[A-Za-z0-9~_,=|.*:/\-]+$'
+
+function ConvertTo-ProceduralRules($Candidates) {
+    if (!$Candidates.Count) { return @{ rules=@(); skipped=@{} } }
+    # No shell, packages or network: the installed Node runtime reads bounded
+    # local JSON. Explicit UTF-8 preserves Chinese labels on every Windows locale.
+    $start = [Diagnostics.ProcessStartInfo]::new()
+    $start.FileName = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    $start.ArgumentList.Add((Join-Path $PSScriptRoot 'compile-procedural.cjs'))
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardInput = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    $start.StandardInputEncoding = [Text.UTF8Encoding]::new($false)
+    $start.StandardOutputEncoding = [Text.UTF8Encoding]::new($false, $true)
+    $start.StandardErrorEncoding = [Text.UTF8Encoding]::new($false, $true)
+    $process = [Diagnostics.Process]::Start($start)
+    try {
+        $output = $process.StandardOutput.ReadToEndAsync()
+        $errorOutput = $process.StandardError.ReadToEndAsync()
+        $write = $process.StandardInput.WriteAsync((ConvertTo-Json -InputObject @($Candidates) -Depth 5 -Compress))
+        if (!$write.Wait(10000)) { throw 'Procedural compiler input timed out.' }
+        $process.StandardInput.Close()
+        if (!$process.WaitForExit(15000)) { throw 'Procedural compiler timed out.' }
+        if ($process.ExitCode -ne 0) { throw $errorOutput.GetAwaiter().GetResult() }
+        return ($output.GetAwaiter().GetResult() | ConvertFrom-Json -AsHashtable)
+    } finally {
+        if (!$process.HasExited) { $process.Kill($true); $process.WaitForExit() }
+        $process.Dispose()
+    }
+}
 
 function ConvertTo-CommunityHost([string]$Value) {
     if (!$Value -or $Value.Length -gt 253) { return $null }
@@ -68,7 +99,7 @@ function Read-CommunityListCatalog([string]$Path) {
     } finally { $document.Dispose() }
 }
 
-# $ProtectedDomains are BlockAds' own blocked domains. Community exceptions may
+# $ProtectedDomains are Module Engine's own blocked domains. Community exceptions may
 # undo community blocks only, so they never apply to requests for these domains.
 function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     $protectedSet = [Collections.Generic.HashSet[string]]::new([string[]]$ProtectedDomains, [StringComparer]::Ordinal)
@@ -83,6 +114,11 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     $skip = { param($reason) $skipped[$reason] = 1 + ($skipped[$reason] ?? 0) }
     $hide = @{}
     $allow = @{}
+    $generic = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    $scoped = [Collections.Generic.List[object]]::new()
+    $proceduralCandidates = [Collections.Generic.List[object]]::new()
+    $disableGeneric = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    $disableAll = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $groups = [ordered]@{}
     $single = [ordered]@{}
     $infoLists = @()
@@ -98,15 +134,44 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             $cosmetic = $CommunityCosmetic.Match($line)
             if ($cosmetic.Success) {
                 $sep = $cosmetic.Groups['sep'].Value
-                if ($sep -cne '##' -and $sep -cne '#@#') { & $skip 'cosmetic: scriptlet, procedural or HTML filter'; continue }
+                if ($sep -cnotin @('##','#@#','#?#','#@?#')) { & $skip 'cosmetic: scriptlet or HTML filter'; continue }
                 $domainText = $cosmetic.Groups['domains'].Value
-                if (!$domainText) { & $skip ($sep -ceq '##' ? 'cosmetic: generic (all sites)' : 'cosmetic: generic exception'); continue }
                 $selector = $cosmetic.Groups['body'].Value.Trim()
-                if ($selector.Length -gt 1000 -or $selector -match '[{}]|/\*' -or $selector.StartsWith('+js(') -or $CommunityProcedural.IsMatch($selector)) {
+                if ($selector.Length -gt 1000 -or $selector -match '[{}\x00-\x1f]|/\*|\*/' -or $selector.StartsWith('+js(')) {
                     & $skip 'cosmetic: procedural or unsafe selector'; continue
                 }
-                $domains = @($domainText.Split(',') | ForEach-Object { if ($_ -match '^[~]|\*') { $null } else { ConvertTo-CommunityHost $_ } })
-                if ($domains -contains $null -or !$domains.Count) { & $skip 'cosmetic: negated, wildcard or invalid domain'; continue }
+                $isProcedure = $sep.Contains('?') -or $CommunityProcedural.IsMatch($selector)
+                $isException = $sep.Contains('@')
+                if (!$domainText) {
+                    if ($isProcedure) {
+                        $proceduralCandidates.Add([ordered]@{ include=@(); exclude=@(); selector=$selector; exception=$isException })
+                        continue
+                    }
+                    if ($sep -ceq '##') { $null = $generic.Add($selector) }
+                    else {
+                        if (!$allow.ContainsKey('*')) { $allow['*'] = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal) }
+                        $null = $allow['*'].Add($selector)
+                    }
+                    continue
+                }
+                $domains = [Collections.Generic.List[string]]::new()
+                $excluded = [Collections.Generic.List[string]]::new()
+                $invalid = $false
+                foreach ($scope in $domainText.Split(',')) {
+                    $negative = $scope.StartsWith('~')
+                    $hostName = ConvertTo-CommunityHost ($negative ? $scope.Substring(1) : $scope)
+                    if (!$hostName) { $invalid = $true; break }
+                    if ($negative) { $excluded.Add($hostName) } else { $domains.Add($hostName) }
+                }
+                if ($invalid) { & $skip 'cosmetic: wildcard or invalid domain'; continue }
+                if ($isProcedure) {
+                    $proceduralCandidates.Add([ordered]@{ include=@($domains); exclude=@($excluded); selector=$selector; exception=$isException })
+                    continue
+                }
+                if ($excluded.Count) {
+                    $scoped.Add([ordered]@{ include=@($domains); exclude=@($excluded); selector=$selector; exception=($sep -ceq '#@#') })
+                    continue
+                }
                 $target = $sep -ceq '##' ? $hide : $allow
                 foreach ($domain in $domains) {
                     if (!$target.ContainsKey($domain)) { $target[$domain] = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal) }
@@ -117,6 +182,15 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
 
             $exception = $line.StartsWith('@@')
             $text = $exception ? $line.Substring(2) : $line
+            # Only exact host-wide exceptions have a lossless mapping here.
+            # Path/option-specific exceptions stay counted as unsupported.
+            if ($exception -and $text -match '\$(generichide|elemhide)$') {
+                $kind = $Matches[1].ToLowerInvariant()
+                $hostName = $text -match '^\|\|([^/^*|:?=&]+)\^\$(generichide|elemhide)$' ? (ConvertTo-CommunityHost $Matches[1]) : $null
+                if (!$hostName) { & $skip 'network: unsupported cosmetic exception'; continue }
+                if ($kind -ceq 'generichide') { $null = $disableGeneric.Add($hostName) } else { $null = $disableAll.Add($hostName) }
+                continue
+            }
             # /.../ is a regular expression, with or without $options; its body may contain $.
             if ($text.Length -gt 2 -and $text -match '^/.+/(\$[^$]*)?$') { & $skip 'network: regular expression'; continue }
             $pattern = $text
@@ -197,7 +271,7 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             if ($pattern.StartsWith('||*') -or $pattern -match '[^\x20-\x7e]') { & $skip 'network: unsupported pattern syntax'; continue }
             $condition.urlFilter = $pattern
             if ($exception -and !$anchoredHost -and $protectedSet.Count) {
-                # A path exception could match any host; keep it off BlockAds' domains.
+                # A path exception could match any host; keep it off Module Engine's domains.
                 $condition.excludedRequestDomains = @($ProtectedDomains | Sort-Object -Unique)
                 $limitedExceptions++
             }
@@ -225,13 +299,19 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     $hideMap = & $toMap $hide
     $selectorCount = 0
     foreach ($value in $hideMap.Values) { $selectorCount += $value.Count }
+    $procedural = ConvertTo-ProceduralRules $proceduralCandidates
+    foreach ($reason in $procedural.skipped.Keys) { $skipped[$reason] = ($skipped[$reason] ?? 0) + $procedural.skipped[$reason] }
     $skippedSorted = [ordered]@{}
     foreach ($key in ($skipped.Keys | Sort-Object)) { $skippedSorted[$key] = $skipped[$key] }
     return @{
         Rules = $rules
-        Cosmetic = [ordered]@{ hide = $hideMap; allow = (& $toMap $allow) }
+        Cosmetic = [ordered]@{ schemaVersion=3; hide=$hideMap; allow=(& $toMap $allow); generic=@($generic); scoped=@($scoped); procedural=@($procedural.rules)
+            disableGeneric=@($disableGeneric); disableAll=@($disableAll) }
         Info = [ordered]@{ schemaVersion = 1; lists = $infoLists; networkRules = $rules.Count; groupedDomains = $groupedHosts
             cosmeticSites = $hideMap.Count; cosmeticSelectors = $selectorCount; exceptionsLimitedForBlockAdsRules = $limitedExceptions
+            genericCosmeticSelectors = $generic.Count; scopedCosmeticRules = $scoped.Count
+            proceduralCosmeticRules = $procedural.rules.Count
+            cosmeticSiteExceptions = $disableGeneric.Count + $disableAll.Count
             skipped = $skippedSorted }
     }
 }
@@ -262,5 +342,8 @@ function ConvertTo-CosmeticJson($Cosmetic) {
         $lines = foreach ($key in $Cosmetic[$name].Keys) { '    ' + (ConvertTo-Json -InputObject $key -Compress) + ': ' + (ConvertTo-Json -InputObject @($Cosmetic[$name][$key]) -Compress) }
         "  `"$name`": {" + ($lines ? "`n" + ($lines -join ",`n") + "`n  }" : '}')
     }
-    return "{`n" + ($sections -join ",`n") + "`n}"
+    $extra = foreach ($name in @('schemaVersion','generic','scoped','procedural','disableGeneric','disableAll')) {
+        '  "' + $name + '": ' + (ConvertTo-Json -InputObject $Cosmetic[$name] -Compress -Depth 32)
+    }
+    return "{`n" + (@($sections) + @($extra) -join ",`n") + "`n}"
 }

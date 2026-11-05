@@ -1,0 +1,260 @@
+[
+  {
+    "directory": "blockads-verify-chrome-HDpvMw",
+    "success": true,
+    "checks": 465,
+    "error": null,
+    "cleanup": {
+      "browserPid": 158068,
+      "forced": true,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-verify-edge-EOcEnA",
+    "success": true,
+    "checks": 465,
+    "error": null,
+    "cleanup": {
+      "browserPid": 104800,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-qTh7BY",
+    "success": true,
+    "checks": 42,
+    "error": null,
+    "cleanup": {
+      "browserPid": 152596,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-DfTr2T",
+    "success": false,
+    "checks": 31,
+    "error": "Error: Navigation failed: net::ERR_BLOCKED_BY_CLIENT\n    at Object.attach [as open] (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:173:39)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:152:15",
+    "cleanup": {
+      "browserPid": 133692,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-ZORZI9",
+    "success": false,
+    "checks": 31,
+    "error": "AssertionError [ERR_ASSERTION]: Reload starts a replacement service worker\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:157:12",
+    "cleanup": {
+      "browserPid": 105644,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-5E5Z1k",
+    "success": false,
+    "checks": 31,
+    "error": "AssertionError [ERR_ASSERTION]: A new service worker restores enabled scripts and module intent\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:38:44)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:160:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+    "cleanup": {
+      "browserPid": 135936,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-VBlp7l",
+    "success": false,
+    "checks": 35,
+    "error": "AssertionError [ERR_ASSERTION]: Explicit discard loads the latest saved source\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:38:44)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:180:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+    "cleanup": {
+      "browserPid": 103720,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-BHRUo1",
+    "success": false,
+    "checks": 38,
+    "error": "AssertionError [ERR_ASSERTION]: Deletion removes source and its GM value namespace\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:41:44)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:190:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+    "cleanup": {
+      "browserPid": 148896,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-VQTKHI",
+    "success": false,
+    "checks": 4,
+    "error": "Error: {\"exceptionId\":1,\"text\":\"Uncaught\",\"lineNumber\":0,\"columnNumber\":58,\"scriptId\":\"29\",\"stackTrace\":{\"callFrames\":[{\"functionName\":\"\",\"scriptId\":\"29\",\"url\":\"\",\"lineNumber\":0,\"columnNumber\":58},{\"functionName\":\"\",\"scriptId\":\"29\",\"url\":\"\",\"lineNumber\":0,\"columnNumber\":333}]},\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"TypeError\",\"description\":\"TypeError: Cannot read properties of null (reading 'shadowRoot')\",\"objectId\":\"5736950933398366108.1.2\"}}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:200:42)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:77:21)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:80:5",
+    "cleanup": {
+      "browserPid": 157820,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-pjGg9M",
+    "success": false,
+    "checks": 28,
+    "error": "AssertionError [ERR_ASSERTION]: Native browser revocation is reported honestly\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:41:44)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:147:5",
+    "cleanup": {
+      "browserPid": 148876,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-u8t9k5",
+    "success": true,
+    "checks": 42,
+    "error": null,
+    "cleanup": {
+      "browserPid": 167580,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-sVVBzK",
+    "success": false,
+    "checks": 28,
+    "error": "Error: Timed out: ((async()=>{try{await (globalThis.browser||chrome).userScripts.getScripts();return true;}catch{return false;}})()).then(value=>value!==true)\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:87:7)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:148:5",
+    "cleanup": {
+      "browserPid": 64884,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-Akd5NI",
+    "success": true,
+    "checks": 46,
+    "error": null,
+    "cleanup": {
+      "browserPid": 101036,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-Wbph9Y",
+    "success": false,
+    "checks": 28,
+    "error": "Error: Timed out: ((async()=>{try{await (globalThis.browser||chrome).userScripts.getScripts();return true;}catch{return false;}})()).then(value=>value!==true)\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:90:7)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:151:5",
+    "cleanup": {
+      "browserPid": 165112,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-chrome-hGJhSX",
+    "success": true,
+    "checks": 46,
+    "error": null,
+    "cleanup": {
+      "browserPid": 168268,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-ie3BRD",
+    "success": false,
+    "checks": 28,
+    "error": "Error: Timed out: ((async()=>{try{await (globalThis.browser||chrome).userScripts.getScripts();return true;}catch{return false;}})()).then(value=>value!==true)\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:95:7)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:156:5",
+    "cleanup": {
+      "browserPid": 168860,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-MeZNlg",
+    "success": false,
+    "checks": 28,
+    "error": "Error: Timed out: ((async()=>{try{await (globalThis.browser||chrome).userScripts.getScripts();return true;}catch{return false;}})()).then(value=>value!==true)\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:97:13)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:167:5",
+    "cleanup": {
+      "browserPid": 171132,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-llCdTj",
+    "success": false,
+    "checks": 28,
+    "error": "Error: Timed out: ((async()=>{try{await (globalThis.browser||chrome).userScripts.getScripts();return true;}catch{return false;}})()).then(value=>value!==true)\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async toggleAccess (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:97:13)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:171:5",
+    "cleanup": {
+      "browserPid": 127188,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-jftVne",
+    "success": false,
+    "checks": 36,
+    "error": "Error: Timed out: document.getElementById('scriptSource').value.endsWith('// newer saved source')\nManager: This script changed in another window. Refresh and reopen it before applying changes.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:218:5",
+    "cleanup": {
+      "browserPid": 124984,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-pug9P6",
+    "success": false,
+    "checks": 0,
+    "error": "Error: EBUSY: resource busy or locked, open 'C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-pug9P6\\profile\\DevToolsActivePort'\nBrowser exit 0: \n    at async open (node:internal/fs/promises:1345:25)\n    at async Object.readFile (node:internal/fs/promises:2003:14)\n    at async chromium (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:139:26)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:72:9"
+  },
+  {
+    "directory": "blockads-userscripts-edge-9tn5j6",
+    "success": false,
+    "checks": 36,
+    "error": "Error: Timed out: (()=>{const e=document.getElementById(\"confirmAccept\");return e&&!e.disabled&&e.getClientRects().length>0;})()\nManager: This script changed in another window. Refresh and reopen it before applying changes.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async click (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:51:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:224:34",
+    "cleanup": {
+      "browserPid": 164632,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  },
+  {
+    "directory": "blockads-userscripts-edge-M6dXBM",
+    "success": false,
+    "checks": 36,
+    "error": "Error: Timed out: (()=>{const e=document.getElementById(\"confirmAccept\");return e&&!e.disabled&&e.getClientRects().length>0;})()\nManager: This script changed in another window. Refresh and reopen it before applying changes.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:45:11)\n    at async click (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:51:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:227:34",
+    "cleanup": {
+      "browserPid": 163848,
+      "forced": false,
+      "leftoverPids": [],
+      "closed": true
+    }
+  }
+]

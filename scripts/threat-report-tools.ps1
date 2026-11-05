@@ -74,6 +74,8 @@ function Read-ThreatReportCatalog([string]$Path, [DateTimeOffset]$Now = [DateTim
         }
         return [pscustomobject]@{
             Rules=$rules
+            # Display-only provenance, taken from the same validated document.
+            Evidence=($root.GetRawText() | ConvertFrom-Json -AsHashtable)
             Policy=[ordered]@{
                 schemaVersion=1; ruleCount=$rules.Count
                 evidenceFrom=$earliest.ToString('yyyy-MM-ddTHH:mm:ssZ')

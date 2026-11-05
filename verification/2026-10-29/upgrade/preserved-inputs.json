@@ -1,0 +1,42 @@
+[
+  {
+    "File": "shared.js",
+    "Unchanged": true
+  },
+  {
+    "File": "flags.js",
+    "Unchanged": true
+  },
+  {
+    "File": "popups.js",
+    "Unchanged": true
+  },
+  {
+    "File": "popup.css",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/reviewed-domains.json",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/reported-threats.json",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/site-ad-hosts.json",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/community-lists.json",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/community/easylist.txt",
+    "Unchanged": true
+  },
+  {
+    "File": "lists/community/easylistchina.txt",
+    "Unchanged": true
+  }
+]

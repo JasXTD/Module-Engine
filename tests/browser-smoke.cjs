@@ -54,7 +54,8 @@ function protocol(write) {
   };
 }
 
-async function chromium(extension, profile, denyPort, { headless = true } = {}) {
+async function chromium(extension, profile, denyPort, { headless = true, networkMode = 'offline' } = {}) {
+  if (!['offline', 'live-public'].includes(networkMode)) throw new Error('Unknown browser network mode');
   // Edge may exit its launcher and relaunch for Windows compatibility handling.
   // A pipe belongs to the exited launcher; a loopback endpoint survives relaunch.
   const useSocket = browserName === 'edge';
@@ -63,7 +64,11 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
     '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
     '--disable-component-update', '--disable-sync', '--enable-unsafe-extension-debugging',
     '--disable-quic', '--dns-prefetch-disable',
-    `--proxy-server=http://127.0.0.1:${denyPort}`, '--proxy-bypass-list=localhost;127.0.0.1;[::1]',
+    `--proxy-server=http://127.0.0.1:${denyPort}`,
+    // Live pages must pass the proxy even for Chromium's implicit localhost
+    // and link-local exclusions. Loopback fixtures remain offline-only.
+    networkMode === 'live-public' ? '--proxy-bypass-list=<-loopback>' : '--proxy-bypass-list=localhost;127.0.0.1;[::1]',
+    '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
     '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1, EXCLUDE [::1]',
     ...(useSocket ? ['--remote-debugging-port=0', '--remote-debugging-address=127.0.0.1'] : ['--remote-debugging-pipe']),
     `--user-data-dir=${profile}`, 'about:blank'
@@ -102,7 +107,7 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
       ConvertTo-Json -InputObject $matches -Compress
     `;
     const output = await new Promise((resolve, reject) => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
-      { windowsHide: true, timeout: 10000, env: { ...process.env, BLOCKADS_TEST_PROFILE: profile } },
+      { windowsHide: true, timeout: 30000, env: { ...process.env, BLOCKADS_TEST_PROFILE: profile } },
       (error, stdout) => error ? reject(error) : resolve(stdout)));
     const pids = JSON.parse(output);
     if (!Array.isArray(pids) || pids.some(pid => !Number.isInteger(pid) || pid <= 0)) throw new Error('Invalid isolated Edge process inventory');
@@ -136,7 +141,7 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
               !/^\/devtools\/browser\/[a-z0-9-]+$/.test(lines[1])) throw new Error('Invalid private debugging endpoint');
           endpoint = `ws://127.0.0.1:${lines[0]}${lines[1]}`;
           break;
-        } catch (error) { if (error.code !== 'ENOENT') throw error; }
+        } catch (error) { if (!['ENOENT', 'EBUSY'].includes(error.code)) throw error; }
         if (child.exitCode !== null && child.exitCode !== 0) throw new Error(`Edge launcher exited ${child.exitCode}`);
         // A successful launcher exit is not browser termination: wait for the
         // private profile's relaunched browser, keeping the deny proxy running.
@@ -160,9 +165,28 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
     if (!Number.isInteger(browserPid) || browserPid <= 0) throw new Error('Browser did not identify its process');
     const { id } = await rpc.send('Extensions.loadUnpacked', { path: extension });
     const attach = async url => {
-      const { targetId } = await rpc.send('Target.createTarget', { url });
+      const { targetId } = await rpc.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await rpc.send('Target.attachToTarget', { targetId, flatten: true });
       await rpc.send('Runtime.enable', {}, sessionId);
+      await rpc.send('Page.enable', {}, sessionId);
+      const navigation = await rpc.send('Page.navigate', { url }, sessionId);
+      if (navigation.errorText) throw new Error(`Navigation failed: ${navigation.errorText}`);
+      // Return a committed document, never the about:blank context that the
+      // requested navigation is about to destroy. Only transient navigation
+      // context errors may be retried; probes with side effects are never replayed.
+      const deadline = Date.now() + 15000;
+      let ready = false;
+      while (Date.now() < deadline && !ready) {
+        try {
+          const result = await rpc.send('Runtime.evaluate', { expression: 'location.href !== "about:blank" && document.readyState === "complete"', returnByValue: true }, sessionId);
+          if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+          ready = result.result.value === true;
+        } catch (error) {
+          if (!/Execution context was destroyed|Cannot find context with specified id/.test(error.message)) throw error;
+        }
+        if (!ready) await pause(50);
+      }
+      if (!ready) throw new Error('New page did not finish its initial navigation.');
       return { id: targetId, session: sessionId };
     };
     const popup = await attach(`chrome-extension://${id}/popup.html`);
@@ -178,9 +202,23 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
     };
     return {
       version, id, popup, evaluate, open: attach, close, events: rpc.events,
+      closePage: target => rpc.send('Target.closeTarget', { targetId: target.id }),
       send: (method, params, target) => rpc.send(method, params, target?.session),
-      launch: { transport: useSocket ? 'loopback-websocket' : 'pipe', launcherPid: child.pid, browserPid, relaunched: child.pid !== browserPid },
+      async clickAt(x, y, target = popup) {
+        await rpc.send('Target.activateTarget', {targetId:target.id});
+        for (const type of ['mouseMoved','mousePressed','mouseReleased']) await rpc.send('Input.dispatchMouseEvent',
+          {type,x,y,button:type === 'mouseMoved' ? 'none' : 'left',clickCount:type === 'mouseMoved' ? 0 : 1},target.session);
+      },
+      async typeText(text, target = popup) { await rpc.send('Input.insertText', {text}, target.session); },
+      async pressKey(key, target = popup) {
+        const code = {Escape:27,Tab:9,Enter:13}[key];
+        for (const type of ['keyDown','keyUp']) await rpc.send('Input.dispatchKeyEvent',{type,key,code:key,windowsVirtualKeyCode:code,
+          ...(type === 'keyDown' && key === 'Enter' ? {text:'\r',unmodifiedText:'\r'} : {})},target.session);
+      },
+      launch: { transport: useSocket ? 'loopback-websocket' : 'pipe', networkMode, launcherPid: child.pid, browserPid, relaunched: child.pid !== browserPid },
       async screenshot(file) {
+        // A background tab may never produce a frame; capture the popup in front.
+        await rpc.send('Target.activateTarget', { targetId: popup.id });
         await rpc.send('Emulation.setDeviceMetricsOverride', { width: 350, height: 600, deviceScaleFactor: 1, mobile: false }, popup.session);
         await rpc.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] }, popup.session);
         const { cssContentSize } = await rpc.send('Page.getLayoutMetrics', {}, popup.session);
@@ -196,13 +234,13 @@ async function chromium(extension, profile, denyPort, { headless = true } = {}) 
   } catch (error) { await close(); error.message += `\nBrowser exit ${child.exitCode}: ${stderr}`; throw error; }
 }
 
-async function firefox(extension, profile, denyPort) {
+async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {}) {
   const uuid = 'd73f30ed-9a72-486f-84f7-8a1d16be7021';
   await fs.mkdir(profile, { recursive: true });
   await fs.writeFile(path.join(profile, 'user.js'), [
     `user_pref("extensions.webextensions.uuids", ${JSON.stringify(JSON.stringify({ 'blockads-shield@local.extension': uuid }))});`,
     'user_pref("browser.shell.checkDefaultBrowser", false);',
-    'user_pref("extensions.dnr.feedback", true);',
+    `user_pref("extensions.dnr.feedback", ${Boolean(ruleFeedback)});`,
     'user_pref("network.proxy.type", 1);',
     'user_pref("network.proxy.http", "127.0.0.1");',
     `user_pref("network.proxy.http_port", ${denyPort});`,
@@ -219,9 +257,11 @@ async function firefox(extension, profile, denyPort) {
     'user_pref("datareporting.policy.dataSubmissionEnabled", false);',
     'user_pref("toolkit.telemetry.enabled", false);'
   ].join('\n'));
+  // Extension pages are privileged contexts to BiDi. Firefox 159 no longer has
+  // --remote-allow-system-access, which older releases need, and reads this instead.
   const child = spawn(executable, ['--headless', '--no-remote', '--profile', profile,
     '--remote-allow-system-access', '--remote-debugging-port', '0', 'about:blank'],
-  { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1' } });
   let stderr = '';
   let socket, rpc;
   const close = async () => {
@@ -248,9 +288,24 @@ async function firefox(extension, profile, denyPort) {
     socket.addEventListener('message', event => rpc.receive(JSON.parse(event.data)));
     const session = await rpc.send('session.new', { capabilities: { alwaysMatch: {} } });
     await rpc.send('session.subscribe', { events: ['log.entryAdded'] });
+    const chromeEvaluate = async expression => {
+      const { contexts: [window] } = await rpc.send('browsingContext.getTree', { 'moz:scope': 'chrome', maxDepth: 0 });
+      const result = await rpc.send('script.evaluate', { expression, target: { context: window.context }, awaitPromise: true });
+      if (result.type === 'exception') throw new Error(JSON.stringify(result.exceptionDetails));
+      return result.result.value;
+    };
+    // log.entryAdded never reports extension documents, and the console store
+    // keeps only 250 messages, so collect uncaught errors from before install.
+    await chromeEvaluate(`(() => {
+      const errors = window.moduleEngineErrors = [], prefix = ${JSON.stringify(`moz-extension://${uuid}/`)};
+      Services.console.registerListener({ observe(message) {
+        if (message instanceof Ci.nsIScriptError && !(message.flags & (message.warningFlag | message.infoFlag)) &&
+          String(message.sourceName).startsWith(prefix)) errors.push({ text: message.errorMessage, source: message.sourceName });
+      } });
+    })()`);
     await rpc.send('webExtension.install', { extensionData: { type: 'path', path: extension } });
     const { contexts } = await rpc.send('browsingContext.getTree');
-    const popup = { id: contexts[0].context };
+    const popup = { id: contexts[0].context, extensionPage: true };
     const navigate = (target, url) => rpc.send('browsingContext.navigate', { context: target.id, url, wait: 'complete' });
     await navigate(popup, `moz-extension://${uuid}/popup.html`);
     const evaluate = async (expression, target = popup) => {
@@ -261,21 +316,74 @@ async function firefox(extension, profile, denyPort) {
       if (result.type === 'exception') throw new Error(JSON.stringify(result.exceptionDetails));
       return result.result.type === 'undefined' ? undefined : JSON.parse(result.result.value);
     };
+    // BiDi refuses browsingContext.activate on privileged contexts, but not
+    // screenshots or native input, so extension pages front themselves.
+    const front = target => target.extensionPage
+      ? evaluate('browser.tabs.getCurrent().then(tab => browser.tabs.update(tab.id, { active: true }))', target)
+      : rpc.send('browsingContext.activate', { context: target.id });
     return {
-      version: session.capabilities, id: uuid, popup, evaluate, navigate, close, events: rpc.events,
+      version: session.capabilities, id: uuid, popup, evaluate, navigate, close, front, events: rpc.events,
+      consoleErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineErrors)')),
+      // emulation.setMediaFeaturesOverride also refuses extension pages.
+      setColorScheme(scheme) {
+        const pref = 'layout.css.prefers-color-scheme.content-override';
+        return chromeEvaluate(scheme ? `Services.prefs.setIntPref('${pref}', ${scheme === 'dark' ? 0 : 1})` : `Services.prefs.clearUserPref('${pref}')`);
+      },
+      // The toolbar panel is outside BiDi's context tree, so its size and pixels
+      // come from the chrome scope. openPopup needs a trusted click on a page.
+      async openToolbarPopup(target, file) {
+        await evaluate(`(document.addEventListener('click', () => { browser.action.openPopup(); }, { once: true }), true)`, target);
+        const { x, y } = await evaluate(`(r => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 }))(document.querySelector('h1').getBoundingClientRect())`, target);
+        await this.clickAt(x, y, target);
+        const popupBrowser = `document.querySelector('.webextension-popup-browser')`;
+        const opened = `${popupBrowser}?.closest('panel').state === 'open' && ${popupBrowser}.getBoundingClientRect().height > 0`;
+        for (let i = 0; i < 300 && !(await chromeEvaluate(opened)); i++) await pause(50);
+        const panel = JSON.parse(await chromeEvaluate(`(() => { const node = ${popupBrowser}, box = node?.getBoundingClientRect();
+          return JSON.stringify({ state: node?.closest('panel').state, width: box?.width, height: box?.height, uri: node?.currentURI.spec }); })()`));
+        if (panel.state === 'open') {
+          const image = await chromeEvaluate(`(async () => { const node = ${popupBrowser}, { width, height } = node.getBoundingClientRect();
+            const bitmap = await node.browsingContext.currentWindowGlobal.drawSnapshot(new DOMRect(0, 0, width, height), 1, 'rgb(255, 0, 255)');
+            const canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas'); canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0); return canvas.toDataURL('image/png'); })()`);
+          await fs.writeFile(file, Buffer.from(image.split(',')[1], 'base64'));
+          await chromeEvaluate(`${popupBrowser}.closest('panel').hidePopup()`);
+        }
+        return panel;
+      },
+      async clickAt(x, y, target = popup) {
+        await front(target);
+        await rpc.send('input.performActions',{context:target.id,actions:[{type:'pointer',id:'fixture-mouse',parameters:{pointerType:'mouse'},actions:[
+          {type:'pointerMove',origin:'viewport',x:Math.round(x),y:Math.round(y),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
+      },
+      async typeText(text, target = popup) {
+        await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:
+          [...text].flatMap(value=>[{type:'keyDown',value},{type:'keyUp',value}])}]});
+      },
+      async pressKey(key, target = popup) {
+        const value = {Escape:'\uE00C',Tab:'\uE004',Enter:'\uE007'}[key];
+        await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:[{type:'keyDown',value},{type:'keyUp',value}]}]});
+      },
+      closePage: target => rpc.send('browsingContext.close', { context: target.id }),
       async open(url) {
         const { context } = await rpc.send('browsingContext.create', { type: 'tab' });
-        const target = { id: context }; await navigate(target, url); return target;
+        const target = { id: context, extensionPage: url.startsWith('moz-extension:') }; await navigate(target, url); return target;
       },
-      async screenshot(file) {
-        // Firefox BiDi does not support screenshots of privileged extension
-        // contexts. Popup behavior is asserted through its DOM; Chromium supplies
-        // the rendered 350px screenshots for visual review.
-        return { unavailable: 'Firefox extension context screenshot unsupported' };
+      async screenshot(file, target = popup, clip) {
+        // Extension pages cannot set a viewport here, so this is the full
+        // document at the window's width. Narrow layouts are measured in frames.
+        await front(target);
+        await evaluate('(document.getAnimations().forEach(animation => animation.finish()), true)', target);
+        const { data } = await rpc.send('browsingContext.captureScreenshot', { context: target.id, origin: 'document',
+          ...(clip ? { clip: { type: 'box', x: 0, y: 0, ...clip } } : {}) });
+        await fs.writeFile(file, Buffer.from(data, 'base64'));
       },
       stderr: () => stderr
     };
-  } catch (error) { await close(); throw error; }
+  } catch (error) {
+    await close();
+    error.message += `\nFirefox launcher PID ${child.pid}, exit ${child.exitCode}. Startup output: ${stderr || '(none)'}`;
+    throw error;
+  }
 }
 
 async function until(browser, expression, target) {
@@ -294,12 +402,12 @@ if (require.main === module) (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-verify-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const testedManifest = JSON.parse(await fs.readFile(path.join(extension, 'manifest.json'), 'utf8'));
   const sourceHashes = {};
-  for (const file of ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/threat-policy.json',
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/community-cosmetic.json', 'rules/threat-evidence.json', 'rules/threat-policy.json',
     ...testedManifest.declarative_net_request.rule_resources.map(rule => rule.path)]) {
     sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
@@ -330,6 +438,27 @@ if (require.main === module) (async () => {
     requests.push(req.url);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/html');
+    if (req.url === '/picker-csp') res.setHeader('Content-Security-Policy', "require-trusted-types-for 'script'; trusted-types 'none'");
+    if (req.url.startsWith('/blocked-probe.network')) {
+      res.setHeader('Content-Type','application/javascript');
+      res.setHeader('Cache-Control','no-store');
+      return res.end('window.__blockadsNetworkProbe=(window.__blockadsNetworkProbe||0)+1;');
+    }
+    if (req.url.startsWith('/promo/')) {
+      // A real image: browsers discard cross-site "images" served as HTML (ORB),
+      // and a discarded response never counts as loaded.
+      res.setHeader('Content-Type', 'image/gif');
+      res.end(Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'));
+      return;
+    }
+    if (req.url === '/flag-fixture') {
+      // A third-party ad-like image and a frame in a standard ad size (300x250).
+      const other = `http://localhost:${server.address().port}`;
+      res.end(`<!doctype html><title>BlockAds flag fixture</title><img src="${other}/promo/ads/creative.gif?zoneid=7">` +
+        `<iframe src="${other}/frame" width="300" height="250" style="border:0"></iframe>` +
+        `<div><span>Sponsored</span><a href="${other}/landing">Great offer</a></div>`);
+      return;
+    }
     const frame = req.url === '/fixture'
       ? `<iframe id="child" src="http://localhost:${server.address().port}/frame"></iframe>
          <script>window.frameDisplay = () => new Promise(resolve => {
@@ -339,9 +468,22 @@ if (require.main === module) (async () => {
              clearTimeout(timer); removeEventListener('message', receive); resolve(event.data.value);
            }};
            addEventListener('message', receive); target.postMessage('measure', '*');
+         });
+         window.framePopup = url => new Promise(resolve => {
+           const target = document.getElementById('child').contentWindow;
+           const timer = setTimeout(() => { removeEventListener('message', receive); resolve(false); }, 1000);
+           const receive = event => { if (event.source === target && event.data?.kind === 'popup-attempted') {
+             clearTimeout(timer); removeEventListener('message', receive); resolve(true);
+           }};
+           addEventListener('message', receive); target.postMessage({kind:'popup-probe',url}, '*');
          });</script>`
       : `<script>addEventListener('message', event => {
            if (event.data === 'measure') event.source.postMessage({kind:'display',value:getComputedStyle(document.getElementById('ad')).display}, event.origin);
+           if (event.data?.kind === 'popup-probe') {
+             const link = document.createElement('a'); link.href = event.data.url; link.target = '_blank';
+             document.body.append(link); link.click();
+             event.source.postMessage({kind:'popup-attempted'}, event.origin);
+           }
          });</script>`;
     res.end(`<!doctype html><html><head><title>BlockAds local fixture</title></head><body><div id="ad" class="ad-slot">Ad fixture</div><div id="normal">Normal content</div><div id="fandom-lookalike" class="fandom-ad-wrapper">Unrelated site content</div><ytd-ad-slot-renderer id="youtube-lookalike">Unrelated site content</ytd-ad-slot-renderer>${frame}</body></html>`);
   });
@@ -359,7 +501,8 @@ if (require.main === module) (async () => {
   let browser;
   const check = (condition, description) => { assert.ok(condition, description); evidence.checks.push(description); };
   try {
-    browser = await (browserName === 'firefox' ? firefox : chromium)(extension, path.join(temporary, 'profile'), denyProxy.address().port);
+    browser = await (browserName === 'firefox' ? firefox : chromium)(extension, path.join(temporary, 'profile'), denyProxy.address().port,
+      { headless: !process.argv.includes('--headed') });
     evidence.version = browser.version;
     if (browser.launch) evidence.launch = browser.launch;
     await until(browser, 'typeof currentSettings !== "undefined" && currentSettings !== null && !busy');
@@ -527,6 +670,7 @@ if (require.main === module) (async () => {
     const page = await browser.open(fixtureUrl);
     await until(browser, 'document.getElementById("ad") && getComputedStyle(document.getElementById("ad")).display === "none"', page);
     check(await browser.evaluate('getComputedStyle(document.getElementById("normal")).display !== "none"', page), 'cosmetic filter hides ad fixture and preserves ordinary content');
+    check(await browser.evaluate('getComputedStyle(document.getElementById("ad")).visibility === "hidden" && getComputedStyle(document.getElementById("ad")).pointerEvents === "none"', page), 'built-in hiding retains its visibility and pointer safeguards');
     check(await browser.evaluate('getComputedStyle(document.getElementById("fandom-lookalike")).display !== "none"', page),
       'Fandom-specific cosmetic rule preserves similarly named content on other sites');
     check(await browser.evaluate('getComputedStyle(document.getElementById("youtube-lookalike")).display !== "none"', page),
@@ -537,6 +681,98 @@ if (require.main === module) (async () => {
       'deny proxy confirms the canary was rejected without DNS lookup or forwarding');
     await until(browser, 'document.getElementById("child") && window.frameDisplay().then(value => value === "none")', page);
     check(true, 'cosmetic filter also applies inside a cross-origin frame');
+    // Only inert loopback elements are used to exercise the expanded filter engine.
+    {
+    const bundleCosmetic = JSON.parse(await fs.readFile(path.join(extension, 'rules/community-cosmetic.json'), 'utf8'));
+    const genericSelector = bundleCosmetic.generic.find(selector => /^\.[a-zA-Z][\w-]+$/.test(selector) && selector !== '.ad-slot');
+    check(Boolean(genericSelector), 'bundle contains a simple generic selector for the local fixture');
+    await browser.evaluate(`(() => {
+      for (const [id, className] of [['genericAd', ${JSON.stringify(genericSelector.slice(1))}], ['customCosmetic', 'blockads-custom-fixture']]) {
+        const element = document.createElement('div'); element.id = id; element.className = className; element.textContent = 'Local cosmetic fixture'; document.body.append(element);
+      }
+      return true;
+    })()`, page);
+    await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display === "none"', page);
+    check(true, 'a newly inserted element matches the bundled generic CSS without a page reload');
+    const toggleStarted = Date.now();
+    await send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: false } });
+    await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display !== "none"', page);
+    check(true, 'turning generic cosmetics off restores the generic fixture');
+    await send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: true } });
+    await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display === "none"', page);
+    evidence.cosmetic = { genericSelectors: bundleCosmetic.generic.length, toggleRoundTripMs: Date.now() - toggleStarted,
+      styleCharacters: await browser.evaluate('document.getElementById("blockads-cosmetic-shield").textContent.length', page) };
+
+    const listsPage = await browser.open(await browser.evaluate('api.runtime.getURL("lists.html")'));
+    await until(browser, 'typeof settings !== "undefined" && settings !== null && !busy', listsPage);
+    await browser.evaluate('(document.getElementById("customFilterPanel").open = true, true)', listsPage);
+    const editDraft = async text => {
+      await until(browser, '!busy && !document.getElementById("customFilters").disabled', listsPage);
+      return browser.evaluate(`(() => { const input = document.getElementById('customFilters'); input.value = ${JSON.stringify(text)}; input.dispatchEvent(new Event('input', {bubbles:true})); return true; })()`, listsPage);
+    };
+    const saveDraft = async () => {
+      await until(browser, '!busy && !document.getElementById("saveFilters").disabled', listsPage);
+      return browser.evaluate('(document.getElementById("saveFilters").click(), true)', listsPage);
+    };
+    const savedFilter = '127.0.0.1##.blockads-custom-fixture';
+    await editDraft(savedFilter);
+    await saveDraft();
+    await until(browser, 'getComputedStyle(document.getElementById("customCosmetic")).display === "none"', page);
+    await until(browser, '!busy && !filterDraftDirty && /Saved 1 rules/.test(document.getElementById("filterStatus").textContent)', listsPage);
+    check((await state()).settings.customCosmeticFilters === savedFilter, 'the visible custom editor saves a rule and updates an existing page');
+    await editDraft('127.0.0.1##[broken');
+    await saveDraft();
+    await until(browser, '/Line 1:/.test(document.getElementById("filterStatus").textContent)', listsPage);
+    check((await state()).settings.customCosmeticFilters === savedFilter, 'invalid CSS is reported without replacing saved filters');
+    const draft = '127.0.0.1##.unsaved-draft';
+    await editDraft(draft);
+    const externalFilter = '127.0.0.1##.blockads-custom-fixture\n127.0.0.1#@#' + genericSelector;
+    check((await send({ type: 'SAVE_COSMETIC_FILTERS', previous: savedFilter, text: externalFilter })).ok, 'a second editor can save with the current revision');
+    await until(browser, `!busy && settings.customCosmeticFilters === ${JSON.stringify(externalFilter)}`, listsPage);
+    check(await browser.evaluate(`document.getElementById('customFilters').value === ${JSON.stringify(draft)}`, listsPage), 'external changes preserve an unsaved draft');
+    await saveDraft();
+    await until(browser, '/another window/.test(document.getElementById("filterStatus").textContent)', listsPage);
+    check((await state()).settings.customCosmeticFilters === externalFilter, 'a stale draft cannot overwrite newer saved filters');
+    await until(browser, '!busy && !document.getElementById("discardFilters").disabled', listsPage);
+    await browser.evaluate('(document.getElementById("discardFilters").click(), true)', listsPage);
+    await until(browser, '!filterDraftDirty && document.getElementById("customFilters").value === settings.customCosmeticFilters', listsPage);
+    await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display !== "none"', page);
+    check(true, 'custom selector exceptions undo generic hiding without removing unrelated custom hiding');
+    check(await browser.evaluate('getComputedStyle(document.getElementById("customCosmetic")).display === "none"', page), 'unrelated custom hiding remains active');
+
+    const enabledBeforeCosmeticPause = (await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).sort();
+    await browser.evaluate(`(() => { const form = document.querySelector('[data-list="cosmeticPausedDomains"] form'); form.querySelector('input').value = '127.0.0.1'; form.requestSubmit(); return true; })()`, listsPage);
+    await until(browser, '!busy && settings.cosmeticPausedDomains.includes("127.0.0.1")', listsPage);
+    await until(browser, 'getComputedStyle(document.getElementById("customCosmetic")).display !== "none" && window.frameDisplay().then(value => value !== null && value !== "none")', page);
+    check(true, 'cosmetic-only site pause restores local and cross-origin embedded elements');
+    check(JSON.stringify((await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).sort()) === JSON.stringify(enabledBeforeCosmeticPause), 'cosmetic-only pause keeps every network ruleset enabled');
+    check((await match('https://doubleclick.net/fixture', 'script', fixtureUrl)).matchedRules.length > 0, 'ad network matching remains active on a cosmetically paused site');
+    check((await match('https://' + threatHosts[0] + '/fixture', 'script', fixtureUrl)).matchedRules.some(rule => rule.rulesetId === 'threats_ruleset'), 'reported-threat matching remains active on a cosmetically paused site');
+    await browser.evaluate('(document.querySelector("[data-list=cosmeticPausedDomains] tbody button").click(), true)', listsPage);
+    await until(browser, 'getComputedStyle(document.getElementById("customCosmetic")).display === "none"', page);
+    check(true, 'removing the cosmetic exception immediately restores hiding');
+    if (browser.send) {
+      await browser.send('Target.activateTarget', { targetId: listsPage.id });
+      for (const width of [1100, 380]) {
+        await browser.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false }, listsPage);
+        await browser.evaluate('(scrollTo(0, 0), document.getElementById("customFilters").focus(), true)', listsPage);
+        check(await browser.evaluate('document.documentElement.scrollWidth <= innerWidth', listsPage), `custom editor fits a ${width}px viewport`);
+        const capture = await browser.send('Page.captureScreenshot', { format: 'png' }, listsPage);
+        await fs.writeFile(path.join(temporary, `cosmetic-editor-${width}.png`), Buffer.from(capture.data, 'base64'));
+      }
+    }
+    await editDraft('');
+    await saveDraft();
+    await until(browser, 'getComputedStyle(document.getElementById("customCosmetic")).display !== "none"', page);
+    check((await state()).settings.customCosmeticFilters === '', 'saving an empty custom list removes its effects');
+    // This editor's storage listeners must not issue late reconciliation requests
+    // during the later probe that deliberately installs a temporary DNR rule.
+    await until(browser, '!busy && !filterDraftDirty', listsPage);
+    await browser.closePage(listsPage);
+    }
+    await require('./procedural-browser.cjs')({ browser, page, send, state, until, check, root });
+    await require('./picker-browser.cjs')({ browser, page, send, state, until, check, temporary });
+    await require('./network-browser.cjs')({ browser, page, send, state, match, until, check, temporary, requests, threatHosts });
     await send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
     await until(browser, 'getComputedStyle(document.getElementById("ad")).display !== "none"', page);
     check(true, 'cosmetic toggle updates an already-open page');
@@ -548,6 +784,8 @@ if (require.main === module) (async () => {
     await until(browser, 'window.frameDisplay().then(value => value !== null && value !== "none")', page);
     check(true, 'site pause also clears cosmetic filtering in cross-origin frames');
     await send({ type: 'SET_SITE_PAUSED', domain: '127.0.0.1', paused: false });
+    await until(browser, '!busy && currentSettings.whitelistedDomains.length === 0');
+    await until(browser, 'getComputedStyle(document.getElementById("ad")).display === "none" && window.frameDisplay().then(value => value === "none")', page);
     const socketProbe = endpoint => browser.evaluate(`new Promise((resolve, reject) => {
       const socket = new WebSocket('ws://localhost:${server.address().port}/${endpoint}');
       const timer = setTimeout(() => { socket.close(); reject(new Error('Loopback WebSocket timed out')); }, 5000);
@@ -560,12 +798,16 @@ if (require.main === module) (async () => {
     socketRule.condition.regexFilter = socketRule.condition.regexFilter.replace(threatHosts[0].replaceAll('.', '\\.'), 'localhost');
     socketRule.condition.resourceTypes = ['websocket'];
     await browser.evaluate(`api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[],addRules:[${JSON.stringify(socketRule)}]})`);
-    check(!(await socketProbe('ws-blocked')) && !socketUpgrades.includes('/ws-blocked'), 'reported-rule regex blocks a real loopback WebSocket before handshake');
+    evidence.socketRuleBefore = await browser.evaluate('api.declarativeNetRequest.getDynamicRules().then(rules => rules.filter(rule => rule.id === 9001))');
+    assert.equal(evidence.socketRuleBefore.length, 1, 'temporary loopback WebSocket rule is installed before the probe');
+    const blockedSocket = await socketProbe('ws-blocked');
+    evidence.socketRuleAfter = await browser.evaluate('api.declarativeNetRequest.getDynamicRules().then(rules => rules.filter(rule => rule.id === 9001))');
+    check(!blockedSocket && !socketUpgrades.includes('/ws-blocked'), 'reported-rule regex blocks a real loopback WebSocket before handshake');
     await browser.evaluate('api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[9001],addRules:[]})');
     check(await socketProbe('ws-blocked'), 'removing the isolated regex rule restores the WebSocket handshake');
 
-    // Per-site pop-up blocking. The browser's own pop-up blocker also refuses
-    // windows opened without a click, so count BlockAds' own block reports.
+    // Per-site pop-up blocking. Network observations, including a synthetic
+    // click inside the cross-origin child frame, establish what was refused.
     await send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: true });
     check((await pageScripts()).some(script => script.id === 'popup-blocker' && script.matches.includes('*://127.0.0.1/*')),
       'pop-up blocker is registered for the chosen site');
@@ -573,8 +815,6 @@ if (require.main === module) (async () => {
     await until(browser, 'document.readyState === "complete"', popupPage);
     const popupTarget = `http://localhost:${server.address().port}/popup-`;
     const popupResult = await browser.evaluate(`(async () => {
-      let reports = 0;
-      document.addEventListener('blockads-popup-blocked', () => reports++);
       const opened = window.open('${popupTarget}open');
       const clicked = document.createElement('a');
       clicked.href = '${popupTarget}click'; clicked.target = '_blank'; clicked.click();
@@ -583,17 +823,21 @@ if (require.main === module) (async () => {
       dispatched.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       const sameSite = document.createElement('a');
       sameSite.href = '#same-site'; document.body.append(sameSite); sameSite.click();
+      document.dispatchEvent(new CustomEvent('blockads-popup-blocked', {detail:'spoof.example'}));
       // Firefox updates the fragment after the click task finishes.
       await new Promise(resolve => setTimeout(resolve, 300));
-      return { opened: opened === null, reports, sameSite: location.hash === '#same-site' };
+      return { opened: opened === null, sameSite: location.hash === '#same-site' };
     })()`, popupPage);
     evidence.popupBlocking = popupResult;
-    check(popupResult.opened && popupResult.reports === 3, 'window.open, link.click() and synthetic link clicks to another site are refused');
+    check(popupResult.opened, 'window.open to another site is refused');
     check(popupResult.sameSite, 'same-site links still work on a pop-up-blocked site');
+    const framePopupTarget = `http://127.0.0.1:${server.address().port}/popup-frame`;
+    check(await browser.evaluate(`window.framePopup(${JSON.stringify(framePopupTarget)})`, popupPage),
+      'cross-origin child frame completes its synthetic pop-up probe');
     await pause(1000);
-    check(!requests.some(url => url.startsWith('/popup-')), 'refused pop-ups never load');
-    await until(browser, `api.runtime.sendMessage({type:'GET_LOG'}).then(log => log.entries.some(entry => entry.message === 'Blocked a pop-up to localhost'))`);
-    check(true, 'blocked pop-up is recorded in the activity log');
+    check(!requests.some(url => url.startsWith('/popup-')), 'top-page and cross-origin-frame pop-ups never load');
+    check(!(await send({ type: 'GET_LOG' })).entries.some(entry => /^Blocked a pop-up/.test(entry.message)),
+      'page-dispatched pop-up events cannot forge activity-log entries');
     await send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: false });
     check(!(await pageScripts()).some(script => script.id === 'popup-blocker'), 'turning pop-up blocking off unregisters its script');
     evidence.socketUpgrades = socketUpgrades;
@@ -653,6 +897,51 @@ if (require.main === module) (async () => {
     await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'lists-allow.example' });
     await send({ type: 'REMOVE_PAUSED_SITE', domain: 'paused-parent.example' });
 
+    // Flagging: an ad-like request that loads is flagged, never blocked; the lists page decides.
+    // localhost is custom-blocked by an earlier check; a blocked request is never flagged.
+    // The Block step below adds it back for the checks that follow.
+    await send({ type: 'REMOVE_CUSTOM_DOMAIN', domain: 'localhost' });
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false, trackers_ruleset: false, community_ruleset: false } } });
+    await browser.evaluate(`(document.getElementById('filter').value = '', document.getElementById('filter').dispatchEvent(new Event('input')), true)`, listsPage);
+    await send({ type: 'FLAG_ACTION', action: 'clear' });
+    await send({ type: 'UPDATE_SETTINGS', patch: { flagSuspects: false } });
+    await browser.open(`http://127.0.0.1:${server.address().port}/flag-fixture`);
+    await pause(3500);
+    check((await send({ type: 'GET_FLAGS' })).flags.length === 0, 'disabled flagging does not scan an open page');
+    await send({ type: 'UPDATE_SETTINGS', patch: { flagSuspects: true } });
+    try {
+      await until(browser, `api.runtime.sendMessage({type:'GET_FLAGS'}).then(r => r.flags.some(f => f.site === 'localhost' &&
+        ['ad-size-frame', 'ad-label'].every(reason => f.reasons.includes(reason))))`);
+    } catch (error) {
+      // Keep what the flag store and settings held, to explain the failure.
+      evidence.flagDebug = { flags: (await send({ type: 'GET_FLAGS' })).flags, settings: (await state()).settings,
+        fixtureRequests: requests.filter(url => url.startsWith('/promo/') || url === '/frame' || url === '/flag-fixture') };
+      throw error;
+    }
+    check(requests.includes('/promo/ads/creative.gif?zoneid=7'), 'fixture request loaded while flagging was disabled');
+    check(true, 'enabling flagging scans the already-open page and records its ad-sized frame and Sponsored label');
+    const flagRow = `[...document.querySelectorAll('#flagTable tbody tr')].find(row => row.cells[0].firstChild.textContent === 'localhost')`;
+    await until(browser, `Boolean(${flagRow})`, listsPage);
+    check(await browser.evaluate(`${flagRow}.cells[1].textContent.includes('standard ad size')`, listsPage), 'lists page explains why the server was flagged');
+    await browser.evaluate('refreshFlagCount().then(() => true)');
+    check(await browser.evaluate('/flagged for review/.test(flagStatus.textContent) && flagStatus.classList.contains("has-flags")'), 'popup shows the number of flags waiting');
+    await until(browser, `!${flagRow}.querySelectorAll('button')[2].disabled`, listsPage);
+    await browser.evaluate(`(${flagRow}.querySelectorAll('button')[2].click(), true)`, listsPage);
+    await until(browser, `api.runtime.sendMessage({type:'GET_FLAGS'}).then(r => r.flags.find(f => f.site === 'localhost')?.status === 'ignored')`);
+    await until(browser, `document.querySelector('#ignoredFlags tbody tr') && !${flagRow}`, listsPage);
+    check(true, 'Ignore moves a flag to the ignored servers');
+    await until(browser, `!document.querySelector('#ignoredFlags tbody tr button').disabled`, listsPage);
+    await browser.evaluate(`(document.querySelector('#ignoredFlags tbody tr button').click(), true)`, listsPage);
+    await until(browser, `Boolean(${flagRow})`, listsPage);
+    // Block asks for confirmation; answer it for the test.
+    await until(browser, `!${flagRow}.querySelectorAll('button')[0].disabled`, listsPage);
+    await browser.evaluate(`(window.confirm = () => true, ${flagRow}.querySelectorAll('button')[0].click(), true)`, listsPage);
+    await until(browser, `api.runtime.sendMessage({type:'GET_STATE'}).then(r => r.settings.customBlockedDomains.includes('localhost'))`);
+    await until(browser, `api.runtime.sendMessage({type:'GET_FLAGS'}).then(r => !r.flags.some(f => f.site === 'localhost'))`);
+    check(true, 'Block adds the server to Custom Blocked Domains and removes its flag');
+    await send({ type: 'FLAG_ACTION', action: 'clear' });
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ...defaults.rulesets, community_ruleset: true } } });
+
     await send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
     check((await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).length === 0, 'master pause disables all static rules');
     check((await browser.evaluate('api.declarativeNetRequest.getDynamicRules()')).length === 0, 'master pause disables all dynamic rules');
@@ -666,6 +955,21 @@ if (require.main === module) (async () => {
     check((await state()).ok, 'reopened popup reconciles and verifies saved state');
     check(!(await browser.evaluate('document.documentElement.scrollWidth > innerWidth')), 'popup has no horizontal overflow');
     await browser.screenshot(path.join(temporary, 'popup-final.png'));
+    await require('./pages-browser.cjs')({ browser, send, state, until, check, temporary,
+      url: file => `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/${file}` });
+    if (browser.consoleErrors) {
+      // Prove the reader sees extension pages before trusting an empty result.
+      const canary = 'module-engine-console-canary';
+      await browser.evaluate(`(setTimeout(() => { throw new Error(${JSON.stringify(canary)}); }), true)`);
+      await until({ evaluate: async () => (await browser.consoleErrors()).some(error => error.text.includes(canary)) },
+        'an uncaught error on an extension page reaches the console store');
+      const reported = (await browser.consoleErrors()).filter(error => !error.text.includes(canary));
+      // Leaving a page with a reply pending is ordinary: Firefox's own wrapPromise
+      // logs the dropped reply for that page. Keep it as evidence, as above.
+      evidence.closedPageErrors = reported.filter(error => /^Promise (rejected|resolved) (after context unloaded|while context is inactive)/.test(error.text));
+      evidence.extensionErrors = reported.filter(error => !evidence.closedPageErrors.includes(error));
+      check(evidence.extensionErrors.length === 0, 'no uncaught errors on Firefox extension pages, background or content scripts');
+    }
     evidence.success = true;
     const loggedErrors = browser.events.filter(event => event.method === 'Runtime.exceptionThrown' ||
       event.method === 'log.entryAdded' && event.params.level === 'error');

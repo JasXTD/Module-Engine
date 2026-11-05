@@ -1,0 +1,2271 @@
+{
+  "browser": "edge",
+  "temporary": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-XjTerH",
+  "sourceHashes": {
+    "manifest.json": "46bb94c23d7b398946a916206b6ba22d626b0ae293f410ba3b385091813c3257",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "cosmetic.js": "8659b2014b9b08d8e766f4d40ccf3b7a58a623a29a45d14e8d897cecf73b504e",
+    "background.js": "944c00868cf6131381ec5a7a3e659a867bafd444fed60abaea33be804eb32ca1",
+    "content.js": "0a45fcc7507ee6f87141c54a845f63564c24884be0a71d840abaf024d89f566b",
+    "youtube.js": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "popups.js": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "flags.js": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "popup.js": "4eb15e2c60231c8118f58517a1ea2229b280de66a1b666d622df72317367754c",
+    "popup.html": "771a6354e45836919b7e3aee472715414c02adf5e6b7948e1bb9fc5a3d914efd",
+    "popup.css": "618827e64596efd81d86823646569ee60dd52b37c63e3e63acd2aa6c5bb5a4ba",
+    "log.html": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "log.js": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "log.css": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "lists.html": "d7c35c53888570b34d7469f5836f154b0ffe1db1a3206ff66099afd03956e636",
+    "lists.js": "b8e4f3e6f1c2e6c7f0cbda02cf9f5a5398b45735b7abc0a748489cb104b88f3d",
+    "rules/community-cosmetic.json": "0968808fa08df7d38167f42ea4fc9c53c3427d76bb4f7a912e2129bb524a0e44",
+    "rules/threat-policy.json": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "rules/ads.json": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/community.json": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94"
+  },
+  "checks": [
+    "unmodified extension loads and reports verified state",
+    "popup has no startup error",
+    "bundled ad request matches",
+    "shared CDN customer is allowed",
+    "country-code TLD is not blanket blocked",
+    "ordinary resource is allowed",
+    "community snapshot contains plain domain-list rules",
+    "community ruleset is enabled by default",
+    "community list domain is blocked",
+    "community switch disables its rules",
+    "community switch re-enables its rules",
+    "packaged site hiding rules are readable by the extension",
+    "popup describes the community snapshot",
+    "YouTube page filter is registered in the page world at document start",
+    "pausing YouTube excludes it from the page filter",
+    "resuming YouTube restores the page filter",
+    "dated threat policy is current and active",
+    "exact threat scope: script https://msbenefit.com/fixture.js",
+    "exact threat scope: main_frame http://msbenefit.com:8080/fixture",
+    "exact threat scope: websocket ws://msbenefit.com/fixture",
+    "exact threat scope: websocket wss://msbenefit.com:8443/fixture",
+    "exact threat scope: sub_frame https://MSBENEFIT.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@msbenefit.com/fixture",
+    "exact threat scope: script https://child.msbenefit.com/fixture",
+    "exact threat scope: script https://msbenefit.com.example/fixture",
+    "exact threat scope: script https://prefixmsbenefit.com/fixture",
+    "exact threat scope: script https://attcdn.com/fixture.js",
+    "exact threat scope: main_frame http://attcdn.com:8080/fixture",
+    "exact threat scope: websocket ws://attcdn.com/fixture",
+    "exact threat scope: websocket wss://attcdn.com:8443/fixture",
+    "exact threat scope: sub_frame https://ATTCDN.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@attcdn.com/fixture",
+    "exact threat scope: script https://child.attcdn.com/fixture",
+    "exact threat scope: script https://attcdn.com.example/fixture",
+    "exact threat scope: script https://prefixattcdn.com/fixture",
+    "exact threat scope: script https://evidence.msbenefit.com/fixture.js",
+    "exact threat scope: main_frame http://evidence.msbenefit.com:8080/fixture",
+    "exact threat scope: websocket ws://evidence.msbenefit.com/fixture",
+    "exact threat scope: websocket wss://evidence.msbenefit.com:8443/fixture",
+    "exact threat scope: sub_frame https://EVIDENCE.MSBENEFIT.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@evidence.msbenefit.com/fixture",
+    "exact threat scope: script https://child.evidence.msbenefit.com/fixture",
+    "exact threat scope: script https://evidence.msbenefit.com.example/fixture",
+    "exact threat scope: script https://prefixevidence.msbenefit.com/fixture",
+    "exact threat scope: script https://data.attcdn.com/fixture.js",
+    "exact threat scope: main_frame http://data.attcdn.com:8080/fixture",
+    "exact threat scope: websocket ws://data.attcdn.com/fixture",
+    "exact threat scope: websocket wss://data.attcdn.com:8443/fixture",
+    "exact threat scope: sub_frame https://DATA.ATTCDN.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@data.attcdn.com/fixture",
+    "exact threat scope: script https://child.data.attcdn.com/fixture",
+    "exact threat scope: script https://data.attcdn.com.example/fixture",
+    "exact threat scope: script https://prefixdata.attcdn.com/fixture",
+    "exact threat scope: script https://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture.js",
+    "exact threat scope: main_frame http://extension-management-portal.kmjukilo-lkjh.workers.dev:8080/fixture",
+    "exact threat scope: websocket ws://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+    "exact threat scope: websocket wss://extension-management-portal.kmjukilo-lkjh.workers.dev:8443/fixture",
+    "exact threat scope: sub_frame https://EXTENSION-MANAGEMENT-PORTAL.KMJUKILO-LKJH.WORKERS.DEV./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+    "exact threat scope: script https://child.extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+    "exact threat scope: script https://extension-management-portal.kmjukilo-lkjh.workers.dev.example/fixture",
+    "exact threat scope: script https://prefixextension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+    "exact threat scope: script https://airproducts.ink/fixture.js",
+    "exact threat scope: main_frame http://airproducts.ink:8080/fixture",
+    "exact threat scope: websocket ws://airproducts.ink/fixture",
+    "exact threat scope: websocket wss://airproducts.ink:8443/fixture",
+    "exact threat scope: sub_frame https://AIRPRODUCTS.INK./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@airproducts.ink/fixture",
+    "exact threat scope: script https://child.airproducts.ink/fixture",
+    "exact threat scope: script https://airproducts.ink.example/fixture",
+    "exact threat scope: script https://prefixairproducts.ink/fixture",
+    "exact threat scope: script https://precipart.ink/fixture.js",
+    "exact threat scope: main_frame http://precipart.ink:8080/fixture",
+    "exact threat scope: websocket ws://precipart.ink/fixture",
+    "exact threat scope: websocket wss://precipart.ink:8443/fixture",
+    "exact threat scope: sub_frame https://PRECIPART.INK./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@precipart.ink/fixture",
+    "exact threat scope: script https://child.precipart.ink/fixture",
+    "exact threat scope: script https://precipart.ink.example/fixture",
+    "exact threat scope: script https://prefixprecipart.ink/fixture",
+    "exact threat scope: script https://epsilonsystems.net/fixture.js",
+    "exact threat scope: main_frame http://epsilonsystems.net:8080/fixture",
+    "exact threat scope: websocket ws://epsilonsystems.net/fixture",
+    "exact threat scope: websocket wss://epsilonsystems.net:8443/fixture",
+    "exact threat scope: sub_frame https://EPSILONSYSTEMS.NET./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@epsilonsystems.net/fixture",
+    "exact threat scope: script https://child.epsilonsystems.net/fixture",
+    "exact threat scope: script https://epsilonsystems.net.example/fixture",
+    "exact threat scope: script https://prefixepsilonsystems.net/fixture",
+    "exact threat scope: script https://rocketlabusa.ink/fixture.js",
+    "exact threat scope: main_frame http://rocketlabusa.ink:8080/fixture",
+    "exact threat scope: websocket ws://rocketlabusa.ink/fixture",
+    "exact threat scope: websocket wss://rocketlabusa.ink:8443/fixture",
+    "exact threat scope: sub_frame https://ROCKETLABUSA.INK./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@rocketlabusa.ink/fixture",
+    "exact threat scope: script https://child.rocketlabusa.ink/fixture",
+    "exact threat scope: script https://rocketlabusa.ink.example/fixture",
+    "exact threat scope: script https://prefixrocketlabusa.ink/fixture",
+    "exact threat scope: script https://spectrolab.fit/fixture.js",
+    "exact threat scope: main_frame http://spectrolab.fit:8080/fixture",
+    "exact threat scope: websocket ws://spectrolab.fit/fixture",
+    "exact threat scope: websocket wss://spectrolab.fit:8443/fixture",
+    "exact threat scope: sub_frame https://SPECTROLAB.FIT./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@spectrolab.fit/fixture",
+    "exact threat scope: script https://child.spectrolab.fit/fixture",
+    "exact threat scope: script https://spectrolab.fit.example/fixture",
+    "exact threat scope: script https://prefixspectrolab.fit/fixture",
+    "exact threat scope: script https://ms.checrity.com/fixture.js",
+    "exact threat scope: main_frame http://ms.checrity.com:8080/fixture",
+    "exact threat scope: websocket ws://ms.checrity.com/fixture",
+    "exact threat scope: websocket wss://ms.checrity.com:8443/fixture",
+    "exact threat scope: sub_frame https://MS.CHECRITY.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@ms.checrity.com/fixture",
+    "exact threat scope: script https://child.ms.checrity.com/fixture",
+    "exact threat scope: script https://ms.checrity.com.example/fixture",
+    "exact threat scope: script https://prefixms.checrity.com/fixture",
+    "exact threat scope: script https://checrity.com/fixture.js",
+    "exact threat scope: main_frame http://checrity.com:8080/fixture",
+    "exact threat scope: websocket ws://checrity.com/fixture",
+    "exact threat scope: websocket wss://checrity.com:8443/fixture",
+    "exact threat scope: sub_frame https://CHECRITY.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@checrity.com/fixture",
+    "exact threat scope: script https://child.checrity.com/fixture",
+    "exact threat scope: script https://checrity.com.example/fixture",
+    "exact threat scope: script https://prefixchecrity.com/fixture",
+    "exact threat scope: script https://yhv41nji.workers.dev/fixture.js",
+    "exact threat scope: main_frame http://yhv41nji.workers.dev:8080/fixture",
+    "exact threat scope: websocket ws://yhv41nji.workers.dev/fixture",
+    "exact threat scope: websocket wss://yhv41nji.workers.dev:8443/fixture",
+    "exact threat scope: sub_frame https://YHV41NJI.WORKERS.DEV./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@yhv41nji.workers.dev/fixture",
+    "exact threat scope: script https://child.yhv41nji.workers.dev/fixture",
+    "exact threat scope: script https://yhv41nji.workers.dev.example/fixture",
+    "exact threat scope: script https://prefixyhv41nji.workers.dev/fixture",
+    "exact threat scope: script https://wcce.joinmacket.com/fixture.js",
+    "exact threat scope: main_frame http://wcce.joinmacket.com:8080/fixture",
+    "exact threat scope: websocket ws://wcce.joinmacket.com/fixture",
+    "exact threat scope: websocket wss://wcce.joinmacket.com:8443/fixture",
+    "exact threat scope: sub_frame https://WCCE.JOINMACKET.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@wcce.joinmacket.com/fixture",
+    "exact threat scope: script https://child.wcce.joinmacket.com/fixture",
+    "exact threat scope: script https://wcce.joinmacket.com.example/fixture",
+    "exact threat scope: script https://prefixwcce.joinmacket.com/fixture",
+    "exact threat scope: script https://joinmacket.com/fixture.js",
+    "exact threat scope: main_frame http://joinmacket.com:8080/fixture",
+    "exact threat scope: websocket ws://joinmacket.com/fixture",
+    "exact threat scope: websocket wss://joinmacket.com:8443/fixture",
+    "exact threat scope: sub_frame https://JOINMACKET.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@joinmacket.com/fixture",
+    "exact threat scope: script https://child.joinmacket.com/fixture",
+    "exact threat scope: script https://joinmacket.com.example/fixture",
+    "exact threat scope: script https://prefixjoinmacket.com/fixture",
+    "exact threat scope: script https://openlumakora.com/fixture.js",
+    "exact threat scope: main_frame http://openlumakora.com:8080/fixture",
+    "exact threat scope: websocket ws://openlumakora.com/fixture",
+    "exact threat scope: websocket wss://openlumakora.com:8443/fixture",
+    "exact threat scope: sub_frame https://OPENLUMAKORA.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@openlumakora.com/fixture",
+    "exact threat scope: script https://child.openlumakora.com/fixture",
+    "exact threat scope: script https://openlumakora.com.example/fixture",
+    "exact threat scope: script https://prefixopenlumakora.com/fixture",
+    "exact threat scope: script https://publish.openlumakora.com/fixture.js",
+    "exact threat scope: main_frame http://publish.openlumakora.com:8080/fixture",
+    "exact threat scope: websocket ws://publish.openlumakora.com/fixture",
+    "exact threat scope: websocket wss://publish.openlumakora.com:8443/fixture",
+    "exact threat scope: sub_frame https://PUBLISH.OPENLUMAKORA.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@publish.openlumakora.com/fixture",
+    "exact threat scope: script https://child.publish.openlumakora.com/fixture",
+    "exact threat scope: script https://publish.openlumakora.com.example/fixture",
+    "exact threat scope: script https://prefixpublish.openlumakora.com/fixture",
+    "exact threat scope: script https://mailtbox.workers.dev/fixture.js",
+    "exact threat scope: main_frame http://mailtbox.workers.dev:8080/fixture",
+    "exact threat scope: websocket ws://mailtbox.workers.dev/fixture",
+    "exact threat scope: websocket wss://mailtbox.workers.dev:8443/fixture",
+    "exact threat scope: sub_frame https://MAILTBOX.WORKERS.DEV./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@mailtbox.workers.dev/fixture",
+    "exact threat scope: script https://child.mailtbox.workers.dev/fixture",
+    "exact threat scope: script https://mailtbox.workers.dev.example/fixture",
+    "exact threat scope: script https://prefixmailtbox.workers.dev/fixture",
+    "exact threat scope: script https://vncdc.mailtbox.workers.dev/fixture.js",
+    "exact threat scope: main_frame http://vncdc.mailtbox.workers.dev:8080/fixture",
+    "exact threat scope: websocket ws://vncdc.mailtbox.workers.dev/fixture",
+    "exact threat scope: websocket wss://vncdc.mailtbox.workers.dev:8443/fixture",
+    "exact threat scope: sub_frame https://VNCDC.MAILTBOX.WORKERS.DEV./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@vncdc.mailtbox.workers.dev/fixture",
+    "exact threat scope: script https://child.vncdc.mailtbox.workers.dev/fixture",
+    "exact threat scope: script https://vncdc.mailtbox.workers.dev.example/fixture",
+    "exact threat scope: script https://prefixvncdc.mailtbox.workers.dev/fixture",
+    "exact threat scope: script https://brianwilli.com/fixture.js",
+    "exact threat scope: main_frame http://brianwilli.com:8080/fixture",
+    "exact threat scope: websocket ws://brianwilli.com/fixture",
+    "exact threat scope: websocket wss://brianwilli.com:8443/fixture",
+    "exact threat scope: sub_frame https://BRIANWILLI.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@brianwilli.com/fixture",
+    "exact threat scope: script https://child.brianwilli.com/fixture",
+    "exact threat scope: script https://brianwilli.com.example/fixture",
+    "exact threat scope: script https://prefixbrianwilli.com/fixture",
+    "exact threat scope: script https://homepage.brianwilli.com/fixture.js",
+    "exact threat scope: main_frame http://homepage.brianwilli.com:8080/fixture",
+    "exact threat scope: websocket ws://homepage.brianwilli.com/fixture",
+    "exact threat scope: websocket wss://homepage.brianwilli.com:8443/fixture",
+    "exact threat scope: sub_frame https://HOMEPAGE.BRIANWILLI.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@homepage.brianwilli.com/fixture",
+    "exact threat scope: script https://child.homepage.brianwilli.com/fixture",
+    "exact threat scope: script https://homepage.brianwilli.com.example/fixture",
+    "exact threat scope: script https://prefixhomepage.brianwilli.com/fixture",
+    "exact threat scope: script https://cloud.shinewrist.net/fixture.js",
+    "exact threat scope: main_frame http://cloud.shinewrist.net:8080/fixture",
+    "exact threat scope: websocket ws://cloud.shinewrist.net/fixture",
+    "exact threat scope: websocket wss://cloud.shinewrist.net:8443/fixture",
+    "exact threat scope: sub_frame https://CLOUD.SHINEWRIST.NET./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@cloud.shinewrist.net/fixture",
+    "exact threat scope: script https://child.cloud.shinewrist.net/fixture",
+    "exact threat scope: script https://cloud.shinewrist.net.example/fixture",
+    "exact threat scope: script https://prefixcloud.shinewrist.net/fixture",
+    "exact threat scope: script https://photos.msbenefit.com/fixture.js",
+    "exact threat scope: main_frame http://photos.msbenefit.com:8080/fixture",
+    "exact threat scope: websocket ws://photos.msbenefit.com/fixture",
+    "exact threat scope: websocket wss://photos.msbenefit.com:8443/fixture",
+    "exact threat scope: sub_frame https://PHOTOS.MSBENEFIT.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@photos.msbenefit.com/fixture",
+    "exact threat scope: script https://child.photos.msbenefit.com/fixture",
+    "exact threat scope: script https://photos.msbenefit.com.example/fixture",
+    "exact threat scope: script https://prefixphotos.msbenefit.com/fixture",
+    "exact threat scope: script https://proof.gitprogram.com/fixture.js",
+    "exact threat scope: main_frame http://proof.gitprogram.com:8080/fixture",
+    "exact threat scope: websocket ws://proof.gitprogram.com/fixture",
+    "exact threat scope: websocket wss://proof.gitprogram.com:8443/fixture",
+    "exact threat scope: sub_frame https://PROOF.GITPROGRAM.COM./fixture",
+    "exact threat scope: xmlhttprequest https://user:pass@proof.gitprogram.com/fixture",
+    "exact threat scope: script https://child.proof.gitprogram.com/fixture",
+    "exact threat scope: script https://proof.gitprogram.com.example/fixture",
+    "exact threat scope: script https://prefixproof.gitprogram.com/fixture",
+    "unlisted parent, tenant or suspected host is allowed: workers.dev",
+    "unlisted parent, tenant or suspected host is allowed: another-tenant.workers.dev",
+    "unlisted parent, tenant or suspected host is allowed: kmjukilo-lkjh.workers.dev",
+    "unlisted parent, tenant or suspected host is allowed: gitprogram.com",
+    "unlisted parent, tenant or suspected host is allowed: shinewrist.net",
+    "unlisted parent, tenant or suspected host is allowed: aurexdefense.online",
+    "unlisted parent, tenant or suspected host is allowed: cyclokinetics.online",
+    "unlisted parent, tenant or suspected host is allowed: sncorp.fit",
+    "reported-threat switch disables its rules",
+    "master pause disables reported threats",
+    "explicit site pause overrides reported-threat blocking",
+    "no reported-host request reached the deny proxy",
+    "ad list blocks the domain before it is allowed",
+    "domain can be always allowed: doubleclick.net",
+    "domain can be always allowed: 000491b06a.com",
+    "domain can be always allowed: msbenefit.com",
+    "always-allowed domain overrides the ad list",
+    "always-allowed domain overrides the community lists",
+    "reported threats stay blocked even when always allowed",
+    "removing the allowed domain restores blocking",
+    "simultaneous switch updates both persist",
+    "ad switch removes the YouTube page filter",
+    "simultaneous domain additions both persist",
+    "IDN is accepted as punycode",
+    "IDN request is actually matched",
+    "invalid domain returns failure",
+    "valid edit succeeds after rejection",
+    "parent exception applies to subdomain",
+    "popup identifies inherited parent exception",
+    "resume button removes matching parent and child exceptions",
+    "popup visibly reports rejection and preserves entered text",
+    "popup adds an always-allowed domain from a URL",
+    "popup removes an always-allowed domain",
+    "long inherited and custom domains fit the popup width",
+    "paused state disables dependent switches and keeps master control usable",
+    "cosmetic filter hides ad fixture and preserves ordinary content",
+    "built-in hiding retains its visibility and pointer safeguards",
+    "Fandom-specific cosmetic rule preserves similarly named content on other sites",
+    "YouTube-specific cosmetic rule preserves similarly named content on other sites",
+    "non-loopback canary request is rejected by the isolated profile",
+    "deny proxy confirms the canary was rejected without DNS lookup or forwarding",
+    "cosmetic filter also applies inside a cross-origin frame",
+    "bundle contains a simple generic selector for the local fixture",
+    "a newly inserted element matches the bundled generic CSS without a page reload",
+    "turning generic cosmetics off restores the generic fixture",
+    "the visible custom editor saves a rule and updates an existing page",
+    "invalid CSS is reported without replacing saved filters",
+    "a second editor can save with the current revision",
+    "external changes preserve an unsaved draft",
+    "a stale draft cannot overwrite newer saved filters",
+    "custom selector exceptions undo generic hiding without removing unrelated custom hiding",
+    "unrelated custom hiding remains active",
+    "cosmetic-only site pause restores local and cross-origin embedded elements",
+    "cosmetic-only pause keeps every network ruleset enabled",
+    "ad network matching remains active on a cosmetically paused site",
+    "reported-threat matching remains active on a cosmetically paused site",
+    "removing the cosmetic exception immediately restores hiding",
+    "custom editor fits a 1100px viewport",
+    "custom editor fits a 380px viewport",
+    "saving an empty custom list removes its effects",
+    "cosmetic toggle updates an already-open page",
+    "site pause removes cosmetic filtering immediately",
+    "site pause also clears cosmetic filtering in cross-origin frames",
+    "real loopback WebSocket control connects",
+    "reported-rule regex blocks a real loopback WebSocket before handshake",
+    "removing the isolated regex rule restores the WebSocket handshake",
+    "pop-up blocker is registered for the chosen site",
+    "window.open to another site is refused",
+    "same-site links still work on a pop-up-blocked site",
+    "cross-origin child frame completes its synthetic pop-up probe",
+    "top-page and cross-origin-frame pop-ups never load",
+    "page-dispatched pop-up events cannot forge activity-log entries",
+    "turning pop-up blocking off unregisters its script",
+    "custom domain blocks a real local network request",
+    "blocked local request never reaches the fixture server",
+    "activity log records the blocked request with its layer and path",
+    "activity log records the settings change",
+    "activity log page shows the blocked server without errors or horizontal overflow",
+    "log page does not offer Allow for a custom-blocked server",
+    "popup links to the activity log",
+    "popup links to the lists page",
+    "lists page shows the site-check hosts with their sites",
+    "lists page adds an always-allowed domain",
+    "lists page follows changes made elsewhere",
+    "lists page removes exactly one entry, not its parent",
+    "lists page filter narrows every table, with no error or horizontal overflow",
+    "disabled flagging does not scan an open page",
+    "fixture request loaded while flagging was disabled",
+    "enabling flagging scans the already-open page and records its ad-sized frame and Sponsored label",
+    "lists page explains why the server was flagged",
+    "popup shows the number of flags waiting",
+    "Ignore moves a flag to the ignored servers",
+    "Block adds the server to Custom Blocked Domains and removes its flag",
+    "master pause disables all static rules",
+    "master pause disables all dynamic rules",
+    "master pause removes the YouTube page filter",
+    "master pause allows the previously blocked local request",
+    "reopened popup reconciles and verifies saved state",
+    "popup has no horizontal overflow",
+    "no uncaught extension runtime exceptions",
+    "isolated browser process is closed after testing"
+  ],
+  "startedAt": "2026-10-29T10:06:12.407Z",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/156.0.4314.50",
+    "revision": "@af2ba23ae0ecf7084d900446fc59d5119dd5fd5e",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+    "jsVersion": "15.6.12.7"
+  },
+  "launch": {
+    "transport": "loopback-websocket",
+    "launcherPid": 103180,
+    "browserPid": 136100,
+    "relaunched": true
+  },
+  "youtubeScript": {
+    "allFrames": true,
+    "id": "youtube-ads",
+    "js": [
+      "youtube.js"
+    ],
+    "matchOriginAsFallback": false,
+    "matches": [
+      "*://*.youtube-nocookie.com/*",
+      "*://*.youtube.com/*"
+    ],
+    "persistAcrossSessions": true,
+    "runAt": "document_start",
+    "world": "MAIN"
+  },
+  "threatProbes": [
+    {
+      "url": "https://msbenefit.com/fixture.js",
+      "testedUrl": "https://msbenefit.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://msbenefit.com:8080/fixture",
+      "testedUrl": "http://msbenefit.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://msbenefit.com/fixture",
+      "testedUrl": "ws://msbenefit.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://msbenefit.com:8443/fixture",
+      "testedUrl": "wss://msbenefit.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://MSBENEFIT.COM./fixture",
+      "testedUrl": "https://MSBENEFIT.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@msbenefit.com/fixture",
+      "testedUrl": "https://user:pass@msbenefit.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.msbenefit.com/fixture",
+      "testedUrl": "https://child.msbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://msbenefit.com.example/fixture",
+      "testedUrl": "https://msbenefit.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixmsbenefit.com/fixture",
+      "testedUrl": "https://prefixmsbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://attcdn.com/fixture.js",
+      "testedUrl": "https://attcdn.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://attcdn.com:8080/fixture",
+      "testedUrl": "http://attcdn.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://attcdn.com/fixture",
+      "testedUrl": "ws://attcdn.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://attcdn.com:8443/fixture",
+      "testedUrl": "wss://attcdn.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://ATTCDN.COM./fixture",
+      "testedUrl": "https://ATTCDN.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@attcdn.com/fixture",
+      "testedUrl": "https://user:pass@attcdn.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.attcdn.com/fixture",
+      "testedUrl": "https://child.attcdn.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://attcdn.com.example/fixture",
+      "testedUrl": "https://attcdn.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixattcdn.com/fixture",
+      "testedUrl": "https://prefixattcdn.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://evidence.msbenefit.com/fixture.js",
+      "testedUrl": "https://evidence.msbenefit.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://evidence.msbenefit.com:8080/fixture",
+      "testedUrl": "http://evidence.msbenefit.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://evidence.msbenefit.com/fixture",
+      "testedUrl": "ws://evidence.msbenefit.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://evidence.msbenefit.com:8443/fixture",
+      "testedUrl": "wss://evidence.msbenefit.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://EVIDENCE.MSBENEFIT.COM./fixture",
+      "testedUrl": "https://EVIDENCE.MSBENEFIT.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@evidence.msbenefit.com/fixture",
+      "testedUrl": "https://user:pass@evidence.msbenefit.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.evidence.msbenefit.com/fixture",
+      "testedUrl": "https://child.evidence.msbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://evidence.msbenefit.com.example/fixture",
+      "testedUrl": "https://evidence.msbenefit.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixevidence.msbenefit.com/fixture",
+      "testedUrl": "https://prefixevidence.msbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://data.attcdn.com/fixture.js",
+      "testedUrl": "https://data.attcdn.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://data.attcdn.com:8080/fixture",
+      "testedUrl": "http://data.attcdn.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://data.attcdn.com/fixture",
+      "testedUrl": "ws://data.attcdn.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://data.attcdn.com:8443/fixture",
+      "testedUrl": "wss://data.attcdn.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://DATA.ATTCDN.COM./fixture",
+      "testedUrl": "https://DATA.ATTCDN.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@data.attcdn.com/fixture",
+      "testedUrl": "https://user:pass@data.attcdn.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.data.attcdn.com/fixture",
+      "testedUrl": "https://child.data.attcdn.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://data.attcdn.com.example/fixture",
+      "testedUrl": "https://data.attcdn.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixdata.attcdn.com/fixture",
+      "testedUrl": "https://prefixdata.attcdn.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture.js",
+      "testedUrl": "https://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://extension-management-portal.kmjukilo-lkjh.workers.dev:8080/fixture",
+      "testedUrl": "http://extension-management-portal.kmjukilo-lkjh.workers.dev:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "testedUrl": "ws://extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://extension-management-portal.kmjukilo-lkjh.workers.dev:8443/fixture",
+      "testedUrl": "wss://extension-management-portal.kmjukilo-lkjh.workers.dev:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://EXTENSION-MANAGEMENT-PORTAL.KMJUKILO-LKJH.WORKERS.DEV./fixture",
+      "testedUrl": "https://EXTENSION-MANAGEMENT-PORTAL.KMJUKILO-LKJH.WORKERS.DEV./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "testedUrl": "https://user:pass@extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "testedUrl": "https://child.extension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://extension-management-portal.kmjukilo-lkjh.workers.dev.example/fixture",
+      "testedUrl": "https://extension-management-portal.kmjukilo-lkjh.workers.dev.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixextension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "testedUrl": "https://prefixextension-management-portal.kmjukilo-lkjh.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://airproducts.ink/fixture.js",
+      "testedUrl": "https://airproducts.ink/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://airproducts.ink:8080/fixture",
+      "testedUrl": "http://airproducts.ink:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://airproducts.ink/fixture",
+      "testedUrl": "ws://airproducts.ink/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://airproducts.ink:8443/fixture",
+      "testedUrl": "wss://airproducts.ink:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://AIRPRODUCTS.INK./fixture",
+      "testedUrl": "https://AIRPRODUCTS.INK./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@airproducts.ink/fixture",
+      "testedUrl": "https://user:pass@airproducts.ink/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.airproducts.ink/fixture",
+      "testedUrl": "https://child.airproducts.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://airproducts.ink.example/fixture",
+      "testedUrl": "https://airproducts.ink.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixairproducts.ink/fixture",
+      "testedUrl": "https://prefixairproducts.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://precipart.ink/fixture.js",
+      "testedUrl": "https://precipart.ink/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://precipart.ink:8080/fixture",
+      "testedUrl": "http://precipart.ink:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://precipart.ink/fixture",
+      "testedUrl": "ws://precipart.ink/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://precipart.ink:8443/fixture",
+      "testedUrl": "wss://precipart.ink:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://PRECIPART.INK./fixture",
+      "testedUrl": "https://PRECIPART.INK./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@precipart.ink/fixture",
+      "testedUrl": "https://user:pass@precipart.ink/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.precipart.ink/fixture",
+      "testedUrl": "https://child.precipart.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://precipart.ink.example/fixture",
+      "testedUrl": "https://precipart.ink.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixprecipart.ink/fixture",
+      "testedUrl": "https://prefixprecipart.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://epsilonsystems.net/fixture.js",
+      "testedUrl": "https://epsilonsystems.net/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://epsilonsystems.net:8080/fixture",
+      "testedUrl": "http://epsilonsystems.net:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://epsilonsystems.net/fixture",
+      "testedUrl": "ws://epsilonsystems.net/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://epsilonsystems.net:8443/fixture",
+      "testedUrl": "wss://epsilonsystems.net:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://EPSILONSYSTEMS.NET./fixture",
+      "testedUrl": "https://EPSILONSYSTEMS.NET./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@epsilonsystems.net/fixture",
+      "testedUrl": "https://user:pass@epsilonsystems.net/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.epsilonsystems.net/fixture",
+      "testedUrl": "https://child.epsilonsystems.net/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://epsilonsystems.net.example/fixture",
+      "testedUrl": "https://epsilonsystems.net.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixepsilonsystems.net/fixture",
+      "testedUrl": "https://prefixepsilonsystems.net/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://rocketlabusa.ink/fixture.js",
+      "testedUrl": "https://rocketlabusa.ink/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://rocketlabusa.ink:8080/fixture",
+      "testedUrl": "http://rocketlabusa.ink:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://rocketlabusa.ink/fixture",
+      "testedUrl": "ws://rocketlabusa.ink/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://rocketlabusa.ink:8443/fixture",
+      "testedUrl": "wss://rocketlabusa.ink:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://ROCKETLABUSA.INK./fixture",
+      "testedUrl": "https://ROCKETLABUSA.INK./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@rocketlabusa.ink/fixture",
+      "testedUrl": "https://user:pass@rocketlabusa.ink/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.rocketlabusa.ink/fixture",
+      "testedUrl": "https://child.rocketlabusa.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://rocketlabusa.ink.example/fixture",
+      "testedUrl": "https://rocketlabusa.ink.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixrocketlabusa.ink/fixture",
+      "testedUrl": "https://prefixrocketlabusa.ink/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://spectrolab.fit/fixture.js",
+      "testedUrl": "https://spectrolab.fit/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://spectrolab.fit:8080/fixture",
+      "testedUrl": "http://spectrolab.fit:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://spectrolab.fit/fixture",
+      "testedUrl": "ws://spectrolab.fit/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://spectrolab.fit:8443/fixture",
+      "testedUrl": "wss://spectrolab.fit:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://SPECTROLAB.FIT./fixture",
+      "testedUrl": "https://SPECTROLAB.FIT./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@spectrolab.fit/fixture",
+      "testedUrl": "https://user:pass@spectrolab.fit/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.spectrolab.fit/fixture",
+      "testedUrl": "https://child.spectrolab.fit/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://spectrolab.fit.example/fixture",
+      "testedUrl": "https://spectrolab.fit.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixspectrolab.fit/fixture",
+      "testedUrl": "https://prefixspectrolab.fit/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://ms.checrity.com/fixture.js",
+      "testedUrl": "https://ms.checrity.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://ms.checrity.com:8080/fixture",
+      "testedUrl": "http://ms.checrity.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://ms.checrity.com/fixture",
+      "testedUrl": "ws://ms.checrity.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://ms.checrity.com:8443/fixture",
+      "testedUrl": "wss://ms.checrity.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://MS.CHECRITY.COM./fixture",
+      "testedUrl": "https://MS.CHECRITY.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@ms.checrity.com/fixture",
+      "testedUrl": "https://user:pass@ms.checrity.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.ms.checrity.com/fixture",
+      "testedUrl": "https://child.ms.checrity.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://ms.checrity.com.example/fixture",
+      "testedUrl": "https://ms.checrity.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixms.checrity.com/fixture",
+      "testedUrl": "https://prefixms.checrity.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://checrity.com/fixture.js",
+      "testedUrl": "https://checrity.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://checrity.com:8080/fixture",
+      "testedUrl": "http://checrity.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://checrity.com/fixture",
+      "testedUrl": "ws://checrity.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://checrity.com:8443/fixture",
+      "testedUrl": "wss://checrity.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://CHECRITY.COM./fixture",
+      "testedUrl": "https://CHECRITY.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@checrity.com/fixture",
+      "testedUrl": "https://user:pass@checrity.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.checrity.com/fixture",
+      "testedUrl": "https://child.checrity.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://checrity.com.example/fixture",
+      "testedUrl": "https://checrity.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixchecrity.com/fixture",
+      "testedUrl": "https://prefixchecrity.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://yhv41nji.workers.dev/fixture.js",
+      "testedUrl": "https://yhv41nji.workers.dev/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://yhv41nji.workers.dev:8080/fixture",
+      "testedUrl": "http://yhv41nji.workers.dev:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://yhv41nji.workers.dev/fixture",
+      "testedUrl": "ws://yhv41nji.workers.dev/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://yhv41nji.workers.dev:8443/fixture",
+      "testedUrl": "wss://yhv41nji.workers.dev:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://YHV41NJI.WORKERS.DEV./fixture",
+      "testedUrl": "https://YHV41NJI.WORKERS.DEV./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@yhv41nji.workers.dev/fixture",
+      "testedUrl": "https://user:pass@yhv41nji.workers.dev/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.yhv41nji.workers.dev/fixture",
+      "testedUrl": "https://child.yhv41nji.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://yhv41nji.workers.dev.example/fixture",
+      "testedUrl": "https://yhv41nji.workers.dev.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixyhv41nji.workers.dev/fixture",
+      "testedUrl": "https://prefixyhv41nji.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://wcce.joinmacket.com/fixture.js",
+      "testedUrl": "https://wcce.joinmacket.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://wcce.joinmacket.com:8080/fixture",
+      "testedUrl": "http://wcce.joinmacket.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://wcce.joinmacket.com/fixture",
+      "testedUrl": "ws://wcce.joinmacket.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://wcce.joinmacket.com:8443/fixture",
+      "testedUrl": "wss://wcce.joinmacket.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://WCCE.JOINMACKET.COM./fixture",
+      "testedUrl": "https://WCCE.JOINMACKET.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@wcce.joinmacket.com/fixture",
+      "testedUrl": "https://user:pass@wcce.joinmacket.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.wcce.joinmacket.com/fixture",
+      "testedUrl": "https://child.wcce.joinmacket.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://wcce.joinmacket.com.example/fixture",
+      "testedUrl": "https://wcce.joinmacket.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixwcce.joinmacket.com/fixture",
+      "testedUrl": "https://prefixwcce.joinmacket.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://joinmacket.com/fixture.js",
+      "testedUrl": "https://joinmacket.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://joinmacket.com:8080/fixture",
+      "testedUrl": "http://joinmacket.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://joinmacket.com/fixture",
+      "testedUrl": "ws://joinmacket.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://joinmacket.com:8443/fixture",
+      "testedUrl": "wss://joinmacket.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://JOINMACKET.COM./fixture",
+      "testedUrl": "https://JOINMACKET.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@joinmacket.com/fixture",
+      "testedUrl": "https://user:pass@joinmacket.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.joinmacket.com/fixture",
+      "testedUrl": "https://child.joinmacket.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://joinmacket.com.example/fixture",
+      "testedUrl": "https://joinmacket.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixjoinmacket.com/fixture",
+      "testedUrl": "https://prefixjoinmacket.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://openlumakora.com/fixture.js",
+      "testedUrl": "https://openlumakora.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://openlumakora.com:8080/fixture",
+      "testedUrl": "http://openlumakora.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://openlumakora.com/fixture",
+      "testedUrl": "ws://openlumakora.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://openlumakora.com:8443/fixture",
+      "testedUrl": "wss://openlumakora.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://OPENLUMAKORA.COM./fixture",
+      "testedUrl": "https://OPENLUMAKORA.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@openlumakora.com/fixture",
+      "testedUrl": "https://user:pass@openlumakora.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.openlumakora.com/fixture",
+      "testedUrl": "https://child.openlumakora.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://openlumakora.com.example/fixture",
+      "testedUrl": "https://openlumakora.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixopenlumakora.com/fixture",
+      "testedUrl": "https://prefixopenlumakora.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://publish.openlumakora.com/fixture.js",
+      "testedUrl": "https://publish.openlumakora.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://publish.openlumakora.com:8080/fixture",
+      "testedUrl": "http://publish.openlumakora.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://publish.openlumakora.com/fixture",
+      "testedUrl": "ws://publish.openlumakora.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://publish.openlumakora.com:8443/fixture",
+      "testedUrl": "wss://publish.openlumakora.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://PUBLISH.OPENLUMAKORA.COM./fixture",
+      "testedUrl": "https://PUBLISH.OPENLUMAKORA.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@publish.openlumakora.com/fixture",
+      "testedUrl": "https://user:pass@publish.openlumakora.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.publish.openlumakora.com/fixture",
+      "testedUrl": "https://child.publish.openlumakora.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://publish.openlumakora.com.example/fixture",
+      "testedUrl": "https://publish.openlumakora.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixpublish.openlumakora.com/fixture",
+      "testedUrl": "https://prefixpublish.openlumakora.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://mailtbox.workers.dev/fixture.js",
+      "testedUrl": "https://mailtbox.workers.dev/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://mailtbox.workers.dev:8080/fixture",
+      "testedUrl": "http://mailtbox.workers.dev:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://mailtbox.workers.dev/fixture",
+      "testedUrl": "ws://mailtbox.workers.dev/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://mailtbox.workers.dev:8443/fixture",
+      "testedUrl": "wss://mailtbox.workers.dev:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://MAILTBOX.WORKERS.DEV./fixture",
+      "testedUrl": "https://MAILTBOX.WORKERS.DEV./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@mailtbox.workers.dev/fixture",
+      "testedUrl": "https://user:pass@mailtbox.workers.dev/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.mailtbox.workers.dev/fixture",
+      "testedUrl": "https://child.mailtbox.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://mailtbox.workers.dev.example/fixture",
+      "testedUrl": "https://mailtbox.workers.dev.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixmailtbox.workers.dev/fixture",
+      "testedUrl": "https://prefixmailtbox.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://vncdc.mailtbox.workers.dev/fixture.js",
+      "testedUrl": "https://vncdc.mailtbox.workers.dev/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://vncdc.mailtbox.workers.dev:8080/fixture",
+      "testedUrl": "http://vncdc.mailtbox.workers.dev:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://vncdc.mailtbox.workers.dev/fixture",
+      "testedUrl": "ws://vncdc.mailtbox.workers.dev/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://vncdc.mailtbox.workers.dev:8443/fixture",
+      "testedUrl": "wss://vncdc.mailtbox.workers.dev:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://VNCDC.MAILTBOX.WORKERS.DEV./fixture",
+      "testedUrl": "https://VNCDC.MAILTBOX.WORKERS.DEV./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@vncdc.mailtbox.workers.dev/fixture",
+      "testedUrl": "https://user:pass@vncdc.mailtbox.workers.dev/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.vncdc.mailtbox.workers.dev/fixture",
+      "testedUrl": "https://child.vncdc.mailtbox.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://vncdc.mailtbox.workers.dev.example/fixture",
+      "testedUrl": "https://vncdc.mailtbox.workers.dev.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixvncdc.mailtbox.workers.dev/fixture",
+      "testedUrl": "https://prefixvncdc.mailtbox.workers.dev/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://brianwilli.com/fixture.js",
+      "testedUrl": "https://brianwilli.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://brianwilli.com:8080/fixture",
+      "testedUrl": "http://brianwilli.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://brianwilli.com/fixture",
+      "testedUrl": "ws://brianwilli.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://brianwilli.com:8443/fixture",
+      "testedUrl": "wss://brianwilli.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://BRIANWILLI.COM./fixture",
+      "testedUrl": "https://BRIANWILLI.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@brianwilli.com/fixture",
+      "testedUrl": "https://user:pass@brianwilli.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.brianwilli.com/fixture",
+      "testedUrl": "https://child.brianwilli.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://brianwilli.com.example/fixture",
+      "testedUrl": "https://brianwilli.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixbrianwilli.com/fixture",
+      "testedUrl": "https://prefixbrianwilli.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://homepage.brianwilli.com/fixture.js",
+      "testedUrl": "https://homepage.brianwilli.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://homepage.brianwilli.com:8080/fixture",
+      "testedUrl": "http://homepage.brianwilli.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://homepage.brianwilli.com/fixture",
+      "testedUrl": "ws://homepage.brianwilli.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://homepage.brianwilli.com:8443/fixture",
+      "testedUrl": "wss://homepage.brianwilli.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://HOMEPAGE.BRIANWILLI.COM./fixture",
+      "testedUrl": "https://HOMEPAGE.BRIANWILLI.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@homepage.brianwilli.com/fixture",
+      "testedUrl": "https://user:pass@homepage.brianwilli.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.homepage.brianwilli.com/fixture",
+      "testedUrl": "https://child.homepage.brianwilli.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://homepage.brianwilli.com.example/fixture",
+      "testedUrl": "https://homepage.brianwilli.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixhomepage.brianwilli.com/fixture",
+      "testedUrl": "https://prefixhomepage.brianwilli.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://cloud.shinewrist.net/fixture.js",
+      "testedUrl": "https://cloud.shinewrist.net/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://cloud.shinewrist.net:8080/fixture",
+      "testedUrl": "http://cloud.shinewrist.net:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://cloud.shinewrist.net/fixture",
+      "testedUrl": "ws://cloud.shinewrist.net/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://cloud.shinewrist.net:8443/fixture",
+      "testedUrl": "wss://cloud.shinewrist.net:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://CLOUD.SHINEWRIST.NET./fixture",
+      "testedUrl": "https://CLOUD.SHINEWRIST.NET./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@cloud.shinewrist.net/fixture",
+      "testedUrl": "https://user:pass@cloud.shinewrist.net/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.cloud.shinewrist.net/fixture",
+      "testedUrl": "https://child.cloud.shinewrist.net/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://cloud.shinewrist.net.example/fixture",
+      "testedUrl": "https://cloud.shinewrist.net.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixcloud.shinewrist.net/fixture",
+      "testedUrl": "https://prefixcloud.shinewrist.net/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://photos.msbenefit.com/fixture.js",
+      "testedUrl": "https://photos.msbenefit.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://photos.msbenefit.com:8080/fixture",
+      "testedUrl": "http://photos.msbenefit.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://photos.msbenefit.com/fixture",
+      "testedUrl": "ws://photos.msbenefit.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://photos.msbenefit.com:8443/fixture",
+      "testedUrl": "wss://photos.msbenefit.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://PHOTOS.MSBENEFIT.COM./fixture",
+      "testedUrl": "https://PHOTOS.MSBENEFIT.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@photos.msbenefit.com/fixture",
+      "testedUrl": "https://user:pass@photos.msbenefit.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.photos.msbenefit.com/fixture",
+      "testedUrl": "https://child.photos.msbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://photos.msbenefit.com.example/fixture",
+      "testedUrl": "https://photos.msbenefit.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixphotos.msbenefit.com/fixture",
+      "testedUrl": "https://prefixphotos.msbenefit.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://proof.gitprogram.com/fixture.js",
+      "testedUrl": "https://proof.gitprogram.com/fixture.js",
+      "type": "script",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "http://proof.gitprogram.com:8080/fixture",
+      "testedUrl": "http://proof.gitprogram.com:8080/fixture",
+      "type": "main_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "ws://proof.gitprogram.com/fixture",
+      "testedUrl": "ws://proof.gitprogram.com/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "wss://proof.gitprogram.com:8443/fixture",
+      "testedUrl": "wss://proof.gitprogram.com:8443/fixture",
+      "type": "websocket",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://PROOF.GITPROGRAM.COM./fixture",
+      "testedUrl": "https://PROOF.GITPROGRAM.COM./fixture",
+      "type": "sub_frame",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://user:pass@proof.gitprogram.com/fixture",
+      "testedUrl": "https://user:pass@proof.gitprogram.com/fixture",
+      "type": "xmlhttprequest",
+      "expected": true,
+      "blocked": true
+    },
+    {
+      "url": "https://child.proof.gitprogram.com/fixture",
+      "testedUrl": "https://child.proof.gitprogram.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://proof.gitprogram.com.example/fixture",
+      "testedUrl": "https://proof.gitprogram.com.example/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    },
+    {
+      "url": "https://prefixproof.gitprogram.com/fixture",
+      "testedUrl": "https://prefixproof.gitprogram.com/fixture",
+      "type": "script",
+      "expected": false,
+      "blocked": false
+    }
+  ],
+  "dnrRoundTrip": {
+    "sent": {
+      "id": 1,
+      "priority": 50,
+      "action": {
+        "type": "block"
+      },
+      "condition": {
+        "requestDomains": [
+          "roundtrip.example"
+        ],
+        "resourceTypes": [
+          "script"
+        ]
+      }
+    },
+    "returned": [
+      {
+        "action": {
+          "type": "block"
+        },
+        "condition": {
+          "requestDomains": [
+            "roundtrip.example"
+          ],
+          "resourceTypes": [
+            "script"
+          ]
+        },
+        "id": 1,
+        "priority": 50
+      }
+    ]
+  },
+  "concurrent": {
+    "responses": [
+      {
+        "ok": true,
+        "settings": {
+          "enabled": true,
+          "rulesets": {
+            "ads_ruleset": false,
+            "trackers_ruleset": true,
+            "threats_ruleset": true,
+            "community_ruleset": true
+          },
+          "cosmeticFiltering": true,
+          "genericCosmeticFiltering": true,
+          "customCosmeticFilters": "",
+          "flagSuspects": true,
+          "whitelistedDomains": [],
+          "customBlockedDomains": [],
+          "popupBlockedDomains": [],
+          "allowedDomains": [],
+          "cosmeticPausedDomains": []
+        },
+        "quarantinedDomains": [],
+        "threatStatus": {
+          "available": true,
+          "count": 24,
+          "expiresAt": "2026-11-30T00:00:00Z",
+          "error": ""
+        }
+      },
+      {
+        "ok": true,
+        "settings": {
+          "enabled": true,
+          "rulesets": {
+            "ads_ruleset": false,
+            "trackers_ruleset": false,
+            "threats_ruleset": true,
+            "community_ruleset": true
+          },
+          "cosmeticFiltering": true,
+          "genericCosmeticFiltering": true,
+          "customCosmeticFilters": "",
+          "flagSuspects": true,
+          "whitelistedDomains": [],
+          "customBlockedDomains": [],
+          "popupBlockedDomains": [],
+          "allowedDomains": [],
+          "cosmeticPausedDomains": []
+        },
+        "quarantinedDomains": [],
+        "threatStatus": {
+          "available": true,
+          "count": 24,
+          "expiresAt": "2026-11-30T00:00:00Z",
+          "error": ""
+        }
+      },
+      {
+        "ok": true,
+        "settings": {
+          "enabled": true,
+          "rulesets": {
+            "ads_ruleset": false,
+            "trackers_ruleset": false,
+            "threats_ruleset": true,
+            "community_ruleset": true
+          },
+          "cosmeticFiltering": true,
+          "genericCosmeticFiltering": true,
+          "customCosmeticFilters": "",
+          "flagSuspects": true,
+          "whitelistedDomains": [],
+          "customBlockedDomains": [
+            "one.example"
+          ],
+          "popupBlockedDomains": [],
+          "allowedDomains": [],
+          "cosmeticPausedDomains": []
+        },
+        "quarantinedDomains": [],
+        "threatStatus": {
+          "available": true,
+          "count": 24,
+          "expiresAt": "2026-11-30T00:00:00Z",
+          "error": ""
+        }
+      },
+      {
+        "ok": true,
+        "settings": {
+          "enabled": true,
+          "rulesets": {
+            "ads_ruleset": false,
+            "trackers_ruleset": false,
+            "threats_ruleset": true,
+            "community_ruleset": true
+          },
+          "cosmeticFiltering": true,
+          "genericCosmeticFiltering": true,
+          "customCosmeticFilters": "",
+          "flagSuspects": true,
+          "whitelistedDomains": [],
+          "customBlockedDomains": [
+            "one.example",
+            "two.example"
+          ],
+          "popupBlockedDomains": [],
+          "allowedDomains": [],
+          "cosmeticPausedDomains": []
+        },
+        "quarantinedDomains": [],
+        "threatStatus": {
+          "available": true,
+          "count": 24,
+          "expiresAt": "2026-11-30T00:00:00Z",
+          "error": ""
+        }
+      }
+    ],
+    "state": {
+      "ok": true,
+      "settings": {
+        "enabled": true,
+        "rulesets": {
+          "ads_ruleset": false,
+          "trackers_ruleset": false,
+          "threats_ruleset": true,
+          "community_ruleset": true
+        },
+        "cosmeticFiltering": true,
+        "genericCosmeticFiltering": true,
+        "customCosmeticFilters": "",
+        "flagSuspects": true,
+        "whitelistedDomains": [],
+        "customBlockedDomains": [
+          "one.example",
+          "two.example"
+        ],
+        "popupBlockedDomains": [],
+        "allowedDomains": [],
+        "cosmeticPausedDomains": []
+      },
+      "quarantinedDomains": [],
+      "threatStatus": {
+        "available": true,
+        "count": 24,
+        "expiresAt": "2026-11-30T00:00:00Z",
+        "error": ""
+      }
+    }
+  },
+  "cosmetic": {
+    "genericSelectors": 14409,
+    "toggleRoundTripMs": 91,
+    "styleCharacters": 239731
+  },
+  "popupBlocking": {
+    "opened": true,
+    "sameSite": true
+  },
+  "socketUpgrades": [
+    "/ws-control",
+    "/ws-blocked"
+  ],
+  "success": true,
+  "expectedNetworkErrors": [],
+  "events": [],
+  "stderr": "",
+  "cleanup": {
+    "browserPid": 136100,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "networkGuard": {
+    "policy": "deny all proxy; only loopback bypass; speculative DNS disabled",
+    "denied": [
+      {
+        "method": "GET",
+        "destination": "edge.microsoft.com"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "edge.microsoft.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "edge.microsoft.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "blockads-network-guard.invalid:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "edge.microsoft.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.bing.com:443"
+      }
+    ],
+    "peerResets": 1,
+    "errors": []
+  }
+}

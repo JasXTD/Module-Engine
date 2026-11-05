@@ -1,0 +1,177 @@
+{
+  "date": "2026-11-05",
+  "project": "BlockAds / Module Engine",
+  "version": "1.9.0",
+  "request": "Automatically close new blank pop-up tabs after the extension blocks their destination.",
+  "baseline": {
+    "reproduced": true,
+    "evidence": "before.json",
+    "observation": "An owned popup remained open after its main-frame request matched a custom block and failed with ERR_BLOCKED_BY_CLIENT. No blocked request reached the local server."
+  },
+  "behavior": {
+    "automatic": true,
+    "newPermissions": false,
+    "criteria": [
+      "New tab with a native opener, first HTTP(S) main-frame navigation, within ten seconds.",
+      "Native rule-match event and blocked-request error must refer to the same tab, request ID and URL; the matched rule action must be block.",
+      "Recheck current tab, opener, pin state, pending URL and candidate identity after async reads before closing.",
+      "Successful responses, new navigations, expiry, tab removal and network-rule updates invalidate pending evidence."
+    ],
+    "limits": {
+      "pendingTabs": 64,
+      "lifetimeMs": 10000,
+      "maximumUrlCharacters": 8192
+    },
+    "preserved": [
+      "Existing tabs",
+      "Pinned or discarded tabs",
+      "Tabs that already received page content",
+      "Unrelated blank tabs",
+      "Tabs without an opener",
+      "Blocked subresources",
+      "Ordinary network errors",
+      "Allow-rule matches"
+    ],
+    "notes": [
+      "Native opener information also covers links intentionally opened in new tabs; a blocked initial navigation there is eligible.",
+      "The candidate map is local to the worker and is not restored after restart.",
+      "Cleanup requires native rule feedback: verified for unpacked Chrome and Edge; unsupported environments retain the tab.",
+      "The ten-second rule is an eligibility window, not a delayed-close timer. Network blocking still happens in the browser.",
+      "No browser API provides an atomic conditional tab close. Events and current tab state are checked immediately before the remove call."
+    ]
+  },
+  "sourceFiles": [
+    "background.js",
+    "tests/background.test.cjs",
+    "tests/blocked-tabs-browser.cjs",
+    "README.md"
+  ],
+  "sourceHashes": {
+    "background.js": {
+      "before": "f2430ff282a886b1cedf705395f43fd8adcbfd86f929d543da3c75e1f0252561",
+      "after": "b905c2abd715a5e966b2945b4bc2e3bdd0939330fffb1ce5ea78d144ca988120"
+    },
+    "tests/background.test.cjs": {
+      "before": "9f90aa21046ab6c5fcb8009dad4a71e141419a6f599d306477a039bbb5cb79ac",
+      "after": "378647659ef79e750b4c442b1077e7d77aae4c8105488dc2480a69fed6f2d29c"
+    },
+    "tests/blocked-tabs-browser.cjs": {
+      "before": null,
+      "after": "f7b4c4c9ae8670be97dcad4e23d6479eabb68ec1895bdd3f2bde6c31b858e2ea"
+    },
+    "README.md": {
+      "before": "110ee2f2b4d614304a0a419ec67f838105b54387b52c240e89008665f590ccdd",
+      "after": "42bb1a5737c8556203a1874b00fe7b2099e5eb5181b0ec2c05f554f39fc7c378"
+    }
+  },
+  "taskPatch": "task-changes.patch",
+  "unit": {
+    "tests": 192,
+    "passed": 192,
+    "failed": 0,
+    "addedTests": 25,
+    "log": "unit-all.log",
+    "command": "node --test tests/background.test.cjs tests/userscripts.test.cjs tests/network.test.cjs tests/evidence.test.cjs tests/cosmetic.test.cjs tests/procedural.test.cjs tests/flags.test.cjs tests/youtube.test.cjs tests/live-network.test.cjs"
+  },
+  "browsers": [
+    {
+      "name": "chrome-cleanup",
+      "version": "Chrome/156.0.8078.80",
+      "checks": 17,
+      "success": true,
+      "evidence": "chrome-cleanup.json",
+      "matchedSourceFiles": 42,
+      "fixtureRule": {
+        "id": 9224,
+        "priority": 1,
+        "action": {
+          "type": "block"
+        },
+        "condition": {
+          "urlFilter": "|http://127.0.0.1:52731/blocked-static",
+          "resourceTypes": [
+            "main_frame"
+          ]
+        }
+      },
+      "cleanup": {
+        "browserPid": 9804,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "name": "edge-cleanup",
+      "version": "Edg/156.0.4314.58",
+      "checks": 17,
+      "success": true,
+      "evidence": "edge-cleanup.json",
+      "matchedSourceFiles": 42,
+      "fixtureRule": {
+        "id": 9224,
+        "priority": 1,
+        "action": {
+          "type": "block"
+        },
+        "condition": {
+          "urlFilter": "|http://127.0.0.1:52804/blocked-static",
+          "resourceTypes": [
+            "main_frame"
+          ]
+        }
+      },
+      "cleanup": {
+        "browserPid": 32792,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "name": "chrome-blocker",
+      "version": "Chrome/156.0.8078.80",
+      "checks": 539,
+      "success": true,
+      "evidence": "chrome-blocker.json",
+      "matchedSourceFiles": 43,
+      "fixtureRule": null,
+      "cleanup": {
+        "browserPid": 16548,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "name": "edge-blocker",
+      "version": "Edg/156.0.4314.58",
+      "checks": 539,
+      "success": true,
+      "evidence": "edge-blocker.json",
+      "matchedSourceFiles": 43,
+      "fixtureRule": null,
+      "cleanup": {
+        "browserPid": 25556,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    }
+  ],
+  "review": {
+    "taskPatchReverseCheck": "passed",
+    "manifestUnchanged": true,
+    "packageHashes": "package-hashes.json",
+    "fixtureModification": "Cleanup runs add one inert loopback-only static canary to the disposable community ruleset; remaining rules are compared exactly. General blocker runs use unchanged source files.",
+    "generatedMetadata": "Browser-generated _metadata indexes are excluded from source hash comparison.",
+    "unrelatedWork": "Preserved; patch compares only this task against the pre-edit snapshot."
+  },
+  "cleanup": "cleanup.json",
+  "boundaries": [
+    "Fresh disposable browser profiles; owned loopback fixtures; deny proxy; no suspicious domain contacted.",
+    "No packages installed and no personal browser profile modified. Reload the unpacked extension to apply the change.",
+    "Firefox tab cleanup is not supported by this feedback path; no Firefox runtime claim is made.",
+    "No rule compilation was needed because shipped list data and permission declarations were not changed."
+  ]
+}

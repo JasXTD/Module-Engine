@@ -1,0 +1,699 @@
+TAP version 13
+# Subtest: network filter defaults migrate without changing existing rules or preferences
+ok 1 - network filter defaults migrate without changing existing rules or preferences
+  ---
+  duration_ms: 35.1656
+  type: 'test'
+  ...
+# Subtest: custom network saves serialize with other editors and refuse a stale base
+ok 2 - custom network saves serialize with other editors and refuse a stale base
+  ---
+  duration_ms: 22.6289
+  type: 'test'
+  ...
+# Subtest: network filters keep extension-only authority and reject invalid saves atomically
+ok 3 - network filters keep extension-only authority and reject invalid saves atomically
+  ---
+  duration_ms: 8.6018
+  type: 'test'
+  ...
+# Subtest: network filter dynamic failure restores the prior filters and permits retry
+ok 4 - network filter dynamic failure restores the prior filters and permits retry
+  ---
+  duration_ms: 8.7874
+  type: 'test'
+  ...
+# Subtest: network filter save failure restores the prior filters and permits retry
+ok 5 - network filter save failure restores the prior filters and permits retry
+  ---
+  duration_ms: 13.6403
+  type: 'test'
+  ...
+# Subtest: network filter ignoreDynamic failure restores the prior filters and permits retry
+ok 6 - network filter ignoreDynamic failure restores the prior filters and permits retry
+  ---
+  duration_ms: 8.4184
+  type: 'test'
+  ...
+# Subtest: network rules share the browser quota with domain rules and preserve the last verified state
+ok 7 - network rules share the browser quota with domain rules and preserve the last verified state
+  ---
+  duration_ms: 5.2584
+  type: 'test'
+  ...
+# Subtest: network rules survive restart, respect master pause and stay independent of cosmetic and list switches
+ok 8 - network rules survive restart, respect master pause and stay independent of cosmetic and list switches
+  ---
+  duration_ms: 13.4344
+  type: 'test'
+  ...
+# Subtest: only the extension interface can start a picker on a supported active page
+ok 9 - only the extension interface can start a picker on a supported active page
+  ---
+  duration_ms: 5.2447
+  type: 'test'
+  ...
+# Subtest: picker sessions bind exact host, top frame, document, URL and short-lived authority
+ok 10 - picker sessions bind exact host, top frame, document, URL and short-lived authority
+  ---
+  duration_ms: 10.6148
+  type: 'test'
+  ...
+# Subtest: picker append preserves concurrent editor changes and has exact site scope and idempotent retries
+ok 11 - picker append preserves concurrent editor changes and has exact site scope and idempotent retries
+  ---
+  duration_ms: 9.2501
+  type: 'test'
+  ...
+# Subtest: picker authority survives a worker restart but closing it prevents a later save
+ok 12 - picker authority survives a worker restart but closing it prevents a later save
+  ---
+  duration_ms: 21.4486
+  type: 'test'
+  ...
+# Subtest: picker session storage stays bounded and retains recently reopened tabs
+ok 13 - picker session storage stays bounded and retains recently reopened tabs
+  ---
+  duration_ms: 12.9708
+  type: 'test'
+  ...
+# Subtest: failed injection, capability writes and settings saves leave custom filters intact
+ok 14 - failed injection, capability writes and settings saves leave custom filters intact
+  ---
+  duration_ms: 7.8187
+  type: 'test'
+  ...
+# Subtest: picker refuses paused hiding, exact exceptions and overflowing custom-rule limits
+ok 15 - picker refuses paused hiding, exact exceptions and overflowing custom-rule limits
+  ---
+  duration_ms: 40.0636
+  type: 'test'
+  ...
+# Subtest: advanced hiding is independent, validated and rolled back when saving fails
+ok 16 - advanced hiding is independent, validated and rolled back when saving fails
+  ---
+  duration_ms: 11.3457
+  type: 'test'
+  ...
+# Subtest: cosmetic-only pauses restore embedded content without disabling network or video-ad protection
+ok 17 - cosmetic-only pauses restore embedded content without disabling network or video-ad protection
+  ---
+  duration_ms: 6.0897
+  type: 'test'
+  ...
+# Subtest: custom cosmetic saves are transactional and conflicting editors cannot overwrite one another
+ok 18 - custom cosmetic saves are transactional and conflicting editors cannot overwrite one another
+  ---
+  duration_ms: 8.348
+  type: 'test'
+  ...
+# Subtest: custom rules reject content-script writers, injection and unrestricted setting patches
+ok 19 - custom rules reject content-script writers, injection and unrestricted setting patches
+  ---
+  duration_ms: 4.5628
+  type: 'test'
+  ...
+# Subtest: generic and custom cosmetics honor switches, list exceptions and browser-supplied frame hosts
+ok 20 - generic and custom cosmetics honor switches, list exceptions and browser-supplied frame hosts
+  ---
+  duration_ms: 6.7106
+  type: 'test'
+  ...
+# Subtest: domain canonicalization accepts URLs and IDN while rejecting filter injection
+ok 21 - domain canonicalization accepts URLs and IDN while rejecting filter injection
+  ---
+  duration_ms: 6.1744
+  type: 'test'
+  ...
+# Subtest: first run applies all settings and verifies actual browser rule state
+ok 22 - first run applies all settings and verifies actual browser rule state
+  ---
+  duration_ms: 4.7015
+  type: 'test'
+  ...
+# Subtest: overlapping independent switches and domain additions are not lost
+ok 23 - overlapping independent switches and domain additions are not lost
+  ---
+  duration_ms: 8.4116
+  type: 'test'
+  ...
+# Subtest: IDN entries become DNR-compatible and a rejected entry cannot poison later edits
+ok 24 - IDN entries become DNR-compatible and a rejected entry cannot poison later edits
+  ---
+  duration_ms: 6.9071
+  type: 'test'
+  ...
+# Subtest: old invalid saved domains are preserved visibly without preventing valid protection
+ok 25 - old invalid saved domains are preserved visibly without preventing valid protection
+  ---
+  duration_ms: 14.4899
+  type: 'test'
+  ...
+# Subtest: Firefox null optional fields are equivalent to omitted fields during verification
+ok 26 - Firefox null optional fields are equivalent to omitted fields during verification
+  ---
+  duration_ms: 5.2269
+  type: 'test'
+  ...
+# Subtest: resuming an inherited site exception removes all matching ancestors, preserving neighbors
+ok 27 - resuming an inherited site exception removes all matching ancestors, preserving neighbors
+  ---
+  duration_ms: 9.6452
+  type: 'test'
+  ...
+# Subtest: dynamic failure is visible and restores previously verified rules and settings
+ok 28 - dynamic failure is visible and restores previously verified rules and settings
+  ---
+  duration_ms: 7.3645
+  type: 'test'
+  ...
+# Subtest: static failure is visible and restores previously verified rules and settings
+ok 29 - static failure is visible and restores previously verified rules and settings
+  ---
+  duration_ms: 8.3704
+  type: 'test'
+  ...
+# Subtest: scripts failure is visible and restores previously verified rules and settings
+ok 30 - scripts failure is visible and restores previously verified rules and settings
+  ---
+  duration_ms: 8.107
+  type: 'test'
+  ...
+# Subtest: save failure is visible and restores previously verified rules and settings
+ok 31 - save failure is visible and restores previously verified rules and settings
+  ---
+  duration_ms: 8.6165
+  type: 'test'
+  ...
+# Subtest: ignoreDynamic failure is visible and restores previously verified rules and settings
+ok 32 - ignoreDynamic failure is visible and restores previously verified rules and settings
+  ---
+  duration_ms: 9.5973
+  type: 'test'
+  ...
+# Subtest: failure of rollback itself explicitly reports unverified protection
+ok 33 - failure of rollback itself explicitly reports unverified protection
+  ---
+  duration_ms: 8.9058
+  type: 'test'
+  ...
+# Subtest: master pause clears network rules, restart reconciliation restores saved selection
+ok 34 - master pause clears network rules, restart reconciliation restores saved selection
+  ---
+  duration_ms: 10.4994
+  type: 'test'
+  ...
+# Subtest: untrusted callers, malformed patches and quota violations cannot change settings
+ok 35 - untrusted callers, malformed patches and quota violations cannot change settings
+  ---
+  duration_ms: 7.758
+  type: 'test'
+  ...
+# Subtest: cosmetic state respects a cross-origin top-page exception using browser sender metadata
+ok 36 - cosmetic state respects a cross-origin top-page exception using browser sender metadata
+  ---
+  duration_ms: 10.5822
+  type: 'test'
+  ...
+# Subtest: upgrading to the reviewed catalog retires the old malware toggle and preserves valid preferences
+ok 37 - upgrading to the reviewed catalog retires the old malware toggle and preserves valid preferences
+  ---
+  duration_ms: 6.175
+  type: 'test'
+  ...
+# Subtest: intentional global pause survives startup, install/update events, and a new worker
+ok 38 - intentional global pause survives startup, install/update events, and a new worker
+  ---
+  duration_ms: 22.2348
+  type: 'test'
+  ...
+# Subtest: stale active rules are removed when saved intent is paused
+ok 39 - stale active rules are removed when saved intent is paused
+  ---
+  duration_ms: 6.3961
+  type: 'test'
+  ...
+# Subtest: worker wake checks packaged evidence and restores missing expiry alarms without a popup
+ok 40 - worker wake checks packaged evidence and restores missing expiry alarms without a popup
+  ---
+  duration_ms: 5.5695
+  type: 'test'
+  ...
+# Subtest: expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors
+ok 41 - expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors
+  ---
+  duration_ms: 5.8699
+  type: 'test'
+  ...
+# Subtest: an expired bundle cannot be re-enabled by startup, upgrade or a settings request
+ok 42 - an expired bundle cannot be re-enabled by startup, upgrade or a settings request
+  ---
+  duration_ms: 7.6589
+  type: 'test'
+  ...
+# Subtest: explicit threat-layer pause survives a worker restart and later reconciliation
+ok 43 - explicit threat-layer pause survives a worker restart and later reconciliation
+  ---
+  duration_ms: 9.1382
+  type: 'test'
+  ...
+# Subtest: malformed, missing and future evidence disables only the threat layer and exposes a retryable error
+ok 44 - malformed, missing and future evidence disables only the threat layer and exposes a retryable error
+  ---
+  duration_ms: 16.6027
+  type: 'test'
+  ...
+# Subtest: failure to schedule expiry prevents threat activation, while a retry recovers
+ok 45 - failure to schedule expiry prevents threat activation, while a retry recovers
+  ---
+  duration_ms: 10.118
+  type: 'test'
+  ...
+# Subtest: crossing expiry during an edit and storage rollback never restores expired threat rules
+ok 46 - crossing expiry during an edit and storage rollback never restores expired threat rules
+  ---
+  duration_ms: 8.49
+  type: 'test'
+  ...
+# Subtest: YouTube page filter is registered only while the ad layer is active
+ok 47 - YouTube page filter is registered only while the ad layer is active
+  ---
+  duration_ms: 9.6115
+  type: 'test'
+  ...
+# Subtest: pausing YouTube excludes only the paused YouTube scope from the page filter
+ok 48 - pausing YouTube excludes only the paused YouTube scope from the page filter
+  ---
+  duration_ms: 9.7449
+  type: 'test'
+  ...
+# Subtest: page filter verification accepts full extension URLs in readback
+ok 49 - page filter verification accepts full extension URLs in readback
+  ---
+  duration_ms: 5.0791
+  type: 'test'
+  ...
+# Subtest: activity log records blocks with layer, server, path and site, but not site-pause allows
+ok 50 - activity log records blocks with layer, server, path and site, but not site-pause allows
+  ---
+  duration_ms: 6.8192
+  type: 'test'
+  ...
+# Subtest: settings changes and failures are logged as events, and only the newest 1000 entries are kept
+ok 51 - settings changes and failures are logged as events, and only the newest 1000 entries are kept
+  ---
+  duration_ms: 51.0134
+  type: 'test'
+  ...
+# Subtest: only extension pages read or clear the log; content scripts add only fixed events
+ok 52 - only extension pages read or clear the log; content scripts add only fixed events
+  ---
+  duration_ms: 6.4474
+  type: 'test'
+  ...
+# Subtest: the log survives a service-worker restart within the browser session
+ok 53 - the log survives a service-worker restart within the browser session
+  ---
+  duration_ms: 13.8063
+  type: 'test'
+  ...
+# Subtest: a log storage failure never affects protection changes
+ok 54 - a log storage failure never affects protection changes
+  ---
+  duration_ms: 5.7821
+  type: 'test'
+  ...
+# [BlockAds] Could not save the activity log: Error: Injected session failure
+#     at fault (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs:23:57)
+#     at runNextTicks (node:internal/process/task_queues:65:5)
+#     at process.processImmediate (node:internal/timers:541:9)
+#     at async Object.set (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs:43:26)
+#     at async Immediate.<anonymous> (background.js:96:13)
+# Subtest: per-site pop-up blocking registers the page script only for chosen sites, respecting pauses and the master switch
+ok 55 - per-site pop-up blocking registers the page script only for chosen sites, respecting pauses and the master switch
+  ---
+  duration_ms: 20.2249
+  type: 'test'
+  ...
+# Subtest: cross-origin frames receive the pop-up guard from browser sender metadata
+ok 56 - cross-origin frames receive the pop-up guard from browser sender metadata
+  ---
+  duration_ms: 12.6964
+  type: 'test'
+  ...
+# Subtest: page-originated pop-up events cannot forge activity-log entries
+ok 57 - page-originated pop-up events cannot forge activity-log entries
+  ---
+  duration_ms: 6.499
+  type: 'test'
+  ...
+# Subtest: community site hiding rules follow the frame host, its parents and exceptions, and the layer switches
+ok 58 - community site hiding rules follow the frame host, its parents and exceptions, and the layer switches
+  ---
+  duration_ms: 8.8849
+  type: 'test'
+  ...
+# [BlockAds] Site hiding rules unavailable: Error: Injected cosmetic failure
+#     at fault (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs:23:57)
+#     at async fetch (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs:101:7)
+#     at async background.js:878:47
+# Subtest: an unreadable site hiding file disables only list hiding rules, and a later request retries
+ok 59 - an unreadable site hiding file disables only list hiding rules, and a later request retries
+  ---
+  duration_ms: 6.4618
+  type: 'test'
+  ...
+# Subtest: always-allowed domains become allow rules that outrank list blocks but not reported threats or custom blocks
+ok 60 - always-allowed domains become allow rules that outrank list blocks but not reported threats or custom blocks
+  ---
+  duration_ms: 12.0713
+  type: 'test'
+  ...
+# Subtest: the same domain cannot be both custom-blocked and always allowed
+ok 61 - the same domain cannot be both custom-blocked and always allowed
+  ---
+  duration_ms: 9.2374
+  type: 'test'
+  ...
+# Subtest: lists-page removals are exact, unlike Resume which also removes covering parents
+ok 62 - lists-page removals are exact, unlike Resume which also removes covering parents
+  ---
+  duration_ms: 17.9823
+  type: 'test'
+  ...
+# Subtest: allowing a domain covered by a custom-blocked parent is refused, but allowing a parent of a blocked child is fine
+ok 63 - allowing a domain covered by a custom-blocked parent is refused, but allowing a parent of a blocked child is fine
+  ---
+  duration_ms: 31.2053
+  type: 'test'
+  ...
+# Subtest: the activity log stays readable when settings cannot be loaded
+ok 64 - the activity log stays readable when settings cannot be loaded
+  ---
+  duration_ms: 6.9741
+  type: 'test'
+  ...
+# Subtest: suspected ads that loaded are flagged per site with reasons, pages and samples, and logged once
+ok 65 - suspected ads that loaded are flagged per site with reasons, pages and samples, and logged once
+  ---
+  duration_ms: 12.0368
+  type: 'test'
+  ...
+# Subtest: ordinary, first-party, browser-internal, paused, allowed and switched-off requests are not flagged
+ok 66 - ordinary, first-party, browser-internal, paused, allowed and switched-off requests are not flagged
+  ---
+  duration_ms: 11.1559
+  type: 'test'
+  ...
+# Subtest: flag decisions: ignore stops counting, unignore resumes, remove and clear delete, and only extension pages may act
+ok 67 - flag decisions: ignore stops counting, unignore resumes, remove and clear delete, and only extension pages may act
+  ---
+  duration_ms: 8.4145
+  type: 'test'
+  ...
+# Subtest: page signals accept only fixed reasons and third-party http(s) addresses from content scripts
+ok 68 - page signals accept only fixed reasons and third-party http(s) addresses from content scripts
+  ---
+  duration_ms: 5.7511
+  type: 'test'
+  ...
+# Subtest: the flag store keeps the 500 most recently seen sites
+ok 69 - the flag store keeps the 500 most recently seen sites
+  ---
+  duration_ms: 709.7667
+  type: 'test'
+  ...
+# [BlockAds] Could not check a request for ad patterns: Error: Injected read failure
+#     at h.api.storage.local.get (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs:1062:81)
+#     at loadFlags (background.js:116:34)
+#     at recordFlag (background.js:144:23)
+#     at runNextTicks (node:internal/process/task_queues:65:5)
+#     at process.processImmediate (node:internal/timers:541:9)
+#     at async flagRequest (background.js:184:5)
+# Subtest: a failed read of saved flags is reported and retried, never saved over as empty
+ok 70 - a failed read of saved flags is reported and retried, never saved over as empty
+  ---
+  duration_ms: 5.1466
+  type: 'test'
+  ...
+# Subtest: generic hiding respects inherited and global selector exceptions
+ok 71 - generic hiding respects inherited and global selector exceptions
+  ---
+  duration_ms: 2.624
+  type: 'test'
+  ...
+# Subtest: negative scopes do not cancel independent rules with the same selector
+ok 72 - negative scopes do not cancel independent rules with the same selector
+  ---
+  duration_ms: 0.4276
+  type: 'test'
+  ...
+# Subtest: generic-only and all-cosmetic exceptions remain distinct
+ok 73 - generic-only and all-cosmetic exceptions remain distinct
+  ---
+  duration_ms: 1.5502
+  type: 'test'
+  ...
+# Subtest: custom filters preserve site scope, IDN names, selector case and exclusions
+ok 74 - custom filters preserve site scope, IDN names, selector case and exclusions
+  ---
+  duration_ms: 4.993
+  type: 'test'
+  ...
+# Subtest: unsafe, unscoped, unsupported and malformed filters fail with a line number
+ok 75 - unsafe, unscoped, unsupported and malformed filters fail with a line number
+  ---
+  duration_ms: 6.7048
+  type: 'test'
+  ...
+# Subtest: custom exceptions remain available with community filtering disabled
+ok 76 - custom exceptions remain available with community filtering disabled
+  ---
+  duration_ms: 0.3368
+  type: 'test'
+  ...
+# Subtest: the built package retains thousands of generic selectors and site exceptions
+ok 77 - the built package retains thousands of generic selectors and site exceptions
+  ---
+  duration_ms: 41.1067
+  type: 'test'
+  ...
+# Subtest: bundled evidence verifies offline and retains exact scope and report date precision
+ok 78 - bundled evidence verifies offline and retains exact scope and report date precision
+  ---
+  duration_ms: 10.3362
+  type: 'test'
+  ...
+# Subtest: evidence refuses mismatched rule and policy bytes
+ok 79 - evidence refuses mismatched rule and policy bytes
+  ---
+  duration_ms: 1.7621
+  type: 'test'
+  ...
+# Subtest: evidence refuses a substituted host even with valid packaged hashes
+ok 80 - evidence refuses a substituted host even with valid packaged hashes
+  ---
+  duration_ms: 1.0937
+  type: 'test'
+  ...
+# Subtest: evidence refuses expanded scope, duplicates and missing source references
+ok 81 - evidence refuses expanded scope, duplicates and missing source references
+  ---
+  duration_ms: 1.9654
+  type: 'test'
+  ...
+# Subtest: evidence never accepts credentialed, remote-text or unapproved source links
+ok 82 - evidence never accepts credentialed, remote-text or unapproved source links
+  ---
+  duration_ms: 2.0392
+  type: 'test'
+  ...
+# Subtest: evidence refuses malformed dates, future observations and expiry drift
+ok 83 - evidence refuses malformed dates, future observations and expiry drift
+  ---
+  duration_ms: 2.6095
+  type: 'test'
+  ...
+# Subtest: evidence refuses unsupported catalogs and source duplication
+ok 84 - evidence refuses unsupported catalogs and source duplication
+  ---
+  duration_ms: 1.4734
+  type: 'test'
+  ...
+# Subtest: evidence checks rule semantics, even if its hash was recomputed
+ok 85 - evidence checks rule semantics, even if its hash was recomputed
+  ---
+  duration_ms: 2.8978
+  type: 'test'
+  ...
+# Subtest: evidence rejects oversized inputs and invalid UTF-8
+ok 86 - evidence rejects oversized inputs and invalid UTF-8
+  ---
+  duration_ms: 0.7929
+  type: 'test'
+  ...
+# Subtest: ad servers seen on uukanshu.cc are flagged with readable reasons
+ok 87 - ad servers seen on uukanshu.cc are flagged with readable reasons
+  ---
+  duration_ms: 3.5277
+  type: 'test'
+  ...
+# Subtest: ordinary third-party files and first-party requests are not flagged
+ok 88 - ordinary third-party files and first-party requests are not flagged
+  ---
+  duration_ms: 0.7148
+  type: 'test'
+  ...
+# Subtest: security scope does not collapse sibling tenants or unrelated IP addresses
+ok 89 - security scope does not collapse sibling tenants or unrelated IP addresses
+  ---
+  duration_ms: 1.0753
+  type: 'test'
+  ...
+# Subtest: siteOf remains a non-authoritative pattern-scoring approximation
+ok 90 - siteOf remains a non-authoritative pattern-scoring approximation
+  ---
+  duration_ms: 0.3525
+  type: 'test'
+  ...
+# Subtest: network rules retain destination, resource, party and initiating-frame scope
+ok 91 - network rules retain destination, resource, party and initiating-frame scope
+  ---
+  duration_ms: 3.138
+  type: 'test'
+  ...
+# Subtest: absolute URL anchors retain scheme, port, path and ending boundary
+ok 92 - absolute URL anchors retain scheme, port, path and ending boundary
+  ---
+  duration_ms: 5.5324
+  type: 'test'
+  ...
+# Subtest: request exceptions never become whole-page allowAllRequests rules
+ok 93 - request exceptions never become whole-page allowAllRequests rules
+  ---
+  duration_ms: 0.4786
+  type: 'test'
+  ...
+# Subtest: type complements and party aliases preserve their intended conditions
+ok 94 - type complements and party aliases preserve their intended conditions
+  ---
+  duration_ms: 0.9654
+  type: 'test'
+  ...
+# Subtest: normalization preserves www and international host scope
+ok 95 - normalization preserves www and international host scope
+  ---
+  duration_ms: 0.3864
+  type: 'test'
+  ...
+# Subtest: blank lines, comments and duplicate equivalent rules do not consume extra rules
+ok 96 - blank lines, comments and duplicate equivalent rules do not consume extra rules
+  ---
+  duration_ms: 0.2801
+  type: 'test'
+  ...
+# Subtest: network parser rejects unsupported syntax before returning any rule
+ok 97 - network parser rejects unsupported syntax before returning any rule
+  ---
+  duration_ms: 1.361
+  type: 'test'
+  ...
+# Subtest: network parser rejects ambiguous or injected patterns before returning any rule
+ok 98 - network parser rejects ambiguous or injected patterns before returning any rule
+  ---
+  duration_ms: 1.47
+  type: 'test'
+  ...
+# Subtest: network parser rejects contradictory or empty options before returning any rule
+ok 99 - network parser rejects contradictory or empty options before returning any rule
+  ---
+  duration_ms: 2.1668
+  type: 'test'
+  ...
+# Subtest: network parser enforces bounded input, rules, lines and domain scopes
+ok 100 - network parser enforces bounded input, rules, lines and domain scopes
+  ---
+  duration_ms: 18.4574
+  type: 'test'
+  ...
+# Subtest: offline compiler rejects malformed, non-UTF8 and excessive input without returning partial rules
+ok 101 - offline compiler rejects malformed, non-UTF8 and excessive input without returning partial rules
+  ---
+  duration_ms: 662.8282
+  type: 'test'
+  ...
+# Subtest: a scoped text filter compiles as a procedure rather than invalid CSS
+ok 102 - a scoped text filter compiles as a procedure rather than invalid CSS
+  ---
+  duration_ms: 3.6207
+  type: 'test'
+  ...
+# Subtest: nested child and text filters preserve relative child scope and Unicode
+ok 103 - nested child and text filters preserve relative child scope and Unicode
+  ---
+  duration_ms: 0.8709
+  type: 'test'
+  ...
+# Subtest: native CSS stays declarative, including procedural-looking strings inside attributes
+ok 104 - native CSS stays declarative, including procedural-looking strings inside attributes
+  ---
+  duration_ms: 0.2953
+  type: 'test'
+  ...
+# Subtest: explicit procedural separators preserve that choice for native CSS and its exception
+ok 105 - explicit procedural separators preserve that choice for native CSS and its exception
+  ---
+  duration_ms: 0.7771
+  type: 'test'
+  ...
+# Subtest: literal text supports quoted punctuation and escaped quotes without evaluating a pattern
+ok 106 - literal text supports quoted punctuation and escaped quotes without evaluating a pattern
+  ---
+  duration_ms: 0.7477
+  type: 'test'
+  ...
+# Subtest: unsupported syntax, ambiguous scope and excessive complexity fail explicitly
+ok 107 - unsupported syntax, ambiguous scope and excessive complexity fail explicitly
+  ---
+  duration_ms: 0.6048
+  type: 'test'
+  ...
+# Subtest: browser CSS validation checks each subject and ancestor selector
+ok 108 - browser CSS validation checks each subject and ancestor selector
+  ---
+  duration_ms: 0.4337
+  type: 'test'
+  ...
+# Subtest: procedural exceptions and site exclusions remain separate from generic CSS
+ok 109 - procedural exceptions and site exclusions remain separate from generic CSS
+  ---
+  duration_ms: 0.6472
+  type: 'test'
+  ...
+# Subtest: initial player response assignment loses only its ad schedule
+ok 110 - initial player response assignment loses only its ad schedule
+  ---
+  duration_ms: 2.9024
+  type: 'test'
+  ...
+# Subtest: JSON.parse removes ad schedules from bare, wrapped and batched player data
+ok 111 - JSON.parse removes ad schedules from bare, wrapped and batched player data
+  ---
+  duration_ms: 2.3288
+  type: 'test'
+  ...
+# Subtest: fetch Response.json removes ad schedules and keeps video data
+ok 112 - fetch Response.json removes ad schedules and keeps video data
+  ---
+  duration_ms: 2.4244
+  type: 'test'
+  ...
+1..112
+# tests 112
+# suites 0
+# pass 112
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1660.6119

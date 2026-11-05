@@ -1,0 +1,527 @@
+[
+  {
+    "browser": "chrome",
+    "file": "manifest.json",
+    "testedSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "currentSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "shared.js",
+    "testedSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "currentSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "cosmetic.js",
+    "testedSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "currentSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "procedural.js",
+    "testedSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "currentSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "picker-core.js",
+    "testedSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "currentSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "picker.js",
+    "testedSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "currentSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "background.js",
+    "testedSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "currentSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "content.js",
+    "testedSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "currentSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "youtube.js",
+    "testedSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "currentSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "popups.js",
+    "testedSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "currentSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "flags.js",
+    "testedSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "currentSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "popup.js",
+    "testedSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "currentSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "popup.html",
+    "testedSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "currentSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "popup.css",
+    "testedSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "currentSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "log.html",
+    "testedSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "currentSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "log.js",
+    "testedSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "currentSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "log.css",
+    "testedSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "currentSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "lists.html",
+    "testedSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "currentSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "lists.js",
+    "testedSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "currentSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/community-cosmetic.json",
+    "testedSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "currentSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/threat-policy.json",
+    "testedSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "currentSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/ads.json",
+    "testedSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "currentSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/trackers.json",
+    "testedSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "currentSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/threats.json",
+    "testedSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "currentSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "identical": true
+  },
+  {
+    "browser": "chrome",
+    "file": "rules/community.json",
+    "testedSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "currentSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "manifest.json",
+    "testedSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "currentSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "shared.js",
+    "testedSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "currentSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "cosmetic.js",
+    "testedSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "currentSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "procedural.js",
+    "testedSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "currentSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "picker-core.js",
+    "testedSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "currentSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "picker.js",
+    "testedSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "currentSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "background.js",
+    "testedSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "currentSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "content.js",
+    "testedSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "currentSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "youtube.js",
+    "testedSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "currentSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "popups.js",
+    "testedSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "currentSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "flags.js",
+    "testedSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "currentSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "popup.js",
+    "testedSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "currentSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "popup.html",
+    "testedSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "currentSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "popup.css",
+    "testedSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "currentSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "log.html",
+    "testedSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "currentSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "log.js",
+    "testedSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "currentSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "log.css",
+    "testedSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "currentSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "lists.html",
+    "testedSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "currentSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "lists.js",
+    "testedSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "currentSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/community-cosmetic.json",
+    "testedSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "currentSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/threat-policy.json",
+    "testedSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "currentSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/ads.json",
+    "testedSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "currentSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/trackers.json",
+    "testedSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "currentSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/threats.json",
+    "testedSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "currentSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "identical": true
+  },
+  {
+    "browser": "edge",
+    "file": "rules/community.json",
+    "testedSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "currentSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "manifest.json",
+    "testedSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "currentSha256": "05bb8f5fabd9b471b5e6d17f5083e477f01c7179c2840716a2ca6cdfaa6326ec",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "shared.js",
+    "testedSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "currentSha256": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "cosmetic.js",
+    "testedSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "currentSha256": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "procedural.js",
+    "testedSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "currentSha256": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "picker-core.js",
+    "testedSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "currentSha256": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "picker.js",
+    "testedSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "currentSha256": "0081aa25fffd8888cb71811c9794b49024bca07fabb4381c6fa8e0c7bd835db1",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "background.js",
+    "testedSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "currentSha256": "5ed1e7917d9e6c04d0de3c88648dff1cb1e32b0044384e0cf9344dbbe96814ff",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "content.js",
+    "testedSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "currentSha256": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "youtube.js",
+    "testedSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "currentSha256": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "popups.js",
+    "testedSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "currentSha256": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "flags.js",
+    "testedSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "currentSha256": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "popup.js",
+    "testedSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "currentSha256": "a857e62b4ceb946a3af0a29a141c654f014c9c75be5fbcf9fdbc05afab946194",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "popup.html",
+    "testedSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "currentSha256": "1a5e507367ed0f4fd9fb4843213540b5b9990b7ee766a6ea6d5e7c9d77217ad1",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "popup.css",
+    "testedSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "currentSha256": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "log.html",
+    "testedSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "currentSha256": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "log.js",
+    "testedSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "currentSha256": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "log.css",
+    "testedSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "currentSha256": "a5de6dc383dcd8901cbe843e8427b3a339d446382828479d21bd5244b862b075",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "lists.html",
+    "testedSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "currentSha256": "e59d214b8503e0ec9a7ef3149d4506d162129127b36718917050b73a15221971",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "lists.js",
+    "testedSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "currentSha256": "f702561b1cc53546c797f19f2f7a6c1c7c93c53c211cfed6c15eea4c369ed66f",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/community-cosmetic.json",
+    "testedSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "currentSha256": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/threat-policy.json",
+    "testedSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "currentSha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/ads.json",
+    "testedSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "currentSha256": "7972de50af6fdca0615cc858b490cce0354f5fc2d235d6b5a876222ecffe3e3c",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/trackers.json",
+    "testedSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "currentSha256": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/threats.json",
+    "testedSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "currentSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "identical": true
+  },
+  {
+    "browser": "firefox",
+    "file": "rules/community.json",
+    "testedSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "currentSha256": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "identical": true
+  }
+]

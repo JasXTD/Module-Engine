@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modules &amp; scripts · Module Engine</title>
+  <link rel="stylesheet" href="ui.css"><link rel="stylesheet" href="manager.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Module Engine">
+  <a class="rail-brand" href="manager.html"><img src="icons/icon48.png" width="28" height="28" alt=""><span>Module Engine</span></a>
+  <ul class="rail-links rail-pages">
+    <li><a href="manager.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-grid"></span></span>Modules &amp; scripts</a></li>
+    <li><a href="lists.html"><span class="tile" aria-hidden="true"><span class="ic ic-list"></span></span>My lists</a></li>
+    <li><a href="log.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Activity log</a></li>
+  </ul>
+  <p class="rail-foot">Runs on this computer. No Module Engine telemetry.</p>
+</nav>
+<main class="page">
+  <header class="page-head">
+    <div><h1>Modules &amp; scripts</h1><p class="muted">Your blocker. Your page customizations.</p></div>
+    <div class="actions"><button id="refresh"><span class="ic ic-refresh" aria-hidden="true"></span>Refresh status</button></div>
+  </header>
+  <p id="status" class="notice" role="status" aria-live="polite">Loading your modules…</p>
+  <section class="modules" aria-label="Installed modules">
+    <article class="card module" id="blockerCard">
+      <div class="module-head">
+        <span class="tile" aria-hidden="true"><span class="ic ic-shield"></span></span>
+        <h2>Ad blocking</h2>
+        <label class="module-switch"><span id="blockerStatus" class="badge">Checking</span><input id="blockingEnabled" type="checkbox" aria-label="Enable ad blocking" disabled></label>
+        <p class="muted">Network filters, page hiding, YouTube filtering and the element picker.</p>
+      </div>
+      <div class="module-foot">
+        <div class="actions">
+          <a href="popup.html" class="button-link"><span class="ic ic-sliders" aria-hidden="true"></span>Protection settings</a>
+          <a href="lists.html" class="button-link"><span class="ic ic-list" aria-hidden="true"></span>My lists</a>
+        </div>
+      </div>
+    </article>
+    <article class="card module" id="scriptsCard">
+      <div class="module-head">
+        <span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>
+        <h2>Userscripts</h2>
+        <label class="module-switch"><span id="scriptsStatus" class="badge">Checking</span><input id="userscriptsEnabled" type="checkbox" aria-label="Enable userscripts" disabled></label>
+        <p class="muted">Run your scripts on the sites you choose. Each script has its own switch.</p>
+      </div>
+      <div class="module-foot"><span id="scriptCount" class="stat muted">Local script library</span><span id="scriptAccess" class="muted"></span></div>
+    </article>
+  </section>
+  <section id="accessPanel" class="notice" hidden aria-label="Userscript browser access"><p id="accessHelp"></p><div class="actions"><button id="grantAccess">Allow userscript access</button><button id="extensionDetails">Open extension details</button></div></section>
+  <section class="workspace" aria-label="Userscript library and editor">
+    <aside class="card library">
+      <div class="toolbar"><h2>Script library</h2><span id="libraryCount" class="muted">0 scripts</span></div>
+      <div class="actions library-actions">
+        <button id="newScript" class="primary" disabled><span class="ic ic-plus" aria-hidden="true"></span>New script</button>
+        <button id="importScript" title="Import a local .user.js file" disabled><span class="ic ic-upload" aria-hidden="true"></span>Import</button>
+        <input type="file" id="scriptFile" accept=".user.js,.js,text/javascript,text/plain" hidden>
+      </div>
+      <label class="sr-only" for="searchScripts">Find a script</label>
+      <div class="search"><span class="ic ic-search" aria-hidden="true"></span><input id="searchScripts" type="search" placeholder="Search names or sites" autocomplete="off"></div>
+      <ul id="scriptList" aria-label="Saved scripts"></ul>
+      <p id="emptyLibrary" class="muted empty">No scripts yet.<br>Create one or import a local .user.js file.</p>
+    </aside>
+    <section class="card editor" aria-labelledby="editorHeading">
+      <div class="editor-head">
+        <div class="editor-title">
+          <div class="editor-name"><h2 id="editorHeading">New script</h2><span id="draftState" class="draft-state">No script open</span></div>
+          <p class="muted">Review the code and site scope before turning a script on. Saving an edit turns it off again.</p>
+        </div>
+        <label class="run"><span class="run-text"><span class="run-name">Run this script</span><span id="activationHelp" class="muted">Open a script to change this</span></span><input id="scriptEnabled" type="checkbox" aria-label="Run this script" aria-describedby="activationHelp" disabled></label>
+      </div>
+      <label class="source-label" for="scriptSource">Script source</label><textarea id="scriptSource" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="sourceHelp" disabled></textarea>
+      <p id="sourceHelp" class="muted">Use @match for site scope and @run-at for timing. Imports stay local; no automatic downloads or updates. Script runtime errors appear in the page’s developer console.</p>
+      <div id="scriptPreview" class="preview" aria-live="polite"><p class="muted">Choose a saved script or create one.</p></div>
+      <div class="editor-actions">
+        <div class="actions"><button id="saveScript" class="primary" disabled><span class="ic ic-save" aria-hidden="true"></span>Save</button><button id="discardDraft" disabled><span class="ic ic-undo" aria-hidden="true"></span>Discard draft</button></div>
+        <div class="actions"><button id="exportScript" disabled><span class="ic ic-download" aria-hidden="true"></span>Export</button><button id="deleteScript" class="danger" disabled><span class="ic ic-trash" aria-hidden="true"></span>Delete</button></div>
+        <p id="saveHint" class="save-hint">Saved scripts start turned off. Reload open pages after changing a script.</p>
+      </div>
+    </section>
+  </section>
+  <details class="card compatibility"><summary>Supported userscript features</summary><p>Metadata: @name, @namespace, @version, @description, @match, @exclude-match, @run-at and @noframes. Scripts use separate isolated worlds by default. @inject-into page is available only with @grant none.</p><p>APIs: GM.info / GM_info, GM.addStyle / GM_addStyle, and asynchronous GM.getValue, GM.setValue, GM.deleteValue and GM.listValues. Values are local and private to each script.</p><p>This is a focused userscript manager, not full Violentmonkey compatibility. Legacy synchronous storage, privileged network requests, @include, @require and @resource are unsupported. The editor reports unsupported features before saving. Disabling prevents future runs; it cannot undo JavaScript that already ran.</p><p>Only enable scripts whose code and site access you trust. Scripts can read and change the pages they match. Module Engine does not fetch scripts; a script you enable can itself make web requests.</p></details>
+</main>
+</div>
+<dialog id="confirmDialog"><form method="dialog"><h2 id="confirmTitle">Discard changes?</h2><p id="confirmText"></p><div class="actions"><button value="cancel" autofocus>Cancel</button><button id="confirmAccept" value="accept" class="danger">Continue</button></div></form></dialog>
+<script src="userscripts-core.js"></script><script src="manager.js"></script>
+</body>
+</html>

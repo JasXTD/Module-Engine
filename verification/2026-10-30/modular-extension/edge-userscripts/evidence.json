@@ -1,0 +1,385 @@
+{
+  "browser": "edge",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-bD2Dsu",
+  "started": "2026-10-29T18:55:07.596Z",
+  "checks": [
+    "Fresh manager keeps blocking on and userscripts off",
+    "New permission has not been granted automatically",
+    "Optional permission UI is visible",
+    "Native permission granted by manager button",
+    "Browser access recognized",
+    "Userscript module is independently enabled",
+    "Local ad canary saved to blocker",
+    "Saved disabled: Storage and styles",
+    "Native userscript executes with persistent GM values",
+    "Style API runs in an isolated script world",
+    "Script has no extension storage API",
+    "Userscript messages cannot change modules",
+    "Invalid values are rejected before JSON transport coercion",
+    "Real loopback ad remains blocked while userscripts run",
+    "Export preserves the exact source",
+    "File import remains a reviewable unsaved draft",
+    "Another script cannot read the first script’s values",
+    "Values survive page navigation",
+    "Excluded URL never receives the first script",
+    "@noframes prevents execution in matching child frames",
+    "Saved disabled: Page script",
+    "Explicit page-world mode works without privileged helpers",
+    "Saved disabled: Early script",
+    "document-start runs before fixture page JavaScript",
+    "Pausing ad blocking keeps userscripts active",
+    "Pausing userscripts retains actual network blocking",
+    "Previously running scripts lose storage authority when disabled",
+    "Re-enabling does not revive old document capabilities",
+    "Native browser revocation is reported honestly",
+    "Native browser revocation leaves blocker functioning",
+    "Module can be paused after native access is revoked",
+    "Native access can recover without losing library",
+    "A restarted service worker restores enabled scripts and module intent",
+    "Storage and execution survive worker restart",
+    "Another editor can save while this draft stays open",
+    "A stale draft gets a visible conflict, with its text preserved",
+    "Explicit discard loads the latest saved source",
+    "Editing an active script pauses it for review",
+    "Unsupported dependency is visible and leaves saved source untouched",
+    "Deletion removes source and its GM value namespace",
+    "Metadata is displayed as literal text",
+    "Long script names fit the narrow layout",
+    "Escape cancels deletion and preserves the script",
+    "Manager has no page overflow at width 1280",
+    "Manager has no page overflow at width 390",
+    "The deny proxy encountered no unexpected socket errors"
+  ],
+  "hashes": {
+    "manifest.json": "1496380f4c8632023a93a013a6cf2bec7499805a03161fd690acd68f82a8063c",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "b334b761afe36b16e8f56f9dc7a46858b6d33af78aadcbb9aa5cb4a8d84ce045",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "1a5f2eb7684fddd5d76b9d1e501dc173d21001f9526d05bf8ac1af0f9f7ae69e",
+    "background.js": "3e1424585c22423d269123fba9192dc13aa1fb9f0589fcbeb0d25f6f5a1feee7",
+    "content.js": "8d9253c1c3c1677b14cb9816651dab63edd522ff843288af5850c0304cd3a7c2",
+    "youtube.js": "b5f9c3bb055fd398b1d5ab4cff5e0fb9847bea98ced6b8c234168052e3e28ace",
+    "popups.js": "d3b2e34adc550535e57a03dadd4939565930f0aa1196c1f4a592d2c6b06d4f0f",
+    "flags.js": "563a95e6e5f8f6d702e093a0bc1d7d69053e906c824d7359048f44a56ab1b16a",
+    "popup.js": "74ef08255f33ed963c787b34bdacb1dc879effceef7f8b66ab8346007bb3e998",
+    "popup.html": "68bf0fa564c348b76f4e3b02925ae993b4432725e58cbaf2a2f5608d26ffe471",
+    "popup.css": "3fe036bc3f8e3a52e51af6395027c8886962b4fa82fb1e56d0f64c2f0fb580d6",
+    "log.html": "08f931528768ada9e4fcc1846b38c47804308694aae070795e1538aa7af0d136",
+    "log.js": "a1452b24beba6da25a50fa6adb24709be02e5feb97e52a94e9874e20f1025262",
+    "log.css": "1bf620271c13f52291be6807d8eea4c20efd8d218a7c70569fb90646910bc945",
+    "lists.html": "d8fc7c22c0051a6c44dce81c83e7afdb51ed7d95bcbe6ba3c47215c63c9cabaf",
+    "lists.js": "cf4f11dcdfcc568916ef2907c8fbd9b913fcc14d31e9b5ee9a0b620ca2f800d0",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "userscripts-core.js": "b04698261bc8b5bc16e08f766e85670dde1f4f6571e960c0400a3e5646495f32",
+    "userscripts-runtime.js": "dd2fb36fb2172cd47c5e484b8e23242d755a72dba45111599384f74c421696c1",
+    "manager.html": "b0efa246304bfe17ad41f95191dcf043ee5f6565bc9cead1579a5f349cca706c",
+    "manager.js": "4274d0bc383a4d779380f9ff51c9afb5597fb8f291fdfdb4ea6b91007fb24650",
+    "manager.css": "82f926e2763bfa3338e339575d1a7015f1ec0ee674d4e6facc50aa82967ff55b"
+  },
+  "deniedRequests": 68,
+  "proxyErrors": [],
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/156.0.4314.50",
+    "revision": "@af2ba23ae0ecf7084d900446fc59d5119dd5fd5e",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+    "jsVersion": "15.6.12.7"
+  },
+  "permissionToggles": [
+    {
+      "before": {
+        "x": 659,
+        "y": 244,
+        "checked": false
+      },
+      "after": {
+        "x": 659,
+        "y": 244,
+        "checked": true
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": false,
+        "active": false,
+        "available": true,
+        "needsPermission": false,
+        "error": "",
+        "revision": 0,
+        "scripts": []
+      }
+    },
+    {
+      "before": {
+        "x": 659,
+        "y": 244,
+        "checked": true
+      },
+      "after": {
+        "x": 659,
+        "y": 244,
+        "checked": false
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": true,
+        "active": false,
+        "available": false,
+        "needsPermission": false,
+        "error": "Browser userscript access is unavailable: 'userScripts.getScripts' is not available in this context.",
+        "revision": 17,
+        "scripts": [
+          {
+            "id": "0014cfaf-191a-485e-b5b5-4ce7ef61ccd0",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Storage and styles\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM.addStyle\n// @exclude-match http://127.0.0.1/excluded*\n// @noframes\n// ==/UserScript==\n(async()=>{const count=await GM.getValue('visits',0);await GM.setValue('visits',count+1);document.body.dataset.visits=String(count+1);GM.addStyle('body{--userscript-style:yes}');window.privateMarker='secret';document.body.dataset.extensionStorage=typeof (globalThis.browser||chrome).storage;const attack=await (globalThis.browser||chrome).runtime.sendMessage({type:'MODULE_SET',id:'blocking',enabled:false});document.body.dataset.attackRejected=String(attack.ok===false);try{await GM.setValue('invalid',NaN);}catch{document.body.dataset.invalidRejected='yes';}document.addEventListener('test-old-capability',()=>GM.setValue('old',true).then(()=>{document.body.dataset.oldCapability='accepted'},()=>{document.body.dataset.oldCapability='denied'}));})().catch(error=>{document.body.dataset.scriptError=error.message;});",
+            "metadata": {
+              "name": "Storage and styles",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [
+                "http://127.0.0.1/excluded*"
+              ],
+              "grants": [
+                "GM.getValue",
+                "GM.setValue",
+                "GM.addStyle"
+              ],
+              "runAt": "document_idle",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          },
+          {
+            "id": "f9c912f0-a6ef-4fe4-896c-fc4804a1f92d",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Separate storage\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant GM.getValue\n// @noframes\n// ==/UserScript==\nGM.getValue('visits','private').then(value=>document.body.dataset.secondValue=String(value));",
+            "metadata": {
+              "name": "Separate storage",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "GM.getValue"
+              ],
+              "runAt": "document_idle",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          },
+          {
+            "id": "59801b53-e2ce-4525-91fd-f1d81d159654",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Page script\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant none\n// @inject-into page\n// ==/UserScript==\nwindow.pageWorldRan=true;",
+            "metadata": {
+              "name": "Page script",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "none"
+              ],
+              "runAt": "document_idle",
+              "allFrames": true,
+              "world": "MAIN",
+              "warnings": []
+            }
+          },
+          {
+            "id": "a2cda272-4b57-4caf-bc2f-4035be54fc3a",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Early script\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant none\n// @run-at document-start\n// @noframes\n// ==/UserScript==\ndocument.documentElement.dataset.startMarker='early';",
+            "metadata": {
+              "name": "Early script",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "none"
+              ],
+              "runAt": "document_start",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "x": 659,
+        "y": 244,
+        "checked": false
+      },
+      "after": {
+        "x": 659,
+        "y": 244,
+        "checked": true
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": false,
+        "active": false,
+        "available": true,
+        "needsPermission": false,
+        "error": "",
+        "revision": 18,
+        "scripts": [
+          {
+            "id": "0014cfaf-191a-485e-b5b5-4ce7ef61ccd0",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Storage and styles\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM.addStyle\n// @exclude-match http://127.0.0.1/excluded*\n// @noframes\n// ==/UserScript==\n(async()=>{const count=await GM.getValue('visits',0);await GM.setValue('visits',count+1);document.body.dataset.visits=String(count+1);GM.addStyle('body{--userscript-style:yes}');window.privateMarker='secret';document.body.dataset.extensionStorage=typeof (globalThis.browser||chrome).storage;const attack=await (globalThis.browser||chrome).runtime.sendMessage({type:'MODULE_SET',id:'blocking',enabled:false});document.body.dataset.attackRejected=String(attack.ok===false);try{await GM.setValue('invalid',NaN);}catch{document.body.dataset.invalidRejected='yes';}document.addEventListener('test-old-capability',()=>GM.setValue('old',true).then(()=>{document.body.dataset.oldCapability='accepted'},()=>{document.body.dataset.oldCapability='denied'}));})().catch(error=>{document.body.dataset.scriptError=error.message;});",
+            "metadata": {
+              "name": "Storage and styles",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [
+                "http://127.0.0.1/excluded*"
+              ],
+              "grants": [
+                "GM.getValue",
+                "GM.setValue",
+                "GM.addStyle"
+              ],
+              "runAt": "document_idle",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          },
+          {
+            "id": "f9c912f0-a6ef-4fe4-896c-fc4804a1f92d",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Separate storage\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant GM.getValue\n// @noframes\n// ==/UserScript==\nGM.getValue('visits','private').then(value=>document.body.dataset.secondValue=String(value));",
+            "metadata": {
+              "name": "Separate storage",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "GM.getValue"
+              ],
+              "runAt": "document_idle",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          },
+          {
+            "id": "59801b53-e2ce-4525-91fd-f1d81d159654",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Page script\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant none\n// @inject-into page\n// ==/UserScript==\nwindow.pageWorldRan=true;",
+            "metadata": {
+              "name": "Page script",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "none"
+              ],
+              "runAt": "document_idle",
+              "allFrames": true,
+              "world": "MAIN",
+              "warnings": []
+            }
+          },
+          {
+            "id": "a2cda272-4b57-4caf-bc2f-4035be54fc3a",
+            "revision": 2,
+            "enabled": true,
+            "source": "// ==UserScript==\n// @name Early script\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant none\n// @run-at document-start\n// @noframes\n// ==/UserScript==\ndocument.documentElement.dataset.startMarker='early';",
+            "metadata": {
+              "name": "Early script",
+              "namespace": "offline.blockads",
+              "version": "1.0",
+              "description": "",
+              "matches": [
+                "http://127.0.0.1/*"
+              ],
+              "excludeMatches": [],
+              "grants": [
+                "none"
+              ],
+              "runAt": "document_start",
+              "allFrames": false,
+              "world": "USER_SCRIPT",
+              "warnings": []
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "workerLifecycle": [
+    {
+      "versionId": "1",
+      "runningStatus": "stopping"
+    },
+    {
+      "versionId": "1",
+      "runningStatus": "stopped"
+    }
+  ],
+  "layouts": [
+    {
+      "width": 1280,
+      "client": 1265,
+      "scroll": 1265,
+      "height": 1220
+    },
+    {
+      "width": 390,
+      "client": 375,
+      "scroll": 375,
+      "height": 1908
+    }
+  ],
+  "success": true,
+  "cleanup": {
+    "browserPid": 165900,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finished": "2026-10-29T18:55:26.063Z"
+}

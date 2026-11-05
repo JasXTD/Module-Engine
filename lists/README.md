@@ -65,13 +65,29 @@ any file whose SHA-256 differs from its record. It never downloads anything: a n
 placed there by a person, and its record is updated deliberately.
 
 `scripts/community-list-tools.ps1` converts the snapshots into `rules/community.json` (the
-switchable `community_ruleset`), `rules/community-cosmetic.json` (site-specific hiding rules
+switchable `community_ruleset`), `rules/community-cosmetic.json` (generic and site-specific hiding rules
 and their exceptions) and `rules/community-info.json` (versions, counts and skipped filters by
 reason). Blocks get priority 1, exceptions 2 and `$important` blocks 3; the allow list is 4, reported threats 5, custom blocks 50 and site pauses 10000.
-Exceptions for domains on BlockAds' own ad, tracker or site-check lists are dropped, and path
+Exceptions for domains on Module Engine's own ad, tracker or site-check lists are dropped, and path
 exceptions exclude those domains. The build fails if the snapshots would exceed 29,000
 rules, which keeps room in Chrome's guaranteed 30,000-rule budget. The lists are third-party
 data under the EasyList licence; see the main README for attribution.
+
+The cosmetic bundle now uses `schemaVersion: 3`: `hide` and `allow` retain the
+domain-to-selector maps (`allow["*"]` holds global selector exceptions), `generic`
+contains global selectors, and `scoped` contains `{include, exclude, selector,
+exception}` rules with excluded sites. `disableGeneric` and `disableAll` hold
+host-wide `generichide` and `elemhide` exceptions. Path-specific and unsupported
+option combinations are counted as skipped rather than expanded to a whole site.
+`procedural` contains `{include, exclude, selector, exception, procedure}` records.
+The procedure holds a CSS subject and ordered text/child/ancestor operations, with
+nested child plans preserved. These are data, never JavaScript or regex source.
+The installed Node 22+ runtime runs `scripts/compile-procedural.cjs` offline so the
+builder and extension use the same parser in `cosmetic.js`. Unsupported syntax and
+unscoped advanced blocking are counted and skipped. Browser-native CSS validation
+runs again before a procedure is activated. The runtime still accepts schema 2
+bundles, which contain no advanced rules.
+This browser-only format does not change the shared reviewed-domain v1 contract.
 
 ## Site ad hosts, browser-only list
 

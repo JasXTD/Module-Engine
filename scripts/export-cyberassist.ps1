@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $source = Join-Path $PSScriptRoot '..\rules\reviewed-domains.json'
 $catalog = Read-ReviewedDomainCatalog $source
 $current = Read-ReviewedDomainCatalog (Join-Path $PSScriptRoot '..\lists\reviewed-domains.json')
-if ($catalog.Json -cne $current.Json) { throw 'Generated catalog differs from reviewed source. Rebuild BlockAds first.' }
+if ($catalog.Json -cne $current.Json) { throw 'Generated catalog differs from reviewed source. Rebuild Module Engine first.' }
 $root = [IO.Path]::GetFullPath($CyberAssistRoot)
 if (!(Test-Path -LiteralPath (Join-Path $root 'CyberAssist\CyberAssist.Core.csproj') -PathType Leaf)) { throw 'Expected the CyberAssist repository root.' }
 $directory = Join-Path $root 'CyberAssist\Intel'

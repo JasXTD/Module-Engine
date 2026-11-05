@@ -1,0 +1,41 @@
+{
+  "completedUtc": "2026-11-04T04:03:48.8758358Z",
+  "scope": "Only the five exact disposable directories created for this task; retained evidence hashes verified before deletion.",
+  "targets": [
+    {
+      "name": "chrome-userscripts-sandbox",
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-Xh1ZsL",
+      "activeProcessCount": 0,
+      "evidenceHashMatched": true,
+      "removed": true
+    },
+    {
+      "name": "chrome-userscripts",
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-p2Jg16",
+      "activeProcessCount": 0,
+      "evidenceHashMatched": true,
+      "removed": true
+    },
+    {
+      "name": "edge-userscripts",
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-6CQBSX",
+      "activeProcessCount": 0,
+      "evidenceHashMatched": true,
+      "removed": true
+    },
+    {
+      "name": "chrome-blocker",
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-CVHJM6",
+      "activeProcessCount": 0,
+      "evidenceHashMatched": true,
+      "removed": true
+    },
+    {
+      "name": "edge-blocker",
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-g5lhXB",
+      "activeProcessCount": 0,
+      "evidenceHashMatched": true,
+      "removed": true
+    }
+  ]
+}

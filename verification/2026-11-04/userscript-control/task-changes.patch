@@ -1,0 +1,345 @@
+diff --git a/userscripts-runtime.js b/userscripts-runtime.js
+index 3328b5c..b12eaf1 100644
+--- a/userscripts-runtime.js
++++ b/userscripts-runtime.js
+@@ -6,6 +6,8 @@
+   const clone = value => JSON.parse(JSON.stringify(value));
+   const token = () => (crypto.randomUUID() + crypto.randomUUID()).replaceAll('-', '');
+   const needsStorage = source => core.parse(source).grants.some(grant => /^GM\.(getValue|setValue|deleteValue|listValues)$/.test(grant));
++  const VALUE_METHODS = Object.freeze({ get: 'GM.getValue', set: 'GM.setValue', delete: 'GM.deleteValue', list: 'GM.listValues' });
++  const VALUE_LIMITS = Object.freeze({ total: 64, script: 16, tab: 8 });
+   function normalized(script) {
+     return { id: script.id, matches: [...(script.matches || [])].sort(), excludeMatches: [...(script.excludeMatches || [])].sort(),
+       runAt: script.runAt || 'document_idle', allFrames: Boolean(script.allFrames), world: script.world || 'USER_SCRIPT',
+@@ -16,14 +18,47 @@
+   const sortedWorlds = worlds => worlds.map(world => ({ worldId: world.worldId, messaging: Boolean(world.messaging),
+     csp: world.csp || '' })).sort((a, b) => a.worldId.localeCompare(b.worldId));
+   function create(api) {
+-    let queue = Promise.resolve(), pending = 0, lastError = '', boundEvent;
++    const controls = [], values = [], byScript = new Map(), byTab = new Map();
++    let running = false, controlPending = 0, valuePending = 0, lastError = '', boundEvent;
++    // GM traffic cannot consume control capacity. A single runner still owns
++    // all writes: controls take precedence after the active transaction finishes.
++    function pump() {
++      if (running) return;
++      const task = controls.shift() || values.shift();
++      if (!task) return;
++      running = true;
++      void Promise.resolve().then(task.work).then(task.resolve, task.reject).finally(() => {
++        task.release(); running = false; pump();
++      });
++    }
++    const schedule = (lane, work, release) => new Promise((resolve, reject) => {
++      lane.push({ work, release, resolve, reject }); pump();
++    });
+     const enqueue = work => {
+-      if (pending >= 100) return Promise.reject(new Error('Userscript manager is busy. Try again shortly.'));
+-      pending++;
+-      const result = queue.then(work);
+-      queue = result.catch(() => {}).finally(() => { pending--; });
+-      return result;
++      if (controlPending >= 100) return Promise.reject(new Error('Userscript manager is busy. Try again shortly.'));
++      controlPending++;
++      return schedule(controls, work, () => { controlPending--; });
+     };
++    function validateValueRequest(message, sender) {
++      if (sender?.id !== api.runtime.id || !Number.isInteger(sender.tab?.id) || !Number.isInteger(sender.frameId) ||
++          !message || message.type !== 'US_VALUE' || !Object.hasOwn(VALUE_METHODS, message.operation) ||
++          typeof message.id !== 'string' || !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(message.id) ||
++          typeof message.token !== 'string' || !/^[a-f0-9]{64}$/.test(message.token)) throw new Error('Invalid userscript storage request.');
++    }
++    function enqueueValue(message, sender) {
++      validateValueRequest(message, sender);
++      const script = message.id, tab = sender.tab.id;
++      if (valuePending >= VALUE_LIMITS.total || (byScript.get(script) || 0) >= VALUE_LIMITS.script ||
++          (byTab.get(tab) || 0) >= VALUE_LIMITS.tab) throw new Error('Too many pending GM storage requests. Wait for earlier requests to finish.');
++      valuePending++; byScript.set(script, (byScript.get(script) || 0) + 1); byTab.set(tab, (byTab.get(tab) || 0) + 1);
++      const release = (counts, key) => {
++        const remaining = counts.get(key) - 1;
++        if (remaining) counts.set(key, remaining); else counts.delete(key);
++      };
++      return schedule(values, () => valueRequest(message, sender), () => {
++        valuePending--; release(byScript, script); release(byTab, tab);
++      });
++    }
+     const read = async () => core.library((await api.storage.local.get([KEY]))[KEY]);
+     async function access() {
+       const granted = api.permissions?.contains ? await api.permissions.contains({ permissions: ['userScripts'] }) : false;
+@@ -74,7 +109,12 @@
+     }
+     const receiveValue = (message, sender, respond) => {
+       // Native userscript messages never enter the privileged settings router.
+-      enqueue(() => valueRequest(message, sender)).then(respond, error => respond({ ok: false, error: errorText(error) }));
++      try {
++        enqueueValue(message, sender).then(respond, error => respond({ ok: false, error: errorText(error) }));
++      } catch (error) {
++        respond({ ok: false, error: errorText(error) });
++        return false;
++      }
+       return true;
+     };
+     function bindMessages() {
+@@ -164,13 +204,11 @@
+       return { ...response, selectedId: message.type === 'US_DELETE' ? null : script.id };
+     }
+     async function valueRequest(message, sender) {
+-      const methods = { get: 'GM.getValue', set: 'GM.setValue', delete: 'GM.deleteValue', list: 'GM.listValues' };
+-      if (sender?.id !== api.runtime.id || !Number.isInteger(sender.tab?.id) || !Number.isInteger(sender.frameId) ||
+-          !message || message.type !== 'US_VALUE' || !Object.hasOwn(methods, message.operation)) throw new Error('Invalid userscript storage request.');
++      validateValueRequest(message, sender);
+       const library = await read(), script = library.scripts.find(item => item.id === message.id);
+       if (!library.enabled || !script?.enabled || message.token !== script.token) throw new Error('This userscript is inactive or its capability has expired. Reload the page.');
+       const metadata = core.parse(script.source);
+-      if (metadata.world !== 'USER_SCRIPT' || !metadata.grants.includes(methods[message.operation]) ||
++      if (metadata.world !== 'USER_SCRIPT' || !metadata.grants.includes(VALUE_METHODS[message.operation]) ||
+           !core.allows(metadata, sender.url) || (!metadata.allFrames && sender.frameId !== 0) ||
+           (sender.userScriptWorldId !== undefined && sender.userScriptWorldId !== core.nativeId(script.id))) throw new Error('This userscript is not allowed to perform that storage operation here.');
+       const available = await access();
+@@ -211,7 +249,7 @@
+       setEnabled: enabled => enqueue(async () => {
+         if (typeof enabled !== 'boolean') throw new Error('Invalid userscript module switch.');
+         const before = await read(), next = clone(before); next.enabled = enabled;
+-        if (enabled && !before.enabled) for (const script of next.scripts) script.token = token();
++        if (enabled !== before.enabled) for (const script of next.scripts) script.token = token();
+         return commit(before, next, enabled);
+       })
+     });
+diff --git a/tests/userscripts.test.cjs b/tests/userscripts.test.cjs
+index 18027a5..9b7be2c 100644
+--- a/tests/userscripts.test.cjs
++++ b/tests/userscripts.test.cjs
+@@ -53,6 +53,122 @@ function harness(initial, options = {}) {
+   });
+   return { state, api, host, ready, command, save, enable, sender, value };
+ }
++for (const action of ['module', 'script', 'delete']) test('GM flood cannot block ' + action + ' shutdown', async () => {
++  const h = harness(), script = await h.enable(await h.save('Flood', '// @grant GM.getValue\n'));
++  const oldToken = h.state.data.userscriptManager.scripts[0].token;
++  const requests = Array.from({ length: 100 }, () => h.value(script.id, 'get', { key: 'value' }));
++  if (action === 'module') await h.host.setEnabled(false);
++  else await h.host.request({ type: action === 'delete' ? 'US_DELETE' : 'US_ENABLE',
++    id: script.id, revision: script.revision, enabled: false });
++  const replies = await Promise.all(requests);
++  assert.ok(replies.filter(reply => reply.ok).length <= 1, 'shutdown runs before the queued GM backlog');
++  assert.deepEqual(h.state.scripts, []);
++  const saved = h.state.data.userscriptManager.scripts[0];
++  if (action === 'delete') assert.equal(saved, undefined);
++  else {
++    assert.equal(action === 'module' ? h.state.data.userscriptManager.enabled : saved.enabled, false);
++    assert.notEqual(saved.token, oldToken);
++  }
++  assert.equal((await h.value(script.id, 'get', { key: 'value', token: oldToken })).ok, false);
++});
++test('GM backpressure applies across scripts and frames in the same native tab', async () => {
++  const h = harness(), scripts = [];
++  for (let i = 0; i < 9; i++) scripts.push(await h.enable(await h.save('Tab ' + i, '// @grant GM.getValue\n')));
++  const replies = await Promise.all(scripts.map((script, frameId) =>
++    h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), frameId })));
++  assert.equal(replies.filter(reply => reply.ok).length, 8);
++  assert.match(replies[8].error, /pending GM storage/);
++  assert.equal((await h.value(scripts[8].id, 'get', { key: 'x' })).ok, true, 'completed requests release tab capacity');
++});
++test('GM backpressure follows a script across native tabs and releases failed requests', async () => {
++  const h = harness(), script = await h.enable(await h.save('Many tabs', '// @grant GM.getValue\n'));
++  h.state.faults.read = 1;
++  const replies = await Promise.all(Array.from({ length: 17 }, (_, id) =>
++    h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), tab: { id } })));
++  assert.equal(replies.filter(reply => reply.ok).length, 15);
++  assert.match(replies[0].error, /Injected read/);
++  assert.match(replies[16].error, /pending GM storage/);
++  assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, true);
++});
++test('global GM backpressure reserves status and shutdown capacity across many tabs', async () => {
++  const h = harness(), scripts = [];
++  for (let i = 0; i < 9; i++) scripts.push(await h.enable(await h.save('Global ' + i, '// @grant GM.getValue\n')));
++  let completed = 0;
++  const requests = scripts.flatMap((script, id) => Array.from({ length: 8 }, () =>
++    h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), tab: { id } }).then(reply => {
++      if (reply.ok) completed++; return reply;
++    })));
++  assert.equal((await h.host.state()).active, true);
++  assert.ok(completed <= 1, 'status takes priority over the GM backlog');
++  await h.host.setEnabled(false);
++  const replies = await Promise.all(requests);
++  assert.equal(replies.filter(reply => /pending GM storage/.test(reply.error || '')).length, 8);
++  assert.equal(h.state.data.userscriptManager.enabled, false);
++  assert.deepEqual(h.state.scripts, []);
++});
++test('malformed storage messages do not take valid request capacity', async () => {
++  const h = harness(), script = await h.enable(await h.save('Admission', '// @grant GM.getValue\n'));
++  const bad = Array.from({ length: 100 }, () => h.value(script.id, 'UPDATE_SETTINGS', { enabled: false }));
++  const good = Array.from({ length: 8 }, () => h.value(script.id, 'get', { key: 'x' }));
++  assert.ok((await Promise.all(bad)).every(reply => !reply.ok));
++  assert.ok((await Promise.all(good)).every(reply => reply.ok));
++});
++test('shutdown waits for the active write, preserves it, and rejects queued old capabilities', { timeout: 5000 }, async () => {
++  const h = harness(), script = await h.enable(await h.save('In flight', '// @grant GM.setValue\n// @grant GM.getValue\n'));
++  const oldToken = h.state.data.userscriptManager.scripts[0].token;
++  const originalSet = h.api.storage.local.set;
++  let signal, release, held = false;
++  const entered = new Promise(resolve => { signal = resolve; }), gate = new Promise(resolve => { release = resolve; });
++  h.api.storage.local.set = async patch => {
++    if (!held && patch.userscriptManager.scripts[0]?.values.inFlight === 42) {
++      held = true; signal(); await gate;
++    }
++    return originalSet(patch);
++  };
++  const active = h.value(script.id, 'set', { key: 'inFlight', value: 42 });
++  await entered;
++  const queued = Array.from({ length: 20 }, () => h.value(script.id, 'set', { key: 'late', value: true }));
++  let stopped = false;
++  const shutdown = h.host.setEnabled(false).then(result => { stopped = true; return result; });
++  try {
++    await Promise.resolve();
++    assert.equal(stopped, false, 'an in-flight write is never raced by a separate management writer');
++  } finally { release(); }
++  assert.equal((await active).ok, true); await shutdown;
++  assert.ok((await Promise.all(queued)).every(reply => !reply.ok));
++  const saved = h.state.data.userscriptManager.scripts[0];
++  assert.deepEqual(saved.values, { inFlight: 42 });
++  assert.notEqual(saved.token, oldToken);
++  await h.host.setEnabled(true);
++  assert.equal((await h.value(script.id, 'get', { key: 'inFlight', token: oldToken })).ok, false);
++  assert.equal((await h.value(script.id, 'get', { key: 'inFlight' })).value, 42);
++});
++test('failed shutdown restores the old capability and allows a clean retry under GM load', async () => {
++  const h = harness(), script = await h.enable(await h.save('Rollback flood', '// @grant GM.getValue\n'));
++  const oldToken = h.state.data.userscriptManager.scripts[0].token;
++  h.state.faults.save = 1;
++  const requests = Array.from({ length: 8 }, () => h.value(script.id, 'get', { key: 'x' }));
++  await assert.rejects(h.host.setEnabled(false), /not applied/);
++  assert.equal(h.state.data.userscriptManager.enabled, true);
++  assert.equal(h.state.data.userscriptManager.scripts[0].token, oldToken);
++  assert.equal(h.state.scripts.length, 1);
++  assert.ok((await Promise.all(requests)).every(reply => reply.ok));
++  await h.host.setEnabled(false);
++  assert.equal(h.state.data.userscriptManager.enabled, false);
++  assert.deepEqual(h.state.scripts, []);
++});
++test('control FIFO order and capability revocation survive immediate disable and re-enable', async () => {
++  const h = harness(), script = await h.enable(await h.save('Transitions', '// @grant GM.getValue\n'));
++  const oldToken = h.state.data.userscriptManager.scripts[0].token;
++  const requests = Array.from({ length: 100 }, () => h.value(script.id, 'get', { key: 'x' }));
++  const disable = h.host.setEnabled(false), enable = h.host.setEnabled(true);
++  await Promise.all([disable, enable]);
++  assert.equal(h.state.data.userscriptManager.enabled, true);
++  assert.equal(h.state.scripts.length, 1);
++  assert.ok((await Promise.all(requests)).filter(reply => reply.ok).length <= 1);
++  assert.equal((await h.value(script.id, 'get', { key: 'x', token: oldToken })).ok, false);
++  assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, true);
++});
+ test('metadata produces explicit site, timing, world, frame and grant scope', () => {
+   const parsed = core.parse(source('Scoped', '// @exclude-match https://example.test/private/*\n// @noframes\n// @run-at document-start\n// @grant GM.getValue\n'));
+   assert.equal(parsed.runAt, 'document_start'); assert.equal(parsed.world, 'USER_SCRIPT'); assert.equal(parsed.allFrames, false);
+diff --git a/tests/userscripts-browser.cjs b/tests/userscripts-browser.cjs
+index b18b5cb..469cf52 100644
+--- a/tests/userscripts-browser.cjs
++++ b/tests/userscripts-browser.cjs
+@@ -16,6 +16,36 @@ function scriptSource(name, grants = '// @grant none\n', body = '', metadata = '
+   return '// ==UserScript==\n// @name ' + name + '\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n' +
+     grants + metadata + '// ==/UserScript==\n' + body;
+ }
++// Bounded, offline-only pressure. The existing document intentionally keeps
++// running until stopped, so shutdown is checked while requests are still sent.
++function gmFloodFixture() {
++  let pending = 0, attempted = 0, limited = 0, active = true;
++  const deadline = Date.now() + 15000;
++  const report = () => {
++    document.body.dataset.gmFloodActive = String(active);
++    document.body.dataset.gmFloodAttempted = String(attempted);
++    document.body.dataset.gmFloodLimited = String(limited);
++  };
++  const stop = () => { active = false; clearInterval(timer); report(); };
++  const wave = () => {
++    if (Date.now() >= deadline) { stop(); return; }
++    for (let i = 0; i < 128 && pending < 128; i++) {
++      pending++; attempted++;
++      Promise.resolve().then(() => GM.getValue('offline-pressure', null)).catch(error => {
++        if (error.message.includes('pending GM storage')) limited++;
++      }).finally(() => { pending--; });
++    }
++    report();
++  };
++  const timer = setInterval(wave, 50);
++  document.addEventListener('stop-gm-flood', stop, { once: true });
++  document.addEventListener('probe-revoked-gm', () => {
++    Promise.resolve().then(() => GM.getValue('offline-probe')).then(
++      () => { document.body.dataset.gmFloodProbe = 'accepted'; },
++      () => { document.body.dataset.gmFloodProbe = 'rejected'; });
++  }, { once: true });
++  wave();
++}
+ (async () => {
+   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'blockads-userscripts-' + browserName + '-')), extension = path.join(temp, 'extension');
+   await fs.mkdir(extension);
+@@ -129,6 +159,36 @@ function scriptSource(name, grants = '// @grant none\n', body = '', metadata = '
+     await click('userscriptsEnabled'); await ready();
+     check('Userscript module is independently enabled', (await send({ type: 'US_LIST' })).enabled);
+     check('Local ad canary saved to blocker', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
++    for (const action of ['module', 'script', 'delete']) {
++      const pathname = '/gm-flood-' + action;
++      const floodSource = scriptSource('Offline GM flood: ' + action, '// @grant GM.getValue\n',
++        '(' + gmFloodFixture.toString() + ')();', '// @noframes\n')
++        .replace('// @match http://127.0.0.1/*', '// @match http://127.0.0.1' + pathname);
++      const id = await install(floodSource), page = await browse(pathname);
++      await until("Number(document.body.dataset.gmFloodAttempted)>=128&&Number(document.body.dataset.gmFloodLimited)>0", page);
++      check('GM backpressure is active during ' + action + ' flood', await b.evaluate("document.body.dataset.gmFloodActive==='true'", page));
++      const status = await send({ type: 'US_LIST' });
++      check('Status remains available during ' + action + ' flood', status.ok && status.active && status.scripts.some(script => script.id === id));
++      const started = Date.now();
++      if (action === 'module') await click('userscriptsEnabled');
++      else if (action === 'script') await click('scriptEnabled');
++      else { await click('deleteScript'); await click('confirmAccept'); }
++      await ready();
++      const result = await send({ type: 'US_LIST' }), saved = result.scripts.find(script => script.id === id);
++      const traffic = await b.evaluate('({active:document.body.dataset.gmFloodActive,attempted:Number(document.body.dataset.gmFloodAttempted),limited:Number(document.body.dataset.gmFloodLimited)})', page);
++      (evidence.floodControls ||= []).push({ action, durationMs: Date.now() - started, ...traffic });
++      check('Manager completes ' + action + ' shutdown during ongoing GM traffic',
++        traffic.active === 'true' && (action === 'module' ? !result.enabled : action === 'script' ? saved?.enabled === false : !saved));
++      await b.evaluate("document.dispatchEvent(new Event('stop-gm-flood'));document.dispatchEvent(new Event('probe-revoked-gm'))", page);
++      await until('document.body.dataset.gmFloodProbe', page);
++      check('Old GM capability is rejected after ' + action + ' shutdown', await b.evaluate("document.body.dataset.gmFloodProbe==='rejected'", page));
++      check('Ad blocking survives ' + action + ' flood shutdown', (await send({ type: 'GET_STATE' })).settings.enabled &&
++        await b.evaluate('window.fixtureAd===undefined', page));
++      await b.closePage(page);
++      if (saved) assert.ok((await send({ type: 'US_DELETE', id, revision: saved.revision })).ok);
++      await click('refresh'); await ready();
++      if (action === 'module') { await click('userscriptsEnabled'); await ready(); }
++    }
+     const firstSource = scriptSource('Storage and styles',
+       '// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM.addStyle\n',
+       "(async()=>{const count=await GM.getValue('visits',0);await GM.setValue('visits',count+1);document.body.dataset.visits=String(count+1);GM.addStyle('body{--userscript-style:yes}');window.privateMarker='secret';document.body.dataset.extensionStorage=typeof (globalThis.browser||chrome).storage;const attack=await (globalThis.browser||chrome).runtime.sendMessage({type:'MODULE_SET',id:'blocking',enabled:false});document.body.dataset.attackRejected=String(attack.ok===false);try{await GM.setValue('invalid',NaN);}catch{document.body.dataset.invalidRejected='yes';}document.addEventListener('test-old-capability',()=>GM.setValue('old',true).then(()=>{document.body.dataset.oldCapability='accepted'},()=>{document.body.dataset.oldCapability='denied'}));})().catch(error=>{document.body.dataset.scriptError=error.message;});",
+diff --git a/README.md b/README.md
+index 5aac01d..bcdf1ea 100644
+--- a/README.md
++++ b/README.md
+@@ -49,15 +49,17 @@ This is an original, focused userscript manager inspired by tools such as [Viole
+ | Timing and frames | `document-start`, `document-end`, `document-idle` (default); matching frames by default, top frame only with `@noframes` |
+ | Execution | A separate `USER_SCRIPT` world for each script. `@inject-into content` / `auto` use isolation; `@inject-into page` uses the page world and requires `@grant none`. The default remains isolated even with `@grant none`. |
+ | Helpers | `GM.info` / `GM_info`, `GM.addStyle` / `GM_addStyle` |
+-| Local values | Asynchronous `GM.getValue`, `GM.setValue`, `GM.deleteValue`, `GM.listValues`; request the needed APIs with `@grant`. JSON-compatible values only; 256 keys and 64 KiB per script. |
++| Local values | Asynchronous `GM.getValue`, `GM.setValue`, `GM.deleteValue`, `GM.listValues`; request the needed APIs with `@grant`. JSON-compatible values only; 256 keys and 64 KiB per script. Pending requests are limited to 8 per browser tab, 16 per requested script and 64 overall. Await requests and handle rejection when a limit is reached. |
+ | Library limits | 32 scripts, 128 KiB source per script, 1 MiB source overall, 3 MiB total library storage |
+ | Unsupported | Legacy synchronous GM storage, privileged network grants, `@grant unsafeWindow`, `@include`, `@exclude`, `@require`, `@resource` and other unsupported directives/grants are rejected. Icon/update/download URLs are ignored with a visible explanation. |
+ 
+ The editor validates metadata and limits; JavaScript runtime errors appear in the matching page's developer console. This does not claim full Violentmonkey compatibility, add a localhost server, or download a third-party script engine.
+ 
+-The module boundary is explicit: `modules.js` registers bundled adapters; `background.js` keeps the existing verified blocker transaction and restricts management messages to extension pages; `userscripts-runtime.js` owns a separate queue, storage key and native registrations; `userscripts-core.js` parses metadata and compiles wrapper source without evaluating user code in the extension. Ad-filter settings are not migrated or duplicated. New privileged modules must ship as reviewed extension code.
++The module boundary is explicit: `modules.js` registers bundled adapters; `background.js` keeps the existing verified blocker transaction and restricts management messages to extension pages; `userscripts-runtime.js` owns its scheduler, storage key and native registrations; `userscripts-core.js` parses metadata and compiles wrapper source without evaluating user code in the extension. Ad-filter settings are not migrated or duplicated. New privileged modules must ship as reviewed extension code.
+ 
+-Native registration, world configuration and persistent library writes are verified and rolled back on failure. Worker startup, browser startup and extension-update handlers restore saved intent. Script storage uses the native `onUserScriptMessage` channel, a per-script capability, declared grants and browser-provided frame/URL information. Capabilities rotate on edits and enable transitions; scripts cannot use this channel to change modules or protection settings. The implementation follows the browser's [userScripts API](https://developer.chrome.com/docs/extensions/reference/api/userScripts) and Firefox's [optional-permission requirements](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/userScripts).
++Native registration, world configuration and persistent library writes are verified and rolled back on failure. Worker startup, browser startup and extension-update handlers restore saved intent. Script storage uses the native `onUserScriptMessage` channel, a per-script capability, declared grants and browser-provided frame/URL information. Capabilities rotate on edits and both enable and disable transitions; scripts cannot use this channel to change modules or protection settings. The implementation follows the browser's [userScripts API](https://developer.chrome.com/docs/extensions/reference/api/userScripts) and Firefox's [optional-permission requirements](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/userScripts).
++
++Manager operations have their own bounded capacity and run before waiting GM storage requests. One runner serializes all library writes, so a shutdown waits for the active transaction to finish before taking priority; it does not race or abandon an in-progress save. GM limits include active and waiting requests, apply across frames in the same native browser tab, and release capacity on success or failure. Queued requests recheck the current capability after management changes, so an old request cannot write after a successful disable or delete. A failed management change restores its prior state and reports the failure.
+ 
+ ## Controls and scope
+ 
+@@ -193,6 +195,8 @@ This upgrade does **not** establish full uBO parity or superiority. Unsupported
+ 
+ ## Verification
+ 
++On 4 November 2026, the userscript queue-exhaustion finding was reproduced: 100 GM requests made module-off, script-disable and delete fail with a busy error. After reserving manager capacity, prioritizing controls and bounding GM traffic, all **167 unit tests**, **64 userscript-manager checks per browser**, and **539 blocker checks per browser** passed in Chrome and Edge. Native manager controls completed while a bounded local script kept sending requests; old capabilities were rejected and local ad blocking remained active. Fault-injection tests cover in-flight writes, failed shutdown rollback, rapid disable/re-enable, and capacity recovery after errors. Tests used disposable profiles and owned loopback fixtures behind a deny proxy. Firefox userscript execution was not tested in this change. See the [security-fix evidence](verification/2026-11-04/userscript-control/summary.json), including the before-fix failures and the initial sandbox browser-startup/cleanup failure. Reload the unpacked extension and affected pages to apply the fix.
++
+ On 30 October 2026, version **1.9.0** passed **157 unit tests**, **237 rule/import assertions**, **338 threat-policy assertions**, **21 cosmetic-compiler assertions**, and **465 blocker plus 46 userscript-manager checks in each of Chrome and Edge**. Tests use fresh profiles, owned loopback fixtures and a deny proxy. They exercise actual ad blocking while scripts run, independent switches, isolated GM storage, rejected administrative messages, scope/timing/frame rules, browser permission revocation, worker restart, import/export, stale drafts, deletion and keyboard cancellation. Desktop and narrow manager layouts and the existing popup were inspected. A wildcard-heavy scope stall and an Edge permission-error handling failure were reproduced before their fixes. The existing bundled blocker assets were hash-compared with the early task package; source changes are isolated in a patch against the pre-task snapshot. See the [1.9 verification report](verification/2026-10-30/modular-extension/summary.json) for exact versions, hashes, earlier failures and cleanup.
+ 
+ **Firefox 159 now passes the browser suite for 1.9.0:** 533 checks on 1 November 2026, alongside 539 each in Chrome and Edge. Firefox 159 dropped `--remote-allow-system-access`, so the test harness sets `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS` for its own test browser. Saved userscripts were not run on a page in Firefox, and its Allow userscript access button was not exercised. Extension-update restoration is covered by unit tests, and actual worker stop/restart by Chrome and Edge tests. A full reload of the temporary CDP-loaded extension encountered Chrome's OFFSTORE protection; that protection was not bypassed. These offline checks do not establish blocking coverage for every live site. No new dependencies were installed. Reload the unpacked extension to use this version.

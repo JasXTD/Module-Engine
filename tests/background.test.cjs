@@ -9,10 +9,10 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'u
 const ids = manifest.declarative_net_request.rule_resources.map(rule => rule.id);
 const policyText = fs.readFileSync(path.join(root, 'rules/threat-policy.json'), 'utf8');
 
-function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}) {
+function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}, options = {}) {
   const listeners = {};
-  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], badge: '', faults: {} };
-  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [],
+  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
+  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
     cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
       allow: { 'shop.example.com': ['.ad-box'] } }) });
   class Clock extends Date { static now() { return state.now; } }
@@ -23,6 +23,12 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     if (state.faults[key]) { state.faults[key]--; throw new Error(`Injected ${key} failure`); }
   }
   const api = {
+    tabs: {
+      onCreated: event('tabCreated'), onUpdated: event('tabUpdated'), onRemoved: event('tabRemoved'),
+      async get(id) { await fault('tabRead'); if (!state.tabs[id]) throw new Error('Missing tab'); return clone(state.tabs[id]); },
+      async update(id, patch) { await tick(); Object.assign(state.tabs[id], patch); return clone(state.tabs[id]); },
+      async remove(id) { await fault('tabRemove'); state.removedTabs.push(id); delete state.tabs[id]; listeners.tabRemoved?.(id); }
+    },
     runtime: { id: 'test', getURL: value => `chrome-extension://test/${value}`, getManifest: () => manifest,
       onInstalled: event('installed'), onStartup: event('startup'), onMessage: event('message') },
     alarms: {
@@ -31,7 +37,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       async create(name, options) { await fault('alarm'); state.alarms[name] = { scheduledTime: options.when || state.now + 3600000, ...options }; },
       async clear(name) { delete state.alarms[name]; }
     },
-    storage: { local: {
+    storage: { onChanged: event('storageChanged'), local: {
       async get(keys) { await tick(); return clone(Object.fromEntries(keys.filter(k => k in state.storage).map(k => [k, state.storage[k]]))); },
       async set(value) { await fault('save'); Object.assign(state.storage, clone(value)); }
     }, session: {
@@ -42,9 +48,11 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     declarativeNetRequest: {
       MAX_NUMBER_OF_DYNAMIC_RULES: limit,
       onRuleMatchedDebug: event('ruleMatched'),
-      async getEnabledRulesets() { await tick(); return clone(state.enabled); },
+      async getEnabledRulesets() { await fault('enabledRead'); return clone(state.enabled); },
+      async getSessionRules() { await fault('sessionRulesRead'); return clone(state.sessionRules || []); },
+      async getDisabledRuleIds({ rulesetId }) { await fault('disabledRead'); return clone(state.disabledRules?.[rulesetId] || []); },
       async getDynamicRules() {
-        await tick();
+        await fault('dynamicRead');
         const rules = clone(state.dynamic);
         if (state.nullReadback) for (const rule of rules) {
           rule.action.redirect = null;
@@ -65,7 +73,14 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       },
       async setExtensionActionOptions() {}
     },
+    webRequest: { onResponseStarted: event('response'), onBeforeRequest: event('beforeRequest'), onErrorOccurred: event('requestError') },
     scripting: {
+      async executeScript(options) {
+        await fault('executeScript');
+        state.executions.push(clone(options));
+        if (options.files?.includes('picker.js')) return [{ frameId:0, result:true }];
+        return [];
+      },
       async getRegisteredContentScripts() {
         await tick();
         // Firefox echoes packaged files as full extension URLs.
@@ -84,25 +99,325 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     },
     action: { async setBadgeBackgroundColor() {}, async setBadgeText({ text }) { state.badge = text; } }
   };
-  const context = vm.createContext({ chrome: api, URL, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
+  if (options.noRuleFeedback) delete api.declarativeNetRequest.onRuleMatchedDebug;
+  if (options.firefox) {
+    api.runtime.getBrowserInfo = async () => ({ name: 'Firefox' });
+    delete api.declarativeNetRequest.onRuleMatchedDebug;
+    api.declarativeNetRequest.testMatchOutcome = () => { throw new Error('Firefox feedback is disabled'); };
+  }
+  const context = vm.createContext({ chrome: api, URL, TextEncoder, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
     if (url === 'chrome-extension://test/rules/community-cosmetic.json') {
       state.fetches.push(url);
       await fault('cosmetic');
       return { ok: true, json: async () => JSON.parse(state.cosmeticText) };
+    }
+    const ruleset = manifest.declarative_net_request.rule_resources.find(item => url === 'chrome-extension://test/' + item.path);
+    if (ruleset) {
+      await fault('ruleFile');
+      return { ok: true, json: async () => clone(options.rulesets?.[ruleset.id] || JSON.parse(fs.readFileSync(path.join(root, ruleset.path), 'utf8'))) };
     }
     assert.equal(url, 'chrome-extension://test/rules/threat-policy.json', 'only a packaged local file may be read');
     state.fetches.push(url);
     await fault('policy');
     return { ok: true, text: async () => state.policyText };
   } });
-  for (const file of ['shared.js', 'background.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of ['shared.js', 'flags.js', 'cosmetic.js', 'network.js', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'background.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   const ready = vm.runInContext('operationQueue', context);
   const send = async (message, sender = { id: 'test', url: 'chrome-extension://test/popup.html' }) => { await ready; return new Promise(resolve => {
     const retained = listeners.message(clone(message), sender, response => resolve(clone(response)));
     if (!retained) resolve(undefined);
   }); };
-  return { state, send, ready, shared: context.BlockAds, listeners };
+  return { state, send, ready, shared: context.BlockAds, listeners, api };
 }
+
+test('modules preserve ad blocking and saved settings when userscript access is missing', async () => {
+  const h = harness({customBlockedDomains:['keep.example'],customCosmeticFilters:'example.test##.kept'});
+  await h.ready;
+  const before = clone({enabled:h.state.enabled,dynamic:h.state.dynamic,scripts:h.state.scripts});
+  const modules = await h.send({type:'MODULES_GET'});
+  assert.equal(modules.modules[0].active,true);
+  assert.equal(modules.modules[1].enabled,false);
+  assert.equal((await h.send({type:'MODULE_SET',id:'userscripts',enabled:true})).ok,false);
+  assert.deepEqual({enabled:h.state.enabled,dynamic:h.state.dynamic,scripts:h.state.scripts},before);
+  assert.equal(h.state.storage.customCosmeticFilters,'example.test##.kept');
+  assert.equal((await h.send({type:'GET_STATE'})).ok,true);
+});
+test('every module and script management command requires an extension page', async () => {
+  const h=harness();
+  for(const type of ['MODULES_GET','MODULE_SET','US_LIST','US_SAVE','US_ENABLE','US_DELETE']) {
+    for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}},{id:'other',url:'chrome-extension://test/manager.html'}]) {
+      assert.equal((await h.send({type,id:'blocking',enabled:false},sender)).ok,false);
+    }
+  }
+  assert.equal(h.state.storage.enabled,true);
+});
+test('ad module pause does not change the userscript library', async () => {
+  const h=harness();
+  const source='// ==UserScript==\n// @name Local\n// @match https://example.test/*\n// ==/UserScript==\nvoid 0;';
+  const saved=await h.send({type:'US_SAVE',source});
+  assert.equal(saved.ok,true);
+  const library=clone(h.state.storage.userscriptManager);
+  assert.equal((await h.send({type:'MODULE_SET',id:'blocking',enabled:false})).ok,true);
+  assert.deepEqual(h.state.storage.userscriptManager,library);
+  assert.deepEqual(h.state.enabled,[]);
+  assert.equal((await h.send({type:'MODULE_SET',id:'blocking',enabled:true})).ok,true);
+  assert.deepEqual(h.state.storage.userscriptManager,library);
+});
+
+test('network filter defaults migrate without changing existing rules or preferences', async () => {
+  const h=harness({enabled:false,customBlockedDomains:['kept.example'],customCosmeticFilters:'example.test##.kept'});
+  const response=await h.send({type:'GET_STATE'});
+  assert.equal(response.ok,true);
+  assert.equal(response.settings.customNetworkFilters,'');
+  assert.equal(response.settings.enabled,false);
+  assert.equal(response.settings.customCosmeticFilters,'example.test##.kept');
+  assert.deepEqual(response.settings.customBlockedDomains,['kept.example']);
+  assert.deepEqual(h.state.dynamic,[]);
+});
+test('custom network saves serialize with other editors and refuse a stale base', async () => {
+  const h=harness();
+  const text='||www.cdn.example.test/promoted/*$script,domain=news.example.test';
+  const results=await Promise.all([
+    h.send({type:'SAVE_NETWORK_FILTERS',previous:'',text}),
+    h.send({type:'SAVE_NETWORK_FILTERS',previous:'',text:'||other.example.test^'}),
+    h.send({type:'SAVE_COSMETIC_FILTERS',previous:'',text:'news.example.test##.card'})
+  ]);
+  assert.deepEqual(results.map(value=>value.ok),[true,false,true]);
+  assert.match(results[1].error,/another window/);
+  assert.equal(h.state.storage.customNetworkFilters,text);
+  assert.equal(h.state.storage.customCosmeticFilters,'news.example.test##.card');
+  assert.equal(h.state.dynamic.length,1);
+  assert.deepEqual(h.state.dynamic[0].condition.initiatorDomains,['news.example.test']);
+});
+test('network filters keep extension-only authority and reject invalid saves atomically', async () => {
+  const h=harness();
+  const command={type:'SAVE_NETWORK_FILTERS',previous:'',text:'||example.test^'};
+  for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}}, {id:'other',url:'chrome-extension://test/lists.html'}]) {
+    assert.equal((await h.send(command,sender)).ok,false);
+  }
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{customNetworkFilters:command.text}})).ok,false);
+  for(const text of [null,'||valid.example.test^\n||bad.example.test^$redirect=noopjs','||example.test^$script,~script']) {
+    assert.equal((await h.send({...command,text})).ok,false);
+    assert.equal(h.state.storage.customNetworkFilters,'');
+    assert.deepEqual(h.state.dynamic,[]);
+  }
+});
+for(const fault of ['dynamic','save','ignoreDynamic']) test('network filter '+fault+' failure restores the prior filters and permits retry', async () => {
+  const old='||old.example.test^',next='||new.example.test/path*$image';
+  const h=harness({customNetworkFilters:old,customBlockedDomains:['kept.example']});
+  await h.ready;
+  const previous=clone(h.state.dynamic);
+  h.state.faults[fault]=1;
+  const response=await h.send({type:'SAVE_NETWORK_FILTERS',previous:old,text:next});
+  assert.equal(response.ok,false);
+  assert.equal(h.state.storage.customNetworkFilters,old);
+  assert.deepEqual(h.state.dynamic,previous);
+  assert.equal((await h.send({type:'SAVE_NETWORK_FILTERS',previous:old,text:next})).ok,true);
+  assert.equal(h.state.storage.customNetworkFilters,next);
+});
+test('network rules share the browser quota with domain rules and preserve the last verified state', async () => {
+  const h=harness({customBlockedDomains:['kept.example'],customNetworkFilters:'||one.example.test^'},2);
+  await h.ready;
+  const previous=clone(h.state.dynamic);
+  const response=await h.send({type:'SAVE_NETWORK_FILTERS',previous:'||one.example.test^',text:'||one.example.test^\n||two.example.test^'});
+  assert.equal(response.ok,false); assert.match(response.error,/limit 2/);
+  assert.deepEqual(h.state.dynamic,previous);
+  assert.equal(h.state.storage.customNetworkFilters,'||one.example.test^');
+});
+test('network rules survive restart, respect master pause and stay independent of cosmetic and list switches', async () => {
+  const text='||example.test/a*$script\n@@||example.test/allowed.js$script';
+  const first=harness({customBlockedDomains:['kept.example'],customNetworkFilters:text});
+  await first.ready;
+  const expected=clone(first.state.dynamic);
+  const h=harness(clone(first.state.storage)); await h.ready;
+  assert.deepEqual(h.state.dynamic,expected);
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{enabled:false}})).ok,true);
+  assert.deepEqual(h.state.dynamic,[]);
+  assert.equal(h.state.storage.customNetworkFilters,text);
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{enabled:true,cosmeticFiltering:false,rulesets:Object.fromEntries(ids.map(id=>[id,false]))}})).ok,true);
+  assert.deepEqual(h.state.dynamic,expected);
+  assert.equal((await h.send({type:'SAVE_NETWORK_FILTERS',previous:text,text:''})).ok,true);
+  assert.equal(h.state.dynamic.length,1);
+  assert.deepEqual(h.state.dynamic[0].condition.requestDomains,['kept.example']);
+});
+
+const pickerSender = () => ({id:'test',url:'https://www.example.com/page',frameId:0,documentId:'document-one',tab:{id:1,url:'https://www.example.com/page'}});
+async function openPicker(h) {
+  assert.equal((await h.send({type:'START_PICKER',tabId:1})).ok,true);
+  const session = await h.send({type:'GET_PICKER_SESSION'},pickerSender());
+  assert.equal(session.ok,true);
+  return session;
+}
+test('only the extension interface can start a picker on a supported active page', async () => {
+  const h = harness();
+  assert.equal((await h.send({type:'GET_PICKER_SESSION'},pickerSender())).ok,false);
+  assert.equal((await h.send({type:'START_PICKER',tabId:1},pickerSender())).ok,false);
+  for (const tabId of [null,-1,'1',2]) assert.equal((await h.send({type:'START_PICKER',tabId})).ok,false);
+  h.state.tabs[1].url = 'file:///local.html';
+  assert.equal((await h.send({type:'START_PICKER',tabId:1})).ok,false);
+  assert.equal(h.state.executions.length,0);
+});
+test('picker sessions bind exact host, top frame, document, URL and short-lived authority', async () => {
+  const h = harness(), session = await openPicker(h), sender = pickerSender();
+  assert.equal(session.domain,'www.example.com');
+  assert.deepEqual(h.state.executions.at(-1),{target:{tabId:1,frameIds:[0]},files:['cosmetic.js','picker-core.js','picker.js']});
+  for (const altered of [{...sender,frameId:2},{...sender,documentId:'other'},{...sender,url:'https://other.example/'},{...sender,id:'other'}]) {
+    assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},altered)).ok,false);
+  }
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:'wrong',selector:'.picked'},sender)).ok,false);
+  for (const selector of ['.x\nother.example##body','.x {display:none}',':has-text(Ad)','.x[']) {
+    assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector},sender)).ok,false);
+  }
+  h.state.tabs[1].url += '?changed';
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},sender)).ok,false);
+  h.state.tabs[1].url = sender.url;
+  h.state.now += 600001;
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},sender)).ok,false);
+  assert.deepEqual(h.state.session.elementPickerSessions,{});
+  assert.equal(h.state.storage.customCosmeticFilters,'');
+});
+test('picker append preserves concurrent editor changes and has exact site scope and idempotent retries', async () => {
+  const h = harness({customCosmeticFilters:'example.net##.old'}), session=await openPicker(h), sender=pickerSender();
+  const [edit,pick] = await Promise.all([
+    h.send({type:'SAVE_COSMETIC_FILTERS',previous:'example.net##.old',text:'example.net##.old\nexample.net##.new'}),
+    h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked',domain:'other.example'},sender)
+  ]);
+  assert.equal(edit.ok,true); assert.equal(pick.ok,true);
+  assert.equal(h.state.storage.customCosmeticFilters,'example.net##.old\nexample.net##.new\nwww.example.com##.picked');
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},sender)).alreadySaved,true);
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.different'},sender)).ok,false);
+  const next=await openPicker(h);
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:next.token,selector:'.picked'},sender)).alreadySaved,true);
+  assert.equal(h.state.storage.customCosmeticFilters.split('\n').length,3);
+});
+test('picker authority survives a worker restart but closing it prevents a later save', async () => {
+  const first=harness(), session=await openPicker(first);
+  const restarted=harness(clone(first.state.storage),5000,'2026-10-18T04:00:00Z',clone(first.state.session));
+  assert.equal((await restarted.send({type:'GET_PICKER_SESSION'},pickerSender())).token,session.token);
+  restarted.state.tabs[1].url = 'https://www.example.com/next-page';
+  assert.equal((await restarted.send({type:'CLOSE_PICKER',token:session.token},pickerSender())).ok,true);
+  assert.equal((await restarted.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},pickerSender())).ok,false);
+});
+test('picker session storage stays bounded and retains recently reopened tabs', async () => {
+  const h=harness();
+  for (let id=1;id<=21;id++) {
+    h.state.tabs[id]={id,url:'https://www.example.com/page'};h.state.now++;
+    assert.equal((await h.send({type:'START_PICKER',tabId:id})).ok,true);
+  }
+  assert.equal(Object.keys(h.state.session.elementPickerSessions).length,20);
+  assert.equal(h.state.session.elementPickerSessions[1],undefined);
+  h.state.now++;await h.send({type:'START_PICKER',tabId:2});
+  h.state.tabs[22]={id:22,url:'https://www.example.com/page'};h.state.now++;
+  await h.send({type:'START_PICKER',tabId:22});
+  assert.ok(h.state.session.elementPickerSessions[2]);
+  assert.equal(h.state.session.elementPickerSessions[3],undefined);
+});
+test('failed injection, capability writes and settings saves leave custom filters intact', async () => {
+  const h=harness();
+  h.state.faults.executeScript=1;
+  assert.equal((await h.send({type:'START_PICKER',tabId:1})).ok,false);
+  assert.deepEqual(h.state.session.elementPickerSessions,{});
+  const session=await openPicker(h), request={type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'};
+  h.state.faults.session=1;
+  assert.equal((await h.send(request,pickerSender())).ok,false);
+  assert.equal(h.state.storage.customCosmeticFilters,'');
+  h.state.faults.save=1;
+  assert.equal((await h.send(request,pickerSender())).ok,false);
+  assert.equal(h.state.storage.customCosmeticFilters,'');
+  assert.equal((await h.send(request,pickerSender())).ok,true);
+});
+test('picker refuses paused hiding, exact exceptions and overflowing custom-rule limits', async () => {
+  for (const initial of [{enabled:false},{cosmeticFiltering:false},{whitelistedDomains:['example.com']},{cosmeticPausedDomains:['example.com']}]) {
+    assert.equal((await harness(initial).send({type:'START_PICKER',tabId:1})).ok,false);
+  }
+  const h=harness({customCosmeticFilters:'www.example.com#@#.picked'}), session=await openPicker(h);
+  assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},pickerSender())).ok,false);
+  assert.equal(h.state.storage.customCosmeticFilters,'www.example.com#@#.picked');
+  const full=Array.from({length:500},(_,i)=>'other.example##.rule'+i).join('\n');
+  const capped=harness({customCosmeticFilters:full}), next=await openPicker(capped);
+  assert.equal((await capped.send({type:'SAVE_PICKER_FILTER',token:next.token,selector:'.picked'},pickerSender())).ok,false);
+  assert.equal(capped.state.storage.customCosmeticFilters,full);
+});
+
+test('advanced hiding is independent, validated and rolled back when saving fails', async () => {
+  const h = harness({ customCosmeticFilters: 'example.com##.label:has-text(Sponsored):upward(1)' });
+  const frame = { id: 'test', url: 'https://example.com/page', frameId: 0, tab: { id: 1, url: 'https://example.com/page' } };
+  const initial = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.equal(initial.procedural, true);
+  assert.equal(initial.proceduralRules.length, 1);
+  const network = clone({ enabled: h.state.enabled, dynamic: h.state.dynamic, scripts: h.state.scripts });
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { proceduralFiltering: false } })).ok, true);
+  const paused = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.equal(paused.procedural, false);
+  assert.equal(paused.enabled, true);
+  assert.deepEqual(clone({ enabled: h.state.enabled, dynamic: h.state.dynamic, scripts: h.state.scripts }), network);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { proceduralFiltering: 'yes' } })).ok, false);
+  h.state.faults.save = 1;
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { proceduralFiltering: true } })).ok, false);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).procedural, false);
+});
+
+test('cosmetic-only pauses restore embedded content without disabling network or video-ad protection', async () => {
+  const h = harness();
+  await h.send({ type: 'GET_STATE' });
+  const networkBefore = clone({ enabled: h.state.enabled, dynamic: h.state.dynamic, scripts: h.state.scripts });
+  const response = await h.send({ type: 'SET_SITE_COSMETICS', domain: 'parent.example', paused: true });
+  assert.equal(response.ok, true);
+  const frame = { id: 'test', url: 'https://child.example/frame', tab: { id: 1, url: 'https://shop.parent.example/' } };
+  const cosmetic = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.equal(cosmetic.enabled, false);
+  assert.equal(cosmetic.ads, true);
+  assert.deepEqual({ enabled: h.state.enabled, dynamic: h.state.dynamic, scripts: h.state.scripts }, networkBefore);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, tab: { id: 1, url: 'https://other.example/' } })).enabled, true);
+  await h.send({ type: 'SET_SITE_COSMETICS', domain: 'shop.parent.example', paused: false });
+  assert.deepEqual(h.state.storage.cosmeticPausedDomains, []);
+});
+
+test('custom cosmetic saves are transactional and conflicting editors cannot overwrite one another', async () => {
+  const h = harness();
+  const first = 'example.com##.first';
+  const responses = await Promise.all([
+    h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: first }),
+    h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: 'example.com##.second' })
+  ]);
+  assert.equal(responses[0].ok, true);
+  assert.equal(responses[1].ok, false);
+  assert.match(responses[1].error, /another window/);
+  assert.equal(h.state.storage.customCosmeticFilters, first);
+  h.state.faults.save = 1;
+  assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: first, text: 'example.com##.third' })).ok, false);
+  assert.equal(h.state.storage.customCosmeticFilters, first);
+  assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: first, text: '' })).ok, true);
+});
+
+test('custom rules reject content-script writers, injection and unrestricted setting patches', async () => {
+  const h = harness();
+  await h.send({ type: 'GET_STATE' });
+  const sender = { id: 'test', url: 'https://example.com/', tab: { id: 1, url: 'https://example.com/' } };
+  assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: 'example.com##.ad' }, sender)).ok, false);
+  assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: 'example.com##.ad {color:red}' })).ok, false);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { customCosmeticFilters: 'example.com##.ad' } })).ok, false);
+  assert.equal(h.state.storage.customCosmeticFilters, '');
+  assert.equal(h.state.enabled.includes('threats_ruleset'), true);
+});
+
+test('generic and custom cosmetics honor switches, list exceptions and browser-supplied frame hosts', async () => {
+  const h = harness();
+  h.state.cosmeticText = JSON.stringify({ hide: { 'example.com': ['.site'] }, allow: {}, generic: ['.generic'], disableGeneric: ['quiet.example.com'], disableAll: ['reader.example.com'] });
+  await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: 'example.com##.custom\nexample.com#@#.generic' });
+  const get = host => h.send({ type: 'GET_COSMETIC_STATE', domain: 'spoof.example' }, { id: 'test', url: `https://${host}/`, tab: { id: 1, url: 'https://top.example/' } });
+  assert.deepEqual((await get('example.com')).siteSelectors, ['.site', '.custom']);
+  assert.deepEqual((await get('example.com')).genericSelectors, []);
+  assert.deepEqual((await get('other.example')).genericSelectors, ['.generic']);
+  assert.equal((await get('quiet.example.com')).disableGeneric, true);
+  assert.equal((await get('reader.example.com')).enabled, false);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: false } });
+  assert.deepEqual((await get('other.example')).genericSelectors, []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: false } } });
+  assert.deepEqual((await get('example.com')).siteSelectors, ['.custom']);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
+  assert.equal((await get('example.com')).enabled, false);
+});
 
 test('domain canonicalization accepts URLs and IDN while rejecting filter injection', () => {
   const { shared } = harness();
@@ -252,13 +567,13 @@ test('untrusted callers, malformed patches and quota violations cannot change se
 test('cosmetic state respects a cross-origin top-page exception using browser sender metadata', async () => {
   const h = harness({ whitelistedDomains: ['parent.example'] });
   const frame = { id: 'test', url: 'https://child.example/frame', tab: { id: 1, url: 'https://shop.parent.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [] });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: false });
   const other = { ...frame, tab: { id: 1, url: 'https://unrelated.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [] });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [] });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: true });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: true, rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [] });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true });
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, id: 'external' })).ok, false);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }, frame)).ok, false);
 });
@@ -437,6 +752,286 @@ test('page filter verification accepts full extension URLs in readback', async (
 });
 
 const settle = async () => { for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve)); };
+
+function popupNavigation(h, tabId = 20, changes = {}, requestChanges = {}) {
+  const tab = { id: tabId, openerTabId: 1, url: 'about:blank', status: 'loading', pinned: false, ...changes };
+  h.state.tabs[tabId] = tab;
+  h.listeners.tabCreated?.(clone(tab));
+  const request = { tabId, frameId: 0, type: 'main_frame', requestId: String(tabId), url: 'https://blocked.example/ad', ...requestChanges };
+  h.listeners.beforeRequest?.(request);
+  const rule = { rulesetId: '_dynamic', ruleId: h.state.dynamic.find(item => item.action.type === 'block')?.id };
+  return { tab, request, match: () => h.listeners.ruleMatched?.({ rule, request }),
+    fail: () => h.listeners.requestError?.({ ...request, error: 'net::ERR_BLOCKED_BY_CLIENT' }) };
+}
+
+for (const order of ['match-first', 'error-first']) test('blocked popup cleanup correlates native events: ' + order, async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h);
+  if (order === 'match-first') { popup.match(); await settle(); popup.fail(); }
+  else { popup.fail(); await settle(); popup.match(); }
+  await settle();
+  assert.deepEqual(h.state.removedTabs, [20]);
+  assert.ok(h.state.tabs[1], 'the opener stays open');
+  popup.match(); popup.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, [20], 'duplicate events cannot close twice');
+  const logs = (await h.send({ type: 'GET_LOG' })).entries;
+  assert.equal(logs.filter(item => item.message?.startsWith('Closed a new pop-up')).length, 1);
+});
+
+for (const scenario of ['no-opener', 'pinned', 'expired', 'existing-tab', 'loaded-page', 'subresource',
+  'next-navigation', 'changed-url', 'changed-pending-url', 'changed-opener', 'missing-match', 'missing-error', 'network-error', 'removed-tab']) {
+  test('blocked popup cleanup preserves ' + scenario, async () => {
+    const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+    const popup = popupNavigation(h, 20, scenario === 'no-opener' ? { openerTabId: undefined } : scenario === 'pinned' ? { pinned: true } : {});
+    if (scenario === 'expired') h.state.now += 10001;
+    if (scenario === 'existing-tab') h.listeners.tabRemoved(20);
+    if (scenario === 'loaded-page') h.listeners.response({ ...popup.request, statusCode: 200 });
+    if (scenario === 'subresource') { popup.request.type = 'script'; popup.request.frameId = 1; }
+    if (scenario === 'next-navigation') h.listeners.beforeRequest({ ...popup.request, requestId: 'new-navigation' });
+    if (scenario === 'changed-url') {
+      popup.tab.url = 'https://ordinary.example/'; h.listeners.tabUpdated(20, { url: popup.tab.url }, clone(popup.tab));
+    }
+    if (scenario === 'changed-pending-url') popup.tab.pendingUrl = 'https://ordinary.example/';
+    if (scenario === 'changed-opener') popup.tab.openerTabId = 3;
+    if (scenario === 'removed-tab') { delete h.state.tabs[20]; h.listeners.tabRemoved(20); }
+    if (scenario !== 'missing-match') popup.match();
+    if (scenario === 'network-error') h.listeners.requestError({ ...popup.request, error: 'net::ERR_CONNECTION_REFUSED' });
+    else if (scenario !== 'missing-error') popup.fail();
+    await settle();
+    assert.deepEqual(h.state.removedTabs, []);
+  });
+}
+
+test('blocked popup cleanup verifies static block actions and rejects allow actions', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'], allowedDomains: ['allowed.example'] }); await h.ready;
+  const rules = JSON.parse(fs.readFileSync(path.join(root, 'rules/community.json'), 'utf8'));
+  const staticBlock = rules.find(rule => rule.action.type === 'block'), staticAllow = rules.find(rule => rule.action.type === 'allow');
+  assert.ok(staticBlock && staticAllow);
+  for (const [tabId, rule] of [[20, { rulesetId: 'community_ruleset', ruleId: staticAllow.id }],
+    [21, { rulesetId: '_dynamic', ruleId: h.state.dynamic.find(item => item.action.type === 'allow').id }],
+    [22, { rulesetId: 'community_ruleset', ruleId: staticBlock.id }]]) {
+    const popup = popupNavigation(h, tabId); popup.fail();
+    h.listeners.ruleMatched({ rule, request: popup.request }); await settle();
+  }
+  assert.deepEqual(h.state.removedTabs, [22]);
+});
+
+test('blocked popup cleanup preserves a tab repurposed during its final read', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h), originalGet = h.api.tabs.get;
+  h.api.tabs.get = async id => {
+    const tab = await originalGet(id);
+    if (id === 20) h.listeners.beforeRequest({ ...popup.request, requestId: 'new-navigation', url: 'https://ordinary.example/' });
+    return tab;
+  };
+  popup.match(); popup.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, []);
+});
+
+test('blocked popup cleanup invalidates pending evidence when network rules change', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h);
+  popup.match(); await settle();
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
+  popup.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, []);
+});
+
+test('blocked popup cleanup supports an initial redirect without closing a loaded document', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h);
+  h.listeners.response({ ...popup.request, statusCode: 302 });
+  popup.request.url = 'https://blocked.example/redirected';
+  h.listeners.beforeRequest(popup.request);
+  popup.match(); popup.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, [20]);
+});
+
+for (const fault of ['tabRead', 'tabRemove', 'ruleFile']) test('blocked popup cleanup fails safely on ' + fault + ' and recovers for later tabs', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  h.state.faults[fault] = 1;
+  const first = popupNavigation(h);
+  if (fault === 'ruleFile') h.listeners.ruleMatched({ rule: { rulesetId: 'community_ruleset', ruleId: 36 }, request: first.request });
+  else first.match();
+  first.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, []);
+  const second = popupNavigation(h, 21); second.match(); second.fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, [21]);
+  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
+});
+
+test('blocked popup cleanup bounds candidates and preserves tabs without native rule feedback', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popups = Array.from({ length: 65 }, (_, index) => popupNavigation(h, 20 + index));
+  popups[0].match(); popups[0].fail(); popups[64].match(); popups[64].fail(); await settle();
+  assert.deepEqual(h.state.removedTabs, [84]);
+  const unsupported = harness({ customBlockedDomains: ['blocked.example'] }, 5000, '2026-10-18T04:00:00Z', {}, { noRuleFeedback: true });
+  await unsupported.ready;
+  assert.equal(unsupported.listeners.tabCreated, undefined);
+  assert.equal((await unsupported.send({ type: 'GET_STATE' })).ok, true);
+});
+
+test('page messages cannot authorize blocked popup cleanup', async () => {
+  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  popupNavigation(h);
+  await h.send({ type: 'CLOSE_BLOCKED_TAB', tabId: 20 }, { id: 'test', url: 'https://page.example/', tab: { id: 20 }, frameId: 0 });
+  await settle();
+  assert.deepEqual(h.state.removedTabs, []);
+});
+
+const firefoxHarness = (initial = {}, options = {}) => harness(initial, 5000, '2026-11-05T04:00:00Z', {}, { firefox: true, ...options });
+const firefoxAbort = (h, popup) => h.listeners.requestError?.({ ...popup.request, method: 'GET', error: 'NS_ERROR_ABORT' });
+
+test('Firefox closes a confirmed custom-domain block with debugging feedback unavailable', async () => {
+  const h = firefoxHarness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h); firefoxAbort(h, popup); await settle();
+  assert.deepEqual(h.state.removedTabs, [20]);
+  assert.ok(h.state.tabs[1]);
+});
+
+test('Firefox confirms the bundled parent-domain main-frame block without visiting it', async () => {
+  const h = firefoxHarness(); await h.ready;
+  const popup = popupNavigation(h, 20, {}, { url: 'https://s.pemsrv.com/offline-fixture' });
+  firefoxAbort(h, popup); await settle();
+  assert.deepEqual(h.state.removedTabs, [20]);
+});
+
+for (const scenario of ['no-block', 'paused', 'site-exception', 'pinned', 'no-opener', 'loaded', 'new-navigation', 'expired', 'network-error']) {
+  test('Firefox preserves aborted popup: ' + scenario, async () => {
+    const h = firefoxHarness({ customBlockedDomains: scenario === 'no-block' ? [] : ['blocked.example'],
+      enabled: scenario !== 'paused', whitelistedDomains: scenario === 'site-exception' ? ['blocked.example'] : [] }); await h.ready;
+    const popup = popupNavigation(h, 20, scenario === 'pinned' ? { pinned: true } : scenario === 'no-opener' ? { openerTabId: undefined } : {});
+    if (scenario === 'loaded') h.listeners.response({ ...popup.request, statusCode: 200 });
+    if (scenario === 'new-navigation') h.listeners.beforeRequest?.({ ...popup.request, requestId: 'another' });
+    if (scenario === 'expired') h.state.now += 10001;
+    if (scenario === 'network-error') h.listeners.requestError?.({ ...popup.request, error: 'NS_ERROR_NET_RESET' });
+    else firefoxAbort(h, popup);
+    await settle(); assert.deepEqual(h.state.removedTabs, []);
+  });
+}
+
+const fixtureRule = (id, type, priority, condition) => ({ id, priority, action: { type }, condition: { resourceTypes: ['main_frame'], ...condition } });
+const fixtureRulesets = rules => Object.fromEntries(ids.map(id => [id, id === 'community_ruleset' ? rules : []]));
+for (const [name, condition, url, closes] of [
+  ['domain and subdomain', { requestDomains: ['BLOCKED.EXAMPLE'] }, 'https://sub.blocked.example/a', true],
+  ['hostname boundary', { requestDomains: ['blocked.example'] }, 'https://notblocked.example/a', false],
+  ['excluded destination', { requestDomains: ['example'], excludedRequestDomains: ['blocked.example'] }, 'https://blocked.example/a', false],
+  ['domain anchor with path wildcard', { urlFilter: '||blocked.example/a*b^' }, 'https://sub.blocked.example/a12b?q=1', true],
+  ['domain anchor cannot match a path', { urlFilter: '||blocked.example^' }, 'https://ordinary.example/blocked.example/', false],
+  ['domain anchor cannot match a suffix lookalike', { urlFilter: '||blocked.example^' }, 'https://blocked.example.evil/a', false],
+  ['domain anchor with port', { urlFilter: '||blocked.example^' }, 'https://blocked.example:8443/a', true],
+  ['literal URL anchor', { urlFilter: '|https://blocked.example/ad|' }, 'https://blocked.example/ad', true],
+  ['end anchor rejects suffix', { urlFilter: '|https://blocked.example/ad|' }, 'https://blocked.example/ads', false],
+  ['unanchored separator', { urlFilter: '^tracking=1^' }, 'https://blocked.example/?tracking=1&x=2', true],
+  ['separator at end', { urlFilter: 'ad^' }, 'https://blocked.example/ad', true],
+  ['only the final separator may match URL end', { urlFilter: '/ad^^' }, 'https://blocked.example/ad', false],
+  ['two separators with a consumed delimiter', { urlFilter: '/ad^^' }, 'https://blocked.example/ad?', true],
+  ['separator excludes underscore', { urlFilter: 'ad^' }, 'https://blocked.example/ad_unit', false],
+  ['separator excludes percent', { urlFilter: 'ad^' }, 'https://blocked.example/ad%20', false],
+  ['case-insensitive default', { urlFilter: '/AD|' }, 'https://blocked.example/ad', true],
+  ['case-sensitive match', { urlFilter: '/AD|', isUrlFilterCaseSensitive: true }, 'https://blocked.example/AD', true],
+  ['case-sensitive rejection', { urlFilter: '/AD|', isUrlFilterCaseSensitive: true }, 'https://blocked.example/ad', false],
+  ['POST-only rule', { requestMethods: ['post'] }, 'https://blocked.example/ad', false],
+  ['excluded GET rule', { excludedRequestMethods: ['get'] }, 'https://blocked.example/ad', false],
+  ['omitted resource types', { resourceTypes: undefined, requestDomains: ['blocked.example'] }, 'https://blocked.example/ad', false],
+  ['subresource rule', { resourceTypes: ['image'], requestDomains: ['blocked.example'] }, 'https://blocked.example/ad', false],
+  ['unknown party condition', { domainType: 'thirdParty', requestDomains: ['blocked.example'] }, 'https://blocked.example/ad', false],
+  ['unknown initiator condition', { initiatorDomains: ['source.example'], requestDomains: ['blocked.example'] }, 'https://blocked.example/ad', false],
+  ['unknown regex condition', { regexFilter: 'blocked\\.example' }, 'https://blocked.example/ad', false],
+  ['future condition', { futureCondition: true, requestDomains: ['blocked.example'] }, 'https://blocked.example/ad', false],
+  ['credentials', { requestDomains: ['blocked.example'] }, 'https://user:pass@blocked.example/ad', false],
+  ['root dot', { requestDomains: ['blocked.example'] }, 'https://blocked.example./ad', false],
+  ['bounded pattern work', { urlFilter: 'a*'.repeat(1000) }, 'https://blocked.example/' + 'a'.repeat(7000), false]
+]) test('Firefox rule proof: ' + name, async () => {
+  const h = firefoxHarness({}, { rulesets: fixtureRulesets([fixtureRule(1, 'block', 1, condition)]) }); await h.ready;
+  const popup = popupNavigation(h, 20, {}, { url });
+  firefoxAbort(h, popup); await settle();
+  assert.deepEqual(h.state.removedTabs, closes ? [20] : []);
+});
+
+for (const [name, type, priority, condition, closes, blockPriority = 1] of [
+  ['matching allow wins tie', 'allow', 1, { requestDomains: ['blocked.example'] }, false],
+  ['higher allowAllRequests', 'allowAllRequests', 2, { requestDomains: ['blocked.example'] }, false],
+  ['unrelated allow', 'allow', 2, { requestDomains: ['ordinary.example'] }, true],
+  ['nonmatching URL allow', 'allow', 2, { urlFilter: '||ordinary.example/*' }, true],
+  ['possibly matching regex allow', 'allow', 2, { regexFilter: 'blocked\\.example' }, false],
+  ['possibly matching party allow', 'allow', 2, { domainType: 'thirdParty' }, false],
+  ['possibly matching initiator allow', 'allow', 2, { initiatorDomains: ['source.example'] }, false],
+  ['excluded-only resource scope can allow navigation', 'allow', 2, { resourceTypes: undefined, excludedResourceTypes: ['image'] }, false],
+  ['future condition on allow', 'allow', 2, { futureCondition: true }, false],
+  ['lower-priority unknown allow', 'allow', 1, { regexFilter: 'unknown' }, true, 2],
+  ['possible redirect', 'redirect', 2, {}, false],
+  ['header modification does not override a block', 'modifyHeaders', 2, {}, true]
+]) test('Firefox rule precedence: ' + name, async () => {
+  const h = firefoxHarness({}, { rulesets: fixtureRulesets([
+    fixtureRule(1, 'block', blockPriority, { requestDomains: ['blocked.example'] }), fixtureRule(2, type, priority, condition)
+  ]) }); await h.ready;
+  const popup = popupNavigation(h); firefoxAbort(h, popup); await settle();
+  assert.deepEqual(h.state.removedTabs, closes ? [20] : []);
+});
+
+for (const scenario of ['disabled-rule', 'disabled-ruleset', 'session-allow', 'missing-before-request', 'rules-changed', 'repurposed-during-read']) {
+  test('Firefox checks native rule state and asynchronous invalidation: ' + scenario, async () => {
+    const h = firefoxHarness({}, { rulesets: fixtureRulesets([fixtureRule(1, 'block', 1, { requestDomains: ['blocked.example'] })]) }); await h.ready;
+    if (scenario === 'disabled-rule') h.state.disabledRules = { community_ruleset: [1] };
+    if (scenario === 'disabled-ruleset') h.state.enabled = [];
+    if (scenario === 'session-allow') h.state.sessionRules = [fixtureRule(2, 'allow', 2, { tabIds: [20] })];
+    const before = h.listeners.beforeRequest;
+    if (scenario === 'missing-before-request') delete h.listeners.beforeRequest;
+    const popup = popupNavigation(h); h.listeners.beforeRequest = before;
+    let release;
+    if (scenario === 'rules-changed') {
+      const get = h.api.declarativeNetRequest.getSessionRules;
+      h.api.declarativeNetRequest.getSessionRules = async () => {
+        const result = await get(); await new Promise(resolve => { release = resolve; }); return result;
+      };
+    }
+    if (scenario === 'repurposed-during-read') {
+      const get = h.api.declarativeNetRequest.getDynamicRules;
+      h.api.declarativeNetRequest.getDynamicRules = async () => {
+        const result = await get(); before({ ...popup.request, requestId: 'replacement' }); return result;
+      };
+    }
+    firefoxAbort(h, popup);
+    if (scenario === 'rules-changed') {
+      await settle(); assert.equal(typeof release, 'function');
+      assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } })).ok, true);
+      release();
+    }
+    await settle(); assert.deepEqual(h.state.removedTabs, []);
+  });
+}
+
+for (const fault of ['enabledRead', 'dynamicRead', 'sessionRulesRead', 'disabledRead', 'ruleFile']) {
+  test('Firefox preserves the tab when cleanup cannot read ' + fault + ', then recovers', async () => {
+    const h = firefoxHarness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+    h.state.faults[fault] = 1;
+    const first = popupNavigation(h); firefoxAbort(h, first); await settle();
+    assert.deepEqual(h.state.removedTabs, []);
+    const second = popupNavigation(h, 21); firefoxAbort(h, second); await settle();
+    assert.deepEqual(h.state.removedTabs, [21]);
+  });
+}
+
+for (const action of ['allow', 'allowAllRequests']) test('Firefox preserves a redirect chain with an earlier ' + action, async () => {
+  const h = firefoxHarness({}, { rulesets: fixtureRulesets([
+    fixtureRule(1, 'block', 1, { requestDomains: ['blocked.example'] }),
+    fixtureRule(2, action, 2, { requestDomains: ['initial.example'], requestMethods: ['post'] })
+  ]) }); await h.ready;
+  const popup = popupNavigation(h, 20, {}, { url: 'https://initial.example/start', method: 'POST' });
+  h.listeners.response({ ...popup.request, statusCode: 303 });
+  popup.request.url = 'https://blocked.example/ad'; h.listeners.beforeRequest(popup.request);
+  firefoxAbort(h, popup); await settle();
+  assert.deepEqual(h.state.removedTabs, []);
+});
+
+test('Firefox bounds redirect history while preserving the network block', async () => {
+  const h = firefoxHarness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
+  const popup = popupNavigation(h);
+  for (let i = 0; i < 9; i++) { popup.request.url = 'https://blocked.example/hop-' + i; h.listeners.beforeRequest(popup.request); }
+  firefoxAbort(h, popup); await settle(); assert.deepEqual(h.state.removedTabs, []);
+  assert.ok(h.state.dynamic.some(rule => rule.action.type === 'block'));
+});
 const youtubeTab = { id: 'test', url: 'https://www.youtube.com/watch?v=x', tab: { id: 7, url: 'https://www.youtube.com/watch?v=x' } };
 
 test('activity log records blocks with layer, server, path and site, but not site-pause allows', async () => {
@@ -548,21 +1143,29 @@ test('per-site pop-up blocking registers the page script only for chosen sites, 
   assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'bad^host', blocked: true })).ok, false);
 });
 
-test('pop-up block reports are logged only from sites with pop-up blocking', async () => {
+test('cross-origin frames receive the pop-up guard from browser sender metadata', async () => {
+  const h = harness({ popupBlockedDomains: ['uukanshu.cc'] });
+  await h.ready;
+  const frame = { id: 'test', url: 'https://ads.shared.example/frame', frameId: 7,
+    tab: { id: 9, url: 'https://www.uukanshu.cc/book/1.html' } };
+  const result = await h.send({ type: 'GET_COSMETIC_STATE', installPopupGuard: true }, frame);
+  assert.deepEqual([result.ok, result.popupGuard], [true, true]);
+  assert.deepEqual(h.state.executions, [{
+    target: { tabId: 9, frameIds: [7] }, files: ['popups.js'], world: 'MAIN'
+  }]);
+  await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, frameId: 8, tab: { id: 9, url: 'https://other.example/' } });
+  assert.equal(h.state.executions.length, 1, 'a frame outside the selected top site is not injected');
+});
+
+test('page-originated pop-up events cannot forge activity-log entries', async () => {
   const h = harness({ popupBlockedDomains: ['uukanshu.cc'] });
   await h.ready;
   const tab = url => ({ id: 'test', url, tab: { id: 9, url } });
-  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: 'Political-Effort.com' }, tab('https://www.uukanshu.cc/book/1.html'));
-  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: 'spoof.example' }, tab('https://other.example/'));
-  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: '<b>not a host</b>' }, tab('https://www.uukanshu.cc/'));
+  await h.send({ type: 'LOG_EVENT', event: 'popup-blocked', host: 'spoof.example' }, tab('https://www.uukanshu.cc/book/1.html'));
   await h.send({ type: 'SET_SITE_POPUPS', domain: 'shady.example', blocked: true });
   await settle();
   const { entries } = await h.send({ type: 'GET_LOG' });
-  assert.deepEqual(entries.map(entry => [entry.message, entry.site ?? '']), [
-    ['Blocked a pop-up to political-effort.com', 'www.uukanshu.cc'],
-    ['Blocked a pop-up', 'www.uukanshu.cc'],
-    ['Pop-up blocking turned on for shady.example', '']
-  ]);
+  assert.deepEqual(entries.map(entry => entry.message), ['Pop-up blocking turned on for shady.example']);
 });
 
 test('community site hiding rules follow the frame host, its parents and exceptions, and the layer switches', async () => {
@@ -667,4 +1270,130 @@ test('the activity log stays readable when settings cannot be loaded', async () 
   const response = await h.send({ type: 'GET_LOG' });
   assert.equal(response.ok, true);
   assert.deepEqual(response.allowedDomains, []);
+});
+
+const AD_SCRIPT = 'https://political-effort.com/bjXWV.s/dRGOlb0/YtWndQi/YlWI5xubZoXDIJ/PeWm/9LuSZ/U_lykUPzT/Ul3CMQDhYHyMMoT/AZtpNHTvcrwkNPjVIXxKMnQN';
+const loaded = (h, url, { type = 'script', page = 'https://www.uukanshu.cc/book/1.html', tabId = 4, firefox = false } = {}) =>
+  h.listeners.response(firefox ? { url, type, tabId, documentUrl: page } : { url, type, tabId, initiator: new URL(page).origin });
+const flagsOf = async h => Object.fromEntries((await h.send({ type: 'GET_FLAGS' })).flags.map(flag => [flag.site, flag]));
+
+test('suspected ads that loaded are flagged per site with reasons, pages and samples, and logged once', async () => {
+  const h = harness();
+  await h.ready;
+  loaded(h, AD_SCRIPT);
+  loaded(h, 'https://www.political-effort.com/acWdZ-y.Pf2gQh9iM_Tkcl5mMnj-QpzqMrTsQ_zuNvTwQx2-NzzAUBzCM_DEMFxGNHy-ZJpKcL2M1_1ObPH', { page: 'https://m.xsw.tw/1/', firefox: true });
+  loaded(h, 'https://imp9.pubadx.one/ad', { type: 'image' });
+  await settle();
+  const flags = await flagsOf(h);
+  assert.deepEqual(Object.keys(flags).sort(), ['imp9.pubadx.one', 'political-effort.com', 'www.political-effort.com']);
+  const flag = flags['political-effort.com'];
+  assert.deepEqual([flag.status, flag.count, flag.hosts, flag.pages, flag.reasons.sort()],
+    ['new', 1, ['political-effort.com'], ['www.uukanshu.cc'], ['obfuscated', 'throwaway-domain']]);
+  assert.deepEqual(flags['www.political-effort.com'].pages, ['m.xsw.tw']);
+  assert.ok(flag.samples[0].startsWith('political-effort.com/bjXWV.s/') && !flag.samples.some(sample => sample.includes('?')));
+  assert.deepEqual(flags['imp9.pubadx.one'].reasons, ['ad-path']);
+  const events = (await h.send({ type: 'GET_LOG' })).entries.filter(entry => /^Flagged /.test(entry.message));
+  assert.deepEqual(events.map(entry => entry.message.split(':')[0]).sort(),
+    ['Flagged imp9.pubadx.one for review', 'Flagged political-effort.com for review', 'Flagged www.political-effort.com for review']);
+  assert.equal(Object.keys(h.state.storage.adFlags).length, 3, 'flags are kept in local storage');
+  const restarted = harness(h.state.storage);
+  await restarted.ready;
+  assert.equal((await flagsOf(restarted))['political-effort.com'].count, 1, 'flags survive a restart');
+});
+
+test('ordinary, first-party, browser-internal, paused, allowed and switched-off requests are not flagged', async () => {
+  const h = harness({ whitelistedDomains: ['paused.example'], allowedDomains: ['political-effort.com'] });
+  await h.ready;
+  loaded(h, 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js');
+  loaded(h, 'https://uukanshu.cc/ads/banner.png', { type: 'image' });
+  loaded(h, 'https://ads.example.net/ads/x.js', { tabId: -1 });
+  h.listeners.response({ url: 'https://ads.example.net/ads/x.js', type: 'script', tabId: 2, initiator: 'chrome-extension://test' });
+  loaded(h, 'https://ads.example.net/ads/x.js', { page: 'https://www.paused.example/' });
+  loaded(h, AD_SCRIPT);
+  await settle();
+  assert.deepEqual((await h.send({ type: 'GET_FLAGS' })).flags, []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { flagSuspects: false } });
+  h.listeners.storageChanged({ flagSuspects: {} }, 'local');
+  loaded(h, 'https://ads.example.net/ads/x.js');
+  await settle();
+  assert.deepEqual((await h.send({ type: 'GET_FLAGS' })).flags, []);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { flagSuspects: true } });
+  h.listeners.storageChanged({ flagSuspects: {} }, 'local');
+  loaded(h, 'https://ads.example.net/ads/x.js');
+  await settle();
+  assert.equal((await h.send({ type: 'GET_FLAGS' })).flags.length, 1, 'turning flagging back on resumes it');
+  assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Flagging suspected ads turned off'));
+});
+
+test('flag decisions: ignore stops counting, unignore resumes, remove and clear delete, and only extension pages may act', async () => {
+  const h = harness();
+  await h.ready;
+  loaded(h, AD_SCRIPT);
+  await settle();
+  const youtube = youtubeTab;
+  for (const message of [{ type: 'GET_FLAGS' }, { type: 'FLAG_ACTION', site: 'political-effort.com', action: 'remove' }]) {
+    assert.equal((await h.send(message, youtube)).ok, false);
+  }
+  assert.equal((await h.send({ type: 'FLAG_ACTION', site: 'political-effort.com', action: 'ignore' })).ok, true);
+  loaded(h, AD_SCRIPT);
+  await settle();
+  assert.deepEqual([(await flagsOf(h))['political-effort.com'].status, (await flagsOf(h))['political-effort.com'].count], ['ignored', 1]);
+  await h.send({ type: 'FLAG_ACTION', site: 'political-effort.com', action: 'unignore' });
+  loaded(h, AD_SCRIPT);
+  await settle();
+  assert.equal((await flagsOf(h))['political-effort.com'].count, 2);
+  assert.equal((await h.send({ type: 'FLAG_ACTION', site: 'missing.example', action: 'remove' })).ok, false);
+  assert.equal((await h.send({ type: 'FLAG_ACTION', site: 'political-effort.com', action: 'explode' })).ok, false);
+  await h.send({ type: 'FLAG_ACTION', site: 'political-effort.com', action: 'remove' });
+  assert.deepEqual((await h.send({ type: 'GET_FLAGS' })).flags, []);
+  loaded(h, 'https://imp9.pubadx.one/ad', { type: 'image' });
+  await settle();
+  await h.send({ type: 'FLAG_ACTION', action: 'clear' });
+  assert.deepEqual(h.state.storage.adFlags, {});
+});
+
+test('page signals accept only fixed reasons and third-party http(s) addresses from content scripts', async () => {
+  const h = harness();
+  await h.ready;
+  const page = { id: 'test', url: 'https://www.uukanshu.cc/book/1.html', tab: { id: 6, url: 'https://www.uukanshu.cc/book/1.html' } };
+  await h.send({ type: 'FLAG_CANDIDATES', items: [
+    { url: 'https://acceptable.a-ads.com/2453155/', reason: 'ad-size-frame' },
+    { url: 'https://img.uukanshu.cc/side.html', reason: 'ad-size-frame' },
+    { url: 'javascript:alert(1)', reason: 'ad-label' },
+    { url: 'https://spoof.example/x', reason: 'obfuscated' },
+    { url: 'https://label.example/x', reason: 'ad-label' }
+  ] }, page);
+  await h.send({ type: 'FLAG_CANDIDATES', items: [{ url: 'https://extension-page.example/', reason: 'ad-label' }] });
+  await settle();
+  const flags = await flagsOf(h);
+  assert.deepEqual(Object.keys(flags).sort(), ['acceptable.a-ads.com', 'img.uukanshu.cc', 'label.example']);
+  assert.deepEqual(flags['acceptable.a-ads.com'].reasons, ['ad-size-frame']);
+});
+
+test('the flag store keeps the 500 most recently seen sites', async () => {
+  const h = harness();
+  await h.ready;
+  for (let i = 0; i < 501; i++) {
+    h.state.now += 1000;
+    loaded(h, `https://ads${i}.example${i}.net/ads/x.js`);
+    await settle();
+  }
+  const flags = (await h.send({ type: 'GET_FLAGS' })).flags;
+  assert.equal(flags.length, 500);
+  assert.ok(!flags.some(flag => flag.site === 'ads0.example0.net') && flags.some(flag => flag.site === 'ads500.example500.net'));
+});
+
+test('a failed read of saved flags is reported and retried, never saved over as empty', async () => {
+  const h = harness({ adFlags: { 'kept.example': { site: 'kept.example', status: 'new', hosts: ['kept.example'], reasons: ['ad-path'],
+    pages: ['uukanshu.cc'], samples: [], count: 3, firstSeen: 1, lastSeen: 1 } } });
+  await h.ready;
+  const realGet = h.api.storage.local.get;
+  h.api.storage.local.get = async keys => { if (keys.includes('adFlags')) throw new Error('Injected read failure'); return realGet(keys); };
+  loaded(h, AD_SCRIPT);
+  await settle();
+  assert.equal((await h.send({ type: 'GET_FLAGS' })).ok, false, 'the failure is reported');
+  h.api.storage.local.get = realGet;
+  await settle();
+  assert.deepEqual(Object.keys(h.state.storage.adFlags), ['kept.example'], 'saved flags were not overwritten');
+  assert.equal((await flagsOf(h))['kept.example'].count, 3, 'the next read succeeds');
 });

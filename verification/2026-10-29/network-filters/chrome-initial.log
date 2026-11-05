@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 363,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-l1AoKH\\evidence.json",
+  "error": "Error: Condition timed out: !busy && !networkDraftDirty && document.getElementById('networkStatus').textContent.startsWith('Saved')\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:335:9)\n    at async verifyNetwork (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-browser.cjs:54:39)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:714:5"
+}

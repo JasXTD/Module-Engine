@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-29",
+  "extensionVersion": "1.5.0",
+  "baselineUnitTests": 57,
+  "finalUnitTests": 68,
+  "ruleBuilderAssertions": 236,
+  "threatPolicyAssertions": 334,
+  "cosmeticCompilerAssertions": 14,
+  "browsers": [
+    {
+      "browser": "chrome",
+      "checks": 334,
+      "version": "Chrome/156.0.8078.48",
+      "runtimeHashesMatch": true,
+      "cleanup": {
+        "browserPid": 114672,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "browserPid": 114672
+    },
+    {
+      "browser": "edge",
+      "checks": 334,
+      "version": "Edg/156.0.4314.50",
+      "runtimeHashesMatch": true,
+      "cleanup": {
+        "browserPid": 136100,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "browserPid": 136100
+    },
+    {
+      "browser": "firefox",
+      "checks": 330,
+      "version": "158.0.1",
+      "runtimeHashesMatch": true,
+      "cleanup": null,
+      "browserPid": 150428
+    }
+  ],
+  "remainingOwnedBrowserProcesses": [],
+  "rebuiltOutputsIdentical": 10,
+  "genericCosmeticSelectors": 14409,
+  "scopedCosmeticRules": 24,
+  "cosmeticSiteExceptions": 348,
+  "noMalwareSiteVisitsOrDns": true,
+  "personalProfilesChanged": false,
+  "checkpoint": ".artifacts/upgrade-20261029-before-1.5",
+  "limitations": [
+    "No claim of uBO parity or superiority.",
+    "No live-site or streaming/anti-adblock verification in this upgrade.",
+    "Unsupported procedural, scriptlet and network-regex filters remain skipped.",
+    "Firefox privileged UI screenshots are unavailable; DOM/state assertions cover Firefox UI."
+  ],
+  "resolvedTestIssues": [
+    "Initial harness syntax collision was corrected before browser launch.",
+    "Chromium new-page navigation now completes before probes run.",
+    "Editor tests wait for enabled controls.",
+    "Completed editor is closed and setting updates settle before the temporary WebSocket rule test."
+  ],
+  "references": [
+    "https://github.com/uBlockOrigin/uBOL-home/wiki/Frequently-asked-questions-(FAQ)",
+    "https://help.adblockplus.org/adblock-plus-help-center/how-to-write-filters"
+  ],
+  "noNewExternalDownloadsOrDependencies": true,
+  "extensionLoading": "Only temporary test copies of this project were loaded; personal browser profiles were unchanged."
+}

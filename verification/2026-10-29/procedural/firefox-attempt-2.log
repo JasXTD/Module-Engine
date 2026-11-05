@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 323,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-FhHn6m\\evidence.json",
+  "error": "Error: {\"columnNumber\":119,\"exception\":{\"type\":\"error\"},\"lineNumber\":0,\"stackTrace\":{\"callFrames\":[{\"columnNumber\":119,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"http://127.0.0.1:49294/fixture?ba-navigation\"},{\"columnNumber\":187,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"http://127.0.0.1:49294/fixture?ba-navigation\"},{\"columnNumber\":192,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"http://127.0.0.1:49294/fixture?ba-navigation\"}]},\"text\":\"TypeError: can't access property \\\"trusted\\\", result is null\"}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:283:46)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async verifyProcedures (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\procedural-browser.cjs:176:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:682:5"
+}

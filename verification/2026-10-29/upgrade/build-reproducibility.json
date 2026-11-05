@@ -1,0 +1,42 @@
+[
+  {
+    "File": "ads.json",
+    "Matches": true
+  },
+  {
+    "File": "community-cosmetic.json",
+    "Matches": true
+  },
+  {
+    "File": "community-info.json",
+    "Matches": true
+  },
+  {
+    "File": "community.json",
+    "Matches": true
+  },
+  {
+    "File": "malware.json",
+    "Matches": true
+  },
+  {
+    "File": "reviewed-domains.json",
+    "Matches": true
+  },
+  {
+    "File": "site-ad-hosts-info.json",
+    "Matches": true
+  },
+  {
+    "File": "threat-policy.json",
+    "Matches": true
+  },
+  {
+    "File": "threats.json",
+    "Matches": true
+  },
+  {
+    "File": "trackers.json",
+    "Matches": true
+  }
+]

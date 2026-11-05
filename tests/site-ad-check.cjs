@@ -1,7 +1,7 @@
 /* Opt-in ad check for one public HTTPS page that the person names.
  * Loads the page twice in a fresh, headless, signed-out Chrome/Edge profile:
  * first with every BlockAds layer on, then with the ad, tracker and cosmetic
- * layers off (reported threats stay on in both). No clicks, typing or
+ * layers off (reported threats stay on in both). No typing or
  * downloads. Only HTTPS CONNECT on port 443 leaves the loopback proxy, and
  * reported or unverified hosts are refused. Page text is not recorded: only
  * request hosts, extension blocks, ad-shaped elements and screenshots.
@@ -18,15 +18,14 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const http = require('node:http');
-const net = require('node:net');
 const { once } = require('node:events');
 const { chromium } = require('./browser-smoke.cjs');
+const { createLiveProxy, siteRunOptions, connectHost } = require('./live-network.cjs');
 const root = path.resolve(__dirname, '..');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const within = (host, domain) => host === domain || host.endsWith('.' + domain);
-const EXTENSION_FILES = ['manifest.json', 'shared.js', 'background.js', 'content.js', 'youtube.js', 'popups.js',
-  'popup.js', 'popup.html', 'popup.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons'];
+const EXTENSION_FILES = ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js',
+  'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons'];
 
 // Runs in the page. Returns element metadata only, never page text.
 const snapshotExpression = `(() => {
@@ -70,6 +69,9 @@ async function main() {
   if (!['chrome', 'edge'].includes(browserName) || !process.argv.includes('--allow-live-sites') || url?.protocol !== 'https:') {
     throw new Error('Explicit opt-in required: node tests/site-ad-check.cjs chrome https://site/page --allow-live-sites');
   }
+  if (url.username || url.password || (url.port && url.port !== '443') || !connectHost(url.hostname + ':443')) {
+    throw new Error('Choose a public HTTPS hostname on port 443 without embedded credentials.');
+  }
   const catalog = JSON.parse(await fs.readFile(path.join(root, 'lists/reviewed-domains.json'), 'utf8'));
   const threats = JSON.parse(await fs.readFile(path.join(root, 'lists/reported-threats.json'), 'utf8'));
   const prohibited = [...catalog.domains.filter(item => item.category === 'unverified').map(item => item.domain),
@@ -80,77 +82,29 @@ async function main() {
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
   for (const file of EXTENSION_FILES) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
-  const headless = !process.argv.includes('--visible');
   // --popups-only: every filter layer off, then one pass with only per-site
   // pop-up blocking on and one with it off. Implies --click.
-  const popupsOnly = process.argv.includes('--popups-only');
-  const click = popupsOnly || process.argv.includes('--click');
-  const evidence = { startedAt: new Date().toISOString(), browser: browserName, page: url.origin + url.pathname, headless,
-    policy: 'HTTPS CONNECT :443 only; reported/unverified hosts refused; downloads denied; no clicks or typing; page text not recorded',
+  const options = siteRunOptions(process.argv);
+  const { headless, popupsOnly, click } = options;
+  const evidence = { startedAt: new Date().toISOString(), browser: browserName, page: url.origin + url.pathname, ...options,
     phases: {} };
 
   let phase = 'startup';
-  const sockets = new Set();
-  const track = socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); return socket; };
   const tally = (kind, host) => {
     const group = (evidence.phases[phase] ??= {}).proxy ??= { allowed: {}, denied: {} };
     group[kind][host] = (group[kind][host] || 0) + 1;
   };
-  // Some servers omit their intermediate certificate, and the browser then
-  // fetches it over plain HTTP from the issuer. Forward only such certificate
-  // file downloads (size-capped); every other plain-HTTP request is refused.
-  const proxy = http.createServer((request, response) => {
-    let target;
-    try { target = new URL(request.url); } catch { target = null; }
-    const host = target?.hostname.toLowerCase() || 'invalid';
-    if (request.method !== 'GET' || target?.protocol !== 'http:' || target.port && target.port !== '80' ||
-        !/\.(cer|crt|der|p7c)$/i.test(target.pathname) || prohibited.some(domain => within(host, domain))) {
-      tally('denied', 'http:' + host);
-      response.writeHead(403); response.end();
-      return;
-    }
-    tally('allowed', 'http-certificate:' + host);
-    const upstream = http.get(target, { timeout: 10000 }, reply => {
-      if (Number(reply.headers['content-length'] || 0) > 65536) { reply.destroy(); response.destroy(); return; }
-      let received = 0;
-      reply.on('data', chunk => { received += chunk.length; if (received > 65536) { reply.destroy(); response.destroy(); } });
-      response.writeHead(reply.statusCode, { 'Content-Type': reply.headers['content-type'] || 'application/pkix-cert' });
-      reply.pipe(response);
-    });
-    upstream.on('timeout', () => upstream.destroy());
-    upstream.on('error', () => { if (!response.headersSent) response.writeHead(502); response.end(); });
-  });
-  proxy.on('connection', socket => { track(socket); socket.on('error', () => {}); });
-  proxy.on('clientError', (_error, socket) => socket.destroy());
-  proxy.on('connect', (request, client, head) => {
-    client.on('error', () => {});
-    const match = /^([a-z0-9.-]+):443$/i.exec(request.url || '');
-    const host = match?.[1].toLowerCase().replace(/\.$/, '');
-    if (!host || prohibited.some(domain => within(host, domain))) {
-      tally('denied', host || 'invalid-connect');
-      client.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
-      return;
-    }
-    tally('allowed', host);
-    const upstream = track(net.connect({ host, port: 443 }));
-    const timer = setTimeout(() => upstream.destroy(new Error('Upstream connection timeout')), 15000);
-    upstream.once('connect', () => {
-      clearTimeout(timer);
-      client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-      if (head.length) upstream.write(head);
-      client.pipe(upstream); upstream.pipe(client);
-    });
-    upstream.on('error', () => client.destroy());
-    upstream.on('close', () => { clearTimeout(timer); client.destroy(); });
-    client.on('close', () => { clearTimeout(timer); upstream.destroy(); });
-  });
+  const guard = createLiveProxy({ prohibited, record: tally,
+    onError: (host, error) => ((evidence.phases[phase] ??= {}).proxyErrors ??= []).push({ host, error: error.code || error.message }) });
+  const { proxy } = guard;
   proxy.listen(0, '127.0.0.1'); await once(proxy, 'listening');
 
   let browser;
   console.log(JSON.stringify({ stage: 'starting', output: temporary, page: evidence.page }));
   try {
-    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless });
+    browser = await chromium(extension, path.join(temporary, 'profile'), proxy.address().port, { headless, networkMode: 'live-public' });
     evidence.version = browser.version.product;
+    evidence.launch = browser.launch;
     await browser.send('Browser.setDownloadBehavior', { behavior: 'deny', eventsEnabled: true });
     const state = await browser.evaluate(`chrome.runtime.sendMessage({type:'GET_STATE'})`);
     if (!state.ok) throw new Error('Extension protection did not initialize');
@@ -259,7 +213,11 @@ async function main() {
       const { targetInfos } = await browser.send('Target.getTargets');
       const extraPages = targetInfos.filter(info => info.type === 'page' && !initialPages.has(info.targetId) && info.targetId !== browser.popup.id);
       for (const info of extraPages) await browser.send('Target.closeTarget', { targetId: info.targetId }).catch(() => {});
-      Object.assign(evidence.phases[phase] ??= {}, {
+      // Servers BlockAds flagged as suspected ads during this pass (they loaded).
+      await pause(1500);
+      const flagReply = await browser.evaluate(`chrome.runtime.sendMessage({type:'GET_FLAGS'})`);
+      const flagged = (flagReply.flags || []).filter(flag => flag.lastSeen >= phaseStart).map(flag => ({ site: flag.site, reasons: flag.reasons, hosts: flag.hosts }));
+      Object.assign(evidence.phases[phase] ??= {}, { flagged,
         top, bottom, clicked, thirdParty, requestCount: requests.size, requestHosts: count([...requests.values()]),
         blockedByExtension: count(blockedByExtension), ruleMatches: count(matches.map(item => `${item.ruleset} ${item.host}`)),
         popups: extraPages.map(info => hostOf(info.url) || info.url.slice(0, 40)),
@@ -268,7 +226,7 @@ async function main() {
       await fs.writeFile(path.join(temporary, 'evidence.json'), JSON.stringify(evidence, null, 2));
       console.log(JSON.stringify({ stage: 'observed', phase, title: top.title, requests: requests.size,
         blocked: blockedByExtension.length, shownFrames: bottom.shownFrames, adLike: bottom.adLikeCount, overlays: bottom.overlayCount,
-        popups: extraPages.length, clicked }));
+        popups: extraPages.length, clicked, flagged: flagged.map(flag => `${flag.site} (${flag.reasons.join(",")})`) }));
     }
     evidence.completed = true;
   } catch (error) {
@@ -278,8 +236,7 @@ async function main() {
       try { evidence.cleanup = await browser.close(); if (!evidence.cleanup.closed) throw new Error('Isolated browser cleanup failed'); }
       catch (error) { evidence.cleanupError = error.stack; process.exitCode = 1; }
     }
-    for (const socket of sockets) socket.destroy();
-    await new Promise(resolve => proxy.close(resolve));
+    await guard.close();
     evidence.finishedAt = new Date().toISOString();
     await fs.writeFile(path.join(temporary, 'evidence.json'), JSON.stringify(evidence, null, 2));
     console.log(JSON.stringify({ stage: 'finished', completed: evidence.completed || false,

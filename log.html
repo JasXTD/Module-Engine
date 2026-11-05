@@ -3,58 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlockAds Activity Log</title>
+  <title>Activity log · Module Engine</title>
+  <link rel="stylesheet" href="ui.css" />
   <link rel="stylesheet" href="log.css" />
 </head>
 <body>
-  <main class="page">
-    <header class="header">
-      <div>
-        <h1>BlockAds activity log</h1>
-        <p class="muted">Recent blocks and extension events on this computer: up to 1,000 entries, cleared when the browser closes. Nothing is sent anywhere.</p>
-      </div>
-      <div class="actions">
-        <a class="button-link" href="lists.html">My lists</a>
-        <label class="check"><input type="checkbox" id="liveToggle" checked /> Live update</label>
-        <button type="button" id="exportButton">Export JSON</button>
-        <button type="button" id="clearButton" class="danger">Clear log</button>
-      </div>
-    </header>
+  <div class="shell">
+    <nav class="rail" aria-label="Module Engine">
+      <a class="rail-brand" href="manager.html"><img src="icons/icon48.png" width="28" height="28" alt="" /><span>Module Engine</span></a>
+      <ul class="rail-links rail-pages">
+        <li><a href="manager.html"><span class="tile" aria-hidden="true"><span class="ic ic-grid"></span></span>Modules &amp; scripts</a></li>
+        <li><a href="lists.html"><span class="tile" aria-hidden="true"><span class="ic ic-list"></span></span>My lists</a></li>
+        <li><a href="log.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Activity log</a></li>
+      </ul>
+      <p class="rail-foot">Runs on this computer. No Module Engine telemetry.</p>
+    </nav>
 
-    <p id="notice" class="notice" role="status" hidden></p>
-    <p id="actionNotice" class="notice" role="status" hidden></p>
+    <main class="page">
+      <header class="page-head">
+        <div>
+          <h1>Activity log</h1>
+          <p class="muted">Recent blocks and extension events on this computer: up to 1,000 entries, cleared when the browser closes. Nothing is sent anywhere.</p>
+        </div>
+        <div class="actions">
+          <label class="check"><input type="checkbox" id="liveToggle" checked /> Live update</label>
+          <button type="button" id="exportButton">Export JSON</button>
+          <button type="button" id="clearButton" class="danger">Clear log</button>
+        </div>
+      </header>
 
-    <section class="card">
-      <h2>Blocked servers <span id="summaryCount" class="muted"></span></h2>
-      <div class="table-wrap">
-        <table id="summaryTable">
-          <thead><tr><th>Server</th><th>Blocks</th><th>Layer</th><th>Seen on sites</th><th>Action</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p id="summaryEmpty" class="muted" hidden>No blocked requests recorded yet.</p>
-    </section>
+      <p id="notice" class="notice" role="status" hidden></p>
+      <p id="actionNotice" class="notice" role="status" hidden></p>
 
-    <section class="card">
-      <div class="toolbar">
-        <h2>All entries <span id="entryCount" class="muted"></span></h2>
-        <select id="kindFilter" aria-label="Entry kind">
-          <option value="">All kinds</option>
-          <option value="blocked">Blocked</option>
-          <option value="event">Events</option>
-          <option value="error">Errors</option>
-        </select>
-        <input type="search" id="textFilter" placeholder="Filter by site, server or text" aria-label="Filter entries" />
-      </div>
-      <div class="table-wrap">
-        <table id="entryTable">
-          <thead><tr><th>Time</th><th>Kind</th><th>Site</th><th>Details</th><th>Layer</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p id="entryEmpty" class="muted" hidden>No matching entries.</p>
-    </section>
-  </main>
+      <section class="card">
+        <h2>Blocked servers <span id="summaryCount" class="muted"></span></h2>
+        <div class="table-wrap">
+          <table id="summaryTable">
+            <thead><tr><th>Server</th><th>Blocks</th><th>Layer</th><th>Seen on sites</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="summaryEmpty" class="muted" hidden>No blocked requests recorded yet.</p>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <h2>All entries <span id="entryCount" class="muted"></span></h2>
+          <select id="kindFilter" aria-label="Entry kind">
+            <option value="">All kinds</option>
+            <option value="blocked">Blocked</option>
+            <option value="event">Events</option>
+            <option value="error">Errors</option>
+          </select>
+          <input type="search" id="textFilter" placeholder="Filter by site, server or text" aria-label="Filter entries" />
+        </div>
+        <div class="table-wrap">
+          <table id="entryTable">
+            <thead><tr><th>Time</th><th>Kind</th><th>Site</th><th>Details</th><th>Layer</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="entryEmpty" class="muted" hidden>No matching entries.</p>
+      </section>
+    </main>
+  </div>
   <script src="shared.js"></script>
   <script src="log.js"></script>
 </body>

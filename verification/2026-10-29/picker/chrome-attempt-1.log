@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 348,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-knCSIN\\evidence.json",
+  "error": "AssertionError [ERR_ASSERTION]: keyboard focus wraps within the picker controls\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:434:54)\n    at verifyPicker (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\picker-browser.cjs:110:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:706:5"
+}

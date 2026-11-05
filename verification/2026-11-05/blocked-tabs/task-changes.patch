@@ -1,0 +1,549 @@
+diff --git a/background.js b/background.js
+index 943e471..67432f3 100644
+--- a/background.js
++++ b/background.js
+@@ -296,6 +296,129 @@ async function logRuleMatch({ rule, request }) {
+   }
+ }
+ 
++// A blocked navigation can leave an empty/error tab behind. Only consider a
++// newly opened tab with a native opener, during its first HTTP(S) navigation.
++// No page message can supply this evidence or authorize closing a tab.
++const blockedPopupTabs = new Map();
++const staticBlockIds = new Map();
++const BLOCKED_POPUP_TTL = 10000;
++const BLOCKED_POPUP_LIMIT = 64;
++let networkRuleUpdates = 0;
++const blankTabUrl = url => !url || /^about:blank(?:#|$)/.test(url);
++function navigationUrl(url) {
++  if (typeof url !== "string" || url.length > 8192) return "";
++  try {
++    const parsed = new URL(url);
++    if (!["http:", "https:"].includes(parsed.protocol)) return "";
++    parsed.hash = "";
++    return parsed.href;
++  } catch { return ""; }
++}
++function popupCandidate(tabId) {
++  const item = blockedPopupTabs.get(tabId);
++  if (item && (networkRuleUpdates || Date.now() - item.created >= BLOCKED_POPUP_TTL)) {
++    blockedPopupTabs.delete(tabId);
++    return null;
++  }
++  return item;
++}
++function trackPopupTab(tab) {
++  if (networkRuleUpdates || !Number.isInteger(tab.id) || !Number.isInteger(tab.openerTabId) ||
++      tab.openerTabId < 0 || tab.id === tab.openerTabId || tab.pinned || tab.discarded || !blankTabUrl(tab.url)) return;
++  for (const id of blockedPopupTabs.keys()) popupCandidate(id);
++  if (blockedPopupTabs.size >= BLOCKED_POPUP_LIMIT) blockedPopupTabs.delete(blockedPopupTabs.keys().next().value);
++  blockedPopupTabs.set(tab.id, { id: tab.id, opener: tab.openerTabId, created: Date.now(), request: null });
++}
++function popupRequest(details, starting = false) {
++  if (details.type !== "main_frame" || details.frameId !== 0 || typeof details.requestId !== "string") return null;
++  const item = popupCandidate(details.tabId), url = navigationUrl(details.url);
++  if (!item) return null;
++  if (!url || (item.request && item.request.id !== details.requestId)) {
++    blockedPopupTabs.delete(details.tabId);
++    return null;
++  }
++  if (!item.request || (starting && item.request.url !== url)) item.request = { id: details.requestId, url };
++  return item.request.url === url ? item : null;
++}
++async function matchedBlock(rule) {
++  if (!Number.isInteger(rule?.ruleId)) return false;
++  if (rule.rulesetId === "_dynamic") return isDynamicBlock(rule.ruleId);
++  const resource = api.runtime.getManifest().declarative_net_request.rule_resources.find(item => item.id === rule.rulesetId);
++  if (!resource) return false;
++  if (!staticBlockIds.has(resource.id)) {
++    const read = fetch(api.runtime.getURL(resource.path)).then(response => {
++      if (!response.ok) throw new Error("Could not read the matched rule's packaged action.");
++      return response.json();
++    }).then(rules => new Set(rules.filter(item => item.action?.type === "block").map(item => item.id)))
++      .catch(error => { staticBlockIds.delete(resource.id); throw error; });
++    staticBlockIds.set(resource.id, read);
++  }
++  return (await staticBlockIds.get(resource.id)).has(rule.ruleId);
++}
++async function closeBlockedPopup(item) {
++  const request = item.request;
++  if (!request?.blocked || !request.failed || request.closing) return;
++  request.closing = true;
++  try {
++    const tab = await api.tabs.get(item.id);
++    if (popupCandidate(item.id) !== item || item.request !== request) return;
++    if (tab.pinned || tab.discarded || tab.openerTabId !== item.opener ||
++        (tab.pendingUrl && navigationUrl(tab.pendingUrl) !== request.url) ||
++        (!blankTabUrl(tab.url) && navigationUrl(tab.url) !== request.url)) {
++      blockedPopupTabs.delete(item.id);
++      return;
++    }
++    // Recheck after the asynchronous read. Tab updates, another navigation,
++    // successful responses, or rule changes invalidate this exact candidate.
++    blockedPopupTabs.delete(item.id);
++    await api.tabs.remove(item.id);
++    await addLog({ kind: "event", message: "Closed a new pop-up tab after blocking its destination",
++      host: urlParts(request.url).host, tabId: item.id });
++  } catch (error) {
++    if (blockedPopupTabs.get(item.id) === item) blockedPopupTabs.delete(item.id);
++    console.warn("[Module Engine] Could not close a blocked pop-up tab:", error);
++  }
++}
++async function popupRuleMatched({ rule, request }) {
++  const item = popupRequest(request);
++  if (!item) return;
++  const pending = item.request;
++  try {
++    if (await matchedBlock(rule) && popupCandidate(item.id) === item && item.request === pending) {
++      pending.blocked = true;
++      await closeBlockedPopup(item);
++    }
++  } catch (error) { console.warn("[Module Engine] Could not verify a blocked pop-up rule:", error); }
++}
++function popupNavigationFailed(details) {
++  const item = popupRequest(details);
++  if (!item) return;
++  if (details.error !== "net::ERR_BLOCKED_BY_CLIENT") { blockedPopupTabs.delete(item.id); return; }
++  item.request.failed = true;
++  void closeBlockedPopup(item);
++}
++function popupTabUpdated(id, change, tab) {
++  const item = popupCandidate(id);
++  if (!item) return;
++  if (tab.pinned || tab.discarded || tab.openerTabId !== item.opener ||
++      (change.url !== undefined && (item.request ? navigationUrl(change.url) !== item.request.url : !blankTabUrl(change.url)))) {
++    blockedPopupTabs.delete(id);
++  }
++}
++function popupResponseStarted(details) {
++  if (details.type === "main_frame" && details.frameId === 0 && ![301, 302, 303, 307, 308].includes(details.statusCode)) {
++    blockedPopupTabs.delete(details.tabId);
++  }
++}
++async function changeNetworkRules(update) {
++  // Rule IDs may be reused. Never correlate a pending event against a different
++  // rule action while settings are being applied or rolled back.
++  blockedPopupTabs.clear();
++  networkRuleUpdates++;
++  try { return await update(); }
++  finally { networkRuleUpdates--; }
++}
++
+ function describeChanges(before, after) {
+   const changes = [];
+   const onOff = value => value ? "on" : "off";
+@@ -371,7 +494,7 @@ async function retireInactiveThreats(status) {
+   if (status.available && Date.parse(status.expiresAt) > Date.now()) return;
+   status.available = false;
+   if ((await api.declarativeNetRequest.getEnabledRulesets()).includes("threats_ruleset")) {
+-    await api.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: [], disableRulesetIds: ["threats_ruleset"] });
++    await changeNetworkRules(() => api.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: [], disableRulesetIds: ["threats_ruleset"] }));
+     if ((await api.declarativeNetRequest.getEnabledRulesets()).includes("threats_ruleset")) {
+       throw new Error("The browser did not disable inactive reported-threat rules.");
+     }
+@@ -552,9 +675,9 @@ async function applyRules(target, threatStatus) {
+   const current = await readRules();
+   if (!same(current.dynamic, target.dynamic)) {
+     dynamicBlockIds = null;
+-    await api.declarativeNetRequest.updateDynamicRules({
++    await changeNetworkRules(() => api.declarativeNetRequest.updateDynamicRules({
+       removeRuleIds: current.dynamic.map(rule => rule.id), addRules: target.dynamic
+-    });
++    }));
+   }
+   if (!same(current.scripts, target.scripts)) {
+     if (current.scripts.length) {
+@@ -568,10 +691,10 @@ async function applyRules(target, threatStatus) {
+   }
+   target = constrainThreatRules(target, threatStatus);
+   if (!same(current.enabled, target.enabled)) {
+-    await api.declarativeNetRequest.updateEnabledRulesets({
++    await changeNetworkRules(() => api.declarativeNetRequest.updateEnabledRulesets({
+       enableRulesetIds: target.enabled,
+       disableRulesetIds: RULESET_IDS.filter(id => !target.enabled.includes(id))
+-    });
++    }));
+   }
+   // A slow browser write may cross the expiry boundary. Never restore expired
+   // threats during rollback, even if an unrelated settings write failed.
+@@ -712,8 +835,18 @@ api.runtime.onStartup.addListener(() => { void userscriptHost.start(); return re
+ api.alarms.onAlarm.addListener(alarm => {
+   if ([THREAT_CHECK_ALARM, THREAT_EXPIRY_ALARM].includes(alarm.name)) return reconcile();
+ });
+-api.declarativeNetRequest.onRuleMatchedDebug?.addListener(info => { void logRuleMatch(info); });
+-api.webRequest?.onResponseStarted.addListener(details => { void flagRequest(details); }, { urls: ["<all_urls>"] });
++api.declarativeNetRequest.onRuleMatchedDebug?.addListener(info => { void logRuleMatch(info); void popupRuleMatched(info); });
++// Positive rule-match feedback is available in unpacked Chrome/Edge. Without
++// it, keep tabs intact rather than guessing which extension blocked a request.
++if (api.declarativeNetRequest.onRuleMatchedDebug && api.tabs.onCreated && api.tabs.onUpdated &&
++    api.tabs.onRemoved && api.webRequest?.onBeforeRequest && api.webRequest.onErrorOccurred) {
++  api.tabs.onCreated.addListener(trackPopupTab);
++  api.tabs.onUpdated.addListener(popupTabUpdated);
++  api.tabs.onRemoved.addListener(id => { blockedPopupTabs.delete(id); });
++  api.webRequest.onBeforeRequest.addListener(details => { popupRequest(details, true); }, { urls: ["<all_urls>"], types: ["main_frame"] });
++  api.webRequest.onErrorOccurred.addListener(popupNavigationFailed, { urls: ["<all_urls>"], types: ["main_frame"] });
++}
++api.webRequest?.onResponseStarted.addListener(details => { popupResponseStarted(details); void flagRequest(details); }, { urls: ["<all_urls>"] });
+ api.storage.onChanged.addListener((changes, area) => {
+   if (area === "local" && SETTING_KEYS.some(key => key in changes)) flagSettings = null;
+ });
+diff --git a/tests/background.test.cjs b/tests/background.test.cjs
+index d6dbd05..998cb3b 100644
+--- a/tests/background.test.cjs
++++ b/tests/background.test.cjs
+@@ -9,9 +9,9 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'u
+ const ids = manifest.declarative_net_request.rule_resources.map(rule => rule.id);
+ const policyText = fs.readFileSync(path.join(root, 'rules/threat-policy.json'), 'utf8');
+ 
+-function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}) {
++function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}, options = {}) {
+   const listeners = {};
+-  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], badge: '', faults: {} };
++  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
+   Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
+     cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
+       allow: { 'shop.example.com': ['.ad-box'] } }) });
+@@ -24,8 +24,10 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
+   }
+   const api = {
+     tabs: {
+-      async get(id) { await tick(); if (!state.tabs[id]) throw new Error('Missing tab'); return clone(state.tabs[id]); },
+-      async update(id, patch) { await tick(); Object.assign(state.tabs[id], patch); return clone(state.tabs[id]); }
++      onCreated: event('tabCreated'), onUpdated: event('tabUpdated'), onRemoved: event('tabRemoved'),
++      async get(id) { await fault('tabRead'); if (!state.tabs[id]) throw new Error('Missing tab'); return clone(state.tabs[id]); },
++      async update(id, patch) { await tick(); Object.assign(state.tabs[id], patch); return clone(state.tabs[id]); },
++      async remove(id) { await fault('tabRemove'); state.removedTabs.push(id); delete state.tabs[id]; listeners.tabRemoved?.(id); }
+     },
+     runtime: { id: 'test', getURL: value => `chrome-extension://test/${value}`, getManifest: () => manifest,
+       onInstalled: event('installed'), onStartup: event('startup'), onMessage: event('message') },
+@@ -69,7 +71,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
+       },
+       async setExtensionActionOptions() {}
+     },
+-    webRequest: { onResponseStarted: event('response') },
++    webRequest: { onResponseStarted: event('response'), onBeforeRequest: event('beforeRequest'), onErrorOccurred: event('requestError') },
+     scripting: {
+       async executeScript(options) {
+         await fault('executeScript');
+@@ -95,12 +97,18 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
+     },
+     action: { async setBadgeBackgroundColor() {}, async setBadgeText({ text }) { state.badge = text; } }
+   };
++  if (options.noRuleFeedback) delete api.declarativeNetRequest.onRuleMatchedDebug;
+   const context = vm.createContext({ chrome: api, URL, TextEncoder, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
+     if (url === 'chrome-extension://test/rules/community-cosmetic.json') {
+       state.fetches.push(url);
+       await fault('cosmetic');
+       return { ok: true, json: async () => JSON.parse(state.cosmeticText) };
+     }
++    const ruleset = manifest.declarative_net_request.rule_resources.find(item => url === 'chrome-extension://test/' + item.path);
++    if (ruleset) {
++      await fault('ruleFile');
++      return { ok: true, json: async () => JSON.parse(fs.readFileSync(path.join(root, ruleset.path), 'utf8')) };
++    }
+     assert.equal(url, 'chrome-extension://test/rules/threat-policy.json', 'only a packaged local file may be read');
+     state.fetches.push(url);
+     await fault('policy');
+@@ -737,6 +745,132 @@ test('page filter verification accepts full extension URLs in readback', async (
+ });
+ 
+ const settle = async () => { for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve)); };
++
++function popupNavigation(h, tabId = 20, changes = {}) {
++  const tab = { id: tabId, openerTabId: 1, url: 'about:blank', status: 'loading', pinned: false, ...changes };
++  h.state.tabs[tabId] = tab;
++  h.listeners.tabCreated?.(clone(tab));
++  const request = { tabId, frameId: 0, type: 'main_frame', requestId: String(tabId), url: 'https://blocked.example/ad' };
++  h.listeners.beforeRequest?.(request);
++  const rule = { rulesetId: '_dynamic', ruleId: h.state.dynamic.find(item => item.action.type === 'block').id };
++  return { tab, request, match: () => h.listeners.ruleMatched?.({ rule, request }),
++    fail: () => h.listeners.requestError?.({ ...request, error: 'net::ERR_BLOCKED_BY_CLIENT' }) };
++}
++
++for (const order of ['match-first', 'error-first']) test('blocked popup cleanup correlates native events: ' + order, async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  const popup = popupNavigation(h);
++  if (order === 'match-first') { popup.match(); await settle(); popup.fail(); }
++  else { popup.fail(); await settle(); popup.match(); }
++  await settle();
++  assert.deepEqual(h.state.removedTabs, [20]);
++  assert.ok(h.state.tabs[1], 'the opener stays open');
++  popup.match(); popup.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, [20], 'duplicate events cannot close twice');
++  const logs = (await h.send({ type: 'GET_LOG' })).entries;
++  assert.equal(logs.filter(item => item.message?.startsWith('Closed a new pop-up')).length, 1);
++});
++
++for (const scenario of ['no-opener', 'pinned', 'expired', 'existing-tab', 'loaded-page', 'subresource',
++  'next-navigation', 'changed-url', 'changed-pending-url', 'changed-opener', 'missing-match', 'missing-error', 'network-error', 'removed-tab']) {
++  test('blocked popup cleanup preserves ' + scenario, async () => {
++    const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++    const popup = popupNavigation(h, 20, scenario === 'no-opener' ? { openerTabId: undefined } : scenario === 'pinned' ? { pinned: true } : {});
++    if (scenario === 'expired') h.state.now += 10001;
++    if (scenario === 'existing-tab') h.listeners.tabRemoved(20);
++    if (scenario === 'loaded-page') h.listeners.response({ ...popup.request, statusCode: 200 });
++    if (scenario === 'subresource') { popup.request.type = 'script'; popup.request.frameId = 1; }
++    if (scenario === 'next-navigation') h.listeners.beforeRequest({ ...popup.request, requestId: 'new-navigation' });
++    if (scenario === 'changed-url') {
++      popup.tab.url = 'https://ordinary.example/'; h.listeners.tabUpdated(20, { url: popup.tab.url }, clone(popup.tab));
++    }
++    if (scenario === 'changed-pending-url') popup.tab.pendingUrl = 'https://ordinary.example/';
++    if (scenario === 'changed-opener') popup.tab.openerTabId = 3;
++    if (scenario === 'removed-tab') { delete h.state.tabs[20]; h.listeners.tabRemoved(20); }
++    if (scenario !== 'missing-match') popup.match();
++    if (scenario === 'network-error') h.listeners.requestError({ ...popup.request, error: 'net::ERR_CONNECTION_REFUSED' });
++    else if (scenario !== 'missing-error') popup.fail();
++    await settle();
++    assert.deepEqual(h.state.removedTabs, []);
++  });
++}
++
++test('blocked popup cleanup verifies static block actions and rejects allow actions', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'], allowedDomains: ['allowed.example'] }); await h.ready;
++  const rules = JSON.parse(fs.readFileSync(path.join(root, 'rules/community.json'), 'utf8'));
++  const staticBlock = rules.find(rule => rule.action.type === 'block'), staticAllow = rules.find(rule => rule.action.type === 'allow');
++  assert.ok(staticBlock && staticAllow);
++  for (const [tabId, rule] of [[20, { rulesetId: 'community_ruleset', ruleId: staticAllow.id }],
++    [21, { rulesetId: '_dynamic', ruleId: h.state.dynamic.find(item => item.action.type === 'allow').id }],
++    [22, { rulesetId: 'community_ruleset', ruleId: staticBlock.id }]]) {
++    const popup = popupNavigation(h, tabId); popup.fail();
++    h.listeners.ruleMatched({ rule, request: popup.request }); await settle();
++  }
++  assert.deepEqual(h.state.removedTabs, [22]);
++});
++
++test('blocked popup cleanup preserves a tab repurposed during its final read', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  const popup = popupNavigation(h), originalGet = h.api.tabs.get;
++  h.api.tabs.get = async id => {
++    const tab = await originalGet(id);
++    if (id === 20) h.listeners.beforeRequest({ ...popup.request, requestId: 'new-navigation', url: 'https://ordinary.example/' });
++    return tab;
++  };
++  popup.match(); popup.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, []);
++});
++
++test('blocked popup cleanup invalidates pending evidence when network rules change', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  const popup = popupNavigation(h);
++  popup.match(); await settle();
++  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
++  popup.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, []);
++});
++
++test('blocked popup cleanup supports an initial redirect without closing a loaded document', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  const popup = popupNavigation(h);
++  h.listeners.response({ ...popup.request, statusCode: 302 });
++  popup.request.url = 'https://blocked.example/redirected';
++  h.listeners.beforeRequest(popup.request);
++  popup.match(); popup.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, [20]);
++});
++
++for (const fault of ['tabRead', 'tabRemove', 'ruleFile']) test('blocked popup cleanup fails safely on ' + fault + ' and recovers for later tabs', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  h.state.faults[fault] = 1;
++  const first = popupNavigation(h);
++  if (fault === 'ruleFile') h.listeners.ruleMatched({ rule: { rulesetId: 'community_ruleset', ruleId: 36 }, request: first.request });
++  else first.match();
++  first.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, []);
++  const second = popupNavigation(h, 21); second.match(); second.fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, [21]);
++  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
++});
++
++test('blocked popup cleanup bounds candidates and preserves tabs without native rule feedback', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  const popups = Array.from({ length: 65 }, (_, index) => popupNavigation(h, 20 + index));
++  popups[0].match(); popups[0].fail(); popups[64].match(); popups[64].fail(); await settle();
++  assert.deepEqual(h.state.removedTabs, [84]);
++  const unsupported = harness({ customBlockedDomains: ['blocked.example'] }, 5000, '2026-10-18T04:00:00Z', {}, { noRuleFeedback: true });
++  await unsupported.ready;
++  assert.equal(unsupported.listeners.tabCreated, undefined);
++  assert.equal((await unsupported.send({ type: 'GET_STATE' })).ok, true);
++});
++
++test('page messages cannot authorize blocked popup cleanup', async () => {
++  const h = harness({ customBlockedDomains: ['blocked.example'] }); await h.ready;
++  popupNavigation(h);
++  await h.send({ type: 'CLOSE_BLOCKED_TAB', tabId: 20 }, { id: 'test', url: 'https://page.example/', tab: { id: 20 }, frameId: 0 });
++  await settle();
++  assert.deepEqual(h.state.removedTabs, []);
++});
+ const youtubeTab = { id: 'test', url: 'https://www.youtube.com/watch?v=x', tab: { id: 7, url: 'https://www.youtube.com/watch?v=x' } };
+ 
+ test('activity log records blocks with layer, server, path and site, but not site-pause allows', async () => {
+diff --git a/tests/blocked-tabs-browser.cjs b/tests/blocked-tabs-browser.cjs
+new file mode 100644
+index 0000000..40e0174
+--- /dev/null
++++ b/tests/blocked-tabs-browser.cjs
+@@ -0,0 +1,134 @@
++/* Native blocked-tab cleanup: installed Chrome/Edge, disposable profiles, loopback only. */
++const assert = require('node:assert/strict');
++const fs = require('node:fs/promises');
++const path = require('node:path');
++const os = require('node:os');
++const http = require('node:http');
++const { createHash } = require('node:crypto');
++const { chromium } = require('./browser-smoke.cjs');
++const root = path.resolve(__dirname, '..'), browserName = process.argv[2] || 'chrome';
++if (!['chrome', 'edge'].includes(browserName)) throw new Error('Choose chrome or edge. Cleanup requires native rule-match feedback.');
++const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
++const files = ['manifest.json','shared.js','flags.js','cosmetic.js','network.js','evidence.js','procedural.js','picker-core.js','picker.js',
++  'background.js','content.js','youtube.js','popups.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
++  'lists.html','lists.js','modules.js','userscripts-core.js','userscripts-runtime.js','manager.html','manager.js','manager.css','rules','icons'];
++(async () => {
++  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'blockads-tabs-' + browserName + '-'));
++  const extension = path.join(temp, 'extension'); await fs.mkdir(extension);
++  for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
++  const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], requests: [], deniedRequests: 0, proxyErrors: [], hashes: {} };
++  for (const file of files.filter(file => !['rules', 'icons'].includes(file))) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
++  const proxy = http.createServer((_request, response) => { evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
++  proxy.on('connect', (_request, socket) => {
++    socket.on('error', error => { if (!['ECONNRESET','EPIPE'].includes(error.code)) evidence.proxyErrors.push(error.message); });
++    evidence.deniedRequests++; socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
++  });
++  proxy.on('clientError', (_error, socket) => socket.destroy());
++  let port;
++  const fixture = http.createServer((request, response) => {
++    evidence.requests.push(request.url);
++    if (request.url === '/favicon.ico') { response.writeHead(204); response.end(); return; }
++    if (request.url === '/network-error') { request.socket.destroy(); return; }
++    if (request.url === '/redirect') { response.writeHead(302, { Location: 'http://localhost:' + port + '/blocked-redirect' }); response.end(); return; }
++    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
++    response.end('<!doctype html><title>Owned blocked-tab fixture</title><body><p>Owned offline page</p><input id="kept" value="keep this work">' +
++      (request.url === '/subresource' ? '<img src="http://localhost:' + port + '/blocked-image">' : '') + '</body>');
++  });
++  await Promise.all([new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve)), new Promise(resolve => fixture.listen(0, '127.0.0.1', resolve))]);
++  port = fixture.address().port;
++  // This single canary is added ONLY to the disposable package. It exercises a
++  // real static block event without navigating to any domain in the real lists.
++  const communityFile = path.join(extension, 'rules/community.json');
++  const community = JSON.parse(await fs.readFile(communityFile, 'utf8'));
++  evidence.fixtureRule = { id: Math.max(...community.map(rule => rule.id)) + 1, priority: 1, action: { type: 'block' },
++    condition: { urlFilter: '|http://127.0.0.1:' + port + '/blocked-static', resourceTypes: ['main_frame'] } };
++  community.push(evidence.fixtureRule); await fs.writeFile(communityFile, JSON.stringify(community));
++  let browser, source;
++  const check = (condition, description) => { assert.ok(condition, description); evidence.checks.push(description); };
++  const evaluate = expression => browser.evaluate(expression);
++  const api = '(globalThis.browser||chrome)';
++  const send = message => evaluate(api + '.runtime.sendMessage(' + JSON.stringify(message) + ')');
++  const until = async (expression, description) => {
++    for (let i = 0; i < 120; i++) { const result = await evaluate(expression); if (result) return result; await pause(50); }
++    throw new Error('Timed out: ' + description);
++  };
++  const exists = id => evaluate(api + '.tabs.get(' + id + ').then(()=>true,()=>false)');
++  const failed = id => until('cleanupEvents.some(e=>e.kind==="error"&&e.data.tabId===' + id + ')', 'native navigation failure for tab ' + id);
++  const spawn = async url => {
++    const offset = await evaluate('cleanupEvents.length');
++    await browser.send('Runtime.evaluate', { expression: 'globalThis.lastTestPopup=window.open(' + JSON.stringify(url) + ',"_blank");true', userGesture: true, returnByValue: true }, source);
++    return until('cleanupEvents.slice(' + offset + ').find(e=>e.kind==="created")?.data.id', 'new popup tab');
++  };
++  const navigatePopup = url => browser.evaluate('lastTestPopup.location=' + JSON.stringify(url), source);
++  try {
++    browser = await chromium(extension, path.join(temp, 'profile'), proxy.address().port);
++    evidence.version = browser.version;
++    check((await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok, 'owned localhost destination is blocked');
++    await evaluate(`(()=>{const api=${api};globalThis.cleanupEvents=[];const record=(kind,data)=>cleanupEvents.push({kind,data});
++      api.tabs.onCreated.addListener(tab=>record('created',{id:tab.id,opener:tab.openerTabId,url:tab.url}));
++      api.tabs.onRemoved.addListener(id=>record('removed',id));
++      api.webRequest.onErrorOccurred.addListener(details=>record('error',details),{urls:['<all_urls>'],types:['main_frame']});
++      api.declarativeNetRequest.onRuleMatchedDebug.addListener(details=>record('match',details));
++    })()`);
++    source = await browser.open('http://127.0.0.1:' + port + '/source');
++    const sourceTab = await evaluate(api + '.tabs.query({url:' + JSON.stringify('http://127.0.0.1:' + port + '/source') + '}).then(tabs=>tabs[0].id)');
++    const blank = await evaluate(api + '.tabs.create({url:"about:blank",active:false}).then(tab=>tab.id)');
++    for (const [name, url] of [
++      ['dynamic', 'http://localhost:' + port + '/blocked-dynamic'],
++      ['static', 'http://127.0.0.1:' + port + '/blocked-static'],
++      ['redirect', 'http://127.0.0.1:' + port + '/redirect']
++    ]) {
++      const id = await spawn(url);
++      await until('cleanupEvents.some(e=>e.kind==="removed"&&e.data===' + id + ')', name + ' blocked popup removed');
++      check(!(await exists(id)), name + ' blocked popup is automatically closed');
++      check(await exists(sourceTab) && await exists(blank), name + ' cleanup preserves the opener and unrelated blank tab');
++    }
++    const blankFirst = await spawn('about:blank');
++    await navigatePopup('http://localhost:' + port + '/blocked-after-blank');
++    await until('cleanupEvents.some(e=>e.kind==="removed"&&e.data===' + blankFirst + ')', 'blank-first popup removed');
++    check(!(await exists(blankFirst)), 'initial about:blank popup closes after its first blocked navigation');
++
++    const pinned = await spawn('about:blank');
++    await evaluate(api + '.tabs.update(' + pinned + ',{pinned:true})');
++    await navigatePopup('http://localhost:' + port + '/blocked-pinned'); await failed(pinned);
++    check(await exists(pinned), 'a pinned popup tab is preserved');
++
++    const loaded = await spawn('http://127.0.0.1:' + port + '/loaded');
++    await until(api + '.tabs.get(' + loaded + ').then(tab=>tab.status==="complete"&&tab.url.endsWith("/loaded"))', 'loaded popup page');
++    await navigatePopup('http://localhost:' + port + '/blocked-later'); await failed(loaded);
++    check(await exists(loaded), 'a tab with a previously loaded page is preserved after a later block');
++
++    await evaluate(api + '.tabs.update(' + blank + ',{url:' + JSON.stringify('http://localhost:' + port + '/blocked-manual') + '})'); await failed(blank);
++    check(await exists(blank), 'a manually created tab without an opener is preserved');
++
++    const error = await spawn('http://127.0.0.1:' + port + '/network-error'); await failed(error);
++    check(await exists(error), 'ordinary network errors never authorize closing a tab');
++
++    const image = await spawn('http://127.0.0.1:' + port + '/subresource');
++    await until(api + '.tabs.get(' + image + ').then(tab=>tab.status==="complete")', 'subresource fixture load');
++    check(await exists(image), 'a blocked image does not close its containing page');
++
++    const log = await send({ type: 'GET_LOG' });
++    const closures = log.entries.filter(entry => entry.message === 'Closed a new pop-up tab after blocking its destination');
++    check(closures.length === 4, 'only the four confirmed initial blocked popups produce cleanup log entries');
++    check(!evidence.requests.some(url => url.startsWith('/blocked-')), 'no blocked fixture destination reached the local server');
++    check((await send({ type: 'GET_STATE' })).ok, 'ad protection remains verified after cleanup');
++    check(evidence.proxyErrors.length === 0, 'deny proxy reports no unexpected errors');
++    evidence.events = await evaluate('cleanupEvents');
++    evidence.success = true;
++  } catch (error) {
++    evidence.success = false; evidence.error = error.stack; process.exitCode = 1;
++    if (browser) {
++      evidence.events = await evaluate('globalThis.cleanupEvents').catch(() => null);
++      evidence.tabs = await evaluate(api + '.tabs.query({})').catch(() => null);
++      evidence.log = await send({ type: 'GET_LOG' }).catch(() => null);
++    }
++  } finally {
++    if (browser) evidence.cleanup = await browser.close();
++    fixture.closeAllConnections(); proxy.closeAllConnections();
++    await Promise.all([new Promise(resolve => fixture.close(resolve)), new Promise(resolve => proxy.close(resolve))]);
++    evidence.finished = new Date().toISOString();
++    await fs.writeFile(path.join(temp, 'evidence.json'), JSON.stringify(evidence, null, 2));
++    console.log(JSON.stringify({ browser: browserName, success: evidence.success, checks: evidence.checks.length, error: evidence.error, evidence: path.join(temp, 'evidence.json') }, null, 2));
++  }
++})().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/README.md b/README.md
+index bcdf1ea..719edf6 100644
+--- a/README.md
++++ b/README.md
+@@ -75,6 +75,7 @@ Manager operations have their own bounded capacity and run before waiting GM sto
+ - **Community lists** are a separate switch. The builder converts supported domain and URL-pattern blocks with their third-party, resource-type, site (`domain=`), `match-case`, `important` and pop-up options, their exceptions, generic and site-specific CSS, and the advanced operators documented below. Plain domain blocks with identical options are merged into domain-list rules. Unsupported filters, including network regexes and scriptlets, are skipped and counted in `rules/community-info.json`. List exceptions rank below reported threats, custom blocks and site pauses, and never apply to domains Module Engine's own ad, tracker or site-check lists block. Browser rules cannot tell a pop-up from a normal page load, so a list pop-up pattern that is not tied to one host applies only to page loads started by another site. The lists are not refreshed automatically.
+ - **Always Allowed Domains** (popup list, or the *Allow* button next to a blocked server in the activity log): requests to these domains and their subdomains are never blocked by the ad, tracker, site-check or community lists, on any site. Unlike *Pause on this site*, which turns filtering off on the pages of a site, this allows one server everywhere. Reported threats and your custom blocks still apply; the same domain cannot be in both Custom Blocked and Always Allowed. Entries accept a hostname or URL like custom blocks.
+ - **Block pop-ups on this site** (popup switch, per site and its subdomains): a page-level script on the chosen site and each injectable child frame refuses windows opened by script, script-made clicks on links to another host scope, and clicks on disguised links to another host scope (invisible, or page-covering overlays). An exact host and its parent or child hosts share a scope; independent sibling hosts are kept separate so tenants on `github.io`, `pages.dev` and similar shared platforms cannot inherit each other's trust. Ordinary visible links still work. It does not depend on knowing the ad network's domains. Page-world block claims are deliberately not added to the activity log because a page could forge them. Reload after turning the switch off to remove an already-installed page hook; it is inactive on new pages while the site is paused or the master switch is off. Browser-restricted frames and pop-up routes that do not use these JavaScript hooks can still bypass this optional layer.
++- **Automatic cleanup of blocked pop-up tabs** works in unpacked Chrome and Edge, independently of the per-site pop-up switch. A new tab with a browser-reported opener is closed only when its first HTTP(S) page navigation fails and native feedback confirms that a Module Engine block rule matched that same request. This includes a blocked link opened in a new tab; Chrome's opener information does not distinguish it from a scripted pop-up. Existing or pinned tabs, tabs that already received page content, ordinary blank tabs without a confirmed block, and tabs opened without an opener are preserved. Pending navigation and rule changes cancel cleanup. The activity log records successful closes. Candidates expire after ten seconds, are capped at 64, and are not restored after a worker restart. Without native rule-match feedback, including Firefox and packaged installations where that feedback is unavailable, tabs stay open. No new browser permission is required. The network block remains effective even when cleanup cannot be confirmed.
+ - **Flag suspected ads** (popup switch, on by default): Module Engine watches requests that actually loaded (it never sees, and never flags, ones it blocked) and flags third-party servers that look like ads, for you to decide later. Signals: ad-like addresses (`/ads/`, banner, popunder, prebid, VAST), ad placement settings (`zoneid=`, placement, campaign), impression or click trackers, known ad-network script shapes, long random-looking script addresses, throwaway-looking domains (two words joined by a hyphen) loading scripts or frames, and on the page itself, frames in standard ad sizes from another site and elements labelled "Ad", "Sponsored" or 广告/廣告. Flags are grouped by exact server name in the *Flagged for review* table at the top of *My lists*, with the reasons, the page hosts they were seen on, a count and examples; **Block** adds that exact server to Custom Blocked Domains, **Allow** to Always Allowed Domains, **Ignore** stops flagging it, and *Clear all flags* empties the table. Nothing is blocked by a flag. Sibling hosts are conservatively treated as separate unless one is a parent of the other; this avoids merging unrelated shared-hosting tenants but may produce an extra harmless flag. Flags are kept in local storage (up to 500 servers, the oldest dropped first) until you decide or clear them; only page hosts, server names, reason codes and short paths without query strings are stored, and nothing is sent anywhere. Paused sites and always-allowed servers are not flagged; the master switch and the popup switch turn flagging off. Pattern matching misses ads served from the same host scope or ordinary-looking addresses and can flag harmless files, which is why it only flags.
+ - **My lists** (popup → *My lists*, or from the activity log): one page with tables for Always Allowed Domains, Custom Blocked Domains, Paused Sites and Pop-up Blocking Sites, each with an add box and a remove button for every row, and a filter across all tables. Removing a row removes exactly that entry (the popup's *Resume* also removes a parent entry that covers the current site). A read-only table lists the hosts added from site checks, with the site each was found on and what it did.
+ - **Activity log** (popup → *Open activity log*): a page listing recent blocked requests (time, site, blocked server and path, layer) and extension events (settings changes, failures, installs/reloads, skipped YouTube video ads), with a per-server summary showing which sites each blocked server appeared on. It keeps up to 1,000 entries in session storage, so it is cleared when the browser closes; *Clear log* empties it and *Export JSON* saves a copy. Query strings are not recorded, and nothing is sent anywhere. Blocked-request entries come from the browser's rule-match feed, which Chrome and Edge provide while Module Engine is loaded unpacked. Firefox 158 does not provide it (even with `extensions.dnr.feedback` enabled), so in Firefox the log lists events only and says so. The YouTube player-data filter runs in the page and does not report to the log.
+@@ -195,6 +196,8 @@ This upgrade does **not** establish full uBO parity or superiority. Unsupported
+ 
+ ## Verification
+ 
++On 5 November 2026, a local Chrome fixture reproduced the blocked-destination tab remaining open while no request reached the destination. Automatic cleanup now correlates native tab creation, the first navigation, a failed request and the matching rule's block action. **192 unit tests** passed, including 25 new cleanup checks for event ordering, action validation, navigation races, rule changes, capacity, expiry, unsupported feedback and error recovery. Chrome and Edge each passed **17 native cleanup checks** and **539 existing blocker checks**. The cleanup harness adds one loopback-only static canary to its disposable package; the general blocker suite uses the unmodified package. No suspicious site was opened or contacted. See [the cleanup verification report](verification/2026-11-05/blocked-tabs/summary.json). Reload the unpacked extension to activate this behavior; no new permission or per-site switch is needed for cleanup.
++
+ On 4 November 2026, the userscript queue-exhaustion finding was reproduced: 100 GM requests made module-off, script-disable and delete fail with a busy error. After reserving manager capacity, prioritizing controls and bounding GM traffic, all **167 unit tests**, **64 userscript-manager checks per browser**, and **539 blocker checks per browser** passed in Chrome and Edge. Native manager controls completed while a bounded local script kept sending requests; old capabilities were rejected and local ad blocking remained active. Fault-injection tests cover in-flight writes, failed shutdown rollback, rapid disable/re-enable, and capacity recovery after errors. Tests used disposable profiles and owned loopback fixtures behind a deny proxy. Firefox userscript execution was not tested in this change. See the [security-fix evidence](verification/2026-11-04/userscript-control/summary.json), including the before-fix failures and the initial sandbox browser-startup/cleanup failure. Reload the unpacked extension and affected pages to apply the fix.
+ 
+ On 30 October 2026, version **1.9.0** passed **157 unit tests**, **237 rule/import assertions**, **338 threat-policy assertions**, **21 cosmetic-compiler assertions**, and **465 blocker plus 46 userscript-manager checks in each of Chrome and Edge**. Tests use fresh profiles, owned loopback fixtures and a deny proxy. They exercise actual ad blocking while scripts run, independent switches, isolated GM storage, rejected administrative messages, scope/timing/frame rules, browser permission revocation, worker restart, import/export, stale drafts, deletion and keyboard cancellation. Desktop and narrow manager layouts and the existing popup were inspected. A wildcard-heavy scope stall and an Edge permission-error handling failure were reproduced before their fixes. The existing bundled blocker assets were hash-compared with the early task package; source changes are isolated in a patch against the pre-task snapshot. See the [1.9 verification report](verification/2026-10-30/modular-extension/summary.json) for exact versions, hashes, earlier failures and cleanup.
+@@ -221,6 +224,8 @@ node tests/live-network-browser.cjs chrome
+ node tests/live-network-browser.cjs edge
+ node tests/userscripts-browser.cjs chrome
+ node tests/userscripts-browser.cjs edge
++node tests/blocked-tabs-browser.cjs chrome
++node tests/blocked-tabs-browser.cjs edge
+ ```
+ 
+ The browser script defaults to the standard Windows installation paths; `BLOCKADS_TEST_BROWSER` can select another executable. It copies the extension unchanged into a temporary directory and uses a fresh browser profile. A local deny proxy rejects every non-loopback request without resolving or forwarding it, with speculative DNS disabled. A reserved-name canary verifies that the proxy is enforcing this policy. DNR matching uses synthetic URLs; actual extension blocking is exercised only against loopback HTTP and WebSocket fixtures. Firefox's simulator uses the HTTP(S) handshake representation for WebSocket checks; real local handshake tests separately verify enforcement. The script checks popup errors, site exceptions, an already-open page's flagging toggle, cosmetic filtering in cross-origin frames, and a synthetic pop-up attempt from a cross-origin frame. It does not visit listed sites or alter a personal browser profile. The current dated-threat assertion intentionally fails after expiry until evidence is reviewed again.

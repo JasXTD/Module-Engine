@@ -1,4 +1,4 @@
-/* BlockAds popup: render verified state and keep unsuccessful input available. */
+/* Module Engine popup: render verified state and keep unsuccessful input available. */
 "use strict";
 const api = typeof browser !== "undefined" ? browser : chrome;
 const { normalizeDomain, whitelistScope } = BlockAds;
@@ -7,6 +7,10 @@ const masterToggle = byId("masterToggle");
 const statusText = byId("statusText");
 const currentDomainEl = byId("currentDomain");
 const siteWhitelistBtn = byId("siteWhitelistBtn");
+// The button also holds its icons, so only its label text is replaced.
+const siteWhitelistLabel = byId("siteWhitelistLabel");
+const siteBadge = byId("siteBadge");
+const masterState = byId("masterState");
 const siteScope = byId("siteScope");
 const errorPanel = byId("errorPanel");
 const savedWarning = byId("savedWarning");
@@ -16,11 +20,19 @@ const toggleTrackers = byId("toggleTrackers");
 const toggleThreats = byId("toggleThreats");
 const threatStatusEl = byId("threatStatus");
 const toggleCosmetic = byId("toggleCosmetic");
+const toggleGenericCosmetic = byId("toggleGenericCosmetic");
+const toggleProcedural = byId("toggleProcedural");
 const togglePopups = byId("togglePopups");
 const toggleCommunity = byId("toggleCommunity");
 const communityStatusEl = byId("communityStatus");
 let communityInfo = null;
+const toggleFlags = byId("toggleFlags");
+const flagStatusEl = byId("flagStatus");
+let flagCount = null;
 const popupScopeEl = byId("popupScope");
+const scriptStatusEl = byId("scriptStatus");
+const domainCountEl = byId("domainCount");
+const tabs = [...document.querySelectorAll('[role="tab"]')];
 const customBlockForm = byId("customBlockForm");
 const customDomainInput = byId("customDomainInput");
 const customDomainList = byId("customDomainList");
@@ -29,6 +41,8 @@ const allowDomainInput = byId("allowDomainInput");
 const allowDomainList = byId("allowDomainList");
 let currentSettings = null;
 let activeHostname = "";
+let activeTabId = null;
+let pickerError = '';
 let busy = false;
 let lastError = "";
 let quarantinedDomains = [];
@@ -39,6 +53,7 @@ async function detectActiveTabDomain() {
   const [tab] = await api.tabs.query({ active: true, currentWindow: true });
   if (tab?.url && /^https?:\/\//i.test(tab.url)) {
     try { activeHostname = normalizeDomain(tab.url); } catch { activeHostname = ""; }
+    activeTabId = tab.id;
   }
   currentDomainEl.textContent = activeHostname || "Browser / unsupported page";
   currentDomainEl.title = activeHostname;
@@ -47,10 +62,13 @@ async function detectActiveTabDomain() {
 function renderUI() {
   const settings = currentSettings;
   document.body.setAttribute("aria-busy", String(busy));
-  for (const element of document.querySelectorAll("input, button")) element.disabled = busy || !settings;
+  // Tabs only change what is on screen, so they stay usable while a command runs.
+  for (const element of document.querySelectorAll('input, button:not([role="tab"])')) element.disabled = busy || !settings;
   retryButton.disabled = busy;
   errorPanel.textContent = lastError;
   errorPanel.hidden = !lastError;
+  byId('pickerError').textContent = pickerError;
+  byId('pickerError').hidden = !pickerError;
   retryButton.hidden = !lastError;
   savedWarning.hidden = quarantinedDomains.length === 0;
   savedWarning.textContent = quarantinedDomains.length
@@ -58,9 +76,12 @@ function renderUI() {
   statusText.classList.toggle("failed", Boolean(lastError));
   if (!settings) {
     statusText.textContent = lastError ? "Protection not verified" : "Checking protection…";
+    masterState.textContent = "";
+    siteBadge.hidden = true;
     return;
   }
   masterToggle.checked = settings.enabled;
+  masterState.textContent = settings.enabled ? "On" : "Off";
   toggleAds.checked = settings.rulesets.ads_ruleset;
   toggleTrackers.checked = settings.rulesets.trackers_ruleset;
   toggleThreats.checked = settings.rulesets.threats_ruleset && Boolean(threatStatus?.available);
@@ -69,11 +90,20 @@ function renderUI() {
     ? "Evidence expired — update required"
     : `${threatStatus.count} exact hosts · expires ${threatStatus.expiresAt.slice(0, 10)} UTC`;
   toggleCosmetic.checked = settings.cosmeticFiltering;
+  toggleGenericCosmetic.checked = settings.genericCosmeticFiltering;
+  toggleGenericCosmetic.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;
+  toggleProcedural.checked = settings.proceduralFiltering;
+  toggleProcedural.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;
   toggleCommunity.checked = settings.rulesets.community_ruleset;
   const lists = communityInfo?.lists || [];
   communityStatusEl.textContent = !communityInfo ? "Snapshot details unavailable" : !lists.length ? "No list snapshot is built"
     : `${lists.map(list => list.title).join(" + ")} · ${communityInfo.networkRules.toLocaleString()} rules · ${(lists[0].lastModified || "").replace(/ \d\d:\d\d.*$/, "")}`;
-  for (const input of [toggleAds, toggleTrackers, toggleCommunity, toggleCosmetic]) {
+  toggleFlags.checked = settings.flagSuspects;
+  flagStatusEl.classList.toggle("has-flags", Boolean(flagCount));
+  flagStatusEl.textContent = !settings.flagSuspects ? "Off: ad-like servers that get through are not flagged"
+    : flagCount === null ? "Flags ad-like servers that got through, for you to review"
+    : flagCount ? `${flagCount} flagged for review: open My lists` : "Nothing flagged for review";
+  for (const input of [toggleAds, toggleTrackers, toggleCommunity, toggleCosmetic, toggleFlags]) {
     input.disabled = busy || !settings.enabled;
   }
   const scope = activeHostname ? whitelistScope(activeHostname, settings.whitelistedDomains) : "";
@@ -85,15 +115,22 @@ function renderUI() {
     : scope ? "Inactive while this site is paused"
     : popupScope ? `On for ${popupScope} and its subdomains. Reload the page after changing.`
     : "Stops new windows and disguised links to other sites";
-  const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 ||
+  const customNetworkBlocks = BlockAdsNetwork.parse(settings.customNetworkFilters ?? "").some(rule => rule.action.type === "block");
+  const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 || customNetworkBlocks ||
     settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || settings.rulesets.community_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
   statusText.textContent = lastError ? "Check protection status" : busy ? "Applying changes…" :
     !settings.enabled ? "Protection paused" : scope ? "Paused on this site" :
     anyFilters ? "Filtering enabled" : "No filters enabled";
   statusText.classList.toggle("paused", !settings.enabled || Boolean(scope) || !anyFilters);
+  // This site's state at a glance; hidden when the state is unverified or there is no site.
+  const sitePaused = !settings.enabled || Boolean(scope);
+  siteBadge.hidden = !activeHostname || Boolean(lastError);
+  siteBadge.textContent = sitePaused ? "Paused" : anyFilters ? "Filtering" : "No filters";
+  siteBadge.className = "badge" + (sitePaused ? " paused" : anyFilters ? " active" : "");
   siteWhitelistBtn.disabled = busy || !settings.enabled || !activeHostname;
+  byId('pickElement').disabled = busy || !settings.enabled || !settings.cosmeticFiltering || !activeHostname || activeTabId === null || Boolean(scope) || Boolean(whitelistScope(activeHostname, settings.cosmeticPausedDomains));
   siteWhitelistBtn.classList.toggle("whitelisted", Boolean(scope));
-  siteWhitelistBtn.textContent = scope
+  siteWhitelistLabel.textContent = scope
     ? scope.length > 40 ? "Resume site filtering" : `Resume on ${scope}`
     : "Pause on this site";
   siteWhitelistBtn.title = scope ? `Resume filtering for ${scope} and its subdomains` : "Pause filtering for this domain and its subdomains";
@@ -102,6 +139,26 @@ function renderUI() {
     : activeHostname ? "Site settings include subdomains. Reload the page after changing them." : "Site controls are available on supported HTTP(S) pages.";
   renderDomainList(customDomainList, settings.customBlockedDomains, "Unblock", "REMOVE_CUSTOM_DOMAIN");
   renderDomainList(allowDomainList, settings.allowedDomains, "Stop always allowing", "REMOVE_ALLOWED_DOMAIN");
+  domainCountEl.textContent = (settings.customBlockedDomains.length + settings.allowedDomains.length) || "";
+}
+
+function selectTab(tab, focus = false) {
+  for (const item of tabs) {
+    const selected = item === tab;
+    item.setAttribute("aria-selected", String(selected));
+    item.tabIndex = selected ? 0 : -1;
+    byId(item.getAttribute("aria-controls")).hidden = !selected;
+  }
+  if (focus) tab.focus();
+}
+for (const tab of tabs) {
+  tab.addEventListener("click", () => selectTab(tab));
+  tab.addEventListener("keydown", event => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    selectTab(tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length], true);
+  });
 }
 
 function renderDomainList(list, domains, removeLabel, removeType) {
@@ -152,12 +209,50 @@ async function runCommand(message, preserveError = false) {
   return successful;
 }
 const updateSettings = patch => runCommand({ type: "UPDATE_SETTINGS", patch });
+byId('pickElement').addEventListener('click', async () => {
+  if (busy || activeTabId === null) return;
+  busy = true; pickerError = ''; renderUI();
+  try {
+    const response = await api.runtime.sendMessage({type:'START_PICKER', tabId:activeTabId});
+    if (!response?.ok) throw new Error(response?.error || 'The picker did not open.');
+  } catch (error) { pickerError = error.message || String(error); }
+  finally { busy = false; renderUI(); if (refreshPending) { refreshPending = false; void runCommand({type:'GET_STATE'}, true); } }
+});
 masterToggle.addEventListener("change", () => updateSettings({ enabled: masterToggle.checked }));
 toggleAds.addEventListener("change", () => updateSettings({ rulesets: { ads_ruleset: toggleAds.checked } }));
 toggleTrackers.addEventListener("change", () => updateSettings({ rulesets: { trackers_ruleset: toggleTrackers.checked } }));
 toggleThreats.addEventListener("change", () => updateSettings({ rulesets: { threats_ruleset: toggleThreats.checked } }));
 toggleCosmetic.addEventListener("change", () => updateSettings({ cosmeticFiltering: toggleCosmetic.checked }));
+toggleGenericCosmetic.addEventListener("change", () => updateSettings({ genericCosmeticFiltering: toggleGenericCosmetic.checked }));
+toggleProcedural.addEventListener("change", () => updateSettings({ proceduralFiltering: toggleProcedural.checked }));
 toggleCommunity.addEventListener("change", () => updateSettings({ rulesets: { community_ruleset: toggleCommunity.checked } }));
+toggleFlags.addEventListener("change", () => updateSettings({ flagSuspects: toggleFlags.checked }));
+
+// Count of servers waiting for a decision; a read failure leaves the generic text.
+async function refreshFlagCount() {
+  try {
+    const response = await api.runtime.sendMessage({ type: "GET_FLAGS" });
+    if (!response?.ok) throw new Error(response?.error || "No flags returned.");
+    flagCount = response.flags.filter(flag => flag.status !== "ignored").length;
+  } catch (error) {
+    flagCount = null;
+    console.warn("[Module Engine] Could not read flags:", error);
+  }
+  renderUI();
+}
+// A read-only summary: the userscript switch lives on the Modules & scripts page.
+// A read failure leaves the generic text.
+async function refreshScriptStatus() {
+  try {
+    const [state, library] = await Promise.all([api.runtime.sendMessage({ type: "MODULES_GET" }), api.runtime.sendMessage({ type: "US_LIST" })]);
+    if (!state?.ok || !library?.ok) throw new Error(state?.error || library?.error || "No script status returned.");
+    const module = state.modules.find(item => item.id === "userscripts");
+    const label = !module || module.enabled === null || (module.enabled && module.error) ? "Needs attention" : module.active ? "Active" : "Off";
+    scriptStatusEl.textContent = `${label} · ${library.scripts.filter(script => script.enabled).length} enabled · ${library.scripts.length} saved`;
+  } catch (error) {
+    console.warn("[Module Engine] Could not read script status:", error);
+  }
+}
 togglePopups.addEventListener("change", () => {
   if (!currentSettings || !activeHostname) return;
   runCommand({ type: "SET_SITE_POPUPS", domain: activeHostname, blocked: togglePopups.checked });
@@ -183,7 +278,7 @@ allowForm.addEventListener("submit", async event => {
 });
 retryButton.addEventListener("click", () => runCommand({ type: "GET_STATE" }));
 api.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus"].some(key => key in changes)) return;
+  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "cosmeticPausedDomains", "customCosmeticFilters", "customNetworkFilters", "flagSuspects", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus"].some(key => key in changes)) return;
   if (busy) refreshPending = true;
   else void runCommand({ type: "GET_STATE" }, true);
 });
@@ -194,4 +289,5 @@ api.storage.onChanged.addListener((changes, area) => {
   try { communityInfo = await (await fetch(api.runtime.getURL("rules/community-info.json"))).json(); }
   catch { communityInfo = null; }
   await runCommand({ type: "GET_STATE" });
+  await Promise.all([refreshFlagCount(), refreshScriptStatus()]);
 })();

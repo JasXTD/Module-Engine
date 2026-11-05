@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 401,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-oY3NkS\\evidence.json",
+  "error": "AssertionError [ERR_ASSERTION]: popup counts custom request blocks when all other filtering is off\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:441:54)\n    at verifyNetwork (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-browser.cjs:108:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:714:5"
+}

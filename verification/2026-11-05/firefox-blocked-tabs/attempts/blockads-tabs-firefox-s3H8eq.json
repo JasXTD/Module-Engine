@@ -1,0 +1,172 @@
+{
+  "browser": "firefox",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-s3H8eq",
+  "started": "2026-11-05T12:59:32.680Z",
+  "checks": [
+    "Firefox cleanup runs with rule-feedback debugging disabled and no match event",
+    "owned localhost destination is blocked"
+  ],
+  "requests": [
+    "/source",
+    "/favicon.ico"
+  ],
+  "deniedRequests": 17,
+  "proxyErrors": [],
+  "hashes": {
+    "manifest.json": "2e2f49e7a24117c1c5c3547cebe954d7396be7cb935febc39081df8adaedaf90",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "flags.js": "b54594940e068fde9bde81914bf19db16c22c89ccab4c35c07d27117a5edf6e1",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "background.js": "797e03b48c4ca814c2b309b7fde59c784394fd3f037bc28f350e991cb0f15c49",
+    "content.js": "1d0e131a606063507b89b06315163c39ca04f99d617f328b69f6ff3ca3969ee1",
+    "youtube.js": "6dc49f0fd662b3eacba8e2e4310c70252b9012006a6105587709461e36de3823",
+    "popups.js": "0d2645e6dacc2b369da62c4f45db113b014faf036bebf3854c1421124c0685aa",
+    "popup.js": "ee991acf151f23c0db0a343e8fbfb48e6c53dd457a532edcefc985fbe4604568",
+    "popup.html": "d373e6b6397ed482a2c67388c8c0d39747a07ba94c6b0ca8fdb0db01948679ba",
+    "popup.css": "f525b2bf90330895530ae414531254ac352759a1cd9efae09abca6ded244e5dc",
+    "ui.css": "ae676da0dce6e354de988b66206b4573b2ac0c6846ed4c7f168b37a682d78678",
+    "log.html": "dda26fcb6b01885cadd975733f668abbf1592076d6f5795e3e4f43eb6155c9cd",
+    "log.js": "cbf8e69e61686f601890d0f8894b3b57761f27b17fc033f2c38e32436e195467",
+    "log.css": "ad3248a47f73528c116a11c5b117fd964c2600b2569a9c7f89fb121344780681",
+    "lists.html": "39b4e5bc8145c83469eed25840b0504e0433c5eaf285561567211e93ff754bcf",
+    "lists.js": "d69aff83c719e3eb6361ae18db8456e0e23a9c6462c3e1311507f2799ad72ee8",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "userscripts-core.js": "1b24336ce0795563df48297400c18cdc997e4b5b092d31a4fad5808df3b9dc75",
+    "userscripts-runtime.js": "ea7a1f59794c27dc77304b9fea13fbcdfd7b7e81acf868dd393f1fc9b83817e8",
+    "manager.html": "da94801be5ba971afb6ee0e9de3a4d4d4a6ebef6b7979694b4689ccf247a7542",
+    "manager.js": "e590a14a97763c9d0cc408661a17d1e121ab02c205a72fee36d3e1f48abcfbf2",
+    "manager.css": "f1f6c03589478891a27f3d83b3f12a0a9b1219528e84c089090e1a68fa1d3b60"
+  },
+  "fixtureRule": {
+    "id": 9224,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "|http://127.0.0.1:53873/blocked-static",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  "version": {
+    "acceptInsecureCerts": false,
+    "browserName": "firefox",
+    "browserVersion": "159.0.1",
+    "platformName": "windows",
+    "setWindowRect": true,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:159.0) Gecko/20100101 Firefox/159.0",
+    "moz:buildID": "20261102144711",
+    "moz:headless": true,
+    "moz:platformVersion": "10.0",
+    "moz:processID": 48428,
+    "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-s3H8eq\\profile",
+    "moz:shutdownTimeout": 73000
+  },
+  "feedback": {
+    "enabled": false,
+    "error": "declarativeNetRequest.testMatchOutcome is only available when the \"extensions.dnr.feedback\" preference is set to true.",
+    "debugEvent": "undefined"
+  },
+  "success": false,
+  "error": "Error: {\"columnNumber\":114,\"exception\":{\"type\":\"error\"},\"lineNumber\":0,\"stackTrace\":{\"callFrames\":[{\"columnNumber\":114,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html\"},{\"columnNumber\":139,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html\"}]},\"text\":\"TypeError: can't access property \\\"id\\\", tabs[0] is undefined\"}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:316:46)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\blocked-tabs-browser.cjs:88:23",
+  "events": [
+    {
+      "kind": "created",
+      "data": {
+        "id": 2
+      }
+    }
+  ],
+  "tabs": [
+    {
+      "id": 1,
+      "index": 0,
+      "windowId": 3,
+      "highlighted": false,
+      "active": false,
+      "attention": false,
+      "pinned": false,
+      "status": "complete",
+      "hidden": false,
+      "discarded": false,
+      "incognito": false,
+      "width": 1366,
+      "height": 683,
+      "lastAccessed": 1793883575288,
+      "audible": false,
+      "autoDiscardable": true,
+      "mutedInfo": {
+        "muted": false
+      },
+      "isInReaderMode": false,
+      "sharingState": {
+        "camera": false,
+        "microphone": false
+      },
+      "successorTabId": -1,
+      "groupId": -1,
+      "splitViewId": -1,
+      "cookieStoreId": "firefox-default",
+      "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html",
+      "title": "Module Engine"
+    },
+    {
+      "id": 2,
+      "index": 1,
+      "windowId": 3,
+      "highlighted": true,
+      "active": true,
+      "attention": false,
+      "pinned": false,
+      "status": "complete",
+      "hidden": false,
+      "discarded": false,
+      "incognito": false,
+      "width": 1366,
+      "height": 683,
+      "lastAccessed": 1793883575464,
+      "audible": false,
+      "autoDiscardable": true,
+      "mutedInfo": {
+        "muted": false
+      },
+      "isArticle": false,
+      "isInReaderMode": false,
+      "sharingState": {
+        "camera": false,
+        "microphone": false
+      },
+      "successorTabId": -1,
+      "groupId": -1,
+      "splitViewId": -1,
+      "cookieStoreId": "firefox-default",
+      "url": "http://127.0.0.1:53873/source",
+      "title": "Owned blocked-tab fixture"
+    }
+  ],
+  "log": {
+    "ok": true,
+    "entries": [
+      {
+        "time": 1793883574948,
+        "kind": "event",
+        "message": "Module Engine 1.9.0 installed"
+      },
+      {
+        "time": 1793883575271,
+        "kind": "event",
+        "message": "Custom block added localhost"
+      }
+    ],
+    "blockLogging": false,
+    "allowedDomains": []
+  },
+  "finished": "2026-11-05T12:59:38.216Z"
+}

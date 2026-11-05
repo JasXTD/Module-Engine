@@ -1,4 +1,4 @@
-/* BlockAds activity log page: a read-only view of the background's session log.
+/* Module Engine activity log page: a read-only view of the background's session log.
  * Entries contain page-controlled URLs, so they are only ever set as text. */
 "use strict";
 const api = typeof browser !== "undefined" ? browser : chrome;
@@ -116,7 +116,7 @@ async function refresh() {
     allowedDomains = Array.isArray(response.allowedDomains) ? response.allowedDomains : [];
     showNotice(response.blockLogging ? "" :
       "This browser does not report individual blocked requests to extensions, so only events are listed. " +
-      "Chrome and Edge report them while BlockAds is loaded unpacked; Firefox does not provide this.");
+      "Chrome and Edge report them while Module Engine is loaded unpacked; Firefox does not provide this.");
     render();
   } catch (error) {
     showNotice(`Could not read the log: ${error.message || error}`, true);
@@ -128,7 +128,7 @@ async function refresh() {
 byId("kindFilter").addEventListener("change", render);
 byId("textFilter").addEventListener("input", render);
 byId("clearButton").addEventListener("click", async () => {
-  if (!confirm("Clear the BlockAds activity log?")) return;
+  if (!confirm("Clear the Module Engine activity log?")) return;
   try {
     entries = (await request("CLEAR_LOG")).entries;
     render();
@@ -140,7 +140,7 @@ byId("exportButton").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `blockads-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  link.download = `module-engine-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 });
