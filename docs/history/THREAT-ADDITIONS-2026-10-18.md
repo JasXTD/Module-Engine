@@ -15,7 +15,7 @@ This is a bounded selection, not an exhaustive import of every indicator in eith
 
 ## Exact hosts
 
-Names below are defanged and are not links. Full machine-readable provenance is in [lists/reported-threats.json](lists/reported-threats.json).
+Names below are defanged and are not links. Full machine-readable provenance is in [lists/reported-threats.json](../../lists/reported-threats.json).
 
 | Host | Reported role | Observed date precision | Source section |
 | --- | --- | --- | --- |
@@ -70,7 +70,7 @@ The browser suites tested all 24 hosts with synthetic DNR request descriptions, 
 
 Firefox's test API rejects WebSocket-scheme inputs before matching. Its tests therefore use the HTTP(S) handshake representation and independently prove blocking with the real loopback handshake. The original failing diagnostic is retained with the final evidence. [Mozilla implementation](https://searchfox.org/firefox-main/source/toolkit/components/extensions/ExtensionDNR.sys.mjs).
 
-Saved evidence is under [verification/2026-10-18/dated-threats/](verification/2026-10-18/dated-threats/). Runtime and ruleset hashes in all three final browser records were compared against the delivered workspace. Permanent signed Firefox installation remains unverified. Expiry/failure timing uses an injected-clock unit harness, not a claim that weeks elapsed in live browsers. These checks do not establish complete protection against all malicious content.
+Saved evidence is under [verification/2026-10-18/dated-threats/](../../verification/2026-10-18/dated-threats). Runtime and ruleset hashes in all three final browser records were compared against the delivered workspace. Permanent signed Firefox installation remains unverified. Expiry/failure timing uses an injected-clock unit harness, not a claim that weeks elapsed in live browsers. These checks do not establish complete protection against all malicious content.
 
 ## Changes and recovery
 

@@ -1,24 +1,42 @@
-# Dated backup copies made before earlier changes (git history replaces these)
-.artifacts/
+# Local snapshots, working logs and scratch exports
+/.artifacts/
+*.log
+
+# Browser-generated data and transient rule-build files
+/_metadata/
+/rules/.build.lock
+*.tmp
+*.temp
+
+# Local build/test output; packaged rules/*.json remain versioned
+/build/
+/dist/
+/coverage/
+/.nyc_output/
 
 # Packed extensions and their signing keys
 *.crx
 *.xpi
 *.pem
+*.key
+*.p12
+*.pfx
 
 # Dependencies, local secrets, editor and OS files
 node_modules/
 .env
 .env.*
+!.env.example
+!.env.sample
 .vscode/
 .idea/
 .vs/
 Thumbs.db
 desktop.ini
 .DS_Store
+*.swp
+*.swo
+*~
 
 # Claude Code's per-user settings for this project
-.claude/settings.local.json
-
-# Chrome writes compiled rulesets here when the folder is loaded unpacked
-_metadata/
+/.claude/settings.local.json

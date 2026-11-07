@@ -21,7 +21,7 @@ BlockAds is an active basic request blocker, but **these checks do not establish
 
 The initial four-site observations used 1.0.3. The subsequent live Twitch/Fandom checks and all three final browser regression suites used 1.0.4. Its only filtering change is scoped to Fandom. All three observed Fandom wrappers changed from visible to hidden; the site's own large themed community header remains.
 
-Screenshots: [YouTube ad leak](verification/2026-10-18/live-sites/youtube-ad-leak.png), [Twitch playback](verification/2026-10-18/live-sites/twitch-live.png), [Fandom before the fix](verification/2026-10-18/live-sites/fandom-before.png), [Fandom after the fix](verification/2026-10-18/live-sites/fandom-after.png), [Fandom comparison with ad/tracker/cosmetic filtering off](verification/2026-10-18/live-sites/fandom-cosmetics-off.png).
+Screenshots: [YouTube ad leak](../../verification/2026-10-18/live-sites/youtube-ad-leak.png), [Twitch playback](../../verification/2026-10-18/live-sites/twitch-live.png), [Fandom before the fix](../../verification/2026-10-18/live-sites/fandom-before.png), [Fandom after the fix](../../verification/2026-10-18/live-sites/fandom-after.png), [Fandom comparison with ad/tracker/cosmetic filtering off](../../verification/2026-10-18/live-sites/fandom-cosmetics-off.png).
 
 ## Changes and verification
 
@@ -42,7 +42,7 @@ Screenshots: [YouTube ad leak](verification/2026-10-18/live-sites/youtube-ad-lea
 
 The catalog/build suites were not repeated because their inputs, scripts and generated rules did not change. The shared v1 catalog retains SHA-256 `C71FD950C7A39A00D6D27BF88CB67BC1D710A37F9214D781D999161A6B4FA5EC`; the dated browser-only threats remain separate and expire on 30 November 2026 UTC.
 
-Saved evidence is under [verification/2026-10-18/live-sites](verification/2026-10-18/live-sites/). The checkpoint predating this work is `.artifacts/live-sites-20261018-141509/`. Failed harness attempts are retained separately: the first used a cache command at the wrong CDP target; another exposed an unbounded media-play promise on an offline Twitch channel. Both were corrected in the harness and their browser processes were closed. They are not counted as successful checks.
+Saved evidence is under [verification/2026-10-18/live-sites](../../verification/2026-10-18/live-sites). The checkpoint predating this work is `.artifacts/live-sites-20261018-141509/`. Failed harness attempts are retained separately: the first used a cache command at the wrong CDP target; another exposed an unbounded media-play promise on an offline Twitch channel. Both were corrected in the harness and their browser processes were closed. They are not counted as successful checks.
 
 ## Blocker detection
 

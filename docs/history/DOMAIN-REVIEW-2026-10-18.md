@@ -111,8 +111,8 @@ Every entry below has current verdict **unverified** and action **do not promote
 
 ## Local artifacts and enforcement
 
-- [Machine-readable review](lists/passive-domain-review-2026-10-18.json): authored findings, not downloaded threat data and not an enforcement input.
-- [Canonical catalog](lists/reviewed-domains.json): version 1 remains an offline structural snapshot, with SHA-256 `C71FD950C7A39A00D6D27BF88CB67BC1D710A37F9214D781D999161A6B4FA5EC`.
+- [Machine-readable review](../../lists/passive-domain-review-2026-10-18.json): authored findings, not downloaded threat data and not an enforcement input.
+- [Canonical catalog](../../lists/reviewed-domains.json): version 1 remains an offline structural snapshot, with SHA-256 `C71FD950C7A39A00D6D27BF88CB67BC1D710A37F9214D781D999161A6B4FA5EC`.
 - Active browser rules remain **100 ad rules and 80 tracker rules**. The compatibility malware file remains empty, and the manifest declares no malware ruleset.
 - The native CyberAssist catalog and its schema were not changed. Runtime code, generated rules and builder inputs were not changed.
 - Existing README files were backed up under `.artifacts/passive-review-20261018-114312/`; that directory also records the pre-review hashes of protected files.
@@ -121,5 +121,5 @@ A future promotion requires dated primary evidence for the precise hostname and 
 
 ## Validation
 
-Validation results are recorded in [verification/2026-10-18/passive-review-validation.json](verification/2026-10-18/passive-review-validation.json). The final checks cover all 73 unique entries, source references and evidence dates, source-catalog identity, unchanged protected files, and the existing offline rule/import regression suite. Browser runtime was not rerun for these documentation-only changes; the earlier Chrome/Firefox results remain in [the implementation report](CHANGES-2026-10-18.md).
+Validation results are recorded in [verification/2026-10-18/passive-review-validation.json](../../verification/2026-10-18/passive-review-validation.json). The final checks cover all 73 unique entries, source references and evidence dates, source-catalog identity, unchanged protected files, and the existing offline rule/import regression suite. Browser runtime was not rerun for these documentation-only changes; the earlier Chrome/Firefox results remain in [the implementation report](CHANGES-2026-10-18.md).
 

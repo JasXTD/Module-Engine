@@ -19,7 +19,7 @@ The separate `passive-domain-review-2026-10-18.json` records a later passive sea
 all 73 unverified entries. No entry met the user-selected recent dated-evidence
 threshold, so it adds no blocks. Four explicit vendor threat descriptions were undated.
 This research record is not a version-1 catalog or build input; it must not be imported
-as one. See [the complete findings](../DOMAIN-REVIEW-2026-10-18.md) for scope and limits.
+as one. See [the complete findings](../docs/history/DOMAIN-REVIEW-2026-10-18.md) for scope and limits.
 
 Each record has a canonical ASCII hostname, `exact` or `subdomains` matching (the latter
 includes the apex), its category, source ID and original rule ID, and original browser
@@ -130,4 +130,4 @@ extending them. A manual new evidence review is required to renew coverage.
 
 Run `pwsh -NoProfile -File tests/threat-rules.test.ps1` for offline schema, expiry,
 exact-boundary, legacy-exclusion and failed-publication checks. See the
-[dated-threat review](../THREAT-ADDITIONS-2026-10-18.md) for sources and browser validation.
+[dated-threat review](../docs/history/THREAT-ADDITIONS-2026-10-18.md) for sources and browser validation.
