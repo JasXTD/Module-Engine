@@ -1,0 +1,448 @@
+{
+  "date": "2026-11-11",
+  "feature": "Manual userscript URL installation and updates",
+  "version": "1.9.0",
+  "unit": {
+    "tests": 328,
+    "passed": 328,
+    "failed": 0,
+    "file": "unit-all-final.out"
+  },
+  "reports": [
+    {
+      "browser": "chrome",
+      "suite": "userscripts-browser.cjs",
+      "success": true,
+      "checks": 41,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "file": "chrome-install.json",
+      "sha256": "159013873f71bc4f2eb6c4d4b8ed1c0be597397295ec48f656bb17fee58ca003",
+      "screenshots": [
+        "chrome-install-install-code-1280.png",
+        "chrome-install-install-code-390.png",
+        "chrome-install-install-review-1280.png",
+        "chrome-install-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 40172,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "userscripts-browser.cjs",
+      "success": true,
+      "checks": 41,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "file": "edge-install.json",
+      "sha256": "7654ecd31080f1b02f66bab1eda2383f81e099eba2c6857004e037c66d2da367",
+      "screenshots": [
+        "edge-install-install-code-1280.png",
+        "edge-install-install-code-390.png",
+        "edge-install-install-review-1280.png",
+        "edge-install-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 42628,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "suite": "userscripts-firefox.cjs",
+      "success": true,
+      "checks": 36,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 40908,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-dbnO3l\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "file": "firefox-install.json",
+      "sha256": "3964737311877921f40caafe9d93aab28a88e437fa332e2b959666560756b5a7",
+      "screenshots": [
+        "firefox-install-install-review-1280.png",
+        "firefox-install-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserClosed": true
+      }
+    },
+    {
+      "browser": "chrome",
+      "suite": "browser-smoke.cjs",
+      "success": true,
+      "checks": 571,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "file": "chrome-blocker.json",
+      "sha256": "d808a660c6c4e0b5839dc5cb23390b67231eaac516257bfa2314d51cf1dd6cd6",
+      "screenshots": [
+        "chrome-blocker-cosmetic-editor-1100.png",
+        "chrome-blocker-cosmetic-editor-380.png",
+        "chrome-blocker-network-editor-1100.png",
+        "chrome-blocker-network-editor-380.png",
+        "chrome-blocker-picker-1100.png",
+        "chrome-blocker-picker-380.png",
+        "chrome-blocker-popup-error.png",
+        "chrome-blocker-popup-final.png",
+        "chrome-blocker-popup-inherited.png",
+        "chrome-blocker-popup-long-domain.png",
+        "chrome-blocker-popup-paused.png",
+        "chrome-blocker-reddit-after.png",
+        "chrome-blocker-reddit-before.png",
+        "chrome-blocker-threat-evidence-1100.png",
+        "chrome-blocker-threat-evidence-380.png"
+      ],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 48380,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "browser-smoke.cjs",
+      "success": true,
+      "checks": 571,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "file": "edge-blocker.json",
+      "sha256": "62af675c5c277959e2c8513ba1862d54fe1567b5550c8537c0324cc658d962c0",
+      "screenshots": [
+        "edge-blocker-cosmetic-editor-1100.png",
+        "edge-blocker-cosmetic-editor-380.png",
+        "edge-blocker-network-editor-1100.png",
+        "edge-blocker-network-editor-380.png",
+        "edge-blocker-picker-1100.png",
+        "edge-blocker-picker-380.png",
+        "edge-blocker-popup-error.png",
+        "edge-blocker-popup-final.png",
+        "edge-blocker-popup-inherited.png",
+        "edge-blocker-popup-long-domain.png",
+        "edge-blocker-popup-paused.png",
+        "edge-blocker-reddit-after.png",
+        "edge-blocker-reddit-before.png",
+        "edge-blocker-threat-evidence-1100.png",
+        "edge-blocker-threat-evidence-380.png"
+      ],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 17944,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "suite": "browser-smoke.cjs",
+      "success": true,
+      "checks": 565,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 40756,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-rXbhqZ\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "file": "firefox-blocker.json",
+      "sha256": "55a348c8bce772aabeb82df68f6146cedc32f1952a2a3511f7bac2d72009e48d",
+      "screenshots": [
+        "firefox-blocker-lists-380.png",
+        "firefox-blocker-lists-dark.png",
+        "firefox-blocker-lists-light.png",
+        "firefox-blocker-log-380.png",
+        "firefox-blocker-log-dark.png",
+        "firefox-blocker-log-light.png",
+        "firefox-blocker-manager-380.png",
+        "firefox-blocker-manager-dark.png",
+        "firefox-blocker-manager-light.png",
+        "firefox-blocker-popup-350.png",
+        "firefox-blocker-popup-dark.png",
+        "firefox-blocker-popup-error.png",
+        "firefox-blocker-popup-final.png",
+        "firefox-blocker-popup-inherited.png",
+        "firefox-blocker-popup-light.png",
+        "firefox-blocker-popup-long-domain.png",
+        "firefox-blocker-popup-paused.png",
+        "firefox-blocker-toolbar-popup.png"
+      ],
+      "sourceHashesMatchWorkspace": true
+    },
+    {
+      "browser": "chrome",
+      "suite": "blocked-tabs-browser.cjs",
+      "success": true,
+      "checks": 25,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "file": "chrome-blocked-tabs.json",
+      "sha256": "ca3489ab42551719f1d8d4ab7713bb9c2b81a20a05c36557ac3709eecf6dd96f",
+      "screenshots": [],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 28640,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "blocked-tabs-browser.cjs",
+      "success": true,
+      "checks": 25,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "file": "edge-blocked-tabs.json",
+      "sha256": "85ff0669f14ac473520aa80023493f0f7be29bed55557efe3633ceb3e3f09340",
+      "screenshots": [],
+      "sourceHashesMatchWorkspace": true,
+      "cleanup": {
+        "browserPid": 6552,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "suite": "blocked-tabs-browser.cjs",
+      "success": true,
+      "checks": 28,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 15280,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-37W0qP\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "file": "firefox-blocked-tabs.json",
+      "sha256": "386dbfbc9bfaa9a806b4e30b6cc38f730ff297a446c9dc2eeccd1740e9c46bbe",
+      "screenshots": [],
+      "sourceHashesMatchWorkspace": true
+    }
+  ],
+  "attempts": [
+    {
+      "browser": "chrome",
+      "success": true,
+      "checks": 39,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "file": "attempts/chrome-install-initial.json",
+      "sha256": "2085ccb6f06597ba8ad37cc704fa80268013d565c6cca59386a77d95867cc3bd",
+      "screenshots": [
+        "attempts/chrome-install-initial-install-code-1280.png",
+        "attempts/chrome-install-initial-install-code-390.png",
+        "attempts/chrome-install-initial-install-review-1280.png",
+        "attempts/chrome-install-initial-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": false,
+      "cleanup": {
+        "browserPid": 51704,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "success": true,
+      "checks": 39,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "file": "attempts/edge-install-initial.json",
+      "sha256": "77c9e9bfeca1907f5474b0b23f7e88c3e788fd0ee00b275bd40574d148f0d297",
+      "screenshots": [
+        "attempts/edge-install-initial-install-code-1280.png",
+        "attempts/edge-install-initial-install-code-390.png",
+        "attempts/edge-install-initial-install-review-1280.png",
+        "attempts/edge-install-initial-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": false,
+      "cleanup": {
+        "browserPid": 48412,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "success": false,
+      "checks": 32,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 25688,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-QmjKQs\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "file": "attempts/firefox-install-teardown-failure.json",
+      "sha256": "d92b56438eebe6fd89235216ff7a89b4da2bdca468f85ee79c4cabee3c0caba2",
+      "screenshots": [
+        "attempts/firefox-install-teardown-failure-install-review-1280.png",
+        "attempts/firefox-install-teardown-failure-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": false,
+      "error": "AssertionError [ERR_ASSERTION]: No uncaught Firefox installation errors\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:41:44)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:75:59\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "cleanup": {
+        "browserClosed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "success": true,
+      "checks": 34,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 50340,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-PE0n60\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "file": "attempts/firefox-install-intermediate.json",
+      "sha256": "2251914a1dc8ee570765563d0e8c121d37666b0abe804637994ac613c2fe3fdd",
+      "screenshots": [
+        "attempts/firefox-install-intermediate-install-review-1280.png",
+        "attempts/firefox-install-intermediate-install-review-390.png"
+      ],
+      "sourceHashesMatchWorkspace": false,
+      "cleanup": {
+        "browserClosed": true
+      }
+    }
+  ],
+  "verification": {
+    "nativeSourceHashesMatchWorkspace": true,
+    "offlineFixturesOnly": true,
+    "thirdPartyCodeExecuted": false,
+    "packagesInstalled": [],
+    "committed": false,
+    "pushed": false,
+    "reviewedLayouts": "Desktop and 390px review/code panels; Firefox narrow CSS is rendered in an inert same-origin frame.",
+    "reference": "https://violentmonkey.github.io/api/metadata-block/",
+    "limitations": [
+      "Public source hosts and redirecting installation sites were not exercised.",
+      "No automatic checks, metadata-directed updates or link interception.",
+      "The full desktop-helper native suite was not repeated; its earlier dated report has a separate source snapshot.",
+      "Rule builders were not repeated because packaged rule inputs/outputs did not change."
+    ]
+  },
+  "notes": [
+    "The first Firefox run completed feature checks but failed the uncaught-error check after test frame teardown. The fixture now renders an inert CSS-only frame and waits for the second manager before closing it; the unchanged error check passes.",
+    "Approval uses exactly reviewed bytes and expected script revision, including after native Chromium worker shutdown. Applied scripts retain the latest GM values and start paused."
+  ],
+  "cleanup": {
+    "pending": false,
+    "removed": [
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-kIVpXH",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-baIbK3",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-dbnO3l",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-jYUE3N",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-0yenws",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-rXbhqZ",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-LAglXo",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-jZaehY",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-37W0qP",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-66ShLo",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-1hgzbk",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-QmjKQs",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-PE0n60",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-install-preview-eRZ5YE",
+      "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-install-preview-WeN71G"
+    ],
+    "count": 15,
+    "matchingProcesses": 0,
+    "evidenceHashesVerified": true
+  }
+}

@@ -54,8 +54,15 @@ function protocol(write) {
   };
 }
 
-async function chromium(extension, profile, denyPort, { headless = true, networkMode = 'offline' } = {}) {
+async function chromium(extension, profile, denyPort, { headless = true, networkMode = 'offline', downloadDirectory } = {}) {
   if (!['offline', 'live-public'].includes(networkMode)) throw new Error('Unknown browser network mode');
+  if (downloadDirectory) {
+    await fs.mkdir(path.join(profile, 'Default'), { recursive: true });
+    // CDP's setDownloadBehavior replaces extension-chosen filenames. Use the
+    // normal download preference in this fresh profile to test native naming.
+    await fs.writeFile(path.join(profile, 'Default', 'Preferences'), JSON.stringify({ download: {
+      default_directory: downloadDirectory, prompt_for_download: false, directory_upgrade: true } }));
+  }
   // Edge may exit its launcher and relaunch for Windows compatibility handling.
   // A pipe belongs to the exited launcher; a loopback endpoint survives relaunch.
   const useSocket = browserName === 'edge';
@@ -200,18 +207,25 @@ async function chromium(extension, profile, denyPort, { headless = true, network
       if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
       return result.result.value;
     };
+    const front = async target => {
+      if (!headless) {
+        const { windowId, bounds } = await rpc.send('Browser.getWindowForTarget', { targetId: target.id });
+        if (bounds.windowState === 'minimized') await rpc.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+      }
+      await rpc.send('Page.bringToFront', {}, target.session);
+    };
     return {
-      version, id, popup, evaluate, open: attach, close, events: rpc.events,
+      version, id, popup, evaluate, front, open: attach, close, events: rpc.events,
       closePage: target => rpc.send('Target.closeTarget', { targetId: target.id }),
       send: (method, params, target) => rpc.send(method, params, target?.session),
       async clickAt(x, y, target = popup) {
-        await rpc.send('Target.activateTarget', {targetId:target.id});
+        await front(target);
         for (const type of ['mouseMoved','mousePressed','mouseReleased']) await rpc.send('Input.dispatchMouseEvent',
           {type,x,y,button:type === 'mouseMoved' ? 'none' : 'left',clickCount:type === 'mouseMoved' ? 0 : 1},target.session);
       },
       async typeText(text, target = popup) { await rpc.send('Input.insertText', {text}, target.session); },
       async pressKey(key, target = popup) {
-        const code = {Escape:27,Tab:9,Enter:13}[key];
+        const code = {Escape:27,Tab:9,Enter:13,PageDown:34}[key];
         for (const type of ['keyDown','keyUp']) await rpc.send('Input.dispatchKeyEvent',{type,key,code:key,windowsVirtualKeyCode:code,
           ...(type === 'keyDown' && key === 'Enter' ? {text:'\r',unmodifiedText:'\r'} : {})},target.session);
       },
@@ -234,12 +248,14 @@ async function chromium(extension, profile, denyPort, { headless = true, network
   } catch (error) { await close(); error.message += `\nBrowser exit ${child.exitCode}: ${stderr}`; throw error; }
 }
 
-async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {}) {
+async function firefox(extension, profile, denyPort, { ruleFeedback = true, downloadDirectory } = {}) {
+  const firefoxExecutable = process.env.BLOCKADS_TEST_BROWSER || executables.firefox;
   const uuid = 'd73f30ed-9a72-486f-84f7-8a1d16be7021';
   await fs.mkdir(profile, { recursive: true });
   await fs.writeFile(path.join(profile, 'user.js'), [
     `user_pref("extensions.webextensions.uuids", ${JSON.stringify(JSON.stringify({ 'blockads-shield@local.extension': uuid }))});`,
     'user_pref("browser.shell.checkDefaultBrowser", false);',
+    ...(downloadDirectory ? [`user_pref("browser.download.dir", ${JSON.stringify(downloadDirectory)});`, 'user_pref("browser.download.folderList", 2);', 'user_pref("browser.download.useDownloadDir", true);'] : []),
     `user_pref("extensions.dnr.feedback", ${Boolean(ruleFeedback)});`,
     'user_pref("network.proxy.type", 1);',
     'user_pref("network.proxy.http", "127.0.0.1");',
@@ -259,7 +275,7 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {
   ].join('\n'));
   // Extension pages are privileged contexts to BiDi. Firefox 159 no longer has
   // --remote-allow-system-access, which older releases need, and reads this instead.
-  const child = spawn(executable, ['--headless', '--no-remote', '--profile', profile,
+  const child = spawn(firefoxExecutable, ['--headless', '--no-remote', '--profile', profile,
     '--remote-allow-system-access', '--remote-debugging-port', '0', 'about:blank'],
   { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1' } });
   let stderr = '';
@@ -273,7 +289,9 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {
   };
   try {
     const endpoint = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Firefox BiDi startup timed out')), 20000);
+      // Cold Firefox startup on Windows can exceed 20 seconds before exposing
+      // BiDi. Wait for that endpoint, with a bounded startup timeout, not a sleep.
+      const timer = setTimeout(() => reject(new Error('Firefox BiDi startup timed out')), 60000);
       const read = data => {
         stderr += data;
         const match = stderr.match(/WebDriver BiDi listening on (ws:\/\/127\.0\.0\.1:\d+)/);
@@ -318,12 +336,40 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {
     };
     // BiDi refuses browsingContext.activate on privileged contexts, but not
     // screenshots or native input, so extension pages front themselves.
-    const front = target => target.extensionPage
-      ? evaluate('browser.tabs.getCurrent().then(tab => browser.tabs.update(tab.id, { active: true }))', target)
-      : rpc.send('browsingContext.activate', { context: target.id });
+    const front = async target => {
+      if (target.extensionPage) await evaluate('browser.tabs.getCurrent().then(tab => browser.tabs.update(tab.id, { active: true }))', target);
+      else await rpc.send('browsingContext.activate', { context: target.id });
+      // Selecting a tab alone can leave native focus in browser chrome after
+      // a permission prompt. DOM activeElement is insufficient for activation.
+      await chromeEvaluate('gBrowser.selectedBrowser.focus()');
+    };
     return {
       version: session.capabilities, id: uuid, popup, evaluate, navigate, close, front, events: rpc.events,
       consoleErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineErrors)')),
+      async userscriptPermissionPrompt(accept = false, kind = 'userscripts') {
+        // Operate only the visible native prompt for this disposable extension.
+        // This is a browser UI acceptance, not a permission-store/pref override.
+        return JSON.parse(await chromeEvaluate(`(() => {
+          const panel = PopupNotifications.panel;
+          const node = [...panel.querySelectorAll('popupnotification')].find(item => !item.hidden && /webext-permissions/.test(item.id));
+          const text = node ? (node.getAttribute('label') || '') + ' ' + node.textContent : '';
+          const button = node?.button;
+          const setting = node?.querySelector('moz-checkbox');
+          const settingLabel = setting?.label || setting?.shadowRoot?.textContent || '';
+          const info = { state: panel.state, id: node?.id, text: text.slice(0, 2000), button: button?.label, disabled: button?.disabled,
+            settingLabel, checked: setting?.checked, accepted: false };
+          if (${Boolean(accept && kind === 'userscripts')} && panel.state === 'open' && text.includes('Module Engine') &&
+              node.querySelectorAll('moz-checkbox').length === 1 && settingLabel === 'Allow unverified third-party scripts to access your data') {
+            if (!setting.checked) { setting.shadowRoot.querySelector('input[type="checkbox"]').click(); info.settingClicked = true; }
+            if (setting.checked && button && !button.disabled) { button.click(); info.accepted = true; }
+          }
+          if (${Boolean(accept && kind === 'helpers')} && panel.state === 'open' && text.includes('Module Engine') &&
+              node.querySelectorAll('moz-checkbox').length === 0 && /clipboard/i.test(text) && /notifications/i.test(text) && /download/i.test(text) && button && !button.disabled) {
+            button.click(); info.accepted = true;
+          }
+          return JSON.stringify(info);
+        })()`));
+      },
       // emulation.setMediaFeaturesOverride also refuses extension pages.
       setColorScheme(scheme) {
         const pref = 'layout.css.prefers-color-scheme.content-override';
@@ -360,7 +406,9 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true } = {
           [...text].flatMap(value=>[{type:'keyDown',value},{type:'keyUp',value}])}]});
       },
       async pressKey(key, target = popup) {
-        const value = {Escape:'\uE00C',Tab:'\uE004',Enter:'\uE007'}[key];
+        await front(target);
+        // Use the main Return key (code Enter), not keypad Enter.
+        const value = {Escape:'\uE00C',Tab:'\uE004',Enter:'\uE006',Space:' ',PageDown:'\uE00F'}[key];
         await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:[{type:'keyDown',value},{type:'keyUp',value}]}]});
       },
       closePage: target => rpc.send('browsingContext.close', { context: target.id }),
@@ -402,15 +450,16 @@ if (require.main === module) (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-verify-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const testedManifest = JSON.parse(await fs.readFile(path.join(extension, 'manifest.json'), 'utf8'));
   const sourceHashes = {};
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/community-cosmetic.json', 'rules/threat-evidence.json', 'rules/threat-policy.json',
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/community-cosmetic.json', 'rules/threat-evidence.json', 'rules/threat-policy.json',
     ...testedManifest.declarative_net_request.rule_resources.map(rule => rule.path)]) {
     sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
+  const redditFixture = await require('./reddit-browser.cjs').aliasFixture(extension);
   const requests = [];
   // This proxy never resolves or forwards a destination. Every non-loopback
   // request from the isolated browser profile is rejected here, including CONNECT.
@@ -497,7 +546,7 @@ if (require.main === module) (async () => {
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const fixtureUrl = `http://127.0.0.1:${server.address().port}/fixture`;
-  const evidence = { browser: browserName, temporary, sourceHashes, checks: [], startedAt: new Date().toISOString() };
+  const evidence = { browser: browserName, temporary, sourceHashes, fixtureOverrides: [redditFixture], checks: [], startedAt: new Date().toISOString() };
   let browser;
   const check = (condition, description) => { assert.ok(condition, description); evidence.checks.push(description); };
   try {
@@ -510,8 +559,16 @@ if (require.main === module) (async () => {
     const state = () => send({ type: 'GET_STATE' });
     const match = (url, type = 'script', initiator = 'https://fixture.example') => browser.evaluate(
       `api.declarativeNetRequest.testMatchOutcome(${JSON.stringify({ url, type, initiator })})`);
-    check((await state()).ok, 'unmodified extension loads and reports verified state');
+    check((await state()).ok, 'extension loads and reports verified state (Reddit hostname alias is limited to the local fixture)');
     check(!(await browser.evaluate('errorPanel.hidden === false')), 'popup has no startup error');
+    if (process.argv.includes('--reddit-only')) {
+      const page = await browser.open(fixtureUrl);
+      await require('./reddit-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
+      await browser.closePage(page);
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during the focused Reddit fixture checks');
+      evidence.success = true; return;
+    }
     check((await match('https://doubleclick.net/test.js')).matchedRules.length > 0, 'bundled ad request matches');
     check((await match('https://customer.azioncdn.net/app.js')).matchedRules.length === 0, 'shared CDN customer is allowed');
     check((await match('https://legitimate.example.tk/app.js')).matchedRules.length === 0, 'country-code TLD is not blanket blocked');
@@ -771,6 +828,7 @@ if (require.main === module) (async () => {
     await browser.closePage(listsPage);
     }
     await require('./procedural-browser.cjs')({ browser, page, send, state, until, check, root });
+    await require('./reddit-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
     await require('./picker-browser.cjs')({ browser, page, send, state, until, check, temporary });
     await require('./network-browser.cjs')({ browser, page, send, state, match, until, check, temporary, requests, threatHosts });
     await send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
@@ -984,6 +1042,8 @@ if (require.main === module) (async () => {
     check(evidence.events.length === 0, 'no uncaught extension runtime exceptions');
   } catch (error) {
     evidence.success = false; evidence.error = error.stack;
+    evidence.failureEvents = browser?.events.filter(event => event.method === 'Runtime.exceptionThrown' ||
+      event.method === 'Runtime.consoleAPICalled' || event.method === 'log.entryAdded');
     process.exitCode = 1;
   } finally {
     if (browser) {

@@ -1,0 +1,22 @@
+{
+  "name": "acorn",
+  "version": "8.18.0",
+  "license": "MIT",
+  "source": "Node.js v24.22.1 signed OpenJS Foundation installation",
+  "executable": "C:\\Program Files\\nodejs\\node.exe",
+  "nativeModule": "internal/deps/acorn/acorn/dist/acorn",
+  "sha256": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+  "upstream": "https://github.com/acornjs/acorn/tree/8.18.0",
+  "approval": "Local bundled copy approved by user on 2026-11-12",
+  "malwareScan": {
+    "product": "Malwarebytes",
+    "result": "No threats found",
+    "reportedBy": "user",
+    "date": "2026-11-13"
+  },
+  "defenderScan": {
+    "result": "Unavailable",
+    "error": "0x80004005",
+    "reason": "Product disabled; user uses Malwarebytes"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "reviewKind": "user-requested-ad-hosts",
+  "hosts": [
+    {
+      "domain": "pxl.wheelroot.com",
+      "match": "exact",
+      "requestedOn": "2026-11-12",
+      "reason": "User requested ad blocking. No independent malware classification or live-site inspection."
+    }
+  ]
+}

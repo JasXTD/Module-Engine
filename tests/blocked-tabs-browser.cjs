@@ -9,9 +9,9 @@ const { chromium, firefox } = require('./browser-smoke.cjs');
 const root = path.resolve(__dirname, '..'), browserName = process.argv[2] || 'chrome';
 if (!['chrome', 'edge', 'firefox'].includes(browserName)) throw new Error('Choose chrome, edge or firefox.');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const files = ['manifest.json','shared.js','flags.js','cosmetic.js','network.js','evidence.js','procedural.js','picker-core.js','picker.js',
+const files = ['manifest.json','shared.js','flags.js','cosmetic.js','network.js','evidence.js','procedural.js', 'reddit.js','picker-core.js','picker.js',
   'background.js','content.js','youtube.js','popups.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
-  'lists.html','lists.js','modules.js','userscripts-core.js','userscripts-runtime.js','manager.html','manager.js','manager.css','rules','icons'];
+  'lists.html','lists.js','modules.js','userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js','clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js','manager.html','manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE','manager.css','rules','icons'];
 (async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'blockads-tabs-' + browserName + '-'));
   const extension = path.join(temp, 'extension'); await fs.mkdir(extension);

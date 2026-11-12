@@ -1,0 +1,224 @@
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\DEVELOPMENT.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\DEVELOPMENT.md"
+index 842628e..bb9d3e5 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\DEVELOPMENT.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\DEVELOPMENT.md"
+@@ -10,6 +10,10 @@ The offline Reddit browser fixtures use the production content scripts and setti
+ 
+ ## Tests and local files
+ 
++`popups.js` also guards top-document same-tab navigation on the existing selected-site scopes. It uses trusted, cancellable Navigation API events; cross-origin URLs can be cancelled even when `canIntercept` is false. Ordinary native link/form navigation, exact link destinations captured before page handlers, same-host/parent/child scopes, reloads and history traversal remain usable. Link intent expires at the next task so it does not authorize a later unrelated redirect. A true `userActivation` flag alone is insufficient: a play button can activate an ad redirect. No new permission or setting is required, and disabling the existing guard still requires a page reload to remove installed hooks.
++
++The [Navigation API specification](https://html.spec.whatwg.org/dev/nav-history-apis.html) explains why cross-origin frame-initiated top navigation and browser UI navigation do not expose the same cancellable events. `sourceElement` arrived in [Chromium 135](https://developer.chrome.com/release-notes/135); older supported engines use the native `userInitiated` flag while retaining exact captured-link checks. The fixture removes this newer property to exercise fallback behavior with real native navigation; it does not claim an actual old-browser run. `tests/same-tab-redirects-browser.cjs` records frame and HTTP-redirect bypasses separately as limitations, not successful protection assertions. Visible links whose actual destination is unwanted, restricted injection and page-world tampering are also outside this hook's guarantee. Keep tests on owned loopback pages behind a deny proxy; never use live suspicious destinations to demonstrate coverage.
++
+ See [verification and test commands](VERIFICATION.md#verification). Start with the offline tests. Browser tests use disposable profiles and owned loopback fixtures; live-site commands require separate opt-in.
+ 
+ Keep working logs, snapshots and scratch exports in `.artifacts/`, which is ignored. The build creates `rules/.build.lock` at runtime; it is not source. Packaged `rules/*.json`, list inputs and referenced verification records remain versioned. Existing dated verification evidence is deliberately retained even where new raw logs match ignore patterns.
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\USER_GUIDE.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\USER_GUIDE.md"
+index 0c58c05..feaebe3 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\USER_GUIDE.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\USER_GUIDE.md"
+@@ -134,10 +134,15 @@ Manager operations have their own bounded capacity and run before waiting GM sto
+ - Cosmetic filtering hides matching page elements. It does not inspect downloaded files or determine whether a page is trustworthy.
+ - **Community lists** are a separate switch. The builder converts supported domain and URL-pattern blocks with their third-party, resource-type, site (`domain=`), `match-case`, `important` and pop-up options, their exceptions, generic and site-specific CSS, and the advanced operators documented below. Plain domain blocks with identical options are merged into domain-list rules. Unsupported filters, including network regexes and scriptlets, are skipped and counted in `rules/community-info.json`. List exceptions rank below reported threats, custom blocks and site pauses, and never apply to domains Module Engine's own ad, tracker or site-check lists block. Browser rules cannot tell a pop-up from a normal page load, so a list pop-up pattern that is not tied to one host applies only to page loads started by another site. The lists are not refreshed automatically.
+ - **Always Allowed Domains** (popup list, or the *Allow* button next to a blocked server in the activity log): requests to these domains and their subdomains are never blocked by the ad, tracker, site-check or community lists, on any site. Unlike *Pause on this site*, which turns filtering off on the pages of a site, this allows one server everywhere. Reported threats and your custom blocks still apply; the same domain cannot be in both Custom Blocked and Always Allowed. Entries accept a hostname or URL like custom blocks.
+-- **Block pop-ups on this site** (popup switch, per site and its subdomains): a page-level script on the chosen site and each injectable child frame refuses windows opened by script, script-made clicks on links to another host scope, and clicks on disguised links to another host scope (invisible, or page-covering overlays). An exact host and its parent or child hosts share a scope; independent sibling hosts are kept separate so tenants on `github.io`, `pages.dev` and similar shared platforms cannot inherit each other's trust. Ordinary visible links still work. It does not depend on knowing the ad network's domains. Page-world block claims are deliberately not added to the activity log because a page could forge them. Reload after turning the switch off to remove an already-installed page hook; it is inactive on new pages while the site is paused or the master switch is off. Browser-restricted frames and pop-up routes that do not use these JavaScript hooks can still bypass this optional layer.
++- **Block pop-ups and redirects** (popup switch, per site and its subdomains): a page-level script on the chosen site and each injectable child frame refuses windows opened by script, script-made clicks on links to another host scope, and clicks on disguised links to another host scope (invisible, or page-covering overlays). An exact host and its parent or child hosts share a scope; independent sibling hosts are kept separate so tenants on `github.io`, `pages.dev` and similar shared platforms cannot inherit each other's trust. Ordinary visible links still work. It does not depend on knowing the ad network's domains. Page-world block claims are deliberately not added to the activity log because a page could forge them. Reload after turning the switch off to remove an already-installed page hook; it is inactive on new pages while the site is paused or the master switch is off. Browser-restricted frames and pop-up routes that do not use these JavaScript hooks can still bypass this optional layer.
++
++  On Chrome and Edge, the same switch also cancels scripted same-tab departures to another host scope, including play-button assignments to `location`, delayed redirects, script-submitted forms and meta refreshes. Normal visible links, native form submissions, same-host navigation, reload and browser Back/Forward remain usable. A synchronous script-handled link may navigate to its original exact destination. Legitimate script-only buttons that leave the host scope can also be stopped; turn the guard off and reload if that flow is needed.
++
++  This is not universal redirect protection: a cross-origin embedded frame can still navigate the top page, and server redirect chains, real links whose destination is unwanted, restricted frames and page scripts that bypass or tamper with the hook can escape it. Browsers without the Navigation API retain the existing pop-up behavior. The local tests verify these limits without contacting any suspicious host.
++
+ - **Automatic cleanup of blocked pop-up tabs** works in Firefox and unpacked Chrome/Edge, independently of the per-site pop-up switch. It considers only a new tab with a browser-reported opener and its first HTTP(S) navigation. Chrome/Edge require a failed navigation and native feedback identifying a Module Engine block rule. Firefox requires a native aborted navigation plus confirmation from the actual enabled static, dynamic and session rules that a matching block outranks all possible exceptions or redirects; disabled static rules are excluded. Firefox checks domain and common URL patterns conservatively: regex, initiator/party constraints, unfamiliar conditions, or an exhausted matching budget cannot establish a block and may prevent cleanup. Ambiguous tabs stay open while browser network filtering continues. Existing or pinned tabs, tabs that already received page content, ordinary blank tabs without a confirmed block, and tabs without an opener are preserved. A blocked link opened in a new tab can also be closed because opener metadata does not distinguish it from a script-created pop-up. Pending navigation and rule changes cancel cleanup. The activity log records successful closes. Candidates expire after ten seconds, are capped at 64, and are not restored after a background restart. Firefox needs no debugging preference or new permission. Chrome/Edge installations without native match feedback keep the tab open.
+ - **Flag suspected ads** (popup switch, on by default): Module Engine watches requests that actually loaded (it never sees, and never flags, ones it blocked) and flags third-party servers that look like ads, for you to decide later. Signals: ad-like addresses (`/ads/`, banner, popunder, prebid, VAST), ad placement settings (`zoneid=`, placement, campaign), impression or click trackers, known ad-network script shapes, long random-looking script addresses, throwaway-looking domains (two words joined by a hyphen) loading scripts or frames, and on the page itself, frames in standard ad sizes from another site and elements labelled "Ad", "Sponsored" or 广告/廣告. Flags are grouped by exact server name in the *Flagged for review* table at the top of *My lists*, with the reasons, the page hosts they were seen on, a count and examples; **Block** adds that exact server to Custom Blocked Domains, **Allow** to Always Allowed Domains, **Ignore** stops flagging it, and *Clear all flags* empties the table. Nothing is blocked by a flag. Sibling hosts are conservatively treated as separate unless one is a parent of the other; this avoids merging unrelated shared-hosting tenants but may produce an extra harmless flag. Flags are kept in local storage (up to 500 servers, the oldest dropped first) until you decide or clear them; only page hosts, server names, reason codes and short paths without query strings are stored, and nothing is sent anywhere. Paused sites and always-allowed servers are not flagged; the master switch and the popup switch turn flagging off. Pattern matching misses ads served from the same host scope or ordinary-looking addresses and can flag harmless files, which is why it only flags.
+-- **My lists** (popup → *My lists*, or from the activity log): one page with tables for Always Allowed Domains, Custom Blocked Domains, Paused Sites and Pop-up Blocking Sites, each with an add box and a remove button for every row, and a filter across all tables. Removing a row removes exactly that entry (the popup's *Resume* also removes a parent entry that covers the current site). A read-only table lists the hosts added from site checks, with the site each was found on and what it did.
++- **My lists** (popup → *My lists*, or from the activity log): one page with tables for Always Allowed Domains, Custom Blocked Domains, Paused Sites and Pop-up and Redirect Blocking Sites, each with an add box and a remove button for every row, and a filter across all tables. Removing a row removes exactly that entry (the popup's *Resume* also removes a parent entry that covers the current site). A read-only table lists the hosts added from site checks, with the site each was found on and what it did.
+ - **Activity log** (popup → *Open activity log*): a page listing recent blocked requests (time, site, blocked server and path, layer) and extension events (settings changes, failures, installs/reloads, skipped YouTube video ads), with a per-server summary showing which sites each blocked server appeared on. It keeps up to 1,000 entries in session storage, so it is cleared when the browser closes; *Clear log* empties it and *Export JSON* saves a copy. Query strings are not recorded, and nothing is sent anywhere. Blocked-request entries come from the browser's rule-match feed, which Chrome and Edge provide while Module Engine is loaded unpacked. Firefox 159.0.1 does not provide it (even with `extensions.dnr.feedback` enabled), so in Firefox the log lists events only and says so. The YouTube player-data filter runs in the page and does not report to the log.
+ - On Fandom, cosmetic filtering also hides its ad wrappers after network blocking leaves them empty. This selector is restricted to Fandom hostnames and follows the existing cosmetic, site-pause and master settings.
+ - On YouTube (youtube.com, its subdomains and youtube-nocookie.com), the **ad layer** removes the ad schedule (`adPlacements`, `adSlots`, `playerAds`) from the player data before the player reads it, using the bundled `youtube.js` in the page's own script context. If a video ad still starts, the content script mutes it and jumps to its end, then restores the previous speed and sound. The **cosmetic layer** hides YouTube's feed, search, sidebar, masthead and in-player overlay ad slots; these selectors are restricted to YouTube hostnames. Pausing YouTube or turning off the ad layer unregisters the page filter for newly loaded YouTube pages; reload open YouTube tabs after changing it. In a YouTube embed on a paused site, the page filter still runs because it cannot see the parent page.
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\VERIFICATION.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\VERIFICATION.md"
+index 2412de3..a5bcc5b 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\docs\\VERIFICATION.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\VERIFICATION.md"
+@@ -1,9 +1,24 @@
+ # Module Engine verification
+ 
+-These are dated results, not a promise that every live site is blocked. The latest browser records below are from 11 November 2026, covering manual userscript installation/updates, clipboard, notification and download helpers, existing userscript compatibility, the Reddit app-popup repair and blocker regressions. Older records describe their own source snapshots and limitations.
++These are dated results, not a promise that every live site is blocked. The latest browser records below are from 12 November 2026, covering same-tab redirect protection and blocker regressions. The 11 November records cover manual userscript installation/updates, clipboard, notification and download helpers, existing userscript compatibility and the Reddit app-popup repair. Older records describe their own source snapshots and limitations.
+ 
+ [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+ 
++## Same-tab redirect guard — 12 November 2026
++
++The existing per-site switch now reads **Block pop-ups and redirects**. After inspecting and checkpointing the current uncommitted source, the old guard was reproduced allowing a play-button `location.href` redirect to an owned local destination. The updated guard cancels supported top-document departures before the destination request while leaving the generated video playing. **328 Node tests** passed with no failures or skips.
++
++| Browser | Redirect and compatibility checks | Existing pop-up checks | Full blocker checks |
++| --- | ---: | ---: | ---: |
++| Chrome 157 | 51 | 38 | 571 |
++| Edge 157 | 51 | 38 | 571 |
++
++Native coverage includes `location.href`, `assign`, `replace`, delayed redirects, `navigation.navigate`, meta refresh, script-submitted forms, synthetic clicks, changed link destinations and expired click intent. Ordinary links, keyboard activation, script-handled links to their original exact destination, native GET/POST forms, same-host navigation, history routing, reload and browser Back/Forward remain usable. Site pause, master pause and disabling the guard restore scripted navigation on newly loaded pages. A native-navigation fixture without the newer `sourceElement` property verifies the compatibility fallback; no old browser binary was run. The 350px popup and desktop/narrow site lists were inspected.
++
++**Known gaps were reproduced locally:** a cross-origin frame can navigate the top page without a cancellable event, and a same-host request followed by an HTTP redirect can leave the site. These are recorded as uncovered routes, not passing protection assertions. Visible links to unwanted destinations, restricted injection and page-world tampering are also outside the guarantee. Legitimate script-only buttons that leave the host scope may require disabling this per-site guard and reloading. Firefox was not tested in this pass.
++
++All browser runs used disposable profiles, owned loopback pages, locally generated canvas video and external deny proxies; Chrome was visible and Edge was headless. No suspicious site was contacted and no tool, package or media was downloaded. The tested blocker source hashes match the workspace, and the existing full blocker harness retains its documented local Reddit hostname alias. New independent edits to `manager.html`, `manager.css`, `manager.js` and their `pages-browser.cjs` assertions arrived after the test packages were copied: they were preserved, but that newer manager UI and those updated assertions are not covered by these browser runs. Manifest permissions, version, list inputs and packaged rules are unchanged. The rule builders were not rerun. Earlier fixture failures and the initial frame-bypass failure remain in the [verification report and attempts](../verification/2026-11-12/same-tab-redirects/summary.json). Reload the extension and affected page to activate the change on an already selected site.
++
+ ## Userscript installation and updates — 11 November 2026
+ 
+ Direct URL installation and manual update review passed **328 Node tests** and the following offline browser suites. [Reports, source hashes, screenshots and earlier attempts](../verification/2026-11-11/userscript-install-updates/summary.json) are retained locally.
+@@ -134,6 +149,10 @@ pwsh -NoProfile -File tests/threat-rules.test.ps1
+ node tests/browser-smoke.cjs chrome --headed
+ node tests/browser-smoke.cjs firefox
+ node tests/browser-smoke.cjs edge
++node tests/same-tab-redirects-browser.cjs chrome
++node tests/same-tab-redirects-browser.cjs edge
++node tests/popup-guard-browser.cjs chrome
++node tests/popup-guard-browser.cjs edge
+ # Focused Reddit fixtures only; still loopback-only with a disposable profile.
+ node tests/browser-smoke.cjs edge --reddit-only
+ node tests/live-network-browser.cjs chrome
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\lists.html" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\lists.html"
+index dd5ca55..c8fdd5e 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\lists.html"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\lists.html"
+@@ -29,7 +29,7 @@
+           <li><a href="#listAllowed">Always allowed</a></li>
+           <li><a href="#listBlocked">Custom blocked</a></li>
+           <li><a href="#listPaused">Paused sites</a></li>
+-          <li><a href="#listPopups">Pop-up blocking</a></li>
++          <li><a href="#listPopups">Pop-ups and redirects</a></li>
+           <li><a href="#cosmeticExceptions">Hiding disabled</a></li>
+         </ul>
+       </div>
+@@ -129,14 +129,14 @@
+             </section>
+ 
+         <section class="card" data-list="popupBlockedDomains" id="listPopups">
+-              <h2>Pop-up blocking sites <span class="muted count"></span></h2>
+-              <p class="muted">Script-opened windows and disguised links to other sites are refused on these sites.</p>
++              <h2>Pop-up and redirect blocking sites <span class="muted count"></span></h2>
++              <p class="muted">Stops script-opened windows, disguised links and scripted same-tab redirects to other host scopes. Ordinary links and forms still work. Reload after changing.</p>
+               <form class="add-form">
+-                <input type="text" maxlength="2048" placeholder="Site, e.g. uukanshu.cc" aria-label="Site to block pop-ups on" autocomplete="off" spellcheck="false" />
+-                <button type="submit">Block pop-ups</button>
++                <input type="text" maxlength="2048" placeholder="Site, e.g. example.com" aria-label="Site to block pop-ups and redirects on" autocomplete="off" spellcheck="false" />
++                <button type="submit">Add site</button>
+               </form>
+               <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+-              <p class="muted empty" hidden>No pop-up blocking sites.</p>
++              <p class="muted empty" hidden>No pop-up and redirect blocking sites.</p>
+             </section>
+ 
+         <section class="card" data-list="cosmeticPausedDomains" id="cosmeticExceptions">
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popup.html" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.html"
+index 51e2371..4787e07 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popup.html"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.html"
+@@ -48,10 +48,10 @@
+         <p id="pickerError" class="notice error-notice" role="alert" hidden></p>
+         <div class="layer-row">
+           <div class="layer-info">
+-            <span class="layer-name">Block pop-ups on this site</span>
+-            <span class="layer-desc" id="popupScope">Stops new windows and disguised links to other sites</span>
++            <span class="layer-name">Block pop-ups and redirects</span>
++            <span class="layer-desc" id="popupScope">Stops new windows and scripted redirects to other sites</span>
+           </div>
+-          <input type="checkbox" id="togglePopups" aria-label="Block pop-ups on this site" disabled />
++          <input type="checkbox" id="togglePopups" aria-label="Block pop-ups and redirects on this site" disabled />
+         </div>
+         <p id="siteScope" class="scope-note"></p>
+       </section>
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popup.js" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.js"
+index 0cd78c9..212810f 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popup.js"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.js"
+@@ -114,7 +114,7 @@ function renderUI() {
+   popupScopeEl.textContent = !activeHostname ? "Available on HTTP(S) pages"
+     : scope ? "Inactive while this site is paused"
+     : popupScope ? `On for ${popupScope} and its subdomains. Reload the page after changing.`
+-    : "Stops new windows and disguised links to other sites";
++    : "Stops new windows and scripted redirects to other sites";
+   const customNetworkBlocks = BlockAdsNetwork.parse(settings.customNetworkFilters ?? "").some(rule => rule.action.type === "block");
+   const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 || customNetworkBlocks ||
+     settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || settings.rulesets.community_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popups.js" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popups.js"
+index 482d386..58b7d17 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\popups.js"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popups.js"
+@@ -1,8 +1,10 @@
+-/* Module Engine: pop-up blocker for sites the person selected (page world).
++/* Module Engine: pop-up and redirect guard for selected sites (page world).
+  * background.js registers this file on matching pages and injects it into their
+  * cross-origin child frames. It refuses windows opened by script, synthetic
+  * clicks on links to other hosts, and clicks on disguised links (invisible or
+- * page-covering overlays) to other hosts. Ordinary visible links still work.
++ * page-covering overlays) to other hosts. The top page also cancels script-made
++ * cross-host navigations exposed by the Navigation API. Ordinary links and
++ * native form submissions still work. This is a page hook, not a security boundary.
+  */
+ (() => {
+   "use strict";
+@@ -75,12 +77,50 @@
+       (share >= 0.3 && style.position === "fixed") ||
+       (share >= 0.6 && !anchor.textContent.trim() && !anchor.querySelector("img, picture, video, svg, canvas"));
+   }
++  let linkIntent = null;
+   window.addEventListener("click", event => {
+-    const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
++    // A composed path also finds links inside open shadow roots. Remember the
++    // href before page handlers can replace it with an unrelated destination.
++    const anchor = event.composedPath().find(node =>
++      (node instanceof HTMLAnchorElement || node instanceof HTMLAreaElement) && node.hasAttribute("href"));
++    const intent = event.isTrusted && anchor && !disguised(anchor) ? { anchor, href: anchor.href } : null;
++    linkIntent = intent;
++    if (intent) setTimeout(() => {
++      // Permit a link's synchronous custom handler, never a later unrelated
++      // redirect that happens to follow the click. A newer click owns its intent.
++      if (linkIntent === intent) linkIntent = null;
++    }, 0);
+     if (!anchor || !otherSite(anchor.href)) return;
+     if (!event.isTrusted || disguised(anchor)) {
+       event.preventDefault();
+       event.stopImmediatePropagation();
+     }
+   }, true);
++
++  if (window === window.top && window.navigation) {
++    window.navigation.addEventListener("navigate", event => {
++      // Unlike Location's unforgeable setters, this browser event can cancel a
++      // navigation before a request. Do not use canIntercept: it is false for
++      // cross-origin URLs even when cancellation is allowed. Browser UI/history,
++      // same-host navigation and embedded players' own navigations stay intact.
++      // Cross-origin frames navigating the top page and HTTP redirect responses
++      // may not expose this event, so this hook cannot guarantee blocking them.
++      if (!event.isTrusted || !event.cancelable || event.navigationType === "traverse" ||
++          event.navigationType === "reload" || !otherSite(event.destination.url)) return;
++      if (linkIntent?.href === event.destination.url) return;
++      const source = event.sourceElement;
++      if (event.userInitiated) {
++        // sourceElement arrived in Chromium 135; the manifest also supports
++        // older engines. Their native action flag still distinguishes a real
++        // form submission from script-only navigation. Keep an observed link's
++        // exact-destination check even without that newer event property.
++        if (!("sourceElement" in event) && !linkIntent) return;
++        if ((source instanceof HTMLAnchorElement || source instanceof HTMLAreaElement) &&
++            !disguised(source) && (linkIntent?.anchor === source ? linkIntent.href : source.href) === event.destination.url) return;
++        if (source instanceof HTMLFormElement ||
++            ((source instanceof HTMLButtonElement || source instanceof HTMLInputElement) && source.form)) return;
++      }
++      event.preventDefault();
++    });
++  }
+ })();
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\README.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\README.md"
+index 49cd954..f254b9b 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-redirect-before\\README.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\README.md"
+@@ -9,7 +9,7 @@ Module Engine uses the browser's Manifest V3 APIs and bundled filter data. It ru
+ - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
+ - **Ad and tracker filtering:** bundled network rules, EasyList snapshots, cosmetic hiding, advanced page hiding and a visual element picker.
+ - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
+-- **Pop-up protection:** an optional per-site pop-up guard and automatic cleanup of confirmed blocked blank pop-up tabs.
++- **Pop-up protection:** an optional per-site guard for pop-ups and scripted same-tab redirects, plus automatic cleanup of confirmed blocked blank pop-up tabs. Cross-origin frame redirects remain a known limitation.
+ - **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
+ - **Userscripts:** import, edit, enable and export `.user.js` files; legacy and modern GM storage, listeners, page commands, DOM/tab helpers, clipboard writes, notifications, downloads, URL globs, cached dependencies/resources and bounded cross-origin HTTP requests.
+ - **Script installation and updates:** install from a direct URL and manually check for updates, with source/access review and approval before replacement. Saved values are retained.

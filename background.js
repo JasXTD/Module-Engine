@@ -7,6 +7,11 @@ if (!globalThis.BlockAdsCosmetic && typeof importScripts === "function") importS
 if (!globalThis.BlockAdsNetwork && typeof importScripts === "function") importScripts("network.js");
 if (!globalThis.BlockAdsModules && typeof importScripts === "function") importScripts("modules.js");
 if (!globalThis.BlockAdsUserScriptCore && typeof importScripts === "function") importScripts("userscripts-core.js");
+if (!globalThis.BlockAdsUserScriptNetwork && typeof importScripts === "function") importScripts("userscripts-network.js");
+if (!globalThis.BlockAdsOffscreen && typeof importScripts === "function") importScripts("userscripts-offscreen.js");
+if (!globalThis.BlockAdsXHR && typeof importScripts === "function") importScripts("userscripts-xhr.js");
+if (!globalThis.BlockAdsClipboard && typeof importScripts === "function") importScripts("clipboard.js");
+if (!globalThis.BlockAdsUserScriptActions && typeof importScripts === "function") importScripts("userscripts-actions.js");
 if (!globalThis.BlockAdsUserScripts && typeof importScripts === "function") importScripts("userscripts-runtime.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const userscriptHost = BlockAdsUserScripts.create(api);
@@ -41,6 +46,13 @@ const DOMAIN_LIST_KEYS = ["whitelistedDomains", "customBlockedDomains", "popupBl
 // Always-allowed domains override every list rule (1-3, including community
 // $important) but not reported threats (5) or custom blocks (50).
 const ALLOWED_DOMAIN_PRIORITY = 4;
+// Applied to the selected top document, then inherited by its descendants.
+// Preserve player APIs and ordinary page capabilities while withholding frame
+// permission to navigate the top tab, including after a genuine play click.
+// Append this policy: never replace the site's own CSP or iframe restrictions.
+const PAGE_GUARD_SANDBOX = "sandbox allow-scripts allow-same-origin allow-forms allow-modals " +
+  "allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox " +
+  "allow-presentation allow-downloads allow-storage-access-by-user-activation";
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 const ALL_RESOURCE_TYPES = [
   "main_frame", "sub_frame", "stylesheet", "script", "image", "font", "object",
@@ -742,6 +754,18 @@ function makeDynamicRules(settings) {
     });
   }
   for (const rule of customNetworkRules(settings.customNetworkFilters)) add(rule);
+  if (settings.popupBlockedDomains.length) {
+    add({
+      // Above request-level allows (4), below site pauses (10000). This changes
+      // navigation privileges, not whether an ad/media request is blocked.
+      priority: 100,
+      action: { type: "modifyHeaders", responseHeaders: [
+        { header: "content-security-policy", operation: "append", value: PAGE_GUARD_SANDBOX }
+      ] },
+      condition: { requestDomains: settings.popupBlockedDomains, resourceTypes: ["main_frame"],
+        ...(settings.whitelistedDomains.length ? { excludedRequestDomains: settings.whitelistedDomains } : {}) }
+    });
+  }
   const limit = api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
     api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
   if (rules.length > limit) throw new Error(`Too many custom network and domain rules for this browser (limit ${limit}).`);
@@ -1090,7 +1114,10 @@ async function pickerRequest(message, sender) {
   return { ok: result.ok, error: result.error, rule };
 }
 api.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (['MODULES_GET', 'MODULE_SET', 'US_LIST', 'US_SAVE', 'US_ENABLE', 'US_DELETE'].includes(message?.type)) {
+  // Only the private offscreen document answers this worker-to-document call.
+  if (message?.type === 'ME_CLIPBOARD_WRITE') return false;
+  if (['MODULES_GET', 'MODULE_SET', 'US_LIST', 'US_SAVE', 'US_ENABLE', 'US_DELETE', 'US_MENU_LIST', 'US_MENU_RUN', 'US_PREPARE_ASSETS', 'US_CANCEL_ASSETS', 'US_ASSET_READ',
+    'US_FETCH_SOURCE', 'US_CHECK_UPDATE', 'US_CANCEL_SOURCE', 'US_APPLY_SOURCE', 'US_TAGS', 'US_MOVE'].includes(message?.type)) {
     if (!fromExtensionPage(sender)) {
       sendResponse({ ok: false, error: 'Modules and scripts can only be managed from the extension interface.' });
       return false;

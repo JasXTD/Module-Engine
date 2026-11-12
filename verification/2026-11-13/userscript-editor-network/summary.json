@@ -1,0 +1,372 @@
+{
+  "verifiedAt": "2026-11-12T17:07:52.493Z",
+  "localDate": "2026-11-13",
+  "version": "1.9.0",
+  "scope": [
+    "Syntax highlighting, inline syntax diagnostics and line navigation",
+    "Author and local tags, library search/filter and configurable injection order",
+    "8 MiB HTTP bodies/responses, 16 MiB downloads, checked redirects, FormData and native upload progress"
+  ],
+  "activation": "Reload the unpacked extension and matching pages. Use Allow helper access for upload progress and for Firefox redirect following.",
+  "baseline": {
+    "unitTests": 333,
+    "checkpoint": ".artifacts/editor-network/before",
+    "preserved": "Existing uncommitted blocker, popup/navigation, manager and requested-host work"
+  },
+  "unitTests": {
+    "passed": 345,
+    "failed": 0,
+    "skipped": 0,
+    "log": "attempts/unit-final-2.log"
+  },
+  "browsers": {
+    "chrome": {
+      "userscripts": {
+        "name": "chrome-core-final-2",
+        "browser": "chrome",
+        "success": true,
+        "checks": 310,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "cleanup": {
+          "browserPid": 58608,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/chrome-core-final-2-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-jr2T21"
+      },
+      "helpers": {
+        "passed": 54,
+        "overallAttemptPassed": false,
+        "completedStage": "desktopFixture",
+        "evidence": "attempts/chrome-full-final-evidence.json",
+        "sourceDifferences": [
+          "userscripts-network.js",
+          "manager.js"
+        ]
+      },
+      "blocker": {
+        "name": "blocker-chrome-final",
+        "browser": "chrome",
+        "success": true,
+        "checks": 573,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "cleanup": {
+          "browserPid": 36588,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blocker-chrome-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-KYLwPz"
+      },
+      "blankTabs": {
+        "name": "blank-tabs-chrome-final",
+        "browser": "chrome",
+        "success": true,
+        "checks": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "cleanup": {
+          "browserPid": 65808,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blank-tabs-chrome-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-0AE63g"
+      }
+    },
+    "edge": {
+      "userscripts": {
+        "name": "edge-core-final",
+        "browser": "edge",
+        "success": true,
+        "checks": 310,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "cleanup": {
+          "browserPid": 40296,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/edge-core-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-R1AEHE"
+      },
+      "helpers": {
+        "name": "edge-transfer-final",
+        "browser": "edge",
+        "success": true,
+        "checks": 54,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "cleanup": {
+          "browserPid": 53144,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/edge-transfer-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-QQ3EwS"
+      },
+      "blocker": {
+        "name": "blocker-edge-final",
+        "browser": "edge",
+        "success": true,
+        "checks": 573,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "cleanup": {
+          "browserPid": 67312,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blocker-edge-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-gpgA5s"
+      },
+      "blankTabs": {
+        "name": "blank-tabs-edge-final",
+        "browser": "edge",
+        "success": true,
+        "checks": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "cleanup": {
+          "browserPid": 67400,
+          "forced": false,
+          "leftoverPids": [],
+          "closed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blank-tabs-edge-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-qhM7B5"
+      }
+    },
+    "firefox": {
+      "userscripts": {
+        "name": "firefox-full-diagnostic",
+        "browser": "firefox",
+        "success": true,
+        "checks": 275,
+        "version": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "160.0",
+          "platformName": "windows",
+          "setWindowRect": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+          "moz:buildID": "20261104181552",
+          "moz:headless": true,
+          "moz:platformVersion": "10.0",
+          "moz:processID": 58688,
+          "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-u2YmYp\\profile",
+          "moz:shutdownTimeout": 73000
+        },
+        "cleanup": {
+          "browserClosed": true
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/firefox-full-diagnostic-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-u2YmYp"
+      },
+      "helpers": "Included in combined userscript suite",
+      "blocker": {
+        "name": "blocker-firefox-final",
+        "browser": "firefox",
+        "success": true,
+        "checks": 567,
+        "version": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "160.0",
+          "platformName": "windows",
+          "setWindowRect": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+          "moz:buildID": "20261104181552",
+          "moz:headless": true,
+          "moz:platformVersion": "10.0",
+          "moz:processID": 64332,
+          "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ATEUQe\\profile",
+          "moz:shutdownTimeout": 73000
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blocker-firefox-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ATEUQe"
+      },
+      "blankTabs": {
+        "name": "blank-tabs-firefox-final",
+        "browser": "firefox",
+        "success": true,
+        "checks": 28,
+        "version": {
+          "acceptInsecureCerts": false,
+          "browserName": "firefox",
+          "browserVersion": "160.0",
+          "platformName": "windows",
+          "setWindowRect": true,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+          "moz:buildID": "20261104181552",
+          "moz:headless": true,
+          "moz:platformVersion": "10.0",
+          "moz:processID": 60132,
+          "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-BgJyIA\\profile",
+          "moz:shutdownTimeout": 73000
+        },
+        "sourceDifferencesFromCurrent": [],
+        "evidence": "attempts/blank-tabs-firefox-final-evidence.json",
+        "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-BgJyIA"
+      }
+    }
+  },
+  "limits": {
+    "uploadMiB": 8,
+    "responseMiB": 8,
+    "downloadMiB": 16,
+    "reservationMiB": 64,
+    "httpTimeoutSeconds": 30,
+    "downloadHttpTimeoutSeconds": 120,
+    "redirects": 5,
+    "formDataEntries": 256,
+    "reservationNote": "Admission allowance only; encoding and browser buffers can use more memory."
+  },
+  "dependency": {
+    "name": "acorn",
+    "version": "8.18.0",
+    "license": "MIT",
+    "source": "Node.js v24.22.1 signed OpenJS Foundation installation",
+    "executable": "C:\\Program Files\\nodejs\\node.exe",
+    "nativeModule": "internal/deps/acorn/acorn/dist/acorn",
+    "sha256": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "upstream": "https://github.com/acornjs/acorn/tree/8.18.0",
+    "approval": "Local bundled copy approved by user on 2026-11-12",
+    "malwareScan": {
+      "product": "Malwarebytes",
+      "result": "No threats found",
+      "reportedBy": "user",
+      "date": "2026-11-13"
+    },
+    "defenderScan": {
+      "result": "Unavailable",
+      "error": "0x80004005",
+      "reason": "Product disabled; user uses Malwarebytes"
+    }
+  },
+  "sourceHashes": "source-hashes.json",
+  "checkpointDiff": "changes-from-checkpoint.patch",
+  "attempts": "attempts.json",
+  "packagingNote": "All package copy lists include the worker/parser/license and offscreen/XHR modules. Source hashes include files without a per-task before snapshot; their pre-existing edits were preserved.",
+  "safety": {
+    "runtimeNetwork": "Owned loopback fixtures only; external deny proxies and speculative DNS restrictions",
+    "personalBrowserProfiles": false,
+    "clipboard": "Native permission/copy ability with a disposable execCommand sink; no OS clipboard read/write",
+    "downloads": "Harmless owned bytes saved through real browser APIs, hash-checked and never opened",
+    "installed": "Only the approved local Acorn 8.18.0 parser copy and MIT license were bundled. No new executable, test package or userscript engine installed.",
+    "git": "No commit or push"
+  },
+  "reviewRounds": [
+    {
+      "focus": "Safety and lifecycle",
+      "changes": [
+        "Guarded each redirect before contact",
+        "Separate Firefox cancellation and Chromium Location-removal guards",
+        "Protected anonymous XHR cookie send/store",
+        "Shared offscreen leases and cancellation tests",
+        "Abort transfers when required permission is removed"
+      ]
+    },
+    {
+      "focus": "Resource use and editor clarity",
+      "changes": [
+        "Indexed binary encoding/decoding avoids cross-world species failures and extra large arrays",
+        "Skip text decoding for binary responses",
+        "Omit plain-token DOM spans",
+        "Cancel oversized response bodies",
+        "Align narrow editor layers",
+        "Map incomplete syntax to source EOF"
+      ]
+    },
+    {
+      "focus": "Final callers and regression review",
+      "changes": [
+        "Preserve tags across combined source edits and updates",
+        "Explain tag-only saves without claiming they pause scripts",
+        "Ignore a queued close event after a new update review opens",
+        "Check actual native ordering, anonymous cookies, byte hashes and unchanged ad blocking"
+      ]
+    }
+  ],
+  "retainedFailures": [
+    "Firefox cross-world typed-array subarray failed on file uploads; indexed copying fixed it. A FileReader experiment was removed.",
+    "Firefox header modification ordering required a blocking redirect observer instead of Chromium Location removal.",
+    "Native Edge exposed cookies on anonymous XHR; scoped Cookie/Set-Cookie removal and seeded native regressions fixed it.",
+    "A queued review close event closed a subsequent dialog; the open-state guard passed final Chrome/Edge/Firefox installation checks.",
+    "Chrome completed all 54 helper-suite checks, then a later dependency UI frame wait timed out. Final core checks ran headlessly; the failed overall attempt remains recorded.",
+    "Two Firefox full runs reached 273 functional checks but failed the unchanged console assertion on two content.js Conduits RuntimeMessage unload diagnostics. The final run records per-stage console snapshots and passes all 275 checks without suppressing any errors. This intermittent browser teardown behavior is not claimed fixed."
+  ],
+  "limitations": [
+    "Safe offline fixtures do not establish live-site compatibility or full Violentmonkey parity.",
+    "Ordering is native start order within a timing phase; legacy storage hydration and asynchronous work may complete later.",
+    "Downloads remain buffered, capped and non-streaming; files above 16 MiB are unsupported.",
+    "Chrome helper-stage source predates only the final permission-removal predicate and review-dialog close fix. Both changes are covered by final core/unit tests and the final Firefox full run; Edge helper stage uses final production hashes.",
+    "Malwarebytes clean scan was reported by the user. Defender was disabled and could not scan; no security setting was changed.",
+    "Actual OS clipboard output and visible notification delivery are not established by the test sink/API checks."
+  ],
+  "references": [
+    "https://violentmonkey.github.io/api/gm/",
+    "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest",
+    "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest",
+    "https://github.com/acornjs/acorn/tree/8.18.0",
+    "https://bugzilla.mozilla.org/show_bug.cgi?id=1655624"
+  ],
+  "cleanup": {
+    "report": "cleanup.json",
+    "removed": 37,
+    "personalProfilesTouched": false
+  }
+}

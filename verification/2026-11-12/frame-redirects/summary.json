@@ -1,0 +1,245 @@
+{
+  "verifiedAt": "2026-11-12T15:41:37.168Z",
+  "feature": "Selected-site protection against frame takeovers and script-initiated server redirects, while preserving the current video document.",
+  "activation": "Reload Module Engine and the affected page. Enable Block pop-ups and redirects for the site. Reload after disabling or pausing to remove an already applied sandbox.",
+  "baseline": {
+    "frameTakeoverReproduced": true,
+    "scriptedServerRedirectReproduced": true,
+    "evidence": "probe-before-evidence.json"
+  },
+  "unitTests": {
+    "passed": 333,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browsers": {
+    "chrome": {
+      "media": {
+        "passed": 28,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "chrome-media-final-evidence.json"
+      },
+      "navigation": {
+        "passed": 56,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "chrome-navigation-evidence.json"
+      },
+      "popups": {
+        "passed": 38,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "chrome-popups-evidence.json"
+      },
+      "cleanup": {
+        "passed": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "chrome-cleanup-evidence.json",
+        "fixtureRule": {
+          "id": 9224,
+          "priority": 1,
+          "action": {
+            "type": "block"
+          },
+          "condition": {
+            "urlFilter": "|http://127.0.0.1:53392/blocked-static",
+            "resourceTypes": [
+              "main_frame"
+            ]
+          }
+        }
+      },
+      "blocker": {
+        "passed": 573,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Chrome/157.0.8103.79",
+          "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+          "jsVersion": "15.7.112.43"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "chrome-blocker-evidence.json",
+        "fixtureOverrides": [
+          {
+            "file": "reddit.js",
+            "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+            "originalSha256": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+            "fixtureSha256": "a8d00ab1615c392514f3e9bdbd453f1ef80d5b80007685dbee80e1741e847cc6"
+          }
+        ]
+      }
+    },
+    "edge": {
+      "media": {
+        "passed": 28,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "edge-media-final-evidence.json"
+      },
+      "navigation": {
+        "passed": 56,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "edge-navigation-evidence.json"
+      },
+      "popups": {
+        "passed": 38,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "edge-popups-evidence.json"
+      },
+      "cleanup": {
+        "passed": 25,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "edge-cleanup-evidence.json",
+        "fixtureRule": {
+          "id": 9224,
+          "priority": 1,
+          "action": {
+            "type": "block"
+          },
+          "condition": {
+            "urlFilter": "|http://127.0.0.1:53463/blocked-static",
+            "resourceTypes": [
+              "main_frame"
+            ]
+          }
+        }
+      },
+      "blocker": {
+        "passed": 573,
+        "version": {
+          "protocolVersion": "1.3",
+          "product": "Edg/157.0.4341.46",
+          "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+          "jsVersion": "15.7.11.4"
+        },
+        "sourceHashesMatch": true,
+        "cleanupClosed": true,
+        "evidence": "edge-blocker-evidence.json",
+        "fixtureOverrides": [
+          {
+            "file": "reddit.js",
+            "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+            "originalSha256": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+            "fixtureSha256": "a8d00ab1615c392514f3e9bdbd453f1ef80d5b80007685dbee80e1741e847cc6"
+          }
+        ]
+      }
+    }
+  },
+  "preservation": {
+    "baselineSources": 115,
+    "unchangedSources": 104,
+    "changedFiles": [
+      "background.js",
+      "docs/DEVELOPMENT.md",
+      "docs/USER_GUIDE.md",
+      "docs/VERIFICATION.md",
+      "lists.html",
+      "popup.html",
+      "popup.js",
+      "popups.js",
+      "README.md",
+      "tests/background.test.cjs",
+      "tests/same-tab-redirects-browser.cjs"
+    ],
+    "newTest": "tests/frame-redirects-browser.cjs",
+    "latestManagerFilesPreservedAndIncludedInBrowserRuns": true,
+    "manifestUnchanged": true,
+    "packagedRulesUnchanged": true,
+    "patch": "changes-from-checkpoint.patch"
+  },
+  "verification": [
+    "Native play click with separate ad and player listeners; locally recorded WebM decoding and clock advancement.",
+    "Pause/resume, seeking, fullscreen, nested frames, frame-local HTTP redirects and origin/storage.",
+    "Scripted same-host server redirects stopped before first hop; native links/forms and browser history/reload preserved.",
+    "Stricter server sandbox preserved; policy enable/pause/disable behavior and transactional failure/rollback/retry.",
+    "Desktop and narrow control layouts inspected. Full blocker, existing popup and blocked-tab cleanup regressions passed."
+  ],
+  "boundaries": [
+    "Real links/forms may legitimately follow HTTP redirects.",
+    "Script-only page navigation and frame-to-top controls are blocked. A player depending on those actions may need the guard disabled.",
+    "A denied frame navigation throws a browser security exception and can interrupt the current handler.",
+    "Service-worker-generated/CacheStorage document responses can bypass network header policies; page-hook tampering and restricted injection remain limits.",
+    "Local tests do not establish universal live-site or DRM compatibility. Firefox and old browser binaries were not tested."
+  ],
+  "safety": {
+    "liveSuspiciousSitesVisited": 0,
+    "externalDownloadsOrInstalls": 0,
+    "personalProfilesUsed": false,
+    "fixtures": "Owned loopback only; external deny proxies; generated canvas/video data in memory. Chrome visible for media, navigation and full blocker checks; Edge headless.",
+    "copiedFixtureOverrides": "Existing Reddit hostname alias and blocked-tab fixture rules only in disposable test packages."
+  },
+  "notes": [
+    "Initial unguarded WebM readiness timed out; explicit preload/load of the recorded Blob fixed the fixture. The attempt is retained.",
+    "No static-rule build was needed because list inputs and packaged rule bytes are unchanged.",
+    "pxl.wheelroot.com remains rule 200001 in ads.json with exact-host scope. The user reported the previously visible ad now blocked; the earlier miss was not independently diagnosed."
+  ],
+  "sources": [
+    "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest/",
+    "https://html.spec.whatwg.org/multipage/browsers.html#sandboxing"
+  ]
+}

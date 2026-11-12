@@ -1,0 +1,2 @@
+Built 107 ad rules (7 from site checks), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22449 site hiding rules from 2 list(s).
+PASS: 338 threat evidence/build assertions. Isolated fixture directory: C:\Users\Tommy\AppData\Local\Temp\blockads-threat-rules-5ab004a8b8c646edad5a089071d348bd

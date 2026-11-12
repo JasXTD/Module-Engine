@@ -1,8 +1,11 @@
-/* Module Engine: pop-up blocker for sites the person selected (page world).
+/* Module Engine: pop-up and redirect guard for selected sites (page world).
  * background.js registers this file on matching pages and injects it into their
  * cross-origin child frames. It refuses windows opened by script, synthetic
  * clicks on links to other hosts, and clicks on disguised links (invisible or
- * page-covering overlays) to other hosts. Ordinary visible links still work.
+ * page-covering overlays) to other hosts. The top page also cancels script-made
+ * document replacements, including same-host requests that could redirect at
+ * the server. A companion response sandbox prevents frame takeovers. Ordinary
+ * links and native form submissions still work. Page hooks can be tampered with.
  */
 (() => {
   "use strict";
@@ -75,12 +78,52 @@
       (share >= 0.3 && style.position === "fixed") ||
       (share >= 0.6 && !anchor.textContent.trim() && !anchor.querySelector("img, picture, video, svg, canvas"));
   }
+  let linkIntent = null;
   window.addEventListener("click", event => {
-    const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    // A composed path also finds links inside open shadow roots. Remember the
+    // href before page handlers can replace it with an unrelated destination.
+    const anchor = event.composedPath().find(node =>
+      (node instanceof HTMLAnchorElement || node instanceof HTMLAreaElement) && node.hasAttribute("href"));
+    const intent = event.isTrusted && anchor && !disguised(anchor) ? { anchor, href: anchor.href } : null;
+    linkIntent = intent;
+    if (intent) setTimeout(() => {
+      // Permit a link's synchronous custom handler, never a later unrelated
+      // redirect that happens to follow the click. A newer click owns its intent.
+      if (linkIntent === intent) linkIntent = null;
+    }, 0);
     if (!anchor || !otherSite(anchor.href)) return;
     if (!event.isTrusted || disguised(anchor)) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
   }, true);
+
+  if (window === window.top && window.navigation) {
+    window.navigation.addEventListener("navigate", event => {
+      // Unlike Location's unforgeable setters, this browser event can cancel a
+      // navigation before a request. Do not use canIntercept: it is false for
+      // cross-origin URLs even when cancellation is allowed. Block the first
+      // scripted document request, since its server's redirect target cannot be
+      // known in advance. Same-document player routing, media requests, browser
+      // history and iframe-local navigation stay intact. The response sandbox
+      // separately stops frames whose top navigation does not fire this event.
+      if (!event.isTrusted || !event.cancelable || event.navigationType === "traverse" ||
+          (event.navigationType === "reload" && event.userInitiated) ||
+          event.destination.sameDocument || !/^https?:/.test(event.destination.url)) return;
+      if (linkIntent?.href === event.destination.url) return;
+      const source = event.sourceElement;
+      if (event.userInitiated) {
+        // sourceElement arrived in Chromium 135; the manifest also supports
+        // older engines. Their native action flag still distinguishes a real
+        // form submission from script-only navigation. Keep an observed link's
+        // exact-destination check even without that newer event property.
+        if (!("sourceElement" in event) && !linkIntent) return;
+        if ((source instanceof HTMLAnchorElement || source instanceof HTMLAreaElement) &&
+            !disguised(source) && (linkIntent?.anchor === source ? linkIntent.href : source.href) === event.destination.url) return;
+        if (source instanceof HTMLFormElement ||
+            ((source instanceof HTMLButtonElement || source instanceof HTMLInputElement) && source.form)) return;
+      }
+      event.preventDefault();
+    });
+  }
 })();

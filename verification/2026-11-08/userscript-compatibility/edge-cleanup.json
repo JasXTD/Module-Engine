@@ -1,0 +1,663 @@
+{
+  "browser": "edge",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-uKMTlK",
+  "started": "2026-11-07T19:26:01.460Z",
+  "checks": [
+    "owned localhost destination is blocked",
+    "dynamic blocked popup is automatically closed",
+    "dynamic cleanup preserves the opener and unrelated blank tab",
+    "static blocked popup is automatically closed",
+    "static cleanup preserves the opener and unrelated blank tab",
+    "redirect blocked popup is automatically closed",
+    "redirect cleanup preserves the opener and unrelated blank tab",
+    "initial about:blank popup closes after its first blocked navigation",
+    "a pinned popup tab is preserved",
+    "a tab with a previously loaded page is preserved after a later block",
+    "a manually created tab without an opener is preserved",
+    "ordinary network errors never authorize closing a tab",
+    "a blocked image does not close its containing page",
+    "higher-priority static exception reaches only the owned fixture",
+    "unblocked navigation reaches only the owned fixture",
+    "site exception is applied",
+    "site exception overriding a custom block reaches only the owned fixture",
+    "global pause is applied",
+    "globally paused protection reaches only the owned fixture",
+    "all loaded, pinned, manual, error, allowed and cancelled tabs remain open",
+    "protection is restored after pause",
+    "only the four confirmed initial blocked popups produce cleanup log entries",
+    "no blocked fixture destination reached the local server",
+    "ad protection remains verified after cleanup",
+    "deny proxy reports no unexpected errors"
+  ],
+  "requests": [
+    "/source",
+    "/favicon.ico",
+    "/redirect",
+    "/loaded",
+    "/favicon.ico",
+    "/network-error",
+    "/network-error",
+    "/network-error",
+    "/subresource",
+    "/favicon.ico",
+    "/blocked-static-allow",
+    "/cancel-unblocked",
+    "/cancel-site-exception",
+    "/cancel-paused"
+  ],
+  "deniedRequests": 58,
+  "proxyErrors": [],
+  "hashes": {
+    "manifest.json": "2e2f49e7a24117c1c5c3547cebe954d7396be7cb935febc39081df8adaedaf90",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "flags.js": "b54594940e068fde9bde81914bf19db16c22c89ccab4c35c07d27117a5edf6e1",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "background.js": "536832c29c993f48e0132d4eb1de20e3120f56f0dc79ea5a1d9b0df7ac8cbe30",
+    "content.js": "1d0e131a606063507b89b06315163c39ca04f99d617f328b69f6ff3ca3969ee1",
+    "youtube.js": "6dc49f0fd662b3eacba8e2e4310c70252b9012006a6105587709461e36de3823",
+    "popups.js": "0d2645e6dacc2b369da62c4f45db113b014faf036bebf3854c1421124c0685aa",
+    "popup.js": "2e8c11d58bc07f3313211ac01c6f20be1cd5555168ea9f1e0311bc971d48e23f",
+    "popup.html": "8da335fe0780431b4b24d072dab37bbbb378ad353e7b0010e2d26f28bf0df831",
+    "popup.css": "83e1370dc2d5cb2b69072e7fb468827147bfc1b3970f85e3f0b7c7dc16963453",
+    "ui.css": "bcc2d9f8077d743a7cf24e9bdc4147a5b18ce5ceff015900ab625357ea001277",
+    "log.html": "628936c85ea594e53e457224c6650a8cdb05662525c3d82bfe284ae7d0adf356",
+    "log.js": "cbf8e69e61686f601890d0f8894b3b57761f27b17fc033f2c38e32436e195467",
+    "log.css": "ad3248a47f73528c116a11c5b117fd964c2600b2569a9c7f89fb121344780681",
+    "lists.html": "e6f31c4762709dc10475e79236a83ce6df89a59cc30578594284aa93045e9443",
+    "lists.js": "d69aff83c719e3eb6361ae18db8456e0e23a9c6462c3e1311507f2799ad72ee8",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "userscripts-core.js": "8dd3d54b1c98532034993fd32d2707ec91995764a614350c82726ed94b6ec867",
+    "userscripts-runtime.js": "5451ceb89bfaf9e808a66d0086292e5d320c8710511655877ea446fe86de0cf8",
+    "manager.html": "d0c2dd8b59338b92ac47fc1979d3733f7d3ac2d54cb678486c891c7f70428f64",
+    "manager.js": "7ab42ecd11512720cf2f1bafd4f20c76144837b5d3883e34c2648f52d9baf844",
+    "manager.css": "d5b91820be30931b81170b58529f12f251fac1183081dfaec6fbad5d394e9bed"
+  },
+  "fixtureRule": {
+    "id": 9224,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "|http://127.0.0.1:56657/blocked-static",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  "fixtureAllow": {
+    "id": 9225,
+    "priority": 2,
+    "action": {
+      "type": "allow"
+    },
+    "condition": {
+      "urlFilter": "|http://127.0.0.1:56657/blocked-static-allow|",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  "fixtureRulesHash": "cf509ce6b17fd67bb48b560c0092d70b3fc71c6bf1eb6c6a218967aaacdcc99b",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/157.0.4341.42",
+    "revision": "@7b1486be4607d53d9f93841b7c776bc525ca74b7",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+    "jsVersion": "15.7.11.4"
+  },
+  "events": [
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306788
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306791
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306792,
+        "opener": 2036306788
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "11",
+          "tabId": 2036306792,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-dynamic"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "11",
+        "tabId": 2036306792,
+        "timeStamp": 1794079562764.52,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-dynamic"
+      }
+    },
+    {
+      "kind": "removed",
+      "data": 2036306792
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306794,
+        "opener": 2036306788
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "12",
+          "tabId": 2036306794,
+          "type": "main_frame",
+          "url": "http://127.0.0.1:56657/blocked-static"
+        },
+        "rule": {
+          "ruleId": 9224,
+          "rulesetId": "community_ruleset"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "12",
+        "tabId": 2036306794,
+        "timeStamp": 1794079562846.435,
+        "type": "main_frame",
+        "url": "http://127.0.0.1:56657/blocked-static"
+      }
+    },
+    {
+      "kind": "removed",
+      "data": 2036306794
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306796,
+        "opener": 2036306788
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "13",
+          "tabId": 2036306796,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-redirect"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "13",
+        "tabId": 2036306796,
+        "timeStamp": 1794079562945.466,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-redirect"
+      }
+    },
+    {
+      "kind": "removed",
+      "data": 2036306796
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306798,
+        "opener": 2036306788
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "14",
+          "tabId": 2036306798,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-after-blank"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "14",
+        "tabId": 2036306798,
+        "timeStamp": 1794079563013.859,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-after-blank"
+      }
+    },
+    {
+      "kind": "removed",
+      "data": 2036306798
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306800,
+        "opener": 2036306788
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "15",
+          "tabId": 2036306800,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-pinned"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "15",
+        "tabId": 2036306800,
+        "timeStamp": 1794079563130.052,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-pinned"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306801,
+        "opener": 2036306800
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "18",
+          "tabId": 2036306801,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-later"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "18",
+        "tabId": 2036306801,
+        "timeStamp": 1794079563199.215,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-later"
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "chrome-extension://glpgbdlkpjianeijipogdomeddmepecd",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "19",
+          "tabId": 2036306791,
+          "type": "main_frame",
+          "url": "http://localhost:56657/blocked-manual"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "chrome-extension://glpgbdlkpjianeijipogdomeddmepecd",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "19",
+        "tabId": 2036306791,
+        "timeStamp": 1794079563237.851,
+        "type": "main_frame",
+        "url": "http://localhost:56657/blocked-manual"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306802,
+        "opener": 2036306801
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_EMPTY_RESPONSE",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "20",
+        "tabId": 2036306802,
+        "timeStamp": 1794079563298.229,
+        "type": "main_frame",
+        "url": "http://127.0.0.1:56657/network-error"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306803,
+        "opener": 2036306802
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentId": "DBC5C917D51465C2A0F5F1FF531FDE6B",
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "22",
+          "tabId": 2036306803,
+          "type": "image",
+          "url": "http://localhost:56657/blocked-image"
+        },
+        "rule": {
+          "ruleId": 1,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306804,
+        "opener": 2036306803
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "24",
+          "tabId": 2036306804,
+          "type": "main_frame",
+          "url": "http://127.0.0.1:56657/blocked-static-allow"
+        },
+        "rule": {
+          "ruleId": 9225,
+          "rulesetId": "community_ruleset"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_ABORTED",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "24",
+        "tabId": 2036306804,
+        "timeStamp": 1794079563442.951,
+        "type": "main_frame",
+        "url": "http://127.0.0.1:56657/blocked-static-allow"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306805,
+        "opener": 2036306804
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_ABORTED",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "25",
+        "tabId": 2036306805,
+        "timeStamp": 1794079563483.376,
+        "type": "main_frame",
+        "url": "http://127.0.0.1:56657/cancel-unblocked"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306806,
+        "opener": 2036306805
+      }
+    },
+    {
+      "kind": "match",
+      "data": {
+        "request": {
+          "documentLifecycle": "active",
+          "frameId": 0,
+          "frameType": "outermost_frame",
+          "initiator": "http://127.0.0.1:56657",
+          "method": "GET",
+          "parentFrameId": -1,
+          "requestId": "26",
+          "tabId": 2036306806,
+          "type": "main_frame",
+          "url": "http://localhost:56657/cancel-site-exception"
+        },
+        "rule": {
+          "ruleId": 2,
+          "rulesetId": "_dynamic"
+        }
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_ABORTED",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "26",
+        "tabId": 2036306806,
+        "timeStamp": 1794079563551.785,
+        "type": "main_frame",
+        "url": "http://localhost:56657/cancel-site-exception"
+      }
+    },
+    {
+      "kind": "created",
+      "data": {
+        "id": 2036306807,
+        "opener": 2036306806
+      }
+    },
+    {
+      "kind": "error",
+      "data": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_ABORTED",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "initiator": "http://127.0.0.1:56657",
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "27",
+        "tabId": 2036306807,
+        "timeStamp": 1794079563635.484,
+        "type": "main_frame",
+        "url": "http://localhost:56657/cancel-paused"
+      }
+    }
+  ],
+  "success": true,
+  "cleanup": {
+    "browserPid": 11128,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finished": "2026-11-07T19:26:07.164Z"
+}

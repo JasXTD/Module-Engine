@@ -19,6 +19,10 @@
       try { api.runtime.sendMessage({ type: 'LOG_EVENT', event: `procedural-filter-${kind}` }).catch(() => {}); } catch {}
     }
   });
+  const redditShield = BlockAdsReddit.create({ document,
+    isAlive: () => { try { return Boolean(api.runtime.id); } catch { return false; } },
+    onProblem: error => console.warn('[Module Engine] Reddit app popup repair stopped:', error.message)
+  });
 
   // Site-specific selectors apply only on their own site, so another site's
   // similarly named content is safe.
@@ -214,6 +218,7 @@
       if (version !== evaluation) return;
       if (!state?.ok) throw new Error(state?.error || "No cosmetic filtering state returned.");
       applyCosmeticShield(state);
+      redditShield.setEnabled(Boolean(state.enabled && !state.disableAll));
       proceduralShield.setRules(state.enabled && !state.disableAll && state.procedural !== false ? state.proceduralRules || [] : []);
       setVideoAdSkipping(Boolean(state.ads));
       setAdSignScanning(Boolean(state.flag));
@@ -292,7 +297,7 @@
   evaluateAndApply();
   document.addEventListener("DOMContentLoaded", evaluateAndApply, { once: true });
   window.addEventListener('pagehide', event => {
-    if (event.isTrusted) { evaluation++; proceduralShield.clear(); }
+    if (event.isTrusted) { evaluation++; proceduralShield.clear(); redditShield.clear(); }
   });
   window.addEventListener('pageshow', event => { if (event.isTrusted) void evaluateAndApply(); });
 

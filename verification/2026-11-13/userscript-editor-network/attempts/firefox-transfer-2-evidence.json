@@ -1,0 +1,214 @@
+{
+  "browser": "firefox",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-21F6SA",
+  "started": "2026-11-12T16:28:20.743Z",
+  "checks": [
+    "Firefox keeps userscripts optional and initially off",
+    "Firefox has no automatic userscript permission grant",
+    "Firefox manager button grants native userscript access",
+    "Firefox native userScripts module is active",
+    "Offline ad canary configured",
+    "Desktop helper permissions are optional and initially absent",
+    "Desktop helper fixture is saved disabled",
+    "Desktop helper fixture enables with exact grants",
+    "Missing native permissions reject helpers without clipboard writes or files",
+    "Manager explains helper access before granting it",
+    "Manager button grants native helper permissions",
+    "Both clipboard spellings complete through the native bridge",
+    "Clipboard sink receives literal text, HTML and empty text in order",
+    "Native notification is visible to the browser and returns an immediate handle",
+    "Notification removal clears the native object and invokes ondone once",
+    "Legacy notification has the same owned remove lifecycle",
+    "Modern download resolves after native completion with unchanged bytes",
+    "Legacy download callbacks complete through the native download API",
+    "Native fixture file stays in the disposable output directory",
+    "Native fixture file has the exact harmless bytes",
+    "Native fixture file stays in the disposable output directory",
+    "Native fixture file has the exact harmless bytes",
+    "Native fixture file stays in the disposable output directory",
+    "Native fixture file has the exact harmless bytes",
+    "Repeated filename uses a separate file without overwriting"
+  ],
+  "hashes": {
+    "manifest.json": "7c914066f0a92cc6b9d580adff77f8b41469701e217b16df65cd28b5265ca7f2",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "reddit.js": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "background.js": "e4233a3f18dc21f79bf2b3e09a64a2df571666e3a9f2f61c6a1ed9256104c7f7",
+    "content.js": "a3cb7a817f7959fcf2c3a49bafa0d09433cdea5c3c74e306f8b790955f15f669",
+    "youtube.js": "6dc49f0fd662b3eacba8e2e4310c70252b9012006a6105587709461e36de3823",
+    "popups.js": "853f41f22727d19292335c3f996c008f7c6889996445967c02a86da187482826",
+    "flags.js": "b54594940e068fde9bde81914bf19db16c22c89ccab4c35c07d27117a5edf6e1",
+    "popup.js": "00f21ac15e6e19cfb52daa57b4ea635c5b24db753801f0430e4052f37ec342e0",
+    "popup.html": "430b03037e6b28b4040c7d56d946282e4fcedba251a9e1e03b44d1db9c2ad9d6",
+    "popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "ui.css": "bcc2d9f8077d743a7cf24e9bdc4147a5b18ce5ceff015900ab625357ea001277",
+    "log.html": "628936c85ea594e53e457224c6650a8cdb05662525c3d82bfe284ae7d0adf356",
+    "log.js": "cbf8e69e61686f601890d0f8894b3b57761f27b17fc033f2c38e32436e195467",
+    "log.css": "ad3248a47f73528c116a11c5b117fd964c2600b2569a9c7f89fb121344780681",
+    "lists.html": "1ee4e52b2822e40ae5102e7139e3d58b20ac092c93ff9492d43a63f111285a5f",
+    "lists.js": "d69aff83c719e3eb6361ae18db8456e0e23a9c6462c3e1311507f2799ad72ee8",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "userscripts-core.js": "2330dbc812a924c480782028b6c3270e6df53b35d0ec697e1c35c7a1e79ced45",
+    "userscripts-network.js": "a30a7b58a89b5e9e9ec7c8f0ebc20494ef2f38789b0fa335726b647be38fce9c",
+    "userscripts-offscreen.js": "139984f21dc97438fb5ee861e937658f8e5f358b357257b980617920ad6f6645",
+    "userscripts-xhr.js": "e7b4c76e4ab1b393c771d5e19eca4769fb320f010a8c8431733b4c00b08ab5f8",
+    "clipboard.html": "970daeb79e2b446e3361625910ffba1d05806556740ca896aacaa2382dd8fda5",
+    "clipboard.js": "a4306ab66e7dcc0bd2b9156f1f46e6898d9a9ba719827a0b5569d79a4307f8b3",
+    "userscripts-actions.js": "62a8b9011374892bd30e7ebfdd983f5d1326d15438207fc84dcde6d71bb37bc7",
+    "userscripts-runtime.js": "ceeb3880a70ff289bdb6c96c59e0c2d9d15ced92bcf72a453f65de2a2d834346",
+    "manager.html": "e4ad9416adfb9be9e94bfaa00ef880c184783843cacd5da68f7c3452c47c428f",
+    "manager.js": "3fd7d2ed917a50ff8f3d8de834c26e0f035819f6c4992cc26200c210ea67aac3",
+    "userscripts-editor.js": "a632807c9e94e537aec1d069b0e790d259f16763549b5bcc5f4b00c6921b28ad",
+    "userscripts-editor-worker.js": "99de1b86c9369f4f544ac67877bd009453b7f3d0b70c530f3bbe435123e3a19d",
+    "userscripts-lint.js": "0a09c7a7d7c96faa97c61d0131269411e1ed09ec86bcd4187185e3db3558214f",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "manager.css": "74b8ed25d8c5fa4edce830f645b6d80a77c608c0e524bf33da0a50f73372977d"
+  },
+  "deniedRequests": 62,
+  "proxyErrors": [],
+  "fixtureOverrides": {
+    "clipboard.js": {
+      "sourceHash": "a4306ab66e7dcc0bd2b9156f1f46e6898d9a9ba719827a0b5569d79a4307f8b3",
+      "fixtureHash": "125d0e373b30133f13860699518c4833bf73a8f1f94f027c5821b227624c1c9e",
+      "reason": "Intercept clipboard writes without changing native permissions or the userscript bridge."
+    },
+    "background.js": {
+      "sourceHash": "e4233a3f18dc21f79bf2b3e09a64a2df571666e3a9f2f61c6a1ed9256104c7f7",
+      "fixtureHash": "6619ffc0f1c745157c0a3cc4c99a37f3848dcc173345113d6b63747f45b48397",
+      "reason": "Intercept clipboard writes without changing native permissions or the userscript bridge."
+    }
+  },
+  "version": {
+    "acceptInsecureCerts": false,
+    "browserName": "firefox",
+    "browserVersion": "160.0",
+    "platformName": "windows",
+    "setWindowRect": true,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+    "moz:buildID": "20261104181552",
+    "moz:headless": true,
+    "moz:platformVersion": "10.0",
+    "moz:processID": 43760,
+    "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-21F6SA\\profile",
+    "moz:shutdownTimeout": 73000
+  },
+  "permissionPrompt": {
+    "state": "closed",
+    "text": "",
+    "settingLabel": "",
+    "accepted": false
+  },
+  "helperPermissionPrompt": {
+    "state": "open",
+    "id": "addon-webext-permissions-notification",
+    "text": " Module Engine requests additional settingsNew permissions:Input data to the clipboardDownload files and read and modify the browser’s download historyDisplay notifications to youNew data collection:Optional settings:Learn more",
+    "button": "Allow",
+    "disabled": false,
+    "settingLabel": "",
+    "accepted": true
+  },
+  "clipboardSink": [
+    {
+      "text/plain": "Module Engine offline fixture"
+    },
+    {
+      "text/html": "<b>literal offline HTML</b>"
+    },
+    {
+      "text/plain": ""
+    }
+  ],
+  "desktopDownloads": [
+    {
+      "filename": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-21F6SA\\exports\\desktop-modern.bin",
+      "state": "complete",
+      "exists": true,
+      "sha256": "0150a92bb1212cd00516b65fde0704614760000963874fcbb11eaa734ee87809"
+    },
+    {
+      "filename": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-21F6SA\\exports\\desktop-legacy.bin",
+      "state": "complete",
+      "exists": true,
+      "sha256": "0150a92bb1212cd00516b65fde0704614760000963874fcbb11eaa734ee87809"
+    },
+    {
+      "filename": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-21F6SA\\exports\\desktop-modern(1).bin",
+      "state": "complete",
+      "exists": true,
+      "sha256": "0150a92bb1212cd00516b65fde0704614760000963874fcbb11eaa734ee87809"
+    }
+  ],
+  "transfers": {
+    "checks": {},
+    "error": "Permission denied to access property \"constructor\"",
+    "stack": "event@blockads-userscript-36bc3c46-2097-45ee-8e34-c218323a93fe.user.js:467:41\ndispatch@blockads-userscript-36bc3c46-2097-45ee-8e34-c218323a93fe.user.js:524:30\n",
+    "stage": "send multipart"
+  },
+  "desktopFailure": {
+    "error": "Native transfer fixture has no unexpected error: Permission denied to access property \"constructor\"",
+    "permissions": {
+      "origins": [
+        "<all_urls>"
+      ],
+      "data_collection": [],
+      "permissions": [
+        "declarativeNetRequest",
+        "declarativeNetRequestFeedback",
+        "storage",
+        "activeTab",
+        "alarms",
+        "scripting",
+        "webRequest",
+        "userScripts",
+        "clipboardWrite",
+        "notifications",
+        "downloads",
+        "webRequestBlocking"
+      ]
+    },
+    "ui": {
+      "status": "Helper access granted. Reload the script’s page before trying it again.",
+      "busy": false,
+      "helper": "Helper access\n\nBrowser access is allowed for this script’s helpers."
+    },
+    "pages": [
+      {
+        "desktopReady": "yes",
+        "denied": "true",
+        "clipboardLegacy": "true",
+        "copied": "yes",
+        "notificationSync": "true",
+        "done": "1",
+        "removed": "yes",
+        "legacyNotification": "true",
+        "legacyDone": "yes",
+        "legacyRemoved": "yes",
+        "downloadPromise": "true",
+        "downloadBytes": "[0,1,127,128,255]",
+        "downloadLegacy": "true",
+        "legacyDownloaded": "yes",
+        "downloadAgain": "yes",
+        "transferStage": "send multipart",
+        "transferError": "Permission denied to access property \"constructor\"",
+        "transferStack": "event@blockads-userscript-36bc3c46-2097-45ee-8e34-c218323a93fe.user.js:467:41\ndispatch@blockads-userscript-36bc3c46-2097-45ee-8e34-c218323a93fe.user.js:524:30\n",
+        "transferResults": "{}"
+      }
+    ]
+  },
+  "success": false,
+  "error": "AssertionError [ERR_ASSERTION]: Native transfer fixture has no unexpected error: Permission denied to access property \"constructor\"\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:41:44)\n    at runTransfers (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-transfer-browser.cjs:55:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Object.runDesktop (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-desktop-browser.cjs:160:26)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:82:5",
+  "events": [],
+  "extensionErrors": [],
+  "ui": "Module Engine\nModules & scripts\nMy lists\nActivity log\n\nRuns on this computer. No Module Engine telemetry.\n\nModules & scripts\n\nYour blocker. Your page customizations.\n\nRefresh status\n\nHelper access granted. Reload the script’s page before trying it again.\n\nAd blocking\nActive\n\nNetwork filters, page hiding, YouTube filtering and the element picker.\n\nProtection settings\nMy lists\nUserscripts\nActive\n\nRun your scripts on the sites you choose. Each script has its own switch.\n\n1 enabled\n1 saved\nBrowser access allowed\nScript library\n1 script\nNew script\nImport\nInstall from URL\nFind a script\nTag\nDesktop helper offline fixture\nhttp://127.0.0.1/desktop-page*\nOn\nDesktop helper offline fixture\nSaved · enabled\n\nReview the code and sites before turning a script on.\n\nRun this script\nRuns on matching page loads\nYour tags (comma separated)\nSave tags\n\nLocal labels stay with this script through updates.\n\nPosition 1 of 1\nMove earlier\nMove later\n\nLibrary order applies within each run-at phase on new page loads. Saved-value loading and asynchronous work can finish later.\n\nSource\n@match sets the sites and @run-at the timing.\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n100\n101\n \n// ==UserScript==\n// @name Desktop helper offline fixture\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/desktop-page*\n// @grant GM_setClipboard\n// @grant GM.setClipboard\n// @grant GM_notification\n// @grant GM.notification\n// @grant GM_download\n// @grant GM.download\n// @grant GM.xmlHttpRequest\n// @connect 127.0.0.1\n// @noframes\n// ==/UserScript==\n\n    const d=document.documentElement.dataset;\n    const fail=error=>{d.desktopError=error.message;};\n    let notification, legacyNotification, pending;\n    document.addEventListener('desktop-denied',()=>{\n      Promise.all([GM.setClipboard('denied').then(()=>false,()=>true),GM.download('/usnet/bytes.bin','denied.bin').then(()=>false,()=>true)])\n        .then(results=>{d.denied=String(results.every(Boolean));}).catch(fail);\n    });\n    document.addEventListener('desktop-copy',()=>{\n      d.clipboardLegacy=String(GM_setClipboard('Module Engine offline fixture')===undefined);\n      GM.setClipboard('<b>literal offline HTML</b>','html').then(()=>GM.setClipboard('')).then(()=>{d.copied='yes';},fail);\n    });\n    document.addEventListener('desktop-notify',()=>{\n      notification=GM.notification({text:'Harmless local test; removed automatically.',title:'Offline fixture',silent:true,ondone:()=>{d.done=String(Number(d.done||0)+1);}});\n      d.notificationSync=String(typeof notification.remove==='function'&&notification.then===undefined);\n    });\n    document.addEventListener('desktop-remove',()=>notification.remove().then(()=>{d.removed='yes';},fail));\n    document.addEventListener('desktop-legacy-notify',()=>{\n      legacyNotification=GM_notification({text:'Legacy offline fixture',silent:true,ondone:()=>{d.legacyDone='yes';}});\n      d.legacyNotification=String(typeof legacyNotification.remove==='function'&&legacyNotification.then===undefined);\n    });\n    document.addEventListener('desktop-remove-legacy',()=>legacyNotification.remove().then(()=>{d.legacyRemoved='yes';},fail));\n    document.addEventListener('desktop-download',()=>{\n      const promise=GM.download({url:'/usnet/bytes.bin',name:'desktop-modern.bin',anonymous:true});\n      d.downloadPromise=String(typeof promise.then==='function'&&typeof promise.abort==='function');\n      promise.then(async result=>{d.downloadBytes=JSON.stringify([...new Uint8Array(await result.response.arrayBuffer())]);},fail);\n    });\n    document.addEventListener('desktop-legacy-download',()=>{\n      const handle=GM_download({url:'/usnet/bytes.bin',name:'desktop-legacy.bin',anonymous:true,onload:()=>{d.legacyDownloaded='yes';},onerror:fail});\n      d.downloadLegacy=String(typeof handle.abort==='function'&&handle.then===undefined);\n    });\n    document.addEventListener('desktop-download-again',()=>GM.download('/usnet/bytes.bin','desktop-modern.bin').then(()=>{d.downloadAgain='yes';},fail));\n    document.addEventListener('desktop-abort',()=>{\n      const handle=GM_download({url:'/usnet/slow?desktop-abort',name:'must-not-exist.bin',onabort:()=>{d.aborted=String(Number(d.aborted||0)+1);},onerror:fail});\n      document.addEventListener('desktop-abort-now',()=>{handle.abort();handle.abort();},{once:true});\n    });\n    document.addEventListener('desktop-invalid',()=>{\n      d.badFilename=String((()=>{try{GM_download('/usnet/bytes.bin','../escape.bin');return false;}catch{return true;}})());\n      Promise.all(['missing','redirect','oversize'].map(name=>GM.download({url:'/usnet/'+name,name:name+'.bin',redirect:'error'}).then(()=>false,()=>true)))\n        .then(results=>{d.invalidDownloads=String(results.every(Boolean));}).catch(fail);\n    });\n    document.addEventListener('desktop-revoke-download',()=>{\n      pending=GM.download('/usnet/slow?desktop-revoke','revoked.bin');pending.then(()=>{d.revokedDownload='accepted';},()=>{d.revokedDownload='rejected';});\n    });\n    document.addEventListener('desktop-permission-probe',()=>GM.download('/usnet/bytes.bin','revoked-permission.bin').then(()=>{d.deniedAgain='no';},()=>{d.deniedAgain='yes';}));\n    d.desktopReady='yes';\n  \n(function transferFixture(GM) {\n  const data = document.documentElement.dataset;\n  document.addEventListener('transfer-checks', async () => {\n    const results = {}, request = GM.xmlHttpRequest;\n    try {\n      data.transferStage = 'construct FormData';\n      const form = new FormData(); form.append('label', 'first ✓'); form.append('label', 'second');\n      const bytes = new Uint8Array(262144); bytes[0] = 128; bytes[bytes.length - 1] = 255;\n      form.append('file', new Blob([bytes], { type: 'application/octet-stream' }), 'offline.bin');\n      data.transferStage = 'send multipart';\n      const progress = []; let uploadLoads = 0, loads = 0;\n      const response = await request({ url: '/usnet/multipart', method: 'POST', data: form, responseType: 'json', anonymous: true,\n        upload: { onprogress: event => progress.push({ loaded: event.loaded, total: event.total, lengthComputable: event.lengthComputable }), onload: () => uploadLoads++ },\n        onload: () => loads++ });\n      const raw = atob(response.response.bodyBase64), last = progress.at(-1);\n      results.formData = response.response.contentType.startsWith('multipart/form-data; boundary=') && raw.indexOf('first ') < raw.indexOf('second') && raw.includes('filename=\"offline.bin\"') && raw.includes(String.fromCharCode(128) + '\\0');\n      results.uploadProgress = progress.length > 0 && last.loaded === last.total && last.total > bytes.length && last.lengthComputable;\n      results.separateCompletion = uploadLoads === 1 && loads === 1 && response.status === 200;\n      results.anonymous = response.response.cookie === '';\n      data.uploadProgress = JSON.stringify(progress);\n      const kept = await request({ url: '/usnet/transfer-307', method: 'POST', data: 'preserved', responseType: 'json', upload: { onprogress() {} } });\n      results.redirect307 = kept.response.method === 'POST' && kept.response.body === 'preserved';\n      const rewritten = await request({ url: '/usnet/redirect', method: 'POST', data: 'discarded', responseType: 'json', upload: { onprogress() {} } });\n      results.redirect302 = rewritten.response.method === 'GET' && rewritten.response.body === '' && rewritten.finalUrl.endsWith('/usnet/json');\n      const fetched = await request({ url: '/usnet/redirect', responseType: 'json' });\n      results.fetchRedirect = fetched.response.value === 42;\n      results.scopeGuard = await request({ url: '/usnet/transfer-denied', method: 'POST', data: 'private', upload: { onprogress() {} } }).then(() => false, error => error.message.includes('@connect'));\n      results.errorPolicy = await request({ url: '/usnet/redirect', redirect: 'error' }).then(() => false, error => /Redirects are disabled/.test(error.message));\n      const file = await GM.download({ url: '/usnet/transfer-file-redirect', name: 'transfer-large.bin', anonymous: true });\n      results.largerDownload = file.response.size === 3145728;\n      data.transferResults = JSON.stringify(results);\n    } catch (error) { data.transferError = error.message; data.transferStack = error.stack; data.transferResults = JSON.stringify(results); }\n  });\n  document.addEventListener('transfer-slow', () => {\n    const pending = GM.xmlHttpRequest({ url: '/usnet/slow?transfer-abort', method: 'POST', data: new Blob([new Uint8Array(524288)]), upload: { onprogress: event => { data.slowUploaded = String(event.loaded); } } });\n    pending.then(() => { data.transferAborted = 'unexpected success'; }, error => { data.transferAborted = error.message; });\n    document.addEventListener('transfer-abort', () => pending.abort(), { once: true });\n  });\n})(GM);\n \n\nNo syntax errors found. Runtime errors still appear in the page console.\n\nSave\nDiscard draft\nExport\nDelete\n\nSaved scripts start turned off. Reload open pages after changing a script.\n\nScript details\nSCRIPT\nDesktop helper offline fixture · 1.0\nSITES\nhttp://127.0.0.1/desktop-page*\nTIMING\ndocument-end\nFRAMES\nTop frame only\nWORLD\nIsolated script world\nAPIS\nGM_setClipboard, GM.setClipboard, GM_notification, GM.notification, GM_download, GM.download, GM.xmlHttpRequest\nNETWORK ACCESS\n127.0.0.1\nHelper access\n\nBrowser access is allowed for this script’s helpers.\n\nSource & updates\n\nLocal script. To link an update URL, use Install from URL with the same @name and @namespace.\n\nSupported userscript features",
+  "cleanup": {
+    "browserClosed": true
+  },
+  "finished": "2026-11-12T16:28:32.727Z"
+}

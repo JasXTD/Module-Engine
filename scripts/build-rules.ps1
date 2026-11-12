@@ -6,6 +6,7 @@ param(
     [string]$CatalogPath = (Join-Path $PSScriptRoot '..\lists\reviewed-domains.json'),
     [string]$ThreatCatalogPath = (Join-Path $PSScriptRoot '..\lists\reported-threats.json'),
     [string]$SiteAdHostsPath = (Join-Path $PSScriptRoot '..\lists\site-ad-hosts.json'),
+    [string]$RequestedAdHostsPath = (Join-Path $PSScriptRoot '..\lists\requested-ad-hosts.json'),
     [string]$CommunityListsPath = (Join-Path $PSScriptRoot '..\lists\community-lists.json')
 )
 $ErrorActionPreference = 'Stop'
@@ -17,9 +18,11 @@ if ($FetchOnlineLists -or $UrlhausCsvPath) {
 . (Join-Path $PSScriptRoot 'reviewed-domain-tools.ps1')
 . (Join-Path $PSScriptRoot 'rule-tools.ps1')
 . (Join-Path $PSScriptRoot 'threat-report-tools.ps1')
+. (Join-Path $PSScriptRoot 'requested-ad-host-tools.ps1')
 . (Join-Path $PSScriptRoot 'community-list-tools.ps1')
 $catalog = Read-ReviewedDomainCatalog $CatalogPath
 $threats = Read-ThreatReportCatalog $ThreatCatalogPath
+$requestedAds = Read-RequestedAdHosts $RequestedAdHostsPath
 $rulesDir = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $rulesDir | Out-Null
 $buildLock = [IO.File]::Open((Join-Path $rulesDir '.build.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
@@ -95,6 +98,7 @@ try {
                 resourceTypes = @('main_frame','sub_frame','script','image','xmlhttprequest','media','ping','websocket','other') } }
         }
     } finally { $siteHosts.Dispose() }
+    $sets['ads.json'] += @($requestedAds.Rules)
     Test-GeneratedRules -RuleSets $sets
     $outputs = @{}
     # Rules are dictionaries: sort by the key's value, not a (missing) property.
@@ -121,5 +125,5 @@ try {
     $outputs['community-cosmetic.json'] = ConvertTo-CosmeticJson $community.Cosmetic
     $outputs['community-info.json'] = ConvertTo-Json -InputObject $community.Info -Depth 6
     Write-RuleOutputs -Directory $rulesDir -Outputs $outputs
-    Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only; $($community.Rules.Count) community rules and $($community.Info.cosmeticSelectors) site hiding rules from $(@($community.Info.lists).Count) list(s)."
+    Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks; $($requestedAds.Rules.Count) exact user requests), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only; $($community.Rules.Count) community rules and $($community.Info.cosmeticSelectors) site hiding rules from $(@($community.Info.lists).Count) list(s)."
 } finally { $buildLock.Dispose() }

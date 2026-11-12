@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-11-09T08:19:45.8943856Z",
+  "matchingProcessesBeforeCleanup": 0,
+  "reparsePoints": 0,
+  "directories": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-tzF5i5",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-dHgxhA",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-KhSA8O",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-4SQOjT",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-rSUKME",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-SoWBkB",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-9CeEVn",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-gRcYmg",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-Zn0JfT",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-tDq4pP",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-sDVN0g",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-ypMzbm",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-eVZvfo",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-P7bPp5",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-4yCtkw",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-3NT3vS",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-threat-rules-5ab004a8b8c646edad5a089071d348bd",
+      "removed": true,
+      "absent": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-rules-test-014154f0ec9d41b38bba3d474af50ee9",
+      "removed": false,
+      "absent": true
+    }
+  ]
+}

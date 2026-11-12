@@ -1,0 +1,311 @@
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\background.js" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\background.js"
+index 61d5959..fc873d5 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\background.js"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\background.js"
+@@ -44,6 +44,13 @@ const DOMAIN_LIST_KEYS = ["whitelistedDomains", "customBlockedDomains", "popupBl
+ // Always-allowed domains override every list rule (1-3, including community
+ // $important) but not reported threats (5) or custom blocks (50).
+ const ALLOWED_DOMAIN_PRIORITY = 4;
++// Applied to the selected top document, then inherited by its descendants.
++// Preserve player APIs and ordinary page capabilities while withholding frame
++// permission to navigate the top tab, including after a genuine play click.
++// Append this policy: never replace the site's own CSP or iframe restrictions.
++const PAGE_GUARD_SANDBOX = "sandbox allow-scripts allow-same-origin allow-forms allow-modals " +
++  "allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox " +
++  "allow-presentation allow-downloads allow-storage-access-by-user-activation";
+ const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
+ const ALL_RESOURCE_TYPES = [
+   "main_frame", "sub_frame", "stylesheet", "script", "image", "font", "object",
+@@ -745,6 +752,18 @@ function makeDynamicRules(settings) {
+     });
+   }
+   for (const rule of customNetworkRules(settings.customNetworkFilters)) add(rule);
++  if (settings.popupBlockedDomains.length) {
++    add({
++      // Above request-level allows (4), below site pauses (10000). This changes
++      // navigation privileges, not whether an ad/media request is blocked.
++      priority: 100,
++      action: { type: "modifyHeaders", responseHeaders: [
++        { header: "content-security-policy", operation: "append", value: PAGE_GUARD_SANDBOX }
++      ] },
++      condition: { requestDomains: settings.popupBlockedDomains, resourceTypes: ["main_frame"],
++        ...(settings.whitelistedDomains.length ? { excludedRequestDomains: settings.whitelistedDomains } : {}) }
++    });
++  }
+   const limit = api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
+     api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
+   if (rules.length > limit) throw new Error(`Too many custom network and domain rules for this browser (limit ${limit}).`);
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\DEVELOPMENT.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\DEVELOPMENT.md"
+index bb9d3e5..4353dd3 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\DEVELOPMENT.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\DEVELOPMENT.md"
+@@ -10,9 +10,13 @@ The offline Reddit browser fixtures use the production content scripts and setti
+ 
+ ## Tests and local files
+ 
+-`popups.js` also guards top-document same-tab navigation on the existing selected-site scopes. It uses trusted, cancellable Navigation API events; cross-origin URLs can be cancelled even when `canIntercept` is false. Ordinary native link/form navigation, exact link destinations captured before page handlers, same-host/parent/child scopes, reloads and history traversal remain usable. Link intent expires at the next task so it does not authorize a later unrelated redirect. A true `userActivation` flag alone is insufficient: a play button can activate an ad redirect. No new permission or setting is required, and disabling the existing guard still requires a page reload to remove installed hooks.
++`popups.js` guards top-document replacements on the existing selected-site scopes. It uses trusted, cancellable Navigation API events; cross-origin URLs can be cancelled even when `canIntercept` is false. Script-only navigation is stopped before the first HTTP(S) request, including same-host URLs and script reloads, so an unseen server redirect cannot replace the video document. Ordinary native links/forms, exact link destinations captured before page handlers, same-document routing, browser reload and history traversal remain usable. Link intent expires with a zero-delay task so it does not authorize a later timer redirect. Transient user activation alone is insufficient: a play button can activate an ad redirect.
+ 
+-The [Navigation API specification](https://html.spec.whatwg.org/dev/nav-history-apis.html) explains why cross-origin frame-initiated top navigation and browser UI navigation do not expose the same cancellable events. `sourceElement` arrived in [Chromium 135](https://developer.chrome.com/release-notes/135); older supported engines use the native `userInitiated` flag while retaining exact captured-link checks. The fixture removes this newer property to exercise fallback behavior with real native navigation; it does not claim an actual old-browser run. `tests/same-tab-redirects-browser.cjs` records frame and HTTP-redirect bypasses separately as limitations, not successful protection assertions. Visible links whose actual destination is unwanted, restricted injection and page-world tampering are also outside this hook's guarantee. Keep tests on owned loopback pages behind a deny proxy; never use live suspicious destinations to demonstrate coverage.
++The [Navigation API specification](https://html.spec.whatwg.org/dev/nav-history-apis.html) explains why cross-origin frame-initiated top navigation is not covered by the event alone. `background.js` now appends a CSP sandbox to selected `main_frame` responses through one aggregate dynamic rule. Its restrictions are [inherited by descendant frames](https://html.spec.whatwg.org/multipage/browsers.html#sandboxing), including nested players, and omit both top-navigation permissions. The policy allows scripts, ordinary origins, forms, storage access, fullscreen-related player capabilities and other normal sandbox permissions. Priority 100 sits above request allows (4) and below site pauses (10000); paused request domains are explicitly excluded. The normal settings transaction verifies and rolls back both native policy and page-script registration. Header matches are neither logged as blocked requests nor treated as evidence for closing a tab. Existing CSP headers are appended to, never replaced; native tests verify stricter script/origin restrictions survive.
++
++`sourceElement` arrived in [Chromium 135](https://developer.chrome.com/release-notes/135); older supported engines use the native `userInitiated` flag while retaining exact captured-link checks. The fixture removes this newer property to test fallback behavior with real navigation, not an old binary. A real link/form may legitimately follow a server redirect. Browser sandbox denials can interrupt a frame's current JavaScript handler; independent ad and player listeners are tested, but a player that requires a top navigation before playback cannot be guaranteed compatible. No new manifest permission or setting is needed. Enabling, pausing or disabling requires reloading the page because an already applied document sandbox is immutable.
++
++The header policy applies only to responses that reach the browser network stack. [Service-worker-generated and CacheStorage responses can bypass DNR header changes](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest/#interactions-with-service-workers). Restricted injection, page-world tampering and deliberate native links to unwanted destinations also remain outside the guarantee. `tests/frame-redirects-browser.cjs` records a short WebM from canvas entirely inside the disposable browser and verifies decoding, playback controls, nested frames, iframe-local redirects and preserved server CSP. Keep tests on owned loopback pages behind a deny proxy; never use live suspicious destinations to demonstrate coverage.
+ 
+ See [verification and test commands](VERIFICATION.md#verification). Start with the offline tests. Browser tests use disposable profiles and owned loopback fixtures; live-site commands require separate opt-in.
+ 
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\USER_GUIDE.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\USER_GUIDE.md"
+index feaebe3..8fbd5c5 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\USER_GUIDE.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\USER_GUIDE.md"
+@@ -136,9 +136,11 @@ Manager operations have their own bounded capacity and run before waiting GM sto
+ - **Always Allowed Domains** (popup list, or the *Allow* button next to a blocked server in the activity log): requests to these domains and their subdomains are never blocked by the ad, tracker, site-check or community lists, on any site. Unlike *Pause on this site*, which turns filtering off on the pages of a site, this allows one server everywhere. Reported threats and your custom blocks still apply; the same domain cannot be in both Custom Blocked and Always Allowed. Entries accept a hostname or URL like custom blocks.
+ - **Block pop-ups and redirects** (popup switch, per site and its subdomains): a page-level script on the chosen site and each injectable child frame refuses windows opened by script, script-made clicks on links to another host scope, and clicks on disguised links to another host scope (invisible, or page-covering overlays). An exact host and its parent or child hosts share a scope; independent sibling hosts are kept separate so tenants on `github.io`, `pages.dev` and similar shared platforms cannot inherit each other's trust. Ordinary visible links still work. It does not depend on knowing the ad network's domains. Page-world block claims are deliberately not added to the activity log because a page could forge them. Reload after turning the switch off to remove an already-installed page hook; it is inactive on new pages while the site is paused or the master switch is off. Browser-restricted frames and pop-up routes that do not use these JavaScript hooks can still bypass this optional layer.
+ 
+-  On Chrome and Edge, the same switch also cancels scripted same-tab departures to another host scope, including play-button assignments to `location`, delayed redirects, script-submitted forms and meta refreshes. Normal visible links, native form submissions, same-host navigation, reload and browser Back/Forward remain usable. A synchronous script-handled link may navigate to its original exact destination. Legitimate script-only buttons that leave the host scope can also be stopped; turn the guard off and reload if that flow is needed.
++  On Chrome and Edge, the same switch also stops script-driven page replacements, including same-site URLs that could start a server redirect chain, scripted reloads, delayed redirects, script-submitted forms and meta refreshes. Stopping the first request keeps the current video document alive. Normal visible links, native forms, navigation within the same document, browser reload and Back/Forward remain usable. A synchronous script-handled link may navigate to its original exact destination. A real link or native form may follow server redirects normally; the guard does not know whether that chosen destination is wanted.
+ 
+-  This is not universal redirect protection: a cross-origin embedded frame can still navigate the top page, and server redirect chains, real links whose destination is unwanted, restricted frames and page scripts that bypass or tamper with the hook can escape it. Browsers without the Navigation API retain the existing pop-up behavior. The local tests verify these limits without contacting any suspicious host.
++  Selected pages also receive a browser sandbox policy, inherited by embedded and nested frames, that prevents frames from navigating the top tab even after a genuine play click. Scripts, normal origins/storage, forms, presentation and other player capabilities remain allowed. Media and API response bodies are untouched. The policy is appended to the site's own CSP and cannot undo a stricter site policy. Locally generated video passed play, pause/resume, seeking and fullscreen checks in Chrome and Edge; player frames can still navigate and follow redirects within themselves.
++
++  Compatibility is not universal: legitimate script-only full-page buttons, automatic next-page navigation and frame controls that intentionally navigate the top tab are also stopped. A blocked frame navigation can throw a browser security exception, so a player that performs that navigation before playback in the same handler may need this guard turned off. Pause protection or disable the guard and reload if a player depends on these behaviors. Already loaded pages retain their sandbox until reloaded. Responses generated entirely by a site's service worker may bypass the header policy; restricted injection, page-hook tampering and browsers without the Navigation API also limit protection. Live players, DRM playback and every redirect route have not been verified. The local tests never contacted a suspicious host.
+ 
+ - **Automatic cleanup of blocked pop-up tabs** works in Firefox and unpacked Chrome/Edge, independently of the per-site pop-up switch. It considers only a new tab with a browser-reported opener and its first HTTP(S) navigation. Chrome/Edge require a failed navigation and native feedback identifying a Module Engine block rule. Firefox requires a native aborted navigation plus confirmation from the actual enabled static, dynamic and session rules that a matching block outranks all possible exceptions or redirects; disabled static rules are excluded. Firefox checks domain and common URL patterns conservatively: regex, initiator/party constraints, unfamiliar conditions, or an exhausted matching budget cannot establish a block and may prevent cleanup. Ambiguous tabs stay open while browser network filtering continues. Existing or pinned tabs, tabs that already received page content, ordinary blank tabs without a confirmed block, and tabs without an opener are preserved. A blocked link opened in a new tab can also be closed because opener metadata does not distinguish it from a script-created pop-up. Pending navigation and rule changes cancel cleanup. The activity log records successful closes. Candidates expire after ten seconds, are capped at 64, and are not restored after a background restart. Firefox needs no debugging preference or new permission. Chrome/Edge installations without native match feedback keep the tab open.
+ - **Flag suspected ads** (popup switch, on by default): Module Engine watches requests that actually loaded (it never sees, and never flags, ones it blocked) and flags third-party servers that look like ads, for you to decide later. Signals: ad-like addresses (`/ads/`, banner, popunder, prebid, VAST), ad placement settings (`zoneid=`, placement, campaign), impression or click trackers, known ad-network script shapes, long random-looking script addresses, throwaway-looking domains (two words joined by a hyphen) loading scripts or frames, and on the page itself, frames in standard ad sizes from another site and elements labelled "Ad", "Sponsored" or 广告/廣告. Flags are grouped by exact server name in the *Flagged for review* table at the top of *My lists*, with the reasons, the page hosts they were seen on, a count and examples; **Block** adds that exact server to Custom Blocked Domains, **Allow** to Always Allowed Domains, **Ignore** stops flagging it, and *Clear all flags* empties the table. Nothing is blocked by a flag. Sibling hosts are conservatively treated as separate unless one is a parent of the other; this avoids merging unrelated shared-hosting tenants but may produce an extra harmless flag. Flags are kept in local storage (up to 500 servers, the oldest dropped first) until you decide or clear them; only page hosts, server names, reason codes and short paths without query strings are stored, and nothing is sent anywhere. Paused sites and always-allowed servers are not flagged; the master switch and the popup switch turn flagging off. Pattern matching misses ads served from the same host scope or ordinary-looking addresses and can flag harmless files, which is why it only flags.
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\VERIFICATION.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\VERIFICATION.md"
+index a5bcc5b..cb9ad23 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\docs\\VERIFICATION.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\docs\\VERIFICATION.md"
+@@ -1,11 +1,28 @@
+ # Module Engine verification
+ 
+-These are dated results, not a promise that every live site is blocked. The latest browser records below are from 12 November 2026, covering same-tab redirect protection and blocker regressions. The 11 November records cover manual userscript installation/updates, clipboard, notification and download helpers, existing userscript compatibility and the Reddit app-popup repair. Older records describe their own source snapshots and limitations.
++These are dated results, not a promise that every live site is blocked. The latest browser records below are from 12 November 2026, covering frame takeovers, script-initiated server redirects, local video playback and blocker regressions. The 11 November records cover manual userscript installation/updates, clipboard, notification and download helpers, existing userscript compatibility and the Reddit app-popup repair. Older records describe their own source snapshots and limitations.
+ 
+ [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+ 
++## Frame takeovers and server redirects — 12 November 2026
++
++The two earlier bypasses were reproduced with the unchanged guard, then closed with a scoped browser sandbox and cancellation before the first scripted document request. The latest manager UI and other existing changes were inspected and checkpointed first. **333 unit tests passed** with no failures or skips, including rollback/retry when the policy write, readback, script registration or settings save fails.
++
++| Browser | Frame/video checks | Navigation checks | Pop-up checks | Blocked-tab cleanup | Full blocker checks |
++| --- | ---: | ---: | ---: | ---: | ---: |
++| Chrome 157 | 28 | 56 | 38 | 25 | 573 |
++| Edge 157 | 28 | 56 | 38 | 25 | 573 |
++
++Each browser exercised a locally recorded WebM: it decoded, advanced, paused, resumed, sought and entered/exited fullscreen after an independent ad listener attempted to replace the top page. Nested frames inherited the restriction. Player frames could still follow their own HTTP redirects, their origin/storage remained usable, and existing stricter server sandbox policies remained enforced. Scripted same-site redirect chains were stopped before their first request; top video and document identity survived. Normal visible links/forms, intentional link redirects, browser reload/history and page routing through history/hash updates remained usable. Header-policy matches were not misreported as blocked requests. Disabling or pausing and reloading restored frame navigation.
++
++The scope is deliberately stricter: script-only full-page buttons, script reloads and intentional frame-to-top navigation are stopped too. A blocked navigation may interrupt its current JavaScript handler; players that require that behavior can need the per-site guard disabled. Real links/forms may follow redirects. Service-worker-generated document responses can bypass response-header policies, and page-hook tampering/restricted injection remain limitations. No live player, DRM service, old browser binary or Firefox was tested in this pass; playback compatibility is established for these fixtures only.
++
++Tests used disposable profiles, owned loopback pages and deny proxies; Chrome was visible for the media, navigation and full blocker runs, and Edge was headless. WebM bytes were generated in browser memory, with no downloaded media, packages or tools. No suspicious destination was contacted. The first WebM fixture stalled while unguarded; explicitly loading its generated Blob resolved the fixture readiness issue, and that failed attempt is retained. The existing full blocker fixture's Reddit hostname alias and blocked-tab fixture rules stayed confined to their temporary packages. See the [report, hashes, screenshots, attempts and checkpoint diff](../verification/2026-11-12/frame-redirects/summary.json). Reload the extension and the affected page to apply or remove the document policy. Manifest permissions/version and packaged list rules are unchanged; no rule builder was run.
++
+ ## Same-tab redirect guard — 12 November 2026
+ 
++This earlier snapshot identified the frame and server-chain bypasses addressed by the subsequent pass above. Its counts and limitations describe that earlier code.
++
+ The existing per-site switch now reads **Block pop-ups and redirects**. After inspecting and checkpointing the current uncommitted source, the old guard was reproduced allowing a play-button `location.href` redirect to an owned local destination. The updated guard cancels supported top-document departures before the destination request while leaving the generated video playing. **328 Node tests** passed with no failures or skips.
+ 
+ | Browser | Redirect and compatibility checks | Existing pop-up checks | Full blocker checks |
+@@ -151,6 +168,8 @@ node tests/browser-smoke.cjs firefox
+ node tests/browser-smoke.cjs edge
+ node tests/same-tab-redirects-browser.cjs chrome
+ node tests/same-tab-redirects-browser.cjs edge
++node tests/frame-redirects-browser.cjs chrome
++node tests/frame-redirects-browser.cjs edge
+ node tests/popup-guard-browser.cjs chrome
+ node tests/popup-guard-browser.cjs edge
+ # Focused Reddit fixtures only; still loopback-only with a disposable profile.
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\lists.html" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\lists.html"
+index c8fdd5e..c11c53e 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\lists.html"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\lists.html"
+@@ -130,7 +130,7 @@
+ 
+         <section class="card" data-list="popupBlockedDomains" id="listPopups">
+               <h2>Pop-up and redirect blocking sites <span class="muted count"></span></h2>
+-              <p class="muted">Stops script-opened windows, disguised links and scripted same-tab redirects to other host scopes. Ordinary links and forms still work. Reload after changing.</p>
++              <p class="muted">Stops pop-ups, embedded-frame takeovers and scripted page changes, including requests that could redirect at the server. Ordinary links, forms and video controls remain usable. Reload after changing.</p>
+               <form class="add-form">
+                 <input type="text" maxlength="2048" placeholder="Site, e.g. example.com" aria-label="Site to block pop-ups and redirects on" autocomplete="off" spellcheck="false" />
+                 <button type="submit">Add site</button>
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popup.html" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.html"
+index 4787e07..0a685e7 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popup.html"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.html"
+@@ -49,7 +49,7 @@
+         <div class="layer-row">
+           <div class="layer-info">
+             <span class="layer-name">Block pop-ups and redirects</span>
+-            <span class="layer-desc" id="popupScope">Stops new windows and scripted redirects to other sites</span>
++            <span class="layer-desc" id="popupScope">Stops pop-ups, frame takeovers and scripted page changes</span>
+           </div>
+           <input type="checkbox" id="togglePopups" aria-label="Block pop-ups and redirects on this site" disabled />
+         </div>
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popup.js" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.js"
+index 212810f..64d72d7 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popup.js"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popup.js"
+@@ -114,7 +114,7 @@ function renderUI() {
+   popupScopeEl.textContent = !activeHostname ? "Available on HTTP(S) pages"
+     : scope ? "Inactive while this site is paused"
+     : popupScope ? `On for ${popupScope} and its subdomains. Reload the page after changing.`
+-    : "Stops new windows and scripted redirects to other sites";
++    : "Stops pop-ups, frame takeovers and scripted page changes";
+   const customNetworkBlocks = BlockAdsNetwork.parse(settings.customNetworkFilters ?? "").some(rule => rule.action.type === "block");
+   const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 || customNetworkBlocks ||
+     settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || settings.rulesets.community_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popups.js" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popups.js"
+index 58b7d17..3a08f9e 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\popups.js"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\popups.js"
+@@ -3,8 +3,9 @@
+  * cross-origin child frames. It refuses windows opened by script, synthetic
+  * clicks on links to other hosts, and clicks on disguised links (invisible or
+  * page-covering overlays) to other hosts. The top page also cancels script-made
+- * cross-host navigations exposed by the Navigation API. Ordinary links and
+- * native form submissions still work. This is a page hook, not a security boundary.
++ * document replacements, including same-host requests that could redirect at
++ * the server. A companion response sandbox prevents frame takeovers. Ordinary
++ * links and native form submissions still work. Page hooks can be tampered with.
+  */
+ (() => {
+   "use strict";
+@@ -101,12 +102,14 @@
+     window.navigation.addEventListener("navigate", event => {
+       // Unlike Location's unforgeable setters, this browser event can cancel a
+       // navigation before a request. Do not use canIntercept: it is false for
+-      // cross-origin URLs even when cancellation is allowed. Browser UI/history,
+-      // same-host navigation and embedded players' own navigations stay intact.
+-      // Cross-origin frames navigating the top page and HTTP redirect responses
+-      // may not expose this event, so this hook cannot guarantee blocking them.
++      // cross-origin URLs even when cancellation is allowed. Block the first
++      // scripted document request, since its server's redirect target cannot be
++      // known in advance. Same-document player routing, media requests, browser
++      // history and iframe-local navigation stay intact. The response sandbox
++      // separately stops frames whose top navigation does not fire this event.
+       if (!event.isTrusted || !event.cancelable || event.navigationType === "traverse" ||
+-          event.navigationType === "reload" || !otherSite(event.destination.url)) return;
++          (event.navigationType === "reload" && event.userInitiated) ||
++          event.destination.sameDocument || !/^https?:/.test(event.destination.url)) return;
+       if (linkIntent?.href === event.destination.url) return;
+       const source = event.sourceElement;
+       if (event.userInitiated) {
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\README.md" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\README.md"
+index f254b9b..86ed81f 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\README.md"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\README.md"
+@@ -9,7 +9,7 @@ Module Engine uses the browser's Manifest V3 APIs and bundled filter data. It ru
+ - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
+ - **Ad and tracker filtering:** bundled network rules, EasyList snapshots, cosmetic hiding, advanced page hiding and a visual element picker.
+ - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
+-- **Pop-up protection:** an optional per-site guard for pop-ups and scripted same-tab redirects, plus automatic cleanup of confirmed blocked blank pop-up tabs. Cross-origin frame redirects remain a known limitation.
++- **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). Confirmed blocked blank pop-up tabs are also cleaned up automatically.
+ - **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
+ - **Userscripts:** import, edit, enable and export `.user.js` files; legacy and modern GM storage, listeners, page commands, DOM/tab helpers, clipboard writes, notifications, downloads, URL globs, cached dependencies/resources and bounded cross-origin HTTP requests.
+ - **Script installation and updates:** install from a direct URL and manually check for updates, with source/access review and approval before replacement. Saved values are retained.
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\tests\\background.test.cjs" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs"
+index c9fbf07..b82326a 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\tests\\background.test.cjs"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\background.test.cjs"
+@@ -1157,6 +1157,42 @@ test('cross-origin frames receive the pop-up guard from browser sender metadata'
+   assert.equal(h.state.executions.length, 1, 'a frame outside the selected top site is not injected');
+ });
+ 
++test('selected-site guard appends a browser sandbox without blocking media and follows site and master pauses', async () => {
++  const h = harness(); await h.ready;
++  const policy = () => h.state.dynamic.find(rule => rule.action.type === 'modifyHeaders');
++  assert.equal(policy(), undefined);
++  await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true });
++  await h.send({ type: 'SET_SITE_POPUPS', domain: 'second.example', blocked: true });
++  await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'player.example' });
++  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: Object.fromEntries(ids.map(id => [id, false])) } });
++  assert.deepEqual(policy().condition, { requestDomains: ['player.example', 'second.example'], resourceTypes: ['main_frame'] });
++  assert.equal(h.state.dynamic.filter(rule => rule.action.type === 'modifyHeaders').length, 1, 'one bounded aggregate rule');
++  assert.ok(policy().priority > h.state.dynamic.find(rule => rule.action.type === 'allow').priority);
++  const header = policy().action.responseHeaders[0];
++  assert.equal(header.header, 'content-security-policy'); assert.equal(header.operation, 'append');
++  for (const token of ['allow-scripts','allow-same-origin','allow-forms','allow-presentation','allow-storage-access-by-user-activation']) assert.ok(header.value.split(' ').includes(token));
++  assert.ok(!header.value.split(' ').some(token => token.startsWith('allow-top-navigation')));
++  await h.send({ type: 'SET_SITE_PAUSED', domain: 'player.example', paused: true });
++  assert.deepEqual(policy().condition.excludedRequestDomains, ['player.example']);
++  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }); assert.equal(policy(), undefined);
++  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: true } }); assert.ok(policy());
++  await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: false });
++  await h.send({ type: 'SET_SITE_POPUPS', domain: 'second.example', blocked: false }); assert.equal(policy(), undefined);
++});
++
++for (const fault of ['dynamic', 'ignoreDynamic', 'scripts', 'save']) test('page guard ' + fault + ' failure cannot report a partially enabled guard', async () => {
++  const h = harness(); await h.ready;
++  h.state.faults[fault] = 1;
++  const result = await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true });
++  assert.equal(result.ok, false);
++  assert.deepEqual(h.state.storage.popupBlockedDomains, []);
++  assert.ok(!h.state.dynamic.some(rule => rule.action.type === 'modifyHeaders'));
++  assert.ok(!h.state.scripts.some(script => script.id === 'popup-blocker'));
++  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true })).ok, true);
++  assert.ok(h.state.dynamic.some(rule => rule.action.type === 'modifyHeaders'));
++  assert.ok(h.state.scripts.some(script => script.id === 'popup-blocker'));
++});
++
+ test('page-originated pop-up events cannot forge activity-log entries', async () => {
+   const h = harness({ popupBlockedDomains: ['uukanshu.cc'] });
+   await h.ready;
+diff --git "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\tests\\same-tab-redirects-browser.cjs" "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\same-tab-redirects-browser.cjs"
+index 6ec4d21..d687062 100644
+--- "a/C:\\Users\\Tommy\\Desktop\\BlockAds\\.artifacts\\2026-11-12-frame-redirect-before\\tests\\same-tab-redirects-browser.cjs"
++++ "b/C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\same-tab-redirects-browser.cjs"
+@@ -40,7 +40,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+     if (url.pathname === '/destination') return res.end('<title>Local destination</title><p>Harmless local destination</p>');
+     const destination = 'http://localhost:' + port + '/destination';
+     if (url.pathname === '/redirect') { res.writeHead(302, { Location: destination + '?case=httpRedirect' }); return res.end(); }
+-    if (url.pathname === '/frame') return res.end(`<!doctype html><button id="framePlay" style="position:fixed;left:0;top:0;width:180px;height:45px;margin:0" onclick="navigator.sendBeacon('/observe',JSON.stringify({frameClick:true,trusted:event.isTrusted}));top.location.href='${destination}?case=frame'">Frame play</button>`);
++    if (url.pathname === '/frame') return res.end(`<!doctype html><button id="framePlay" style="position:fixed;left:0;top:0;width:180px;height:45px;margin:0" onclick="navigator.sendBeacon('/observe',JSON.stringify({frameClick:true,trusted:event.isTrusted}));try{top.location.href='${destination}?case=frame'}catch(error){navigator.sendBeacon('/observe',JSON.stringify({test:'frame',blocked:error.name==='SecurityError'}))}">Frame play</button>`);
+     res.end(`<!doctype html><meta charset="utf-8"><title>Same-tab player fixture</title>
+       <style>body{font:16px sans-serif;margin:16px}button,a,input{display:inline-block;padding:8px;margin:4px}video{width:120px;height:75px}iframe{width:300px;height:65px}</style>
+       <canvas id="canvas" width="120" height="75"></canvas><video id="video" muted playsinline></video>
+@@ -133,7 +133,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+     check(true, 'control: without the per-site guard a play-button redirect reaches the unlisted local destination');
+     evidence.requests.length = 0;
+     await send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: true });
+-    for (const name of ['href', 'assign', 'replace', 'timer', 'navigation', 'scriptForm', 'refresh']) await blocked(name);
++    for (const name of ['href', 'assign', 'replace', 'timer', 'navigation', 'scriptForm', 'refresh', 'sameScript']) await blocked(name);
+     await open('synthetic'); await click('synthetic');
+     check(await browser.evaluate('window.attempts[0]?.trusted && location.pathname==="/player"', page) && !loaded('synthetic'), 'synthetic same-tab anchor clicks remain blocked');
+     for (const name of ['hijackLink', 'mutatedLink', 'lateLink']) {
+@@ -142,7 +142,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+       check(!loaded(name) && evidence.navigations.some(item => item.test === name && item.prevented) &&
+         await browser.evaluate('location.pathname==="/player"', page), name + ': a changed destination or stale click intent does not authorize a redirect');
+     }
+-    for (const [name, id] of [['link', 'link'], ['scriptLink', 'scriptLink'], ['getForm', 'getSubmit'], ['postForm', 'postSubmit'], ['sameLink', 'sameLink'], ['sameScript', 'sameScript']]) await allowed(name, id);
++    for (const [name, id] of [['link', 'link'], ['scriptLink', 'scriptLink'], ['getForm', 'getSubmit'], ['postForm', 'postSubmit'], ['sameLink', 'sameLink']]) await allowed(name, id);
+     await open('keyboard'); await browser.evaluate('document.getElementById("keyboard").focus()', page);
+     await browser.send('Target.activateTarget', { targetId: page.id }); await browser.pressKey('Enter', page);
+     await until(() => loaded('keyboard'), 'keyboard link'); check(true, 'keyboard activation of a normal external link remains usable');
+@@ -179,20 +179,14 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+     const frameBox = await browser.evaluate('(async()=>{const f=document.getElementById("frame");f.scrollIntoView({block:"center",behavior:"instant"});await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);const r=f.getBoundingClientRect();return {x:r.x+f.clientLeft,y:r.y+f.clientTop}})()', page);
+     await browser.clickAt(frameBox.x + 90, frameBox.y + 22, page);
+     await until(() => evidence.navigations.some(item => item.frameClick && item.trusted), 'native click delivered to the embedded frame');
+-    check(true, 'the frame-limit probe received a real trusted click');
++    check(true, 'the frame-takeover probe received a real trusted click');
+     await until(() => loaded('frame') || evidence.navigations.some(item => item.test === 'frame'), 'child-frame top navigation');
+-    // Cross-origin frame-initiated top navigations do not dispatch the top
+-    // document's navigate event. Preserve this negative coverage as an explicit
+-    // limitation, not a passing protection assertion. The initial failed probe
+-    // is retained with the dated verification evidence.
+-    evidence.limitations.push({ route: 'cross-origin frame top.location',
+-      destinationRequested: loaded('frame'),
+-      cancellableEventObserved: evidence.navigations.some(item => item.test === 'frame' && item.cancelable) });
++    check(!loaded('frame') && evidence.navigations.some(item => item.test === 'frame' && item.blocked), 'the browser sandbox denies a cross-origin frame takeover before any destination request');
+     await open('httpRedirect');
+-    await browser.evaluate('location.assign("/redirect")', page);
+-    await until(() => loaded('httpRedirect'), 'local HTTP redirect limitation probe');
+-    evidence.limitations.push({ route: 'same-host request followed by cross-host HTTP 302', destinationRequested: loaded('httpRedirect'),
+-      cancellableDestinationEventObserved: evidence.navigations.some(item => item.test === 'httpRedirect' && item.url.includes('/destination') && item.cancelable) });
++    await browser.evaluate('(document.getElementById("video").play(),location.assign("/redirect"))', page);
++    await until(() => evidence.navigations.some(item => item.test === 'httpRedirect'), 'local HTTP redirect first-hop probe');
++    check(!evidence.requests.includes('/redirect') && !loaded('httpRedirect') && evidence.navigations.some(item => item.test === 'httpRedirect' && item.prevented), 'the server-redirect chain is stopped before its first request');
++    check(await browser.evaluate('location.pathname==="/player" && !document.getElementById("video").paused', page), 'the server redirect leaves the video document playing');
+     await send({ type: 'SET_SITE_PAUSED', domain: '127.0.0.1', paused: true });
+     await open('paused'); await click('assign'); await until(() => loaded('assign'), 'site pause'); check(true, 'site pause stops installing the redirect guard');
+     await send({ type: 'SET_SITE_PAUSED', domain: '127.0.0.1', paused: false });

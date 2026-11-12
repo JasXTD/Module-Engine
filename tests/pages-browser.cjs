@@ -206,13 +206,15 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
       return status.classList.contains('success') && badge.textContent==='Active' && badge.classList.contains('active') && document.getElementById('blockingEnabled').checked;})()`,manager),'manager reports ad blocking active on its verified state');
     check(await browser.evaluate(`document.querySelector('.rail-links a[aria-current="page"]').getAttribute('href') === 'manager.html' && [...document.querySelectorAll('.rail-links a')].map(link=>link.getAttribute('href')).join() === 'manager.html,lists.html,log.html'`,manager),'manager side menu links every page and marks the current one');
     check(await browser.evaluate("!document.getElementById('accessPanel').hidden && !document.getElementById('grantAccess').hidden && !document.getElementById('userscriptsEnabled').checked",manager),'manager explains that userscript access has not been granted');
+    const editorEmpty="(() => {const shown=id=>document.getElementById(id).getClientRects().length>0;return shown('editorEmpty') && !shown('editorBody') && !shown('runControl');})()";
+    check(await browser.evaluate(editorEmpty,manager),'with no script open the editor shows an empty state, not disabled controls');
     await press(manager,'#newScript');
     await wait("!document.getElementById('scriptSource').disabled && document.getElementById('scriptPreview').textContent.includes('My page customization')",manager);
     check(await browser.evaluate(`document.activeElement.id === 'scriptSource' && ${text('editorHeading')} === 'New script' && !document.getElementById('saveScript').disabled`,manager),'New script opens a focused, reviewed draft');
     const source=name=>`// ==UserScript==\n// @name ${name}\n// @match http://127.0.0.1/*\n// @grant none\n// ==/UserScript==\n`;
     await setSource(source('Layout fixture'));
     await press(manager,'#saveScript');
-    await wait(`${text('libraryCount')} === '1 scripts' && /saved and turned off/i.test(${text('status')})`,manager);
+    await wait(`${text('libraryCount')} === '1 script' && /saved and turned off/i.test(${text('status')})`,manager);
     await managerReady();
     const saved=(await send({type:'US_LIST'})).scripts[0];
     check(saved?.metadata.name==='Layout fixture' && !saved.enabled,'manager saves a new script disabled');
@@ -274,13 +276,14 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
 
     await press(manager,'#deleteScript');
     await accept();
-    await wait(`${text('libraryCount')} === '1 scripts'`,manager);
+    await wait(`${text('libraryCount')} === '1 script'`,manager);
     await press(manager,'.script-item');
     await wait(`${text('editorHeading')} === 'Layout fixture'`,manager);
     await press(manager,'#deleteScript');
     await accept();
     await wait(`${text('libraryCount')} === '0 scripts' && /deleted/.test(${text('status')})`,manager);
     check((await send({type:'US_LIST'})).scripts.length===0,'confirmed deletions empty the library');
+    check(await browser.evaluate(editorEmpty,manager),'deleting the open script returns the editor to its empty state');
   } finally {
     await setColourScheme(null,Object.values(open)).catch(()=>{});
     for (const target of [manager,lists,log,...extras]) await browser.closePage(target).catch(()=>{});

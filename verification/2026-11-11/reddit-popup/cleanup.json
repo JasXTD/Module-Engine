@@ -1,0 +1,18 @@
+{
+  "alreadyAbsent": [
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-rules-test-0d16cd19b8e74087afbe3080ae1894e3"
+  ],
+  "leftoverProfileProcesses": [],
+  "removed": [
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ATB22g",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-mIwd3V",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-J1BhaC",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-RxHmI7",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-QSkTun",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-A9GKFn",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-tHQTEI",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-vIzQUs",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-threat-rules-0c0515d4df164ca1b8efaed83147a2b7"
+  ],
+  "checkedAt": "2026-11-11T10:27:40.0686388+00:00"
+}

@@ -217,3 +217,9 @@ body:not([aria-busy="true"]) .layer-row:has(input:disabled) .layer-name { color:
 .launch .button-link { gap: 6px; min-width: 0; min-height: 36px; padding: 6px 4px; font-size: 12px; white-space: nowrap; }
 .launch .ic { color: var(--accent-text); }
 .launch .button-link:hover { border-color: var(--accent-text); }
+/* Native userscript commands use the same popup controls and focus treatment. */
+.script-commands { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+#scriptCommandList { display: grid; gap: 8px; }
+#scriptCommandList button { display: grid; gap: 3px; width: 100%; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+#scriptCommandList small { font-weight: normal; opacity: .75; }
+#scriptCommandList button img { vertical-align: middle; margin-right: 6px; object-fit: contain; }

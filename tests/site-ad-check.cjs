@@ -24,7 +24,7 @@ const { createLiveProxy, siteRunOptions, connectHost } = require('./live-network
 const root = path.resolve(__dirname, '..');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const within = (host, domain) => host === domain || host.endsWith('.' + domain);
-const EXTENSION_FILES = ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js',
+const EXTENSION_FILES = ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js',
   'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons'];
 
 // Runs in the page. Returns element metadata only, never page text.

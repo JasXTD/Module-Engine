@@ -51,8 +51,9 @@ try {
     $catalog = Read-ReviewedDomainCatalog (Join-Path $output 'reviewed-domains.json')
     $siteHostsJson = [IO.File]::ReadAllText((Join-Path $project 'lists/site-ad-hosts.json'))
     $siteHostCount = ($siteHostsJson | ConvertFrom-Json).hosts.Count
-    Assert-True ($adRules.Count -eq 100 + $siteHostCount) 'reviewed ad domains, browser-only patterns and site ad hosts preserved'
-    $siteRules = @($adRules | Where-Object id -GE 1001)
+    $requestedHostCount = (Get-Content (Join-Path $project 'lists/requested-ad-hosts.json') -Raw | ConvertFrom-Json).hosts.Count
+    Assert-True ($adRules.Count -eq 100 + $siteHostCount + $requestedHostCount) 'reviewed ad domains, browser-only patterns, site ad hosts and user requests preserved'
+    $siteRules = @($adRules | Where-Object { $_.id -ge 1001 -and $_.id -lt 1501 })
     Assert-True ($siteRules.Count -eq $siteHostCount -and @($siteRules | Where-Object { $_.condition.resourceTypes -notcontains 'main_frame' }).Count -eq 0) 'site ad hosts also block pop-up pages'
     $ids = @($adRules.id)
     Assert-True (($ids -join ',') -ceq ((@($ids | Sort-Object) -join ','))) 'generated rules are ordered by id'
@@ -143,7 +144,9 @@ try {
     $validSite.hosts = @()
     [IO.File]::WriteAllText($sitePath, (ConvertTo-Json -InputObject $validSite -Depth 6), [Text.UTF8Encoding]::new($false))
     & $builder -OutputDirectory $output -SiteAdHostsPath $sitePath
-    Assert-True ((Get-Content (Join-Path $output 'ads.json') -Raw | ConvertFrom-Json).Count -eq 100) 'empty site ad host list adds no rules'
+    $emptySiteAds = @(Get-Content (Join-Path $output 'ads.json') -Raw | ConvertFrom-Json)
+    Assert-True ($emptySiteAds.Count -eq 100 + $requestedHostCount -and
+        @($emptySiteAds | Where-Object { $_.id -ge 1001 -and $_.id -lt 1501 }).Count -eq 0) 'empty site ad host list adds no rules; user requests remain independent'
     # Community lists: convert a synthetic EasyList-format snapshot (inert strings only).
     $communityRoot = Join-Path $temporary 'community-lists'
     New-Item -ItemType Directory -Path (Join-Path $communityRoot 'community') -Force | Out-Null

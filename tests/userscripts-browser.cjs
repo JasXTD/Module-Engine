@@ -6,16 +6,12 @@ const os = require('node:os');
 const http = require('node:http');
 const { createHash } = require('node:crypto');
 const { chromium } = require('./browser-smoke.cjs');
+const { runCompatibility, files, scriptSource } = require('./userscripts-compatibility.cjs');
+const { fixtureHandler } = require('./userscripts-network-fixtures.cjs');
+const { runAssetsAndNetwork } = require('./userscripts-assets-network.cjs');
 const root = path.resolve(__dirname, '..'), browserName = process.argv[2] || 'chrome';
 if (!['chrome', 'edge'].includes(browserName)) throw new Error('Choose chrome or edge; this harness tests the Chromium userscript permission UI.');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const files = ['manifest.json','shared.js','cosmetic.js','network.js','evidence.js','procedural.js','picker-core.js','picker.js',
-  'background.js','content.js','youtube.js','popups.js','flags.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
-  'lists.html','lists.js','modules.js','userscripts-core.js','userscripts-runtime.js','manager.html','manager.js','manager.css','rules','icons'];
-function scriptSource(name, grants = '// @grant none\n', body = '', metadata = '') {
-  return '// ==UserScript==\n// @name ' + name + '\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n' +
-    grants + metadata + '// ==/UserScript==\n' + body;
-}
 // Bounded, offline-only pressure. The existing document intentionally keeps
 // running until stopped, so shutdown is checked while requests are still sent.
 function gmFloodFixture() {
@@ -52,18 +48,23 @@ function gmFloodFixture() {
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
   for (const file of files.filter(file => !['rules', 'icons'].includes(file))) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
+  if (!process.argv.includes('--install-only')) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
   const proxy = http.createServer((request, response) => { evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
   proxy.on('connect', (_request, socket) => {
     socket.on('error', error => { if (!['ECONNRESET', 'EPIPE'].includes(error.code)) evidence.proxyErrors.push(error.message); });
     evidence.deniedRequests++; socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
   });
   proxy.on('clientError', (_error, socket) => socket.destroy());
+  const fixtureState = { hits: [], aborted: 0 }, route = fixtureHandler(fixtureState);
+  const secondOrigin = http.createServer((request, response) => { if (!route(request, response)) { response.writeHead(404); response.end(); } });
+  await new Promise(resolve => secondOrigin.listen(0, '127.0.0.1', resolve));
   let port;
   const fixtures = http.createServer((request, response) => {
+    if (route(request, response)) return;
     if (request.url === '/ad.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }); response.end('window.fixtureAd=true;'); return; }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end('<!doctype html><html><head><script>window.startObserved=document.documentElement.dataset.startMarker;</script></head><body><h1>Owned offline fixture</h1>' +
-      '<script src="http://localhost:' + port + '/ad.js"></script>' + (request.url === '/frames' ? '<iframe src="/child"></iframe>' : '') + '</body></html>');
+      '<script src="http://localhost:' + port + '/ad.js"></script>' + (request.url === '/frames' ? '<iframe src="/child"></iframe>' : request.url === '/compat/frames' ? '<iframe src="/compat/child"></iframe>' : '') + '</body></html>');
   });
   await Promise.all([new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve)), new Promise(resolve => fixtures.listen(0, '127.0.0.1', resolve))]);
   port = fixtures.address().port;
@@ -80,7 +81,7 @@ function gmFloodFixture() {
   // event and a disabled editor takes no text. Confirm that the input arrived and try
   // again, as a person would. Retries are recorded so lost input stays visible.
   const click = async (id, target = manager) => {
-    await b.send('Target.activateTarget', { targetId: target.id });
+    await b.front(target);
     const locator = 'document.getElementById(' + JSON.stringify(id) + ')';
     for (let attempt = 1; attempt <= 5; attempt++) {
       await until('(()=>{const e=' + locator + ';return e&&!e.disabled&&e.getClientRects().length>0;})()', target);
@@ -123,9 +124,8 @@ function gmFloodFixture() {
   };
   const browse = async pathname => b.open('http://127.0.0.1:' + port + pathname);
   try {
-    b = await chromium(extension, path.join(temp, 'profile'), proxy.address().port);
     await fs.mkdir(path.join(temp, 'exports'));
-    await b.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: path.join(temp, 'exports') });
+    b = await chromium(extension, path.join(temp, 'profile'), proxy.address().port, { headless: !process.argv.includes('--native-helper-prompt'), downloadDirectory: path.join(temp, 'exports') });
     evidence.version = b.version;
     manager = await b.open('chrome-extension://' + b.id + '/manager.html');
     await b.evaluate("globalThis.__moduleTestClicks=[];for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,event=>{globalThis.__moduleTestClicks.push({type,id:event.target.closest('button,input,a')?.id,trusted:event.isTrusted,discardDisabled:document.getElementById('discardDraft').disabled,dialog:document.getElementById('confirmDialog').open,scroll:scrollY});},true)", manager);
@@ -181,6 +181,21 @@ function gmFloodFixture() {
     await click('userscriptsEnabled'); await ready();
     check('Userscript module is independently enabled', (await send({ type: 'US_LIST' })).enabled);
     check('Local ad canary saved to blocker', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
+    if(!process.argv.includes('--desktop-only')&&!process.argv.includes('--install-only')) await require('./userscripts-editor-browser.cjs').runEditor({b,manager,send,check,until,browse,scriptSource,click,temp,evidence});
+    if(process.argv.includes('--editor-only')) { evidence.success=true;evidence.focus='editor-only';return; }
+    if (!process.argv.includes('--desktop-only')) await require('./userscripts-install-browser.cjs').runInstallation({ b, manager, send, check, until, browse, temp, evidence, fixtureState, base: 'http://127.0.0.1:' + port });
+    if (process.argv.includes('--install-only')) { check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0); evidence.success = true; evidence.focus = 'install-only'; return; }
+    if(!process.argv.includes('--desktop-only')) {
+      await runCompatibility({ b, manager, send, check, until, browse, scriptSource, temp, evidence });
+      await require('./userscripts-helpers-browser.cjs').runHelpers({ b, manager, send, check, until, browse, scriptSource, evidence });
+    }
+    if (!process.argv.includes('--skip-desktop')) await require('./userscripts-desktop-browser.cjs').runDesktop({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState, click, base: 'http://127.0.0.1:' + port });
+    if(process.argv.includes('--desktop-only')) { evidence.success=true; evidence.focus='desktop-only'; return; }
+    // Restore the older editor-export fixture's CDP output routing only after
+    // native GM download naming/collision checks have completed with normal prefs.
+    await b.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: path.join(temp, 'exports') });
+    await runAssetsAndNetwork({ b, manager, send, check, until, browse, scriptSource, temp, evidence, fixtureState,
+      base: 'http://127.0.0.1:' + port, other: 'http://127.0.0.1:' + secondOrigin.address().port });
     for (const action of ['module', 'script', 'delete']) {
       const pathname = '/gm-flood-' + action;
       const floodSource = scriptSource('Offline GM flood: ' + action, '// @grant GM.getValue\n',
@@ -310,9 +325,9 @@ function gmFloodFixture() {
     await until("document.getElementById('scriptSource').value.endsWith('// newer saved source')");
     check('Explicit discard loads the latest saved source', await b.evaluate("document.getElementById('scriptSource').value.endsWith('// newer saved source')", manager));
     check('Editing an active script pauses it for review', !(await send({ type: 'US_LIST' })).scripts.find(script => script.id === firstId).enabled);
-    const unsupported = firstSource.replace('// ==/UserScript==', '// @require https://unused.invalid/code.js\n// ==/UserScript==');
+    const unsupported = firstSource.replace('// ==/UserScript==', '// @require http://unused.invalid/code.js\n// ==/UserScript==');
     await setText(unsupported); await click('saveScript'); await ready();
-    check('Unsupported dependency is visible and leaves saved source untouched', await b.evaluate("document.getElementById('status').textContent.includes('Unsupported metadata @require')", manager) &&
+    check('Insecure dependency is rejected visibly and leaves saved source untouched', await b.evaluate("document.getElementById('status').textContent.includes('Assets require HTTPS')", manager) &&
       (await send({ type: 'US_LIST' })).scripts.find(script => script.id === firstId).source.endsWith('// newer saved source'));
     await click('discardDraft'); await click('confirmAccept'); await ready();
     await click('deleteScript'); await click('confirmAccept'); await ready();
@@ -356,7 +371,8 @@ function gmFloodFixture() {
     process.exitCode = 1;
   } finally {
     if (b) evidence.cleanup = await b.close();
-    fixtures.closeAllConnections(); proxy.closeAllConnections();
+    fixtures.closeAllConnections(); proxy.closeAllConnections(); secondOrigin.closeAllConnections();
+    await new Promise(resolve => secondOrigin.close(resolve));
     await Promise.all([new Promise(resolve => fixtures.close(resolve)), new Promise(resolve => proxy.close(resolve))]);
     evidence.finished = new Date().toISOString();
     await fs.writeFile(path.join(temp, 'evidence.json'), JSON.stringify(evidence, null, 2));

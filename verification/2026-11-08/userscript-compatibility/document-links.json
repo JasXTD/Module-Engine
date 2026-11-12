@@ -1,0 +1,10 @@
+{
+  "files": [
+    "README.md",
+    "docs/USER_GUIDE.md",
+    "docs/DEVELOPMENT.md",
+    "docs/VERIFICATION.md"
+  ],
+  "checked": 38,
+  "failures": []
+}

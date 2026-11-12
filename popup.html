@@ -48,12 +48,19 @@
         <p id="pickerError" class="notice error-notice" role="alert" hidden></p>
         <div class="layer-row">
           <div class="layer-info">
-            <span class="layer-name">Block pop-ups on this site</span>
-            <span class="layer-desc" id="popupScope">Stops new windows and disguised links to other sites</span>
+            <span class="layer-name">Block pop-ups and redirects</span>
+            <span class="layer-desc" id="popupScope">Stops pop-ups, frame takeovers and scripted page changes</span>
           </div>
-          <input type="checkbox" id="togglePopups" aria-label="Block pop-ups on this site" disabled />
+          <input type="checkbox" id="togglePopups" aria-label="Block pop-ups and redirects on this site" disabled />
         </div>
         <p id="siteScope" class="scope-note"></p>
+      </section>
+
+      <section class="group script-commands" id="scriptCommands" hidden aria-labelledby="scriptCommandsHeading">
+        <h2 class="eyebrow" id="scriptCommandsHeading">Script commands for this page</h2>
+        <div id="scriptCommandList"></div>
+        <p id="scriptCommandError" class="scope-note" role="status"></p>
+        <button type="button" id="refreshScriptCommands">Refresh commands</button>
       </section>
 
       <div class="tabs">

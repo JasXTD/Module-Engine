@@ -29,7 +29,7 @@
           <li><a href="#listAllowed">Always allowed</a></li>
           <li><a href="#listBlocked">Custom blocked</a></li>
           <li><a href="#listPaused">Paused sites</a></li>
-          <li><a href="#listPopups">Pop-up blocking</a></li>
+          <li><a href="#listPopups">Pop-ups and redirects</a></li>
           <li><a href="#cosmeticExceptions">Hiding disabled</a></li>
         </ul>
       </div>
@@ -129,14 +129,14 @@
             </section>
 
         <section class="card" data-list="popupBlockedDomains" id="listPopups">
-              <h2>Pop-up blocking sites <span class="muted count"></span></h2>
-              <p class="muted">Script-opened windows and disguised links to other sites are refused on these sites.</p>
+              <h2>Pop-up and redirect blocking sites <span class="muted count"></span></h2>
+              <p class="muted">Stops pop-ups, embedded-frame takeovers and scripted page changes, including requests that could redirect at the server. Ordinary links, forms and video controls remain usable. Reload after changing.</p>
               <form class="add-form">
-                <input type="text" maxlength="2048" placeholder="Site, e.g. uukanshu.cc" aria-label="Site to block pop-ups on" autocomplete="off" spellcheck="false" />
-                <button type="submit">Block pop-ups</button>
+                <input type="text" maxlength="2048" placeholder="Site, e.g. example.com" aria-label="Site to block pop-ups and redirects on" autocomplete="off" spellcheck="false" />
+                <button type="submit">Add site</button>
               </form>
               <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
-              <p class="muted empty" hidden>No pop-up blocking sites.</p>
+              <p class="muted empty" hidden>No pop-up and redirect blocking sites.</p>
             </section>
 
         <section class="card" data-list="cosmeticPausedDomains" id="cosmeticExceptions">

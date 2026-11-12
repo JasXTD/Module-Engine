@@ -13,7 +13,7 @@
     "scripting",
     "webRequest"
   ],
-  "optional_permissions": ["userScripts"],
+  "optional_permissions": ["userScripts", "clipboardWrite", "offscreen", "notifications", "downloads", "webRequestBlocking"],
   "options_ui": { "page": "manager.html", "open_in_tab": true },
   "host_permissions": [
     "<all_urls>"
@@ -34,7 +34,7 @@
   },
   "background": {
     "service_worker": "background.js",
-    "scripts": ["shared.js", "flags.js", "cosmetic.js", "network.js", "modules.js", "userscripts-core.js", "userscripts-runtime.js", "background.js"]
+    "scripts": ["shared.js", "flags.js", "cosmetic.js", "network.js", "modules.js", "userscripts-core.js", "userscripts-network.js", "userscripts-offscreen.js", "userscripts-xhr.js", "clipboard.js", "userscripts-actions.js", "userscripts-runtime.js", "background.js"]
   },
   "declarative_net_request": {
     "rule_resources": [
@@ -63,7 +63,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["cosmetic.js", "procedural.js", "content.js"],
+      "js": ["cosmetic.js", "procedural.js", "reddit.js", "content.js"],
       "run_at": "document_start",
       "all_frames": true
     }

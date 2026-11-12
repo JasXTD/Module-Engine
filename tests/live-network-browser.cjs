@@ -15,7 +15,7 @@ const { createLiveProxy } = require('./live-network.cjs');
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(),`blockads-live-guard-${browserName}-`));
   const root = path.resolve(__dirname,'..'), extension = path.join(temporary,'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js','shared.js','cosmetic.js','network.js','evidence.js','procedural.js','picker-core.js','picker.js',
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE','shared.js','cosmetic.js','network.js','evidence.js','procedural.js', 'reddit.js','picker-core.js','picker.js',
     'background.js','content.js','youtube.js','popups.js','flags.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
     'lists.html','lists.js','rules','icons']) await fs.cp(path.join(root,file),path.join(extension,file),{recursive:true});
   const evidence = { browser:browserName, startedAt:new Date().toISOString(), checks:[], canaryHits:[], canaryConnections:0,

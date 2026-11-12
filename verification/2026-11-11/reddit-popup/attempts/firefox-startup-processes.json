@@ -1,0 +1,12 @@
+[
+  {
+    "ProcessId": 22276,
+    "ParentProcessId": 33632,
+    "CommandLine": "\"C:\\Program Files\\Mozilla Firefox\\firefox.exe\" --no-remote --profile C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ATB22g\\profile --remote-allow-system-access --remote-debugging-port 0 about:blank"
+  },
+  {
+    "ProcessId": 22336,
+    "ParentProcessId": 22276,
+    "CommandLine": "\"C:\\Program Files\\Mozilla Firefox\\firefox.exe\" --no-remote --profile C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-ATB22g\\profile --remote-allow-system-access --remote-debugging-port 0 about:blank"
+  }
+]

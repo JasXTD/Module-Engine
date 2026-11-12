@@ -1,0 +1,295 @@
+{
+  "date": "2026-11-11",
+  "version": "1.9.0",
+  "change": "GM_addElement/GM.addElement and GM_openInTab/GM.openInTab with owned, bounded tab handles",
+  "unitTests": {
+    "passed": 300,
+    "failed": 0,
+    "evidence": "unit-tests.out"
+  },
+  "results": [
+    {
+      "browser": "chrome",
+      "suite": "userscripts",
+      "checks": 241,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "evidence": "chrome-userscripts.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": [],
+      "cleanup": {
+        "browserPid": 9360,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "userscripts",
+      "checks": 241,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "evidence": "edge-userscripts.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": [],
+      "cleanup": {
+        "browserPid": 38584,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "chrome",
+      "suite": "blocker",
+      "checks": 571,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "evidence": "chrome-blocker.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 37,
+      "fixtureOverrides": [
+        {
+          "file": "reddit.js",
+          "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+          "originalSha256": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+          "fixtureSha256": "a8d00ab1615c392514f3e9bdbd453f1ef80d5b80007685dbee80e1741e847cc6"
+        }
+      ],
+      "cleanup": {
+        "browserPid": 29736,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "blocker",
+      "checks": 571,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "evidence": "edge-blocker.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 37,
+      "fixtureOverrides": [
+        {
+          "file": "reddit.js",
+          "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+          "originalSha256": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+          "fixtureSha256": "a8d00ab1615c392514f3e9bdbd453f1ef80d5b80007685dbee80e1741e847cc6"
+        }
+      ],
+      "cleanup": {
+        "browserPid": 45648,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "suite": "blocker",
+      "checks": 565,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 36904,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-7RJyPC\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "evidence": "firefox-blocker.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 37,
+      "fixtureOverrides": [
+        {
+          "file": "reddit.js",
+          "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+          "originalSha256": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+          "fixtureSha256": "a8d00ab1615c392514f3e9bdbd453f1ef80d5b80007685dbee80e1741e847cc6"
+        }
+      ]
+    },
+    {
+      "browser": "chrome",
+      "suite": "blocked-tabs",
+      "checks": 25,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.51",
+        "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.23"
+      },
+      "evidence": "chrome-blocked-tabs.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": [],
+      "cleanup": {
+        "browserPid": 13888,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "edge",
+      "suite": "blocked-tabs",
+      "checks": 25,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "evidence": "edge-blocked-tabs.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": [],
+      "cleanup": {
+        "browserPid": 9204,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      }
+    },
+    {
+      "browser": "firefox",
+      "suite": "blocked-tabs",
+      "checks": 28,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 51376,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-KUOqcE\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "evidence": "firefox-blocked-tabs.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": []
+    },
+    {
+      "browser": "firefox",
+      "suite": "userscripts",
+      "checks": 169,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 40768,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-r4EreK\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "evidence": "firefox-userscripts.json",
+      "runtimeSourceHashesMatch": true,
+      "hashCount": 30,
+      "fixtureOverrides": [],
+      "cleanup": {
+        "browserClosed": true
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "evidence": "attempts/edge-initial.json",
+      "success": true,
+      "checks": 238,
+      "explanation": "Initial helper implementation before later lifecycle checks."
+    },
+    {
+      "evidence": "attempts/chrome-cleanup-assumption.json",
+      "success": false,
+      "checks": 126,
+      "explanation": "Fixture incorrectly required automatic cleanup of an API-created tab."
+    },
+    {
+      "evidence": "attempts/chrome-cleanup-trace.json",
+      "success": false,
+      "checks": 126,
+      "explanation": "Native trace confirmed a blocked navigation and a creation event without an opener; conservative cleanup correctly preserved the uncertain tab."
+    },
+    {
+      "evidence": "attempts/chrome-intermediate.json",
+      "success": true,
+      "checks": 241,
+      "explanation": "Passed before broadening failed-lookup reconciliation to include tabs moved between windows."
+    },
+    {
+      "evidence": "attempts/edge-intermediate.json",
+      "success": true,
+      "checks": 241,
+      "explanation": "Passed before broadening failed-lookup reconciliation to include tabs moved between windows."
+    }
+  ],
+  "manifestUnchanged": true,
+  "safety": "Installed browsers, fresh disposable profiles, owned loopback fixtures and deny-all external proxies. No third-party code execution, installs, live-site tests, commits or pushes.",
+  "limitations": [
+    "Element insertion follows native DOM, CSP and Trusted Types behavior; no CSP bypass is implemented.",
+    "Only active, insert and pinned tab options are supported. Firefox container selection and inheritance are unsupported.",
+    "Revocation, unload and connection loss invalidate handles without closing user tabs or replaying accepted openings.",
+    "Conservative popup cleanup needs an opener in the initial native creation event. API-created tabs can lack that evidence and require an explicit handle.close().",
+    "Synthetic offline coverage does not establish full Violentmonkey compatibility or live-site coverage."
+  ],
+  "checks": [
+    "Native DOM and shadow-root insertion",
+    "Synchronous legacy/modern handles and one-use element then callbacks",
+    "Close before opening, manual closure, pinning and placement",
+    "Exact grants and native document/connection ownership",
+    "Browser failures, uncertain lookups, revocation and pending-open admission",
+    "No handle replay after port loss",
+    "Per-script opening rate limit",
+    "Existing values, menus, matching, timing, dependencies and HTTP",
+    "Network/cosmetic blocking, picker, Reddit overlay repair and blocked blank-tab cleanup"
+  ],
+  "sourceReview": [
+    "https://violentmonkey.github.io/api/gm/",
+    "https://github.com/violentmonkey/violentmonkey/blob/master/src/background/utils/tabs.js",
+    "https://github.com/violentmonkey/types/blob/3fad29f648f3bcf3e821d853421672471043410e/index.d.ts"
+  ],
+  "cleanupEvidence": "cleanup.json"
+}

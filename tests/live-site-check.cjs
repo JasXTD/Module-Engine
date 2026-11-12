@@ -85,7 +85,7 @@ async function main() {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-live-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const evidence = { startedAt: new Date().toISOString(), browser: browserName, headed: true,
@@ -93,7 +93,7 @@ async function main() {
     networkGuard: { allowedServiceDomains: serviceDomains, allowed: {}, denied: {}, errors: [],
       policy: NETWORK_POLICY + '; named service domains only; no forwarding or DNS for other hosts; downloads denied',
       limitation: 'Third-party providers outside the allowlist are denied in both phases. Missing ads alone do not prove extension effectiveness.' } };
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'rules/community-cosmetic.json', 'rules/threat-evidence.json',
+  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'rules/community-cosmetic.json', 'rules/threat-evidence.json',
     'rules/ads.json', 'rules/trackers.json', 'rules/threats.json', 'rules/threat-policy.json']) {
     evidence.sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }

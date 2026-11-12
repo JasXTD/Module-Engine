@@ -121,7 +121,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     await fault('policy');
     return { ok: true, text: async () => state.policyText };
   } });
-  for (const file of ['shared.js', 'flags.js', 'cosmetic.js', 'network.js', 'modules.js', 'userscripts-core.js', 'userscripts-runtime.js', 'background.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of ['shared.js', 'flags.js', 'cosmetic.js', 'network.js', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'background.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   const ready = vm.runInContext('operationQueue', context);
   const send = async (message, sender = { id: 'test', url: 'chrome-extension://test/popup.html' }) => { await ready; return new Promise(resolve => {
     const retained = listeners.message(clone(message), sender, response => resolve(clone(response)));
@@ -144,7 +144,7 @@ test('modules preserve ad blocking and saved settings when userscript access is 
 });
 test('every module and script management command requires an extension page', async () => {
   const h=harness();
-  for(const type of ['MODULES_GET','MODULE_SET','US_LIST','US_SAVE','US_ENABLE','US_DELETE']) {
+  for(const type of ['MODULES_GET','MODULE_SET','US_LIST','US_SAVE','US_ENABLE','US_DELETE','US_MENU_LIST','US_MENU_RUN','US_PREPARE_ASSETS','US_CANCEL_ASSETS','US_ASSET_READ','US_FETCH_SOURCE','US_CHECK_UPDATE','US_CANCEL_SOURCE','US_APPLY_SOURCE']) {
     for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}},{id:'other',url:'chrome-extension://test/manager.html'}]) {
       assert.equal((await h.send({type,id:'blocking',enabled:false},sender)).ok,false);
     }
@@ -1155,6 +1155,42 @@ test('cross-origin frames receive the pop-up guard from browser sender metadata'
   }]);
   await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, frameId: 8, tab: { id: 9, url: 'https://other.example/' } });
   assert.equal(h.state.executions.length, 1, 'a frame outside the selected top site is not injected');
+});
+
+test('selected-site guard appends a browser sandbox without blocking media and follows site and master pauses', async () => {
+  const h = harness(); await h.ready;
+  const policy = () => h.state.dynamic.find(rule => rule.action.type === 'modifyHeaders');
+  assert.equal(policy(), undefined);
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true });
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'second.example', blocked: true });
+  await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'player.example' });
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: Object.fromEntries(ids.map(id => [id, false])) } });
+  assert.deepEqual(policy().condition, { requestDomains: ['player.example', 'second.example'], resourceTypes: ['main_frame'] });
+  assert.equal(h.state.dynamic.filter(rule => rule.action.type === 'modifyHeaders').length, 1, 'one bounded aggregate rule');
+  assert.ok(policy().priority > h.state.dynamic.find(rule => rule.action.type === 'allow').priority);
+  const header = policy().action.responseHeaders[0];
+  assert.equal(header.header, 'content-security-policy'); assert.equal(header.operation, 'append');
+  for (const token of ['allow-scripts','allow-same-origin','allow-forms','allow-presentation','allow-storage-access-by-user-activation']) assert.ok(header.value.split(' ').includes(token));
+  assert.ok(!header.value.split(' ').some(token => token.startsWith('allow-top-navigation')));
+  await h.send({ type: 'SET_SITE_PAUSED', domain: 'player.example', paused: true });
+  assert.deepEqual(policy().condition.excludedRequestDomains, ['player.example']);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }); assert.equal(policy(), undefined);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: true } }); assert.ok(policy());
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: false });
+  await h.send({ type: 'SET_SITE_POPUPS', domain: 'second.example', blocked: false }); assert.equal(policy(), undefined);
+});
+
+for (const fault of ['dynamic', 'ignoreDynamic', 'scripts', 'save']) test('page guard ' + fault + ' failure cannot report a partially enabled guard', async () => {
+  const h = harness(); await h.ready;
+  h.state.faults[fault] = 1;
+  const result = await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true });
+  assert.equal(result.ok, false);
+  assert.deepEqual(h.state.storage.popupBlockedDomains, []);
+  assert.ok(!h.state.dynamic.some(rule => rule.action.type === 'modifyHeaders'));
+  assert.ok(!h.state.scripts.some(script => script.id === 'popup-blocker'));
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'player.example', blocked: true })).ok, true);
+  assert.ok(h.state.dynamic.some(rule => rule.action.type === 'modifyHeaders'));
+  assert.ok(h.state.scripts.some(script => script.id === 'popup-blocker'));
 });
 
 test('page-originated pop-up events cannot forge activity-log entries', async () => {

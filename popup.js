@@ -63,7 +63,7 @@ function renderUI() {
   const settings = currentSettings;
   document.body.setAttribute("aria-busy", String(busy));
   // Tabs only change what is on screen, so they stay usable while a command runs.
-  for (const element of document.querySelectorAll('input, button:not([role="tab"])')) element.disabled = busy || !settings;
+  for (const element of document.querySelectorAll('input, button:not([role="tab"])')) element.disabled = busy || !settings || element.dataset.commandBusy === 'true';
   retryButton.disabled = busy;
   errorPanel.textContent = lastError;
   errorPanel.hidden = !lastError;
@@ -114,7 +114,7 @@ function renderUI() {
   popupScopeEl.textContent = !activeHostname ? "Available on HTTP(S) pages"
     : scope ? "Inactive while this site is paused"
     : popupScope ? `On for ${popupScope} and its subdomains. Reload the page after changing.`
-    : "Stops new windows and disguised links to other sites";
+    : "Stops pop-ups, frame takeovers and scripted page changes";
   const customNetworkBlocks = BlockAdsNetwork.parse(settings.customNetworkFilters ?? "").some(rule => rule.action.type === "block");
   const anyFilters = settings.cosmeticFiltering || settings.customBlockedDomains.length > 0 || customNetworkBlocks ||
     settings.rulesets.ads_ruleset || settings.rulesets.trackers_ruleset || settings.rulesets.community_ruleset || (settings.rulesets.threats_ruleset && threatStatus?.available);
@@ -253,6 +253,42 @@ async function refreshScriptStatus() {
     console.warn("[Module Engine] Could not read script status:", error);
   }
 }
+
+async function refreshScriptCommands() {
+  const section = byId('scriptCommands'), list = byId('scriptCommandList'), error = byId('scriptCommandError');
+  section.hidden = activeTabId === null;
+  if (section.hidden) return;
+  error.textContent = '';
+  try {
+    const response = await api.runtime.sendMessage({ type: 'US_MENU_LIST', tabId: activeTabId });
+    if (!response?.ok) throw new Error(response?.error || 'Script commands unavailable.');
+    list.replaceChildren();
+    section.hidden = !response.active;
+    if (section.hidden) return;
+    for (const command of response.commands) {
+      const button = document.createElement('button'), label = document.createElement('span'), script = document.createElement('small');
+      button.type = 'button'; button.title = command.title; button.accessKey = command.accessKey;
+      label.textContent = command.caption;
+      if (command.icon) { const icon = document.createElement('img'); icon.src = command.icon; icon.alt = ''; icon.width = 16; icon.height = 16; label.prepend(icon); }
+      script.textContent = command.scriptName + (command.frameId ? ' · frame ' + command.frameId : '');
+      button.append(label, script);
+      button.addEventListener('click', async event => {
+        button.disabled = true; button.dataset.commandBusy = 'true'; error.textContent = '';
+        try {
+          const result = await api.runtime.sendMessage({ type: 'US_MENU_RUN', tabId: activeTabId,
+            connectionId: command.connectionId, menuId: command.id,
+            event: { altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey } });
+          if (!result?.ok) throw new Error(result?.error || 'Script command unavailable.');
+          if (result.autoClose) window.close();
+        } catch (failure) { error.textContent = failure.message; }
+        finally { button.dataset.commandBusy = 'false'; button.disabled = busy || !currentSettings; }
+      });
+      list.append(button);
+    }
+    if (!response.commands.length) error.textContent = 'No script commands on this page.';
+  } catch (failure) { list.replaceChildren(); error.textContent = failure.message; }
+}
+byId('refreshScriptCommands').addEventListener('click', refreshScriptCommands);
 togglePopups.addEventListener("change", () => {
   if (!currentSettings || !activeHostname) return;
   runCommand({ type: "SET_SITE_POPUPS", domain: activeHostname, blocked: togglePopups.checked });
@@ -289,5 +325,5 @@ api.storage.onChanged.addListener((changes, area) => {
   try { communityInfo = await (await fetch(api.runtime.getURL("rules/community-info.json"))).json(); }
   catch { communityInfo = null; }
   await runCommand({ type: "GET_STATE" });
-  await Promise.all([refreshFlagCount(), refreshScriptStatus()]);
+  await Promise.all([refreshFlagCount(), refreshScriptStatus(), refreshScriptCommands()]);
 })();

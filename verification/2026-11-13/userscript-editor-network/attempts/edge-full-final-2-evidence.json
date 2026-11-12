@@ -1,0 +1,305 @@
+{
+  "browser": "edge",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-20VN1w",
+  "started": "2026-11-12T16:53:22.541Z",
+  "checks": [
+    "Fresh manager keeps blocking on and userscripts off",
+    "New permission has not been granted automatically",
+    "Optional permission UI is visible",
+    "Native permission granted by manager button",
+    "Browser access recognized",
+    "Userscript module is independently enabled",
+    "Local ad canary saved to blocker",
+    "Saved ordered fixture A",
+    "Enabled ordered fixture A",
+    "Saved ordered fixture B",
+    "Enabled ordered fixture B",
+    "Saved ordered fixture C",
+    "Enabled ordered fixture C",
+    "Bundled worker highlights metadata and JavaScript",
+    "Inline diagnostic focuses the exact failing source character",
+    "Highlighted source is text and cannot create HTML elements",
+    "Saving tags keeps the script enabled",
+    "Search includes local tags",
+    "Tag filter includes author metadata tags",
+    "Editor layout fits width 1280",
+    "Editor input and highlighting have equal height at 1280",
+    "Editor layout fits width 390",
+    "Editor input and highlighting have equal height at 390",
+    "Stale ordering from another window is rejected",
+    "Configured native order at document-start",
+    "Ad blocking remains active during ordered scripts",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Configured native order at document-end",
+    "Ad blocking remains active during ordered scripts",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Configured native order at document-idle",
+    "Ad blocking remains active during ordered scripts",
+    "Tags survive source updates and re-registration",
+    "Install dialog focuses the URL field",
+    "URL fetch opens a source review without adding a script",
+    "Fetched code stays literal and read-only",
+    "Fetch omits cookies and referrer even with an existing site cookie",
+    "Escape cancels the review and restores keyboard focus",
+    "Cancelling an install leaves the library unchanged",
+    "Approval installs a paused script and remembers only the supplied URL",
+    "A metadata download URL was never requested",
+    "Installed scripts do not run before enabling",
+    "Enabled URL script runs through native userScripts while the ad is blocked",
+    "Identical source has no actionable update",
+    "Newer version and changed site/API/dependency access are shown",
+    "Review preserves the current enabled version until approval",
+    "Install review has no horizontal overflow: 1280 access",
+    "Install review has no horizontal overflow: 1280 code",
+    "Install review has no horizontal overflow: 390 access",
+    "Install review has no horizontal overflow: 390 code",
+    "Cancelling an update retains the running version",
+    "Found the native worker before update approval",
+    "Review stays open across a confirmed worker stop",
+    "Approval uses reviewed bytes without a second fetch and pauses the update",
+    "New dependencies must be prepared before enabling",
+    "Updated native script retains GM values and the blocker stays active",
+    "Same-version edits are disclosed for explicit review",
+    "A second manager can edit while review is open",
+    "Stale review disables approval instead of overwriting the other edit",
+    "Downgrades are visible and cannot be applied",
+    "An update cannot change script identity"
+  ],
+  "hashes": {
+    "manifest.json": "7c914066f0a92cc6b9d580adff77f8b41469701e217b16df65cd28b5265ca7f2",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "reddit.js": "562762ff772277b6f3b508aa7d64dab412c8e16a6a64fee5578590b8d7566f49",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "background.js": "e4233a3f18dc21f79bf2b3e09a64a2df571666e3a9f2f61c6a1ed9256104c7f7",
+    "content.js": "a3cb7a817f7959fcf2c3a49bafa0d09433cdea5c3c74e306f8b790955f15f669",
+    "youtube.js": "6dc49f0fd662b3eacba8e2e4310c70252b9012006a6105587709461e36de3823",
+    "popups.js": "853f41f22727d19292335c3f996c008f7c6889996445967c02a86da187482826",
+    "flags.js": "b54594940e068fde9bde81914bf19db16c22c89ccab4c35c07d27117a5edf6e1",
+    "popup.js": "00f21ac15e6e19cfb52daa57b4ea635c5b24db753801f0430e4052f37ec342e0",
+    "popup.html": "430b03037e6b28b4040c7d56d946282e4fcedba251a9e1e03b44d1db9c2ad9d6",
+    "popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "ui.css": "bcc2d9f8077d743a7cf24e9bdc4147a5b18ce5ceff015900ab625357ea001277",
+    "log.html": "628936c85ea594e53e457224c6650a8cdb05662525c3d82bfe284ae7d0adf356",
+    "log.js": "cbf8e69e61686f601890d0f8894b3b57761f27b17fc033f2c38e32436e195467",
+    "log.css": "ad3248a47f73528c116a11c5b117fd964c2600b2569a9c7f89fb121344780681",
+    "lists.html": "1ee4e52b2822e40ae5102e7139e3d58b20ac092c93ff9492d43a63f111285a5f",
+    "lists.js": "d69aff83c719e3eb6361ae18db8456e0e23a9c6462c3e1311507f2799ad72ee8",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "userscripts-core.js": "a91bab24ab0d0029a413f2c360a0171203eb7e08c34c5eea08af45e04f61e20d",
+    "userscripts-network.js": "679806940de7efe965202a96e1f1bfff92b812c141daef295d571e947104080a",
+    "userscripts-offscreen.js": "43e5bf89a46a5d828537fbf118275e06b9444a0feed8a24568dc852f2dce9fe3",
+    "userscripts-xhr.js": "d3f79824c20450617bd10a64b299932f05422c1d33c16eb2e23ee520d802bbfb",
+    "clipboard.html": "970daeb79e2b446e3361625910ffba1d05806556740ca896aacaa2382dd8fda5",
+    "clipboard.js": "a4306ab66e7dcc0bd2b9156f1f46e6898d9a9ba719827a0b5569d79a4307f8b3",
+    "userscripts-actions.js": "62a8b9011374892bd30e7ebfdd983f5d1326d15438207fc84dcde6d71bb37bc7",
+    "userscripts-runtime.js": "ceeb3880a70ff289bdb6c96c59e0c2d9d15ced92bcf72a453f65de2a2d834346",
+    "manager.html": "eb1f483f9b78267036dff6211f7c540ca7956477044e49bc2679092506b71f6f",
+    "manager.js": "84a6d52aa6ef6b530806767d994307506d9f7db609a49b38b1f9f5e9d39cee7d",
+    "userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "userscripts-editor-worker.js": "99de1b86c9369f4f544ac67877bd009453b7f3d0b70c530f3bbe435123e3a19d",
+    "userscripts-lint.js": "7a0304f7b97d68a2d8f8883980a500d0a4441a60162525e067e4bef6faa2f4f8",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "manager.css": "ca356c5fd73dafddad630134317114978a6a266740d6eceed481e24c175d4ee9"
+  },
+  "deniedRequests": 72,
+  "proxyErrors": [],
+  "fixtureOverrides": {
+    "clipboard.js": {
+      "sourceHash": "a4306ab66e7dcc0bd2b9156f1f46e6898d9a9ba719827a0b5569d79a4307f8b3",
+      "fixtureHash": "125d0e373b30133f13860699518c4833bf73a8f1f94f027c5821b227624c1c9e",
+      "reason": "Intercept clipboard writes without changing native permissions or the userscript bridge."
+    },
+    "background.js": {
+      "sourceHash": "e4233a3f18dc21f79bf2b3e09a64a2df571666e3a9f2f61c6a1ed9256104c7f7",
+      "fixtureHash": "6619ffc0f1c745157c0a3cc4c99a37f3848dcc173345113d6b63747f45b48397",
+      "reason": "Intercept clipboard writes without changing native permissions or the userscript bridge."
+    }
+  },
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Edg/157.0.4341.46",
+    "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+    "jsVersion": "15.7.11.4"
+  },
+  "permissionToggles": [
+    {
+      "before": {
+        "x": 1150,
+        "y": 404,
+        "checked": false
+      },
+      "after": {
+        "x": 1150,
+        "y": 404,
+        "checked": true
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": false,
+        "active": false,
+        "available": true,
+        "needsPermission": false,
+        "error": "",
+        "revision": 0,
+        "scripts": []
+      }
+    }
+  ],
+  "editorOrganizationCompleted": true,
+  "installLayouts": [
+    {
+      "width": 1270,
+      "page": 1270,
+      "dialog": 983,
+      "content": 983
+    },
+    {
+      "width": 1270,
+      "page": 1270,
+      "dialog": 983,
+      "content": 983
+    },
+    {
+      "width": 380,
+      "page": 380,
+      "dialog": 341,
+      "content": 341
+    },
+    {
+      "width": 380,
+      "page": 380,
+      "dialog": 341,
+      "content": 341
+    }
+  ],
+  "success": false,
+  "error": "Error: Timed out: document.getElementById(\"installDialog\").open&&!document.getElementById(\"fetchSource\").disabled\nManager: Status refreshed. Reload open pages after changing scripts.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:76:11)\n    at async update (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-install-browser.cjs:40:75)\n    at async Object.runInstallation (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-install-browser.cjs:140:110)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:186:51",
+  "ui": {
+    "text": "Module Engine\nModules & scripts\nMy lists\nActivity log\n\nRuns on this computer. No Module Engine telemetry.\n\nModules & scripts\n\nYour blocker. Your page customizations.\n\nRefresh status\n\nStatus refreshed. Reload open pages after changing scripts.\n\nAd blocking\nActive\n\nNetwork filters, page hiding, YouTube filtering and the element picker.\n\nProtection settings\nMy lists\nUserscripts\nActive\n\nRun your scripts on the sites you choose. Each script has its own switch.\n\n0 enabled\n1 saved\nBrowser access allowed\nScript library\n1 script\nNew script\nImport\nInstall from URL\nFind a script\nTag\nAll tags\nOffline URL install\nhttp://127.0.0.1/install-page*, https://additional.invalid/*\nOff\nOffline URL install\nSaved · disabled\n\nReview the code and sites before turning a script on.\n\nRun this script\nOff for future page loads\nYour tags (comma separated)\nSave tags\n\nLocal labels stay with this script through updates.\n\nPosition 1 of 1\nMove earlier\nMove later\n\nLibrary order applies within each run-at phase on new page loads. Saved-value loading and asynchronous work can finish later.\n\nSource\n@match sets the sites and @run-at the timing.\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n \n// ==UserScript==\n// @name Offline URL install\n// @namespace module-engine-offline\n// @version 1.1\n// @match http://127.0.0.1/install-page*\n// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM.addStyle\n// @match https://additional.invalid/*\n// @connect 127.0.0.1\n// @require http://127.0.0.1:55011/usnet/first.js\n// ==/UserScript==\nGM.getValue(\"visits\",0).then(n=>{document.body.dataset.installed=\"1.1\";document.body.dataset.kept=String(n);});\n// local edit\n \n\nNo syntax errors found. Runtime errors still appear in the page console.\n\nSave\nDiscard draft\nExport\nDelete\n\nSaved scripts start turned off. Reload open pages after changing a script.\n\nScript details\nSCRIPT\nOffline URL install · 1.1\nSITES\nhttp://127.0.0.1/install-page*, https://additional.invalid/*\nTIMING\ndocument-end\nFRAMES\nMatching frames\nWORLD\nIsolated script world\nAPIS\nGM.getValue, GM.setValue, GM.addStyle\nDependencies\nDownload again\n\nNothing downloads until you prepare them. Downloads use the listed URLs without cookies or redirects, and page loads use the cached copies. Review each file before enabling the script.\n\n@require\nhttp://127.0.0.1:55011/usnet/first.js\n65 bytes · SHA-256 0c80210483bedd77da7704e77ec1fdd6cd695a52be2a51402379020ef3118c04\nReview contents\n\nCached. Review the contents, then enable this script.\n\nSource & updates\nCheck for updates\n\nInstalled from http://127.0.0.1:55011/usnet/install.user.js\n\nChecks are manual and use the installed URL only. Updates need your review and approval.\n\nSupported userscript features",
+    "source": "// ==UserScript==\n// @name Offline URL install\n// @namespace module-engine-offline\n// @version 1.1\n// @match http://127.0.0.1/install-page*\n// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM.addStyle\n// @match https://additional.invalid/*\n// @connect 127.0.0.1\n// @require http://127.0.0.1:55011/usnet/first.js\n// ==/UserScript==\nGM.getValue(\"visits\",0).then(n=>{document.body.dataset.installed=\"1.1\";document.body.dataset.kept=String(n);});\n// local edit"
+  },
+  "inputEvents": [
+    {
+      "type": "pointerdown",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerup",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "click",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerdown",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerup",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "click",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerdown",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerup",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "click",
+      "id": "cancelSource",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerdown",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "pointerup",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    },
+    {
+      "type": "click",
+      "id": "checkUpdate",
+      "trusted": true,
+      "discardDisabled": true,
+      "dialog": false,
+      "scroll": 802
+    }
+  ],
+  "events": [],
+  "browserDetails": null,
+  "cleanup": {
+    "browserPid": 66508,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finished": "2026-11-12T16:54:43.344Z"
+}

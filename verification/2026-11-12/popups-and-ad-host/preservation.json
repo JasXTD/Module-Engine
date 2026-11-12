@@ -1,0 +1,8 @@
+{
+  "preExistingChangesPreserved": 38,
+  "guardUnchanged": true,
+  "manifestUnchanged": true,
+  "unrelatedRuleOutputsUnchanged": true,
+  "syntax": "passed",
+  "whitespace": "passed"
+}

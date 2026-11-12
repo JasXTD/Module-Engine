@@ -1,0 +1,734 @@
+[
+  {
+    "log": "chrome-blocker-final-r6.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "chrome-blocker-final-r9.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "chrome-blocker-final.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "chrome-cleanup-final-r6.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "chrome-cleanup-final-r9.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "chrome-cleanup-final.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "chrome-include-diagnostic.log",
+    "success": false,
+    "checks": 45,
+    "error": "AssertionError [ERR_ASSERTION]: Compatibility source enabled: Offline include-only fragment\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:65:44)\n    at install (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:22:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:142:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:178:5",
+    "installFailure": {
+      "name": "Offline include-only fragment",
+      "error": "Userscript changes were not applied. Script with ID 'blockads-user-081f004a-add2-4e5d-b09d-e05e153fcf13' must specify at least one match."
+    }
+  },
+  {
+    "log": "chrome-many-diagnostic.log",
+    "success": false,
+    "checks": 72,
+    "error": "Error: Timed out: Array.from({length:12},(_,i)=>document.body.dataset[\"cache\"+i]).every(value=>value===\"42\")\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:69:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:148:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:178:5",
+    "simultaneousCache": {
+      "dataset": {
+        "cache0": "42",
+        "cache1": "42",
+        "cache2": "42",
+        "cache3": "42",
+        "cache4": "42",
+        "cache5": "42",
+        "cache6": "42",
+        "cache7": "42",
+        "cache8": "42"
+      },
+      "registrations": [
+        {
+          "id": "blockads-user-a0c5e5df-fbdb-47d6-a226-333384797b36",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-a0c5e5df-fbdb-47d6-a226-333384797b36"
+        },
+        {
+          "id": "blockads-user-329fc408-6b20-41c1-be17-63cf789264cd",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-329fc408-6b20-41c1-be17-63cf789264cd"
+        },
+        {
+          "id": "blockads-user-00a5a52f-6b6b-40fb-a4dc-47f4cf6ef7c2",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-00a5a52f-6b6b-40fb-a4dc-47f4cf6ef7c2"
+        },
+        {
+          "id": "blockads-user-8e0f3c35-02e2-411c-b14a-c132dd3d2204",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-8e0f3c35-02e2-411c-b14a-c132dd3d2204"
+        },
+        {
+          "id": "blockads-user-b11db573-a798-4581-845a-29d85ec80ce1",
+          "matches": [
+            "http://*/*",
+            "https://*/*"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-b11db573-a798-4581-845a-29d85ec80ce1"
+        },
+        {
+          "id": "blockads-user-a897d7a9-2292-47cc-8f9c-59fe40bbad5d",
+          "matches": [
+            "http://127.0.0.1/compat/*"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-a897d7a9-2292-47cc-8f9c-59fe40bbad5d"
+        },
+        {
+          "id": "blockads-user-b5089655-1059-49db-af98-bfbd8f4fc9a9",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-b5089655-1059-49db-af98-bfbd8f4fc9a9"
+        },
+        {
+          "id": "blockads-user-514529a4-8374-4e39-8f41-517f49b60753",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-514529a4-8374-4e39-8f41-517f49b60753"
+        },
+        {
+          "id": "blockads-user-267175b7-11ed-4e11-a792-b8054bdf7fdd",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-267175b7-11ed-4e11-a792-b8054bdf7fdd"
+        },
+        {
+          "id": "blockads-user-4e7bd2cd-db2c-4c8f-9f45-e7a773d82b93",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-4e7bd2cd-db2c-4c8f-9f45-e7a773d82b93"
+        },
+        {
+          "id": "blockads-user-6bb5f60f-7d7a-4ba2-8733-a12bae971ac1",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-6bb5f60f-7d7a-4ba2-8733-a12bae971ac1"
+        },
+        {
+          "id": "blockads-user-f6645bdb-548e-4d68-ab06-492087de875e",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-f6645bdb-548e-4d68-ab06-492087de875e"
+        },
+        {
+          "id": "blockads-user-510d4b7a-f902-4094-ae96-8da99ae57110",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-510d4b7a-f902-4094-ae96-8da99ae57110"
+        },
+        {
+          "id": "blockads-user-7a41714b-dc16-4cb3-9910-6eb018225f68",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-7a41714b-dc16-4cb3-9910-6eb018225f68"
+        },
+        {
+          "id": "blockads-user-49b854a7-d3ef-4610-9cbf-8e22380c5217",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-49b854a7-d3ef-4610-9cbf-8e22380c5217"
+        },
+        {
+          "id": "blockads-user-fe97fd97-82b8-4653-8655-e00e1b8c2883",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-fe97fd97-82b8-4653-8655-e00e1b8c2883"
+        },
+        {
+          "id": "blockads-user-df542795-bf71-4e2e-b041-e66ae87a2199",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-df542795-bf71-4e2e-b041-e66ae87a2199"
+        },
+        {
+          "id": "blockads-user-8757790a-8020-43d3-aeb7-dbef10389d9d",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-8757790a-8020-43d3-aeb7-dbef10389d9d"
+        }
+      ],
+      "errors": [
+        "[Module Engine userscript]",
+        "TypeError: runtime.connect is not a function\n    at connect (blockads-userscript-fe97fd97-82b8-4653-8655-e00e1b8c2883.user.js:159:31)\n    at runUserScript (blockads-userscript-fe97fd97-82b8-4653-8655-e00e1b8c2883.user.js:193:26)\n    at blockads-userscript-fe97fd97-82b8-4653-8655-e00e1b8c2883.user.js:195:5\n    at blockads-userscript-fe97fd97-82b8-4653-8655-e00e1b8c2883.user.js:221:3",
+        "[Module Engine userscript]",
+        "TypeError: runtime.connect is not a function\n    at connect (blockads-userscript-df542795-bf71-4e2e-b041-e66ae87a2199.user.js:159:31)\n    at runUserScript (blockads-userscript-df542795-bf71-4e2e-b041-e66ae87a2199.user.js:193:26)\n    at blockads-userscript-df542795-bf71-4e2e-b041-e66ae87a2199.user.js:195:5\n    at blockads-userscript-df542795-bf71-4e2e-b041-e66ae87a2199.user.js:221:3",
+        "[Module Engine userscript]",
+        "TypeError: runtime.connect is not a function\n    at connect (blockads-userscript-8757790a-8020-43d3-aeb7-dbef10389d9d.user.js:159:31)\n    at runUserScript (blockads-userscript-8757790a-8020-43d3-aeb7-dbef10389d9d.user.js:193:26)\n    at blockads-userscript-8757790a-8020-43d3-aeb7-dbef10389d9d.user.js:195:5\n    at blockads-userscript-8757790a-8020-43d3-aeb7-dbef10389d9d.user.js:221:3"
+      ]
+    }
+  },
+  {
+    "log": "chrome-userscripts-final-r2.log",
+    "success": false,
+    "checks": 72,
+    "error": "Error: Timed out: Array.from({length:12},(_,i)=>document.body.dataset[\"cache\"+i]).every(value=>value===\"42\")\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:69:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:148:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:178:5"
+  },
+  {
+    "log": "chrome-userscripts-final-r3.log",
+    "success": false,
+    "checks": 68,
+    "error": "Error: Timed out: Array.from({length:10},(_,i)=>document.body.dataset[\"cache\"+i]).every(value=>value===\"42\")\nManager: Userscripts enabled for future page loads.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:69:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:148:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:178:5",
+    "simultaneousCache": {
+      "dataset": {
+        "cache0": "42",
+        "cache1": "42",
+        "cache2": "42",
+        "cache3": "42",
+        "cache4": "42",
+        "cache5": "42",
+        "cache6": "42",
+        "cache7": "42",
+        "cache8": "42"
+      },
+      "registrations": [
+        {
+          "id": "blockads-user-3400293e-a495-4090-a8f1-94c8f5f72b11",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-3400293e-a495-4090-a8f1-94c8f5f72b11"
+        },
+        {
+          "id": "blockads-user-8db1410b-935a-4de5-9055-7acbc621372f",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-8db1410b-935a-4de5-9055-7acbc621372f"
+        },
+        {
+          "id": "blockads-user-12c78b16-f361-421e-90ca-7924e2d99ba9",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-12c78b16-f361-421e-90ca-7924e2d99ba9"
+        },
+        {
+          "id": "blockads-user-2f3dc87d-1be8-46be-ad65-671b934ec4b8",
+          "matches": [
+            "http://127.0.0.1/compat-timing"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-2f3dc87d-1be8-46be-ad65-671b934ec4b8"
+        },
+        {
+          "id": "blockads-user-1a646411-ae05-4807-bbe6-e35c60dc5d86",
+          "matches": [
+            "http://*/*",
+            "https://*/*"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-1a646411-ae05-4807-bbe6-e35c60dc5d86"
+        },
+        {
+          "id": "blockads-user-262fc550-47e6-4151-ad43-adebf9421a3d",
+          "matches": [
+            "http://127.0.0.1/compat/*"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-262fc550-47e6-4151-ad43-adebf9421a3d"
+        },
+        {
+          "id": "blockads-user-b9be2713-d14d-4bc7-9a13-f7f05bb4ce73",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-b9be2713-d14d-4bc7-9a13-f7f05bb4ce73"
+        },
+        {
+          "id": "blockads-user-e303eea1-af97-43e6-bd18-57f437d3e3d6",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-e303eea1-af97-43e6-bd18-57f437d3e3d6"
+        },
+        {
+          "id": "blockads-user-6df978b8-8d8d-46fa-9c61-b8140247ed33",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-6df978b8-8d8d-46fa-9c61-b8140247ed33"
+        },
+        {
+          "id": "blockads-user-de5d43fb-592b-4df8-ad83-328a79ec2a1b",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-de5d43fb-592b-4df8-ad83-328a79ec2a1b"
+        },
+        {
+          "id": "blockads-user-8356dd16-7dd4-4fa9-814e-1caecfa7c5b7",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-8356dd16-7dd4-4fa9-814e-1caecfa7c5b7"
+        },
+        {
+          "id": "blockads-user-101203a8-4491-4232-b179-5391cc7aa3ff",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-101203a8-4491-4232-b179-5391cc7aa3ff"
+        },
+        {
+          "id": "blockads-user-1dc307c3-4581-484d-a165-cd8f9bf06647",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-1dc307c3-4581-484d-a165-cd8f9bf06647"
+        },
+        {
+          "id": "blockads-user-dc0a3ddf-732b-41ef-b884-91f66222a1dc",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-dc0a3ddf-732b-41ef-b884-91f66222a1dc"
+        },
+        {
+          "id": "blockads-user-f3a996c4-de4e-4620-930e-6a8cbfb97ec6",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-f3a996c4-de4e-4620-930e-6a8cbfb97ec6"
+        },
+        {
+          "id": "blockads-user-15279508-bdec-4e06-9ea1-3365614e4016",
+          "matches": [
+            "http://127.0.0.1/compat-many"
+          ],
+          "world": "USER_SCRIPT",
+          "worldId": "blockads-user-15279508-bdec-4e06-9ea1-3365614e4016"
+        }
+      ],
+      "errors": [
+        "[Module Engine userscript]",
+        "Error: Native userscript messaging is unavailable. Chrome/Edge allow 10 isolated script worlds per document. Reduce overlapping scopes or enable browser access, then reload.\n    at runUserScript (blockads-userscript-15279508-bdec-4e06-9ea1-3365614e4016.user.js:21:14)\n    at blockads-userscript-15279508-bdec-4e06-9ea1-3365614e4016.user.js:199:5\n    at blockads-userscript-15279508-bdec-4e06-9ea1-3365614e4016.user.js:225:3"
+      ]
+    }
+  },
+  {
+    "log": "chrome-userscripts-final-r4.log",
+    "success": false,
+    "checks": 0,
+    "error": "Error: Timeout: Extensions.loadUnpacked\nBrowser exit 0: \n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:44:69)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)"
+  },
+  {
+    "log": "chrome-userscripts-final-r5.log",
+    "success": false,
+    "checks": 45,
+    "error": "AssertionError [ERR_ASSERTION]: Compatibility source enabled: Offline include-only fragment\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:65:44)\n    at install (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:20:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:140:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:178:5"
+  },
+  {
+    "log": "chrome-userscripts-final-r6.log",
+    "success": true,
+    "checks": 164
+  },
+  {
+    "log": "chrome-userscripts-final-r9.log",
+    "success": true,
+    "checks": 165
+  },
+  {
+    "log": "chrome-userscripts-final.log",
+    "success": true,
+    "checks": 113
+  },
+  {
+    "log": "chrome-userscripts-run1.log",
+    "success": true,
+    "checks": 113
+  },
+  {
+    "log": "edge-blocker-final-r6.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "edge-blocker-final-r9.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "edge-blocker-final.log",
+    "success": true,
+    "checks": 541
+  },
+  {
+    "log": "edge-cleanup-final-r6.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "edge-cleanup-final-r9.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "edge-cleanup-final.log",
+    "success": true,
+    "checks": 25
+  },
+  {
+    "log": "edge-userscripts-final-r6.log",
+    "success": true,
+    "checks": 164
+  },
+  {
+    "log": "edge-userscripts-final-r9.log",
+    "success": true,
+    "checks": 165
+  },
+  {
+    "log": "edge-userscripts-final.log",
+    "success": true,
+    "checks": 113
+  },
+  {
+    "log": "edge-userscripts-run1.log",
+    "success": true,
+    "checks": 113
+  },
+  {
+    "log": "firefox-blocker-final-r8.log",
+    "success": true,
+    "checks": 535
+  },
+  {
+    "log": "firefox-blocker-final-r9.log",
+    "success": true,
+    "checks": 535
+  },
+  {
+    "log": "firefox-blocker-final.log",
+    "success": true,
+    "checks": 535
+  },
+  {
+    "log": "firefox-cleanup-final-r8.log",
+    "success": true,
+    "checks": 28
+  },
+  {
+    "log": "firefox-cleanup-final-r9.log",
+    "success": true,
+    "checks": 28
+  },
+  {
+    "log": "firefox-cleanup-final.log",
+    "success": true,
+    "checks": 28
+  },
+  {
+    "log": "firefox-keyboard-baseline.log",
+    "success": false,
+    "checks": 15,
+    "error": "AssertionError [ERR_ASSERTION]: Keyboard Tab reaches the next script command\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:33:44)\n    at runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:89:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5",
+    "plainKeyboardProbe": {
+      "active": "keyboardProbe"
+    }
+  },
+  {
+    "log": "firefox-keyboard-diagnostic-r2.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: Timed out: document.body.dataset.bulkDeleted==='true'\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:86:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5",
+    "keyboardFailure": {
+      "dataset": {
+        "compatRuns": "1",
+        "count": "1",
+        "syncRead": "true",
+        "compatReady": "true",
+        "remote": "false",
+        "changes": "[{\"key\":\"count\",\"value\":1,\"remote\":false}]",
+        "writeReturn": "undefined",
+        "immediate": "1",
+        "persisted": "1"
+      },
+      "popup": {
+        "active": "<button type=\"button\" title=\"\" accesskey=\"\"><span>Bulk values</span><small>Offline legacy and menus</small></button>",
+        "error": "",
+        "input": [
+          {
+            "type": "keydown",
+            "key": "Enter",
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keyup",
+            "key": "Enter",
+            "target": "Bulk valuesOffline legacy and menus"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "log": "firefox-keyboard-diagnostic.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: {\"columnNumber\":39,\"exception\":{\"type\":\"error\"},\"lineNumber\":305,\"stackTrace\":{\"callFrames\":[]},\"text\":\"SyntaxError: missing ) in parenthetical\"}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:319:46)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:84:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5"
+  },
+  {
+    "log": "firefox-keyboard-front.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: Timed out: document.body.dataset.bulkDeleted==='true'\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:86:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5",
+    "keyboardFailure": {
+      "dataset": {
+        "compatRuns": "1",
+        "count": "1",
+        "syncRead": "true",
+        "compatReady": "true",
+        "remote": "false",
+        "changes": "[{\"key\":\"count\",\"value\":1,\"remote\":false}]",
+        "writeReturn": "undefined",
+        "immediate": "1",
+        "persisted": "1"
+      },
+      "popup": {
+        "active": "<button type=\"button\" title=\"\" accesskey=\"\"><span>Bulk values</span><small>Offline legacy and menus</small></button>",
+        "error": "",
+        "input": [
+          {
+            "type": "keydown",
+            "key": "Enter",
+            "code": "Enter",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keypress",
+            "key": "Enter",
+            "code": "Enter",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keyup",
+            "key": "Enter",
+            "code": "Enter",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "log": "firefox-space-diagnostic.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: Timed out: document.body.dataset.bulkDeleted==='true'\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:86:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5",
+    "keyboardFailure": {
+      "dataset": {
+        "compatRuns": "1",
+        "count": "1",
+        "syncRead": "true",
+        "compatReady": "true",
+        "remote": "false",
+        "changes": "[{\"key\":\"count\",\"value\":1,\"remote\":false}]",
+        "writeReturn": "undefined",
+        "immediate": "1",
+        "persisted": "1"
+      },
+      "popup": {
+        "active": "<button type=\"button\" title=\"\" accesskey=\"\"><span>Bulk values</span><small>Offline legacy and menus</small></button>",
+        "error": "",
+        "input": [
+          {
+            "type": "keydown",
+            "key": " ",
+            "code": "Space",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keypress",
+            "key": " ",
+            "code": "Space",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keyup",
+            "key": " ",
+            "code": "Space",
+            "trusted": true,
+            "prevented": false,
+            "target": "Bulk valuesOffline legacy and menus"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "log": "firefox-userscripts-final-r6.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: Timed out: document.body.dataset.bulkDeleted==='true'\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:84:37)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5"
+  },
+  {
+    "log": "firefox-userscripts-final-r7.log",
+    "success": false,
+    "checks": 16,
+    "error": "Error: Timed out: document.body.dataset.bulkDeleted==='true'\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:86:9)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:65:5",
+    "keyboardFailure": {
+      "dataset": {
+        "compatRuns": "1",
+        "count": "1",
+        "syncRead": "true",
+        "compatReady": "true",
+        "remote": "false",
+        "changes": "[{\"key\":\"count\",\"value\":1,\"remote\":false}]",
+        "writeReturn": "undefined",
+        "immediate": "1",
+        "persisted": "1"
+      },
+      "popup": {
+        "active": "<button type=\"button\" title=\"\" accesskey=\"\"><span>Bulk values</span><small>Offline legacy and menus</small></button>",
+        "error": "",
+        "input": [
+          {
+            "type": "keydown",
+            "key": "Enter",
+            "target": "Bulk valuesOffline legacy and menus"
+          },
+          {
+            "type": "keyup",
+            "key": "Enter",
+            "target": "Bulk valuesOffline legacy and menus"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "log": "firefox-userscripts-final-r8.log",
+    "success": true,
+    "checks": 96
+  },
+  {
+    "log": "firefox-userscripts-final-r9.log",
+    "success": true,
+    "checks": 97
+  },
+  {
+    "log": "firefox-userscripts-run1.log",
+    "success": false,
+    "checks": 0,
+    "error": "Error: Firefox BiDi startup timed out\nFirefox launcher PID 37460, exit 13. Startup output: [1108/022302.983:ERROR:chrome\\app\\chrome_main.cc:204] Multiple targets are not supported in headless mode.\r\n\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:276:45)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)"
+  },
+  {
+    "log": "firefox-userscripts-run2.log",
+    "success": false,
+    "checks": 0,
+    "error": "Error: Firefox BiDi startup timed out\nFirefox launcher PID 39540, exit null. Startup output: (none)\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:277:45)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)"
+  },
+  {
+    "log": "firefox-userscripts-run3.log",
+    "success": false,
+    "checks": 0,
+    "error": "Error: Firefox BiDi startup timed out\nFirefox launcher PID 27112, exit null. Startup output: *** You are running in headless mode.\r\n\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:277:45)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)"
+  },
+  {
+    "log": "firefox-userscripts-run4.log",
+    "success": false,
+    "checks": 2,
+    "error": "Error: Timed out: browser.permissions.contains({permissions:['userScripts']})\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:51:5"
+  },
+  {
+    "log": "firefox-userscripts-run5.log",
+    "success": false,
+    "checks": 2,
+    "error": "Error: Timed out: browser.permissions.contains({permissions:['userScripts']})\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:58:5"
+  },
+  {
+    "log": "firefox-userscripts-run6.log",
+    "success": false,
+    "checks": 2,
+    "error": "Error: Timed out: browser.permissions.contains({permissions:['userScripts']})\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:58:5"
+  },
+  {
+    "log": "firefox-userscripts-run7.log",
+    "success": false,
+    "checks": 2,
+    "error": "Error: Timed out: browser.permissions.contains({permissions:['userScripts']})\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:36:11)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:58:5"
+  },
+  {
+    "log": "firefox-userscripts-run8.log",
+    "success": true,
+    "checks": 53
+  }
+]
