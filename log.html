@@ -27,8 +27,8 @@
         </div>
         <div class="actions">
           <label class="check"><input type="checkbox" id="liveToggle" checked /> Live update</label>
-          <button type="button" id="exportButton">Export JSON</button>
-          <button type="button" id="clearButton" class="danger">Clear log</button>
+          <button type="button" id="exportButton"><span class="ic ic-download" aria-hidden="true"></span>Export JSON</button>
+          <button type="button" id="clearButton" class="danger"><span class="ic ic-trash" aria-hidden="true"></span>Clear log</button>
         </div>
       </header>
 
@@ -55,7 +55,7 @@
             <option value="event">Events</option>
             <option value="error">Errors</option>
           </select>
-          <input type="search" id="textFilter" placeholder="Filter by site, server or text" aria-label="Filter entries" />
+          <div class="page-search"><span class="ic ic-search" aria-hidden="true"></span><input type="search" id="textFilter" placeholder="Filter by site, server or text" aria-label="Filter entries" autocomplete="off" /></div>
         </div>
         <div class="table-wrap">
           <table id="entryTable">

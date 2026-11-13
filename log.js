@@ -17,6 +17,22 @@ function addCell(row, text, className) {
   return cell;
 }
 
+// Today's entries show the time alone; older ones add the date. The tooltip keeps both.
+function timeLabel(time) {
+  const date = new Date(time);
+  return date.toDateString() === new Date().toDateString() ? date.toLocaleTimeString()
+    : date.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+// A small tag, coloured for the layers that never yield to the allow list.
+function tag(text, className = "") {
+  const element = document.createElement("span");
+  element.className = `tag ${className}`.trim();
+  element.textContent = text;
+  return element;
+}
+const layerTag = layer => tag(layer, layer === "Reported threat" ? "tag-threat" : layer === "Custom block" ? "tag-custom" : "");
+
 // "notice" reflects the latest refresh; "actionNotice" keeps the result of a button.
 function showNotice(text, isError = false, id = "notice") {
   const notice = byId(id);
@@ -44,15 +60,19 @@ function render() {
   summary.replaceChildren();
   for (const item of [...servers.values()].sort((a, b) => b.count - a.count || a.host.localeCompare(b.host))) {
     const row = document.createElement("tr");
-    addCell(row, item.host || "(unknown)");
+    addCell(row, item.host || "(unknown)", "server");
     addCell(row, String(item.count), "count");
-    addCell(row, [...item.layers].join(", "));
-    addCell(row, [...item.sites].sort().join(", ") || "(unknown)");
+    addCell(row, "", "layers").append(...[...item.layers].map(layerTag));
+    addCell(row, [...item.sites].sort().join(", ") || "(unknown)", "sites");
     // An allowed domain does not override reported threats or the person's own blocks.
-    const action = addCell(row, "");
+    const action = addCell(row, "", "action");
     if (item.layers.has("Reported threat")) action.textContent = "Reported threat: stays blocked";
-    else if (item.layers.has("Custom block")) action.textContent = "Remove it from Custom Blocked Domains";
-    else if (item.host && isAllowed(item.host)) action.textContent = "Always allowed now";
+    else if (item.layers.has("Custom block")) {
+      const link = document.createElement("a");
+      link.href = "lists.html#listBlocked";
+      link.textContent = "Remove it from Custom Blocked Domains";
+      action.append(link);
+    } else if (item.host && isAllowed(item.host)) action.append(tag("Always allowed now", "tag-allowed"));
     else if (item.host) {
       const button = document.createElement("button");
       button.type = "button";
@@ -64,27 +84,33 @@ function render() {
     summary.append(row);
   }
   byId("summaryCount").textContent = servers.size ? `(${servers.size})` : "";
+  const anyBlocked = entries.some(entry => entry.kind === "blocked");
+  byId("summaryEmpty").textContent = anyBlocked ? "No blocked servers match the filter." : "No blocked requests recorded yet.";
   byId("summaryEmpty").hidden = servers.size > 0;
 
+  const filtered = Boolean(kind || text);
   const shown = entries.filter(entry => (!kind || entry.kind === kind) && matchesText(entry)).reverse();
   const body = byId("entryTable").tBodies[0];
   body.replaceChildren();
   for (const entry of shown) {
     const row = document.createElement("tr");
-    addCell(row, new Date(entry.time).toLocaleString(), "time");
+    addCell(row, timeLabel(entry.time), "time").title = new Date(entry.time).toLocaleString();
     addCell(row, KIND_LABELS[entry.kind] || String(entry.kind), `kind kind-${entry.kind}`);
-    addCell(row, entry.site || "");
-    const details = addCell(row, entry.kind === "blocked" ? entry.host : entry.message || "");
+    addCell(row, entry.site || "", "site");
+    const details = addCell(row, entry.kind === "blocked" ? entry.host : entry.message || "", "details");
     if (entry.kind === "blocked") {
+      // The path, then the request type as a tag.
       const path = document.createElement("span");
       path.className = "path";
-      path.textContent = `${entry.path || ""} (${entry.type || "request"})`;
+      path.append(entry.path || "", " ", tag(entry.type || "request", "tag-type"));
       details.append(path);
     }
-    addCell(row, entry.layer || "");
+    const layer = addCell(row, "", "layer");
+    if (entry.layer) layer.append(layerTag(entry.layer));
     body.append(row);
   }
-  byId("entryCount").textContent = `(${shown.length} of ${entries.length})`;
+  byId("entryCount").textContent = filtered ? `(${shown.length} of ${entries.length})` : `(${entries.length})`;
+  byId("entryEmpty").textContent = entries.length ? "No entries match the filter." : "Nothing logged yet. Blocks and extension events appear here as you browse.";
   byId("entryEmpty").hidden = shown.length > 0;
 }
 
