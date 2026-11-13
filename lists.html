@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="ui.css" />
   <link rel="stylesheet" href="log.css" />
 </head>
-<body>
+<body class="lists-page">
   <div class="shell">
     <nav class="rail" aria-label="Module Engine">
       <a class="rail-brand" href="manager.html"><img src="icons/icon48.png" width="28" height="28" alt="" /><span>Module Engine</span></a>
@@ -16,6 +16,8 @@
         <li><a href="lists.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-list"></span></span>My lists</a></li>
         <li><a href="log.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Activity log</a></li>
       </ul>
+      <!-- Section links: grouped in the side menu, one scrolling row on narrow screens. -->
+      <div class="rail-sections">
       <div class="rail-group">
         <p class="eyebrow">Filters</p>
         <ul class="rail-links">
@@ -41,6 +43,7 @@
           <li><a href="#siteHosts">Site checks</a></li>
         </ul>
       </div>
+      </div>
       <p class="rail-foot">Runs on this computer. No Module Engine telemetry.</p>
     </nav>
 
@@ -50,7 +53,7 @@
           <h1>My lists</h1>
           <p class="muted">Your request filters, page hiding and domain lists. Domain entries include subdomains. Reload affected pages after a change.</p>
         </div>
-        <input type="search" id="filter" placeholder="Filter all lists" aria-label="Filter all lists" />
+        <div class="page-search"><span class="ic ic-search" aria-hidden="true"></span><input type="search" id="filter" placeholder="Filter all lists" aria-label="Filter all lists" autocomplete="off" /></div>
       </header>
 
       <p id="notice" class="notice" role="status" hidden></p>
@@ -155,11 +158,11 @@
               <button type="button" id="clearFlags" class="danger">Clear all flags</button>
             </div>
             <p class="muted">Servers that loaded and look like ads, but are on no block list. Nothing here is blocked until you choose Block. Kept on this computer until you decide or clear them.</p>
-            <div class="table-wrap"><table id="flagTable"><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Times</th><th>Last seen</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table id="flagTable" class="stack"><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Times</th><th>Last seen</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
             <p class="muted empty" hidden>Nothing flagged yet. Flags appear as you browse while "Flag suspected ads" is on.</p>
             <details id="ignoredFlags">
               <summary class="muted">Ignored servers <span class="ignored-count"></span></summary>
-              <div class="table-wrap"><table><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
+              <div class="table-wrap"><table class="stack"><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
             </details>
           </section>
 
@@ -178,7 +181,7 @@
       <section class="card" id="siteHosts">
             <h2>Blocked from site checks <span class="muted count"></span></h2>
             <p class="muted">Ad servers added after testing a named site. Built into the Ads layer; change them in lists/site-ad-hosts.json and rebuild.</p>
-            <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Found on</th><th>What it did</th><th>Date (UTC)</th></tr></thead><tbody></tbody></table></div>
+            <div class="table-wrap"><table class="stack"><thead><tr><th>Domain</th><th>Found on</th><th>What it did</th><th>Date (UTC)</th></tr></thead><tbody></tbody></table></div>
             <p class="muted empty" hidden>No hosts from site checks.</p>
           </section>
     </main>

@@ -14,6 +14,7 @@ const LISTS = {
 };
 let settings = null;
 let siteHosts = [];
+let siteHostsError = "";
 let flags = [];
 let reasonText = {};
 let busy = false;
@@ -81,14 +82,54 @@ function showNotice(text, isError = false) {
   notice.hidden = !text;
 }
 
-const covers = domain => /^[0-9.]+$/.test(domain) || !domain.includes(".") ? "This host only" : "This domain and its subdomains";
+const covers = domain => /^[0-9.]+$/.test(domain) || !domain.includes(".") ? "This host only" : "Includes subdomains";
 const matches = (values, filter) => !filter || values.some(value => String(value).toLowerCase().includes(filter));
 
-function addCell(row, text) {
+// The label names the column when narrow screens stack a table's cells.
+function addCell(row, text, label) {
   const cell = document.createElement("td");
   cell.textContent = text;
+  if (label) cell.dataset.label = label;
   row.append(cell);
   return cell;
+}
+
+// Hostnames may wrap after a dot, never in the middle of a label.
+function hostText(parent, host) {
+  host.split(/(?<=\.)/).forEach((part, index) => {
+    if (index) parent.append(document.createElement("wbr"));
+    parent.append(part);
+  });
+  return parent;
+}
+
+// One value per line: a server's reasons, or the sites it was seen on.
+function linesCell(row, values, label, hosts = false) {
+  const cell = addCell(row, "", label);
+  cell.className = "lines";
+  for (const value of values) {
+    const line = document.createElement("span");
+    if (hosts) hostText(line, value); else line.textContent = value;
+    cell.append(line);
+  }
+  return cell;
+}
+
+// Recent sightings read as "5 min ago"; the cell's tooltip keeps the exact time.
+function ago(time) {
+  const minutes = Math.round((Date.now() - time) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours} h ago` : new Date(time).toLocaleDateString();
+}
+
+// An empty table says whether the list is empty or the filter matches nothing in it.
+function setEmpty(section, shown, total, filter, noMatch) {
+  const empty = section.querySelector(".empty");
+  empty.dataset.default ??= empty.textContent;
+  empty.textContent = filter && total ? noMatch : empty.dataset.default;
+  empty.hidden = shown > 0;
 }
 
 function decisionButton(label, title, onClick) {
@@ -112,7 +153,7 @@ async function decide(site, list) {
 }
 
 function serverCell(row, flag) {
-  const cell = addCell(row, flag.site);
+  const cell = addCell(row, flag.site, "Server");
   const others = flag.hosts.filter(host => host !== flag.site);
   if (others.length) {
     const hosts = document.createElement("div");
@@ -131,17 +172,19 @@ function renderFlags(filter) {
   const ignored = visible.filter(flag => flag.status === "ignored");
   const body = byId("flagTable").querySelector("tbody");
   body.replaceChildren();
+  const reasons = flag => flag.reasons.map(reason => reasonText[reason] || reason);
+  const decisions = (...buttons) => { const group = document.createElement("div"); group.className = "decisions"; group.append(...buttons); return group; };
   for (const flag of pending) {
     const row = document.createElement("tr");
     serverCell(row, flag);
-    addCell(row, why(flag));
-    addCell(row, flag.pages.join(", "));
-    addCell(row, String(flag.count));
-    addCell(row, new Date(flag.lastSeen).toLocaleString());
-    addCell(row, "").append(
+    linesCell(row, reasons(flag), "Why flagged");
+    linesCell(row, flag.pages, "Seen on", true);
+    addCell(row, String(flag.count), "Times");
+    addCell(row, ago(flag.lastSeen), "Last seen").title = new Date(flag.lastSeen).toLocaleString();
+    addCell(row, "", "Decision").append(decisions(
       decisionButton("Block", `Add ${flag.site} to Custom Blocked Domains`, () => decide(flag.site, "block")),
       decisionButton("Allow", `Add ${flag.site} to Always Allowed Domains`, () => decide(flag.site, "allow")),
-      decisionButton("Ignore", `Stop flagging ${flag.site} without blocking it`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "ignore" })));
+      decisionButton("Ignore", `Stop flagging ${flag.site} without blocking it`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "ignore" }))));
     body.append(row);
   }
   const ignoredBody = byId("ignoredFlags").querySelector("tbody");
@@ -149,14 +192,14 @@ function renderFlags(filter) {
   for (const flag of ignored) {
     const row = document.createElement("tr");
     serverCell(row, flag);
-    addCell(row, why(flag));
-    addCell(row, flag.pages.join(", "));
-    addCell(row, "").append(decisionButton("Unignore", `Flag ${flag.site} again`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "unignore" })));
+    linesCell(row, reasons(flag), "Why flagged");
+    linesCell(row, flag.pages, "Seen on", true);
+    addCell(row, "", "Decision").append(decisions(decisionButton("Unignore", `Flag ${flag.site} again`, () => run({ type: "FLAG_ACTION", site: flag.site, action: "unignore" }))));
     ignoredBody.append(row);
   }
   const waiting = flags.filter(flag => flag.status !== "ignored").length;
   section.querySelector(".count").textContent = filter ? `(${pending.length} of ${waiting})` : `(${waiting})`;
-  section.querySelector(".empty").hidden = pending.length > 0;
+  setEmpty(section, pending.length, waiting, filter, "No flagged servers match the filter.");
   byId("ignoredFlags").querySelector(".ignored-count").textContent = `(${ignored.length})`;
   byId("clearFlags").disabled = busy || !flags.length;
 }
@@ -192,7 +235,7 @@ function render() {
     body.replaceChildren();
     for (const domain of shown) {
       const row = document.createElement("tr");
-      addCell(row, domain);
+      hostText(addCell(row, ""), domain);
       addCell(row, covers(domain));
       const button = document.createElement("button");
       button.type = "button";
@@ -204,7 +247,7 @@ function render() {
       body.append(row);
     }
     section.querySelector(".count").textContent = filter ? `(${shown.length} of ${entries.length})` : `(${entries.length})`;
-    section.querySelector(".empty").hidden = shown.length > 0;
+    setEmpty(section, shown.length, entries.length, filter, "No entries match the filter.");
     for (const control of section.querySelectorAll("input, button")) control.disabled = busy || !settings;
   }
   const hostSection = byId("siteHosts");
@@ -213,11 +256,14 @@ function render() {
   const shownHosts = siteHosts.filter(item => matches([item.domain, item.site, item.role], filter));
   for (const item of shownHosts) {
     const row = document.createElement("tr");
-    for (const value of [item.domain, item.site, item.role, item.observedOnUtc]) addCell(row, value);
+    [item.domain, item.site, item.role, item.observedOnUtc].forEach((value, index) => addCell(row, value, ["Domain", "Found on", "What it did", "Date (UTC)"][index]));
     hostBody.append(row);
   }
   hostSection.querySelector(".count").textContent = `(${siteHosts.length})`;
-  hostSection.querySelector(".empty").hidden = shownHosts.length > 0;
+  // A read failure is reported as such, never presented as an empty list.
+  const hostEmpty = hostSection.querySelector(".empty");
+  hostEmpty.textContent = siteHostsError || (filter && siteHosts.length ? "No site-check hosts match the filter." : "No hosts from site checks.");
+  hostEmpty.hidden = shownHosts.length > 0;
 }
 
 // Commands run one at a time, in order. They queue rather than being dropped, so
@@ -381,7 +427,7 @@ api.storage.onChanged.addListener((changes, area) => {
   } catch (error) {
     siteHosts = [];
     // Say so, rather than presenting a read failure as an empty list.
-    byId("siteHosts").querySelector(".empty").textContent = `Could not read the site-check hosts (${error.message || error}). Rebuild the rules and reload Module Engine.`;
+    siteHostsError = `Could not read the site-check hosts (${error.message || error}). Rebuild the rules and reload Module Engine.`;
   }
   await run({ type: "GET_STATE" });
   await refreshFlags();
