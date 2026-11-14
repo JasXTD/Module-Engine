@@ -1,0 +1,2102 @@
+{
+  "browser": "chrome",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-yfWMh3",
+  "started": "2026-11-14T14:03:53.874Z",
+  "checks": [
+    "Fresh manager keeps blocking on and userscripts off",
+    "New permission has not been granted automatically",
+    "Optional permission UI is visible",
+    "Native permission granted by manager button",
+    "Browser access recognized",
+    "Userscript module is independently enabled",
+    "Local ad canary saved to blocker",
+    "Matching source validates: Matching ready marker",
+    "Matching native registration succeeds: Matching ready marker",
+    "Matching source validates: Partial host and explicit port (isolated)",
+    "Matching native registration succeeds: Partial host and explicit port (isolated)",
+    "Partial host and explicit port: positive scope executes in isolated",
+    "Partial host and explicit port: negative scope is untouched in isolated",
+    "Partial host and explicit port: ad subresource stays blocked",
+    "Matching fixture removed: Partial host and explicit port (isolated)",
+    "Matching source validates: Partial host and explicit port (page)",
+    "Matching native registration succeeds: Partial host and explicit port (page)",
+    "Partial host and explicit port: page world executes",
+    "Partial host and explicit port: positive scope executes in page",
+    "Partial host and explicit port: negative scope is untouched in page",
+    "Partial host and explicit port: ad subresource stays blocked",
+    "Matching fixture removed: Partial host and explicit port (page)",
+    "Matching source validates: Wrong port guard (isolated)",
+    "Matching native registration succeeds: Wrong port guard (isolated)",
+    "Wrong port guard: positive scope executes in isolated",
+    "Wrong port guard: negative scope is untouched in isolated",
+    "Wrong port guard: ad subresource stays blocked",
+    "Matching fixture removed: Wrong port guard (isolated)",
+    "Matching source validates: Wrong port guard (page)",
+    "Matching native registration succeeds: Wrong port guard (page)",
+    "Wrong port guard: page world executes",
+    "Wrong port guard: positive scope executes in page",
+    "Wrong port guard: negative scope is untouched in page",
+    "Wrong port guard: ad subresource stays blocked",
+    "Matching fixture removed: Wrong port guard (page)",
+    "Matching source validates: Fragment match and exclusion (isolated)",
+    "Matching native registration succeeds: Fragment match and exclusion (isolated)",
+    "Fragment match and exclusion: positive scope executes in isolated",
+    "Fragment match and exclusion: negative scope is untouched in isolated",
+    "Fragment match and exclusion: ad subresource stays blocked",
+    "Matching fixture removed: Fragment match and exclusion (isolated)",
+    "Matching source validates: Fragment match and exclusion (page)",
+    "Matching native registration succeeds: Fragment match and exclusion (page)",
+    "Fragment match and exclusion: page world executes",
+    "Fragment match and exclusion: positive scope executes in page",
+    "Fragment match and exclusion: negative scope is untouched in page",
+    "Fragment match and exclusion: ad subresource stays blocked",
+    "Matching fixture removed: Fragment match and exclusion (page)",
+    "Matching source validates: Regex includes and exclusion (isolated)",
+    "Matching native registration succeeds: Regex includes and exclusion (isolated)",
+    "Regex includes and exclusion: positive scope executes in isolated",
+    "Regex includes and exclusion: negative scope is untouched in isolated",
+    "Regex includes and exclusion: ad subresource stays blocked",
+    "Matching fixture removed: Regex includes and exclusion (isolated)",
+    "Matching source validates: Regex includes and exclusion (page)",
+    "Matching native registration succeeds: Regex includes and exclusion (page)",
+    "Regex includes and exclusion: page world executes",
+    "Regex includes and exclusion: positive scope executes in page",
+    "Regex includes and exclusion: negative scope is untouched in page",
+    "Regex includes and exclusion: ad subresource stays blocked",
+    "Matching fixture removed: Regex includes and exclusion (page)",
+    "Matching source validates: Regex lookarounds (isolated)",
+    "Matching native registration succeeds: Regex lookarounds (isolated)",
+    "Regex lookarounds: positive scope executes in isolated",
+    "Regex lookarounds: negative scope is untouched in isolated",
+    "Regex lookarounds: ad subresource stays blocked",
+    "Matching fixture removed: Regex lookarounds (isolated)",
+    "Matching source validates: Regex lookarounds (page)",
+    "Matching native registration succeeds: Regex lookarounds (page)",
+    "Regex lookarounds: page world executes",
+    "Regex lookarounds: positive scope executes in page",
+    "Regex lookarounds: negative scope is untouched in page",
+    "Regex lookarounds: ad subresource stays blocked",
+    "Matching fixture removed: Regex lookarounds (page)",
+    "Matching source validates: Regex named backreference (isolated)",
+    "Matching native registration succeeds: Regex named backreference (isolated)",
+    "Regex named backreference: positive scope executes in isolated",
+    "Regex named backreference: negative scope is untouched in isolated",
+    "Regex named backreference: ad subresource stays blocked",
+    "Matching fixture removed: Regex named backreference (isolated)",
+    "Matching source validates: Regex named backreference (page)",
+    "Matching native registration succeeds: Regex named backreference (page)",
+    "Regex named backreference: page world executes",
+    "Regex named backreference: positive scope executes in page",
+    "Regex named backreference: negative scope is untouched in page",
+    "Regex named backreference: ad subresource stays blocked",
+    "Matching fixture removed: Regex named backreference (page)",
+    "Matching source validates: Public suffix match (isolated)",
+    "Matching native registration succeeds: Public suffix match (isolated)",
+    "Public suffix match: positive scope executes in isolated",
+    "Public suffix match: negative scope is untouched in isolated",
+    "Public suffix match: ad subresource stays blocked",
+    "Matching fixture removed: Public suffix match (isolated)",
+    "Matching source validates: Public suffix match (page)",
+    "Matching native registration succeeds: Public suffix match (page)",
+    "Public suffix match: page world executes",
+    "Public suffix match: positive scope executes in page",
+    "Public suffix match: negative scope is untouched in page",
+    "Public suffix match: ad subresource stays blocked",
+    "Matching fixture removed: Public suffix match (page)",
+    "Matching source validates: Public suffix include (isolated)",
+    "Matching native registration succeeds: Public suffix include (isolated)",
+    "Public suffix include: positive scope executes in isolated",
+    "Public suffix include: negative scope is untouched in isolated",
+    "Public suffix include: ad subresource stays blocked",
+    "Matching fixture removed: Public suffix include (isolated)",
+    "Matching source validates: Public suffix include (page)",
+    "Matching native registration succeeds: Public suffix include (page)",
+    "Public suffix include: page world executes",
+    "Public suffix include: positive scope executes in page",
+    "Public suffix include: negative scope is untouched in page",
+    "Public suffix include: ad subresource stays blocked",
+    "Matching fixture removed: Public suffix include (page)",
+    "Matching source validates: Guarded raw scope (content)",
+    "Matching native registration succeeds: Guarded raw scope (content)",
+    "Guarded raw scope (content): in-scope raw code keeps global declarations",
+    "Guarded raw scope (content): excluded page runs no statement and creates no binding",
+    "Guarded raw scope (content): page error listeners do not see the skipped script",
+    "Guarded raw scope (content): the skipped raw script reports no console error",
+    "Matching fixture removed: Guarded raw scope (content)",
+    "Matching source validates: Guarded raw scope (page)",
+    "Matching native registration succeeds: Guarded raw scope (page)",
+    "Guarded raw scope (page): in-scope raw code keeps global declarations",
+    "Guarded raw scope (page): excluded page runs no statement and creates no binding",
+    "Guarded raw scope (page): page error listeners do not see the skipped script",
+    "Guarded raw scope (page): the skipped raw script reports no console error",
+    "Matching fixture removed: Guarded raw scope (page)",
+    "Matching source validates: Regex scope revokes after history change",
+    "Matching native registration succeeds: Regex scope revokes after history change",
+    "Native GM broker rejects requests after leaving the regex scope",
+    "Native iframe scope can run without granting its parent scope",
+    "Native GM broker checks the current child-frame URL after history changes",
+    "Matching fixture removed: Regex scope revokes after history change",
+    "Unsupported regex imports fail visibly without creating a script",
+    "Fixed suffix aliases were served only by loopback",
+    "Ad blocking is still enabled after matching checks",
+    "Matching fixture removed: Matching ready marker",
+    "Saved ordered fixture A",
+    "Enabled ordered fixture A",
+    "Saved ordered fixture B",
+    "Enabled ordered fixture B",
+    "Saved ordered fixture C",
+    "Enabled ordered fixture C",
+    "Bundled worker highlights metadata and JavaScript",
+    "Inline diagnostic focuses the exact failing source character",
+    "Highlighted source is text and cannot create HTML elements",
+    "Saving tags keeps the script enabled",
+    "Search includes local tags",
+    "Tag filter includes author metadata tags",
+    "Editor layout fits width 1280",
+    "Editor input and highlighting have equal height at 1280",
+    "Editor layout fits width 390",
+    "Editor input and highlighting have equal height at 390",
+    "Stale ordering from another window is rejected",
+    "Configured native order at document-start",
+    "Ad blocking remains active during ordered scripts",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Configured native order at document-end",
+    "Ad blocking remains active during ordered scripts",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Timing fixture updated",
+    "Timing fixture enabled",
+    "Configured native order at document-idle",
+    "Ad blocking remains active during ordered scripts",
+    "Tags survive source updates and re-registration",
+    "Saved owned CRLF file fixture",
+    "Enabled original file fixture",
+    "Windows line endings do not create a false unsaved draft",
+    "Ctrl+Space offers only matching supported GM values",
+    "completion fits width 1280",
+    "completion fits width 390",
+    "Enter inserts exactly the selected metadata token",
+    "Native Ctrl+Z undoes suggestion insertion",
+    "Native Ctrl+Y redoes suggestion insertion",
+    "Pointer selection inserts only its literal suggestion",
+    "Selecting all dismisses stale suggestions without changing source",
+    "Arrow selection and Tab insert the second completion",
+    "Escape dismisses suggestions without changing source",
+    "Tab leaves the editor when suggestions are closed",
+    "Composition state suppresses metadata suggestions",
+    "Suggestions do not appear in executable script text",
+    "Synthetic clicks cannot approve file tracking",
+    "Paired file starts without changing or saving the draft",
+    "Pairing code is cleared after use",
+    "An atomic external save waits for explicit draft review",
+    "Cancelling external replacement preserves unsaved edits",
+    "A file changed during confirmation cannot replace the reviewed bytes",
+    "Loading the latest file changes only the draft and preserves tags",
+    "Loading source does not save, enable or execute it",
+    "Only saved code runs during review; ad blocking remains active",
+    "external-review fits width 1280",
+    "external-review fits width 390",
+    "Explicit Save pauses the script and preserves local tags",
+    "Saving keeps the same chosen file connected",
+    "Saving local tags keeps external tracking connected",
+    "Helper never writes normalized editor text back to disk",
+    "Invalid file data preserves the saved draft and hides outdated candidate",
+    "Created concurrent saved revision",
+    "Stale editor cannot load external changes",
+    "Reloading a saved revision stops tracking and preserves latest saved bytes",
+    "Stop preserves the reviewed draft",
+    "Stopped tracking cannot overwrite the draft after a later file save",
+    "Opening another draft disconnects the chosen file",
+    "Install dialog focuses the URL field",
+    "URL fetch opens a source review without adding a script",
+    "Fetched code stays literal and read-only",
+    "Fetch omits cookies and referrer even with an existing site cookie",
+    "Escape cancels the review and restores keyboard focus",
+    "Cancelling an install leaves the library unchanged",
+    "Approval installs a paused script and remembers only the supplied URL",
+    "A metadata download URL was never requested",
+    "Installed scripts do not run before enabling",
+    "Enabled URL script runs through native userScripts while the ad is blocked",
+    "Identical source has no actionable update",
+    "Newer version and changed site/API/dependency access are shown",
+    "Review preserves the current enabled version until approval",
+    "Install review has no horizontal overflow: 1280 access",
+    "Install review has no horizontal overflow: 1280 code",
+    "Install review has no horizontal overflow: 390 access",
+    "Install review has no horizontal overflow: 390 code",
+    "Cancelling an update retains the running version",
+    "Found the native worker before update approval",
+    "Review stays open across a confirmed worker stop",
+    "Approval uses reviewed bytes without a second fetch and pauses the update",
+    "New dependencies must be prepared before enabling",
+    "Updated native script retains GM values and the blocker stays active",
+    "Same-version edits are disclosed for explicit review",
+    "A second manager can edit while review is open",
+    "Stale review disables approval instead of overwriting the other edit",
+    "Downgrades are visible and cannot be applied",
+    "An update cannot change script identity",
+    "HTML download errors remain visible in the review dialog",
+    "Cancelling a slow source fetch restores manager controls",
+    "Reinstalling an existing identity reviews replacement without duplicating it",
+    "Changing the entered URL invalidates its earlier review",
+    "Ad blocking remains enabled after all install/update failure paths",
+    "Compatibility source saved: Offline legacy and menus",
+    "Compatibility source enabled: Offline legacy and menus",
+    "Legacy getters return values synchronously in native worlds",
+    "Script globals remain isolated from the page",
+    "Ad blocking remains active beside native GM scripts",
+    "Menus are scoped to the native page tab",
+    "Menu labels render as text",
+    "Legacy writes return void with immediate reads",
+    "Value listener identifies its local writer",
+    "Native cross-tab listener updates the second cache",
+    "Keyboard Tab reaches the next script command",
+    "Bulk defaults and deletion work in the browser",
+    "New documents hydrate the latest persisted values",
+    "Unregister removes the live menu command",
+    "Menu popup fits a narrow viewport",
+    "Native worker restart restores menus without rerunning source",
+    "Value changes continue after native worker restart",
+    "Legacy script disables successfully",
+    "Disabling removes existing document menus",
+    "Old documents lose storage access after disable",
+    "Compatibility source saved: Offline timing Start",
+    "Compatibility source enabled: Offline timing Start",
+    "Compatibility source saved: Offline timing Body",
+    "Compatibility source enabled: Offline timing Body",
+    "Compatibility source saved: Offline timing End",
+    "Compatibility source enabled: Offline timing End",
+    "Compatibility source saved: Offline timing Idle",
+    "Compatibility source enabled: Offline timing Idle",
+    "Native document-start precedes the fixture head script",
+    "Native document-body runs once a body exists",
+    "Native document-end and idle run after parsing",
+    "Compatibility source saved: Offline glob union",
+    "Compatibility source enabled: Offline glob union",
+    "Native match/include union and exclusion: /compat-glob",
+    "Native match/include union and exclusion: /COMPAT-GlOb",
+    "Native match/include union and exclusion: /compat-match",
+    "Native match/include union and exclusion: /compat-glob-private",
+    "Native match/include union and exclusion: /compat-GLOB-PRIVATE",
+    "Native match/include union and exclusion: /compat-outside",
+    "Case-insensitive glob fixture disabled before native capacity checks",
+    "Compatibility source saved: Offline include-only fragment",
+    "Compatibility source enabled: Offline include-only fragment",
+    "Include-only literal query/fragment: /compat-include?mode=one#kept",
+    "Include-only literal query/fragment: /compat-include?mode=one#other",
+    "Include-only literal query/fragment: /compat-includeXmode=one#kept",
+    "Compatibility source saved: Offline top frame",
+    "Compatibility source enabled: Offline top frame",
+    "noframes prevents child execution",
+    "Unsupported directives are rejected without execution",
+    "Compatibility source saved: Offline simultaneous cache 0",
+    "Compatibility source enabled: Offline simultaneous cache 0",
+    "Compatibility source saved: Offline simultaneous cache 1",
+    "Compatibility source enabled: Offline simultaneous cache 1",
+    "Compatibility source saved: Offline simultaneous cache 2",
+    "Compatibility source enabled: Offline simultaneous cache 2",
+    "Compatibility source saved: Offline simultaneous cache 3",
+    "Compatibility source enabled: Offline simultaneous cache 3",
+    "Compatibility source saved: Offline simultaneous cache 4",
+    "Compatibility source enabled: Offline simultaneous cache 4",
+    "Compatibility source saved: Offline simultaneous cache 5",
+    "Compatibility source enabled: Offline simultaneous cache 5",
+    "Compatibility source saved: Offline simultaneous cache 6",
+    "Compatibility source enabled: Offline simultaneous cache 6",
+    "Compatibility source saved: Offline simultaneous cache 7",
+    "Compatibility source enabled: Offline simultaneous cache 7",
+    "Compatibility source saved: Offline simultaneous cache 8",
+    "Compatibility source enabled: Offline simultaneous cache 8",
+    "Compatibility source saved: Offline simultaneous cache 9",
+    "Compatibility source enabled: Offline simultaneous cache 9",
+    "Ten matching legacy scripts hydrate together",
+    "Ten simultaneous scripts publish all menus without consuming value slots",
+    "Manager explains the limit when many isolated scripts are enabled",
+    "Compatibility source saved: Offline world overflow 10",
+    "Compatibility source enabled: Offline world overflow 10",
+    "Compatibility source saved: Offline world overflow 11",
+    "Compatibility source enabled: Offline world overflow 11",
+    "Chromium world overflow does not execute privileged script bodies",
+    "Chromium world exhaustion reports an actionable error",
+    "Blocker remains enabled after compatibility exercises",
+    "Local ad remains blocked after compatibility exercises",
+    "Fixture script deleted: Offline legacy and menus",
+    "Fixture script deleted: Offline timing Start",
+    "Fixture script deleted: Offline timing Body",
+    "Fixture script deleted: Offline timing End",
+    "Fixture script deleted: Offline timing Idle",
+    "Fixture script deleted: Offline glob union",
+    "Fixture script deleted: Offline include-only fragment",
+    "Fixture script deleted: Offline top frame",
+    "Fixture script deleted: Offline simultaneous cache 0",
+    "Fixture script deleted: Offline simultaneous cache 1",
+    "Fixture script deleted: Offline simultaneous cache 2",
+    "Fixture script deleted: Offline simultaneous cache 3",
+    "Fixture script deleted: Offline simultaneous cache 4",
+    "Fixture script deleted: Offline simultaneous cache 5",
+    "Fixture script deleted: Offline simultaneous cache 6",
+    "Fixture script deleted: Offline simultaneous cache 7",
+    "Fixture script deleted: Offline simultaneous cache 8",
+    "Fixture script deleted: Offline simultaneous cache 9",
+    "Fixture script deleted: Offline world overflow 10",
+    "Fixture script deleted: Offline world overflow 11",
+    "Enabled module has a useful empty command state",
+    "Fixture module can be paused",
+    "Disabled userscript module leaves the blocker popup uncluttered",
+    "Fixture module can be restored",
+    "Saved helper fixture: Offline DOM and tab helpers",
+    "Enabled helper fixture: Offline DOM and tab helpers",
+    "GM_addElement and GM.addElement return real synchronous elements at document-start",
+    "DOM helpers preserve literal attributes, explicit parents and text",
+    "DOM helpers append into an explicit shadow root",
+    "GM_addStyle retains CSS behavior and its one-use then callback",
+    "Invalid element attributes fail without inserting a partial element",
+    "Legacy GM_openInTab immediately returns a handle and honors background mode",
+    "Default insertion uses the originating window and opener",
+    "A handle closes only its own tab and fires onclose once",
+    "Modern GM.openInTab returns a synchronous control and supports pinned background tabs",
+    "insert:false does not assign the source as opener",
+    "Native tab removal updates closed and invokes the script callback",
+    "Closing a handle before browser creation completes leaves no child tab",
+    "DNR still blocks an owned loopback destination opened through a userscript",
+    "A retained blocked API tab had no opener at creation",
+    "Blocked userscript tabs report closure and keep the source tab intact",
+    "Disallowed schemes and invalid tab options are rejected before opening",
+    "Helper script can be disabled without changing blocker state",
+    "Disable revokes close/open capabilities without pretending an existing tab closed",
+    "The ordinary page ad canary stays blocked while helper APIs run",
+    "Saved helper fixture: Offline helper grants absent",
+    "Enabled helper fixture: Offline helper grants absent",
+    "Scripts without the exact grants receive neither helper",
+    "Deleted helper fixture: Offline DOM and tab helpers",
+    "Deleted helper fixture: Offline helper grants absent",
+    "Saved offline fixture: Offline dependencies",
+    "Saving dependencies makes no HTTP request",
+    "Unprepared dependencies cannot be enabled",
+    "Manager explains dependencies before download",
+    "Manager caches every dependency with sizes and verified hashes",
+    "Prepared scripts remain disabled",
+    "Dependency manager has no horizontal overflow at 1200px",
+    "Dependency manager has no horizontal overflow at 520px",
+    "Dependency review is read-only text",
+    "Dependency review opens with its heading visible and focused",
+    "Dependency manager has no horizontal overflow at 520px",
+    "Native libraries run in order before the main source",
+    "Legacy and modern resource APIs agree and preserve binary bytes",
+    "Default native timing is document-end with canonical GM_info grants",
+    "GM_addStyle supports its element and then callback",
+    "Page-world globals cannot see isolated dependencies",
+    "Page runs use cached assets without refetching",
+    "The fixture ad remains blocked during dependency execution",
+    "Saved offline fixture: Offline HTTP",
+    "Native request fixture enabled",
+    "Native HTTP fixture completed",
+    "Native HTTP: crossOrigin",
+    "Native HTTP: responseHeaders",
+    "Native HTTP: binary",
+    "Native HTTP: blob",
+    "Native HTTP: document",
+    "Native HTTP: httpError",
+    "Native HTTP: invalidJSON",
+    "Native HTTP: basicAuth",
+    "Native HTTP: explicitAuth",
+    "Native HTTP: blobStream",
+    "Native HTTP: manualStream",
+    "Native HTTP: badStream",
+    "Native HTTP: progress",
+    "Native HTTP: legacyText",
+    "Native HTTP: callbacks",
+    "Native HTTP: redirect",
+    "Native HTTP: connect",
+    "Native HTTP: headers",
+    "Native HTTP: timeout",
+    "Native HTTP: abort",
+    "Native HTTP: oversize",
+    "Native HTTP: cookies",
+    "Native HTTP: anonymous",
+    "Native HTTP: blocker",
+    "Module disables during slow native HTTP",
+    "Native HTTP does not hold the disable control",
+    "Disabling revokes the existing native network API",
+    "Ad blocker stays active after network cancellation",
+    "Deleted dependency/network fixture",
+    "Deleted dependency/network fixture",
+    "Restored userscript module",
+    "Page source saved: Page globals with GM",
+    "Page source enabled: Page globals with GM",
+    "Page unsafeWindow reads real objects, methods and global lexical declarations with GM APIs",
+    "Page legacy values are synchronous and modern values await native storage",
+    "Granted helpers stay in the script closure, not page global properties",
+    "Local ad canary remains blocked with the page bridge active",
+    "Page menu is bound to the native tab",
+    "Extension can invoke the page menu",
+    "Menu callbacks and legacy writes use the page closure",
+    "Cross-tab value listeners reach the page and report remote changes",
+    "Page cookie calls require native optional permission",
+    "Manager warns that the site can invoke granted page helpers",
+    "Page-access review fits at 1280",
+    "Page-access review fits at 390",
+    "Page cookie helper uses the calling browser store and can read its synthetic HttpOnly cookie",
+    "Page cookie helper enforces its declared destination scope",
+    "Page cookie deletion confirms the actual native result",
+    "Page FormData and Blob uploads survive an owned redirect through GM HTTP",
+    "Page GM calls recheck the live URL after same-document navigation",
+    "Page script disabled",
+    "Disabling revokes retained page GM handles",
+    "Disabling also revokes page cookie handles",
+    "Disabling removes page menus",
+    "Rejected writes preserve the native value store",
+    "Page source saved: Automatic page or content",
+    "Page source enabled: Automatic page or content",
+    "Auto executes exactly once with real GM storage: open",
+    "Auto chooses the correct native world without weakening site policy: open",
+    "unsafeWindow follows the actual auto world: open",
+    "Auto executes exactly once with real GM storage: csp",
+    "Auto chooses the correct native world without weakening site policy: csp",
+    "unsafeWindow follows the actual auto world: csp",
+    "Auto executes exactly once with real GM storage: trusted",
+    "Auto chooses the correct native world without weakening site policy: trusted",
+    "unsafeWindow follows the actual auto world: trusted",
+    "Page source saved: Page refuses blocked startup",
+    "Page source enabled: Page refuses blocked startup",
+    "Explicit page mode does not silently fall back when CSP blocks it",
+    "Page source saved: Auto failure false",
+    "Page source enabled: Auto failure false",
+    "Runtime exception never reruns the script in content mode",
+    "Page source saved: Auto failure true",
+    "Page source enabled: Auto failure true",
+    "Runtime rejection never reruns the script in content mode",
+    "Page source saved: Page timing start",
+    "Page source enabled: Page timing start",
+    "Page source saved: Page timing body",
+    "Page source enabled: Page timing body",
+    "Page source saved: Page timing end",
+    "Page source enabled: Page timing end",
+    "Page source saved: Page timing idle",
+    "Page source enabled: Page timing idle",
+    "Page document-start runs before the first site script",
+    "Page document-body waits for body",
+    "Page document-end and idle run after parsing",
+    "Page source saved: Page order A",
+    "Page source enabled: Page order A",
+    "Page source saved: Page order B",
+    "Page source enabled: Page order B",
+    "Page and auto bridges preserve configured start order within one timing phase",
+    "Page script order can be changed transactionally",
+    "Changed page script order reaches native registrations",
+    "Page source saved: Page matching frames",
+    "Page source enabled: Page matching frames",
+    "Page source saved: Page noframes",
+    "Page source enabled: Page noframes",
+    "Page bridge works in matching subframes with native GM authorization",
+    "Page noframes leaves the child untouched",
+    "Page native exclusions prevent source execution",
+    "Page source saved: Page lifecycle",
+    "Page source enabled: Page lifecycle",
+    "Synthetic lifecycle events preserve the page connection, values and single execution",
+    "A real worker restart reconnects page menus and values without rerunning source",
+    "Native history return hydrates current GM values and has one source execution per document",
+    "A cached history return does not re-execute source",
+    "Restored page command can run",
+    "Restored legacy writes reach the peer and the local ad canary remains blocked",
+    "Page script disabled",
+    "Disabling while away cannot revive GM writes on history return",
+    "Revoked page menus stay absent",
+    "The ad-blocker module is still enabled after page compatibility tests",
+    "No unexpected proxy errors during page compatibility tests",
+    "Relocated private helper loads all native DOM/XHR dependencies",
+    "Real stdio MCP initializes",
+    "Only seven read-only tools are advertised",
+    "MCP cannot inspect an unpaired browser",
+    "Owned diagnostic script saved",
+    "Owned diagnostic script enabled",
+    "Network metadata sharing is unchecked by default",
+    "MCP has a persistent manager sidebar entry",
+    "Synthetic page submit does not connect",
+    "MCP pairing clears its secret from the field",
+    "MCP sees active blocker and userscripts",
+    "MCP script list has metadata without source bodies",
+    "MCP retrieves the exact installed source",
+    "MCP checks matching without visiting URL",
+    "Unexpected write-like arguments are rejected",
+    "MCP inspection leaves persisted configuration identical",
+    "MCP results never expose stored capability tokens or values",
+    "MCP captures a page-bridge userscript exception",
+    "The captured script actually ran in the page world",
+    "Diagnostic URL omits query and fragment",
+    "Ad canary remains blocked during MCP connection",
+    "Activity reads are bounded",
+    "Debug UI records agent read names",
+    "Existing script/log approval does not grant network access",
+    "MCP approval has not started native capture",
+    "Network sidebar opens MCP separately to preserve capture",
+    "MCP sidebar opens Network separately to preserve approval",
+    "MCP pairing clears its secret from the field",
+    "A network read reports stopped capture without starting it",
+    "Reading a stopped log does not write or clear session storage",
+    "Network-only approval cannot read installed source or diagnostic logs",
+    "Local ad canary stays blocked while MCP and capture run",
+    "Live MCP read sees metadata without taking ownership or stopping capture",
+    "MCP returns native method, status, type and timing",
+    "MCP retains redirects, HTTP errors and network failures",
+    "MCP metadata excludes credentials, queries, fragments, headers and bodies",
+    "MCP combines request filters without making requests",
+    "MCP entry limit selects newest matching records and reports omitted matches",
+    "MCP rejects capture controls or oversized reads: {\"start\":true}",
+    "MCP rejects capture controls or oversized reads: {\"clear\":true}",
+    "MCP rejects capture controls or oversized reads: {\"stop\":true}",
+    "MCP rejects capture controls or oversized reads: {\"limit\":101}",
+    "MCP advertises no capture control tool",
+    "Network MCP reads leave captured session data identical",
+    "MCP page lists the read without persisting request contents",
+    "Disconnect revokes network reads immediately",
+    "MCP pairing clears its secret from the field",
+    "Reconnecting without network consent cannot inherit it",
+    "Debug page has no horizontal overflow at 1280",
+    "Debug page has no horizontal overflow at 390",
+    "Disconnect immediately revokes subsequent reads",
+    "MCP pairing clears its secret from the field",
+    "Status-only approval refuses script source",
+    "Status-only approval refuses logs",
+    "Status-only approval refuses network metadata",
+    "MCP pairing clears its secret from the field",
+    "New debug session starts with empty captured errors",
+    "Closing Debug page prevents browser data delivery",
+    "Ad blocker remains active after MCP shutdown",
+    "Owned MCP script removed",
+    "Owned MCP process stops without unexpected output",
+    "Real http MCP initializes",
+    "Only seven read-only tools are advertised",
+    "MCP cannot inspect an unpaired browser",
+    "Owned diagnostic script saved",
+    "Owned diagnostic script enabled",
+    "Network metadata sharing is unchecked by default",
+    "MCP has a persistent manager sidebar entry",
+    "Synthetic page submit does not connect",
+    "MCP pairing clears its secret from the field",
+    "MCP sees active blocker and userscripts",
+    "MCP script list has metadata without source bodies",
+    "MCP retrieves the exact installed source",
+    "MCP checks matching without visiting URL",
+    "Unexpected write-like arguments are rejected",
+    "MCP inspection leaves persisted configuration identical",
+    "MCP results never expose stored capability tokens or values",
+    "MCP captures a page-bridge userscript exception",
+    "The captured script actually ran in the page world",
+    "Diagnostic URL omits query and fragment",
+    "Ad canary remains blocked during MCP connection",
+    "Activity reads are bounded",
+    "Debug UI records agent read names",
+    "Existing script/log approval does not grant network access",
+    "MCP approval has not started native capture",
+    "Network sidebar opens MCP separately to preserve capture",
+    "MCP sidebar opens Network separately to preserve approval",
+    "MCP pairing clears its secret from the field",
+    "A network read reports stopped capture without starting it",
+    "Reading a stopped log does not write or clear session storage",
+    "Network-only approval cannot read installed source or diagnostic logs",
+    "Local ad canary stays blocked while MCP and capture run",
+    "Live MCP read sees metadata without taking ownership or stopping capture",
+    "MCP returns native method, status, type and timing",
+    "MCP retains redirects, HTTP errors and network failures",
+    "MCP metadata excludes credentials, queries, fragments, headers and bodies",
+    "MCP combines request filters without making requests",
+    "MCP entry limit selects newest matching records and reports omitted matches",
+    "MCP rejects capture controls or oversized reads: {\"start\":true}",
+    "MCP rejects capture controls or oversized reads: {\"clear\":true}",
+    "MCP rejects capture controls or oversized reads: {\"stop\":true}",
+    "MCP rejects capture controls or oversized reads: {\"limit\":101}",
+    "MCP advertises no capture control tool",
+    "Network MCP reads leave captured session data identical",
+    "MCP page lists the read without persisting request contents",
+    "Disconnect revokes network reads immediately",
+    "MCP pairing clears its secret from the field",
+    "Reconnecting without network consent cannot inherit it",
+    "Debug page has no horizontal overflow at 1280",
+    "Debug page has no horizontal overflow at 390",
+    "Disconnect immediately revokes subsequent reads",
+    "MCP pairing clears its secret from the field",
+    "Status-only approval refuses script source",
+    "Status-only approval refuses logs",
+    "Status-only approval refuses network metadata",
+    "MCP pairing clears its secret from the field",
+    "New debug session starts with empty captured errors",
+    "HTTP DELETE revokes the native browser connection",
+    "Reinitialized HTTP client cannot inherit browser approval",
+    "MCP pairing clears its secret from the field",
+    "Explicit browser reapproval restores HTTP status reads",
+    "Closing Debug page prevents browser data delivery",
+    "Ad blocker remains active after MCP shutdown",
+    "Owned MCP script removed",
+    "Owned MCP process stops without unexpected output",
+    "No unexpected runtime errors during relocated userscript and MCP tests",
+    "No unexpected proxy errors during the path regression"
+  ],
+  "hashes": {
+    "manifest.json": "2e39c281fee04782c316d989b05815f7f86f5ade53f4583f779e6e7cf6120dec",
+    "src/background/background.js": "12dcbdf8dcb4179b57b87a169113d6835d2bc3be5ef949e2b2376129a12a9fb6",
+    "src/background/debug-runtime.js": "430783cd03fdfcb0878604eb06200f9d1875d94d0cb81a8573b84fe372776170",
+    "src/background/modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "src/background/network-log.js": "bd2ee515130dfd3b6f62b4b6f4ec16c1d019e84f603784a98a198eb0d57ee4f4",
+    "src/blocking/buttons.js": "4fec1e29a8e6438b31bd00787b9c867a746037c2e20bcd07a83f3724375727af",
+    "src/blocking/content.js": "5a21f2f16ee605ad2a77f2f71a91934a4d60a39e702c8638d47ba138c893a246",
+    "src/blocking/cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "src/blocking/evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "src/blocking/flags.js": "2656545e8ba8cc27e8fedf7a0d67c1fafa82071089892b7e2d6c5ab3857b5603",
+    "src/blocking/network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "src/blocking/notification-guard.js": "c8257c83c9fd1a13633e037bf4be1ad4fdf7403e39c885267bd11b8328a1aacc",
+    "src/blocking/overlays.js": "339c309b5c4dd90c412d8dc16a85708d694c7051aba53c9e8a69fe5a775205cf",
+    "src/blocking/picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "src/blocking/picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "src/blocking/popups.js": "fc65cb70bce15a045ebc61955e45e28da0c8fb29c289ba9551a2c0d545330bd8",
+    "src/blocking/procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "src/blocking/prompts.js": "e0510454f1260759b14dbd1b849e2467ac0ef17eafb32000111376c95fb99378",
+    "src/blocking/reddit.js": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+    "src/blocking/youtube-fallback.js": "41718421cd999f8ba1774eba6a1c24eaf69c3abbc517636ab66c557b5488a43d",
+    "src/blocking/youtube.js": "08aaf232bea285d500ef0941f4d1fa81d9224c2f0b162a10fdbc1e4696504db1",
+    "src/shared/debug-protocol.js": "d38ae7b32db4c246d9a2f7e412e61c6d3fa16f6bcb71045e5cbbed644819a8ff",
+    "src/shared/shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "src/ui/lists/lists.html": "86be22464771b0d2186bf0d25c27b688f8c4bc20f64ec6af7d4536da044b8d24",
+    "src/ui/lists/lists.js": "14d961c4c21c2de0b473ca633a9917e7578d5654f84cdca9255be1da7924ab1d",
+    "src/ui/log/log.css": "89676dd265630f2875c38b2d2847ccb986ef84cefdec706f7af23f81a457d54e",
+    "src/ui/log/log.html": "21bea22802aa118d3b6fadb463cc4330bc850533bed35f26704a4de0b4ec5977",
+    "src/ui/log/log.js": "ea01b72c686aec25374b1ba3e993cd0aefbc1cd4aa73f1a711262eefa92c6390",
+    "src/ui/manager/manager.css": "ad331dfd099ddfad6f4e09f7d0ef1c4643f8508642ad96d65c3da6288835531c",
+    "src/ui/manager/manager.html": "d4431faa45aa158e3eaf4d660499f60a55ad932f5c3c4a67e86f51660cfc690d",
+    "src/ui/manager/manager.js": "a9de36deb4b66e660bbe2556ee395159cc4c45de58fd85f847a56bde85f232fa",
+    "src/ui/manager/userscripts-completion.js": "c0f46ccb157314942361859a578f09dac183bc232769ada3e5ac1919051fa748",
+    "src/ui/manager/userscripts-editor-worker.js": "149883c0455f2628f7b51d750bbc34d339e92e992b76d052b83f5727a27c7908",
+    "src/ui/manager/userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "src/ui/manager/userscripts-external.js": "6a576b34dcbe659554047623679829dced105ae8493138f05025c6fe07534a90",
+    "src/ui/mcp/debug.css": "16bb0fa54480af29eadca06064eb42392dc6cd2bd7d195c7d0c4ba0577c7a145",
+    "src/ui/mcp/debug.html": "84a0d925c9dad4dd954c51b9a249897fd7a77292976d2c8b31e10dcdeac97acd",
+    "src/ui/mcp/debug.js": "893a0b8a01a89cbae1b09495f84445bf1bfc3e8a698de0dc1e13453343cea830",
+    "src/ui/network/network.css": "2ad431c81741c6a69c78f8474e2899e26a1ebe0604e672df7d1b734b492aa5ae",
+    "src/ui/network/network.html": "dcca3fb9a478164d5815dc1b3361ddda38c0243fa4750870977a0b183bb9f643",
+    "src/ui/network/network.js": "96ac1586418e1183fb492a9e36568c73646db1edb868253319cfe309f2400ac1",
+    "src/ui/popup/popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "src/ui/popup/popup.html": "96ea08c92c0ef202663e5e3f209b840cf39d166b39582c496a36fae7ad096420",
+    "src/ui/popup/popup.js": "3a8c1f556bfac67c2ea0e3c90c6b3dc1604c8533d70c33c0dc3cf4676e0a7812",
+    "src/ui/shared/ui.css": "22b0248ab16ce440fea83008b1b39c78427969433b5df423bf11a646facc6c84",
+    "src/userscripts/clipboard.html": "b8db6e3853bcd4188349bb054d489dee7356ef1a91799827424e4f9ee87377fb",
+    "src/userscripts/clipboard.js": "20077559139d326a64b944918462fd77dc63a7d3df858997021f73a016b86294",
+    "src/userscripts/userscripts-actions.js": "5f37116fb8095058e4806d159b9c1fa19f4543f753dabd4dd7ee9a653d39e9e4",
+    "src/userscripts/userscripts-core.js": "aedd93eff5637862fb838ffe339f47644a555d3632cf02afd189861cd9b6a910",
+    "src/userscripts/userscripts-lint.js": "2d04a82b9e75736af3708537631ae21e18ce6e09fb5037baeba83b1192cf7501",
+    "src/userscripts/userscripts-matching.js": "a5b57ba7fa946e5069db2bd74f7b7d3571cb0a630c5db3375b5601779098929d",
+    "src/userscripts/userscripts-network.js": "c6764812b02f33871744ecd707fba077163cd747ba116a82e704838b82ddb37d",
+    "src/userscripts/userscripts-offscreen.js": "f4f1ce4282e6c64bbe4998225d426a14e5377b4fdd7c2ccb8e494c9d51630b1a",
+    "src/userscripts/userscripts-page.js": "ce0e4cfac448a83bd9e935d8f48010766e57d20531564c1d2e86ae5c6ff86fdb",
+    "src/userscripts/userscripts-runtime.js": "46a54d1e52daca74148e764d8fcaf04d4287af59d7be5bd45ec2d2870fee2223",
+    "src/userscripts/userscripts-updates.js": "616525eda7d4b62e32e96f23912b67e817366e0039994130d536af26783d9e3e",
+    "src/userscripts/userscripts-xhr.js": "1474f3ec37d188c88dbbfd1938481e6d939f822ba713712512a6e793a5103edf",
+    "icons/icon128.png": "fe313d3ad0715a33e2079b6dc078bad930fe142490d4ba40748e84e99fd104de",
+    "icons/icon16.png": "5a2228b9b7f74a1231b59093907c54d244f2b26bbc67887552b27b46c04ad87a",
+    "icons/icon48.png": "8dad16da824d63b433238e9be229828e387d550ccf526509f73a26afa10d53fe",
+    "rules/ads.json": "9e824086797f284ed53f1149609cb8ca3cbf1ed4dc54f6cd62841adc20ef979f",
+    "rules/community-cosmetic.json": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "rules/community-info.json": "a7dc6c69bac82852665b783259b9ddf722c6396574d9af8eda92b73749c4a4ee",
+    "rules/community.json": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "rules/malware.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "rules/reviewed-domains.json": "c71fd950c7a39a00d6d27bf88cb67bc1d710a37f9214d781d999161a6b4fa5ec",
+    "rules/site-ad-hosts-info.json": "4f1e047fd8efe0abec9437fe438c1f02bf9289d4475b719184853fe163f7b903",
+    "rules/threat-evidence.json": "a4ca45a6c065ac4192674528e6029d1f845e13077f3ba63850d574200c7fac74",
+    "rules/threat-policy.json": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "vendor/publicsuffix/LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "vendor/publicsuffix/provenance.json": "26c1b30fa717beaf478f604dc55bb92bfb311084cdece5608f97ec8dcf9945c7",
+    "vendor/publicsuffix/suffixes.js": "13a92053d42e95d9bfeb080abcd3bfb33b98f80ad9ad9e5d1984c1016d08d0b9",
+    "docs/MCP.md": "0aae766786446c39bc2a3e703a78fd4a99a87913745acd2437addcad1d5020cc"
+  },
+  "deniedRequests": 456,
+  "proxyErrors": [],
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.79",
+    "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.43"
+  },
+  "permissionToggles": [
+    {
+      "before": {
+        "x": 690.5,
+        "y": 270.7578125
+      },
+      "after": {
+        "x": 690.5,
+        "y": 270.7578125
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": false,
+        "active": false,
+        "available": true,
+        "needsPermission": false,
+        "error": "",
+        "revision": 0,
+        "scripts": []
+      }
+    }
+  ],
+  "layoutPhases": [
+    {
+      "name": "matching",
+      "checks": 130
+    },
+    {
+      "name": "editor and external file",
+      "checks": 74
+    },
+    {
+      "name": "installation and updates",
+      "checks": 33
+    },
+    {
+      "name": "GM compatibility",
+      "checks": 104
+    },
+    {
+      "name": "DOM and tab helpers",
+      "checks": 26
+    },
+    {
+      "name": "dependencies and HTTP",
+      "checks": 52
+    },
+    {
+      "name": "page-world bridge",
+      "checks": 82
+    },
+    {
+      "name": "MCP stdio",
+      "checks": 60
+    },
+    {
+      "name": "MCP http",
+      "checks": 64
+    }
+  ],
+  "matchingAliasRequests": [
+    {
+      "url": "http://matching.example.com:65357/matching/port",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com:65357/matching/port",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com.evil.invalid:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com.evil.invalid:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.org:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com.evil.invalid:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.org:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    },
+    {
+      "url": "http://matching.example.com.evil.invalid:65357/matching/suffix",
+      "destination": "127.0.0.1:65357"
+    }
+  ],
+  "rawGuardPageErrors": {
+    "content": [],
+    "page": []
+  },
+  "rawGuardExceptions": {
+    "content": [
+      "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23"
+    ],
+    "page": [
+      "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23"
+    ]
+  },
+  "matchingCompleted": true,
+  "externalHelperHash": "acc61e8613308ca730e7a0399f6c3af6ba776c24caf7b7090bb1bd252cdcfd33",
+  "completionPointer": {
+    "events": [
+      {
+        "type": "pointerdown",
+        "id": "sourceSuggestion1",
+        "hidden": false,
+        "caret": 144,
+        "active": "scriptSource"
+      },
+      {
+        "type": "click",
+        "id": "sourceSuggestion1",
+        "hidden": false,
+        "caret": 144,
+        "active": "scriptSource"
+      }
+    ],
+    "value": "// ==UserScript==\n// @name External editor fixture\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n// @grant GM.setValues\n// ==/UserScript==\ndocument.documentElement.dataset.editorOriginal=\"yes\";",
+    "hidden": true,
+    "active": "scriptSource"
+  },
+  "editorDevelopmentCompleted": true,
+  "editorOrganizationCompleted": true,
+  "installLayouts": [
+    {
+      "width": 1270,
+      "page": 1270,
+      "dialog": 983,
+      "content": 983
+    },
+    {
+      "width": 1270,
+      "page": 1270,
+      "dialog": 983,
+      "content": 983
+    },
+    {
+      "width": 380,
+      "page": 380,
+      "dialog": 341,
+      "content": 341
+    },
+    {
+      "width": 380,
+      "page": 380,
+      "dialog": 341,
+      "content": 341
+    }
+  ],
+  "installationCompleted": true,
+  "worldLimit": {
+    "perDocument": 10,
+    "overflowBodiesRan": false,
+    "messages": [
+      "Error: Native userscript messaging is unavailable. Chrome/Edge allow 10 isolated script worlds per document. Reduce overlapping scopes or enable browser access, then reload.\n    at runUserScript (blockads-userscript-0ad8440f-f75e-4ac8-9e05-76518db79bf4.user.js:519:14)\n    at blockads-userscript-0ad8440f-f75e-4ac8-9e05-76518db79bf4.user.js:856:5\n    at blockads-userscript-0ad8440f-f75e-4ac8-9e05-76518db79bf4.user.js:1140:3",
+      "Error: Native userscript messaging is unavailable. Chrome/Edge allow 10 isolated script worlds per document. Reduce overlapping scopes or enable browser access, then reload.\n    at runUserScript (blockads-userscript-f0b0c7c3-ec37-4a5f-adf3-e08e128dae20.user.js:519:14)\n    at blockads-userscript-f0b0c7c3-ec37-4a5f-adf3-e08e128dae20.user.js:856:5\n    at blockads-userscript-f0b0c7c3-ec37-4a5f-adf3-e08e128dae20.user.js:1140:3"
+    ]
+  },
+  "compatibilityCompleted": true,
+  "helperTabEvents": [
+    {
+      "type": "created",
+      "tab": {
+        "active": false,
+        "audible": false,
+        "autoDiscardable": true,
+        "discarded": false,
+        "frozen": false,
+        "groupId": -1,
+        "height": 0,
+        "highlighted": false,
+        "id": 535370459,
+        "incognito": false,
+        "index": 5,
+        "lastAccessed": 1794665094371.238,
+        "mutedInfo": {
+          "muted": false
+        },
+        "pendingUrl": "http://localhost:65357/helper-blocked",
+        "pinned": false,
+        "selected": false,
+        "splitViewId": -1,
+        "status": "loading",
+        "width": 0,
+        "windowId": 535370321
+      }
+    },
+    {
+      "type": "error",
+      "details": {
+        "documentLifecycle": "active",
+        "error": "net::ERR_BLOCKED_BY_CLIENT",
+        "frameId": 0,
+        "frameType": "outermost_frame",
+        "fromCache": false,
+        "method": "GET",
+        "parentFrameId": -1,
+        "requestId": "290",
+        "tabId": 535370459,
+        "timeStamp": 1794665094386.403,
+        "type": "main_frame",
+        "url": "http://localhost:65357/helper-blocked"
+      }
+    },
+    {
+      "type": "removed",
+      "id": 535370459
+    },
+    {
+      "type": "created",
+      "tab": {
+        "active": false,
+        "audible": false,
+        "autoDiscardable": true,
+        "discarded": false,
+        "frozen": false,
+        "groupId": -1,
+        "height": 0,
+        "highlighted": false,
+        "id": 535370461,
+        "incognito": false,
+        "index": 5,
+        "lastAccessed": 1794665094500.219,
+        "mutedInfo": {
+          "muted": false
+        },
+        "pendingUrl": "http://127.0.0.1:65357/helper-child-kept",
+        "pinned": false,
+        "selected": false,
+        "splitViewId": -1,
+        "status": "loading",
+        "width": 0,
+        "windowId": 535370321
+      }
+    },
+    {
+      "type": "created",
+      "tab": {
+        "active": true,
+        "audible": false,
+        "autoDiscardable": true,
+        "discarded": false,
+        "frozen": false,
+        "groupId": -1,
+        "height": 485,
+        "highlighted": true,
+        "id": 535370462,
+        "incognito": false,
+        "index": 6,
+        "lastAccessed": 1794665095433.093,
+        "mutedInfo": {
+          "muted": false
+        },
+        "openerTabId": 535370452,
+        "pinned": false,
+        "selected": true,
+        "splitViewId": -1,
+        "status": "loading",
+        "width": 764,
+        "windowId": 535370321
+      }
+    }
+  ],
+  "dependencies": {
+    "value": 42,
+    "order": [
+      "first",
+      "second"
+    ],
+    "grant": [
+      "GM_getResourceText",
+      "GM_getResourceURL",
+      "GM.getResourceText",
+      "GM.getResourceUrl",
+      "GM_addStyle"
+    ],
+    "runAt": "document-end",
+    "phase": "interactive",
+    "text": "/* locally authored */\nbody { --offline-resource: \"✓\"; }",
+    "modernText": "/* locally authored */\nbody { --offline-resource: \"✓\"; }",
+    "sameUrl": true,
+    "bytes": [
+      0,
+      1,
+      127,
+      128,
+      255
+    ],
+    "styleThen": "STYLE"
+  },
+  "http": {
+    "crossOrigin": true,
+    "responseHeaders": true,
+    "binary": true,
+    "blob": true,
+    "document": true,
+    "httpError": true,
+    "invalidJSON": true,
+    "basicAuth": true,
+    "explicitAuth": true,
+    "blobStream": true,
+    "manualStream": true,
+    "badStream": true,
+    "progress": true,
+    "legacyText": true,
+    "callbacks": true,
+    "redirect": true,
+    "connect": true,
+    "headers": true,
+    "timeout": true,
+    "abort": true,
+    "oversize": true,
+    "cookies": true,
+    "anonymous": true,
+    "blocker": true
+  },
+  "httpStreamErrors": null,
+  "httpStreamChunkProbe": "{\"type\":\"object\",\"tag\":\"[object Uint8Array]\",\"isView\":true,\"instance\":true,\"length\":2,\"first\":7,\"unwrapped\":null}",
+  "httpDisableMs": 305,
+  "assetsNetworkCompleted": true,
+  "pageModes": [
+    {
+      "kind": "open",
+      "data": {
+        "autoRuns": "1",
+        "autoValue": "23",
+        "autoWorld": "page",
+        "autoGlobal": "true",
+        "autoReady": "true"
+      }
+    },
+    {
+      "kind": "csp",
+      "data": {
+        "autoRuns": "1",
+        "autoValue": "23",
+        "autoWorld": "content",
+        "autoGlobal": "false",
+        "autoReady": "true"
+      }
+    },
+    {
+      "kind": "trusted",
+      "data": {
+        "autoRuns": "1",
+        "autoValue": "23",
+        "autoWorld": "content",
+        "autoGlobal": "false",
+        "autoReady": "true"
+      }
+    }
+  ],
+  "pageHistory": {
+    "cachedDocumentRestored": true,
+    "stamp": "ab0fd094-68f2-4f98-8923-95ab0db0ac3b",
+    "runs": 1,
+    "persisted": "true"
+  },
+  "layoutMCP": [
+    {
+      "protocol": "2025-11-25",
+      "readOnly": true,
+      "process": "stdio",
+      "serverHashes": {
+        "mcp/server.cjs": "cd4552403143875fdf26bc58281d2676bd562feafd1065e9c95688d3134767a3",
+        "mcp/rpc.cjs": "867e23dd7f8569aa4e27b0bea4d17dd1df3c5b111a1514ed2a119e6118d5a644",
+        "mcp/http.cjs": "ff957bbcbc0ab9f3498400f503938ed3bf6bb63f8856f71767d126300f5a9d07",
+        "src/shared/debug-protocol.js": "d38ae7b32db4c246d9a2f7e412e61c6d3fa16f6bcb71045e5cbbed644819a8ff"
+      },
+      "screenshots": [
+        "debug-stdio-1280.png",
+        "debug-stdio-390.png"
+      ],
+      "processExit": {
+        "code": 0,
+        "signal": null,
+        "stderr": ""
+      }
+    },
+    {
+      "protocol": "2025-11-25",
+      "readOnly": true,
+      "process": "http",
+      "serverHashes": {
+        "mcp/server.cjs": "cd4552403143875fdf26bc58281d2676bd562feafd1065e9c95688d3134767a3",
+        "mcp/rpc.cjs": "867e23dd7f8569aa4e27b0bea4d17dd1df3c5b111a1514ed2a119e6118d5a644",
+        "mcp/http.cjs": "ff957bbcbc0ab9f3498400f503938ed3bf6bb63f8856f71767d126300f5a9d07",
+        "src/shared/debug-protocol.js": "d38ae7b32db4c246d9a2f7e412e61c6d3fa16f6bcb71045e5cbbed644819a8ff"
+      },
+      "screenshots": [
+        "debug-http-1280.png",
+        "debug-http-390.png"
+      ],
+      "processExit": {
+        "code": null,
+        "signal": "SIGTERM",
+        "stderr": "",
+        "stdout": "",
+        "stoppedByFixture": true
+      }
+    }
+  ],
+  "mcpPairingWaits": [
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 1
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    },
+    {
+      "transport": "http",
+      "waits": 0
+    }
+  ],
+  "mcpNetwork": [
+    {
+      "transport": "stdio",
+      "result": {
+        "ok": true,
+        "entries": [
+          {
+            "id": 1,
+            "requestId": "424",
+            "url": "http://127.0.0.1:65357/net/page",
+            "method": "GET",
+            "type": "main_frame",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "",
+            "observedAt": 1794665105872.409,
+            "startedAt": 1794665105872.409,
+            "sentAt": 1794665105872.565,
+            "responseAt": 1794665105874.326,
+            "endedAt": 1794665105876.332,
+            "state": "complete",
+            "statusCode": 200,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 3,
+            "requestId": "426",
+            "url": "http://127.0.0.1:65357/net/post",
+            "method": "POST",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105901.836,
+            "startedAt": 1794665105901.836,
+            "sentAt": 1794665105902.038,
+            "responseAt": 1794665105906.252,
+            "endedAt": 1794665105906.967,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 4,
+            "requestId": "427",
+            "url": "http://127.0.0.1:65357/net/redirect",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105949.744,
+            "startedAt": 1794665105949.744,
+            "sentAt": 1794665105949.952,
+            "responseAt": null,
+            "endedAt": 1794665105951.471,
+            "state": "redirect",
+            "statusCode": 302,
+            "fromCache": false,
+            "redirectTo": "http://127.0.0.1:65357/net/final",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 5,
+            "requestId": "427",
+            "url": "http://127.0.0.1:65357/net/final",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105954.226,
+            "startedAt": 1794665105954.226,
+            "sentAt": 1794665105954.504,
+            "responseAt": 1794665105957.268,
+            "endedAt": 1794665105957.638,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 6,
+            "requestId": "428",
+            "url": "http://127.0.0.1:65357/net/http-error",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105959.363,
+            "startedAt": 1794665105959.363,
+            "sentAt": 1794665105959.531,
+            "responseAt": 1794665105961.09,
+            "endedAt": 1794665105961.474,
+            "state": "complete",
+            "statusCode": 418,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 7,
+            "requestId": "429",
+            "url": "http://127.0.0.1:65357/net/fail",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105962.604,
+            "startedAt": 1794665105962.604,
+            "sentAt": 1794665105962.773,
+            "responseAt": null,
+            "endedAt": 1794665105965.393,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_EMPTY_RESPONSE",
+            "partial": false
+          },
+          {
+            "id": 8,
+            "requestId": "430",
+            "url": "http://localhost:65357/net/ad.js",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370505,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665105968.591,
+            "startedAt": 1794665105968.591,
+            "sentAt": null,
+            "responseAt": null,
+            "endedAt": 1794665105968.994,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_BLOCKED_BY_CLIENT",
+            "partial": false
+          }
+        ],
+        "matched": 7,
+        "truncated": false,
+        "capture": {
+          "active": false,
+          "tabId": null,
+          "startedAt": null,
+          "expiresAt": null,
+          "count": 11,
+          "bytes": 4472,
+          "dropped": 0,
+          "limit": 2000,
+          "byteLimit": 2097152,
+          "available": true,
+          "error": ""
+        },
+        "readLimit": 100,
+        "readByteLimit": 131072,
+        "redaction": "URL credentials, query strings and fragments omitted. No headers, cookies or bodies. URL paths may contain private information.",
+        "coverage": "Browser-reported metadata only; some events may be missing. A failed request does not establish blocker ownership. Capture is controlled only in the Network page."
+      }
+    },
+    {
+      "transport": "http",
+      "result": {
+        "ok": true,
+        "entries": [
+          {
+            "id": 12,
+            "requestId": "486",
+            "url": "http://127.0.0.1:65357/net/page",
+            "method": "GET",
+            "type": "main_frame",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "",
+            "observedAt": 1794665108759.928,
+            "startedAt": 1794665108759.928,
+            "sentAt": 1794665108760.104,
+            "responseAt": 1794665108761.776,
+            "endedAt": 1794665108763.558,
+            "state": "complete",
+            "statusCode": 200,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 14,
+            "requestId": "488",
+            "url": "http://127.0.0.1:65357/net/post",
+            "method": "POST",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108789.376,
+            "startedAt": 1794665108789.376,
+            "sentAt": 1794665108789.554,
+            "responseAt": 1794665108791.653,
+            "endedAt": 1794665108792.37,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 15,
+            "requestId": "489",
+            "url": "http://127.0.0.1:65357/net/redirect",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108831.645,
+            "startedAt": 1794665108831.645,
+            "sentAt": 1794665108831.839,
+            "responseAt": null,
+            "endedAt": 1794665108833.109,
+            "state": "redirect",
+            "statusCode": 302,
+            "fromCache": false,
+            "redirectTo": "http://127.0.0.1:65357/net/final",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 16,
+            "requestId": "489",
+            "url": "http://127.0.0.1:65357/net/final",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108833.721,
+            "startedAt": 1794665108833.721,
+            "sentAt": 1794665108833.964,
+            "responseAt": 1794665108835.191,
+            "endedAt": 1794665108835.716,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 17,
+            "requestId": "490",
+            "url": "http://127.0.0.1:65357/net/http-error",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108836.811,
+            "startedAt": 1794665108836.811,
+            "sentAt": 1794665108836.994,
+            "responseAt": 1794665108838.207,
+            "endedAt": 1794665108838.558,
+            "state": "complete",
+            "statusCode": 418,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 18,
+            "requestId": "491",
+            "url": "http://127.0.0.1:65357/net/fail",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108839.575,
+            "startedAt": 1794665108839.575,
+            "sentAt": 1794665108839.751,
+            "responseAt": null,
+            "endedAt": 1794665108841.634,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_EMPTY_RESPONSE",
+            "partial": false
+          },
+          {
+            "id": 19,
+            "requestId": "492",
+            "url": "http://localhost:65357/net/ad.js",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 535370515,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:65357",
+            "observedAt": 1794665108844.775,
+            "startedAt": 1794665108844.775,
+            "sentAt": null,
+            "responseAt": null,
+            "endedAt": 1794665108845.133,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_BLOCKED_BY_CLIENT",
+            "partial": false
+          }
+        ],
+        "matched": 7,
+        "truncated": false,
+        "capture": {
+          "active": false,
+          "tabId": null,
+          "startedAt": null,
+          "expiresAt": null,
+          "count": 11,
+          "bytes": 4480,
+          "dropped": 0,
+          "limit": 2000,
+          "byteLimit": 2097152,
+          "available": true,
+          "error": ""
+        },
+        "readLimit": 100,
+        "readByteLimit": 131072,
+        "redaction": "URL credentials, query strings and fragments omitted. No headers, cookies or bodies. URL paths may contain private information.",
+        "coverage": "Browser-reported metadata only; some events may be missing. A failed request does not establish blocker ownership. Capture is controlled only in the Network page."
+      }
+    }
+  ],
+  "mcp": {
+    "protocol": "2025-11-25",
+    "readOnly": true,
+    "process": "http",
+    "serverHashes": {
+      "mcp/server.cjs": "cd4552403143875fdf26bc58281d2676bd562feafd1065e9c95688d3134767a3",
+      "mcp/rpc.cjs": "867e23dd7f8569aa4e27b0bea4d17dd1df3c5b111a1514ed2a119e6118d5a644",
+      "mcp/http.cjs": "ff957bbcbc0ab9f3498400f503938ed3bf6bb63f8856f71767d126300f5a9d07",
+      "src/shared/debug-protocol.js": "d38ae7b32db4c246d9a2f7e412e61c6d3fa16f6bcb71045e5cbbed644819a8ff"
+    },
+    "screenshots": [
+      "debug-http-1280.png",
+      "debug-http-390.png"
+    ]
+  },
+  "mcpProcessExit": {
+    "code": null,
+    "signal": "SIGTERM",
+    "stderr": "",
+    "stdout": "",
+    "stoppedByFixture": true
+  },
+  "layoutExpectedErrors": [
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 0,
+      "columnNumber": 22,
+      "scriptId": "21",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "21",
+            "url": "",
+            "lineNumber": 0,
+            "columnNumber": 22
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23",
+        "objectId": "5606301274183555830.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned page failure: matching guard control"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 0,
+      "columnNumber": 22,
+      "scriptId": "21",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "21",
+            "url": "",
+            "lineNumber": 0,
+            "columnNumber": 22
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23",
+        "objectId": "-6018096142976836205.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned page failure: matching guard control\n    at <anonymous>:1:23"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned page failure: matching guard control"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 456,
+      "columnNumber": 96,
+      "scriptId": "17",
+      "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 456,
+            "columnNumber": 96
+          },
+          {
+            "functionName": "start",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 371,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 444,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 445,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "13",
+            "url": "chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/e8ccf41c-7b25-4630-aba6-8adfb4fc2ec4",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned page failure\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:457:97\n    at start (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:372:26)\n    at runUserScript (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:445:25)\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:446:5\n    at client (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:74:5)\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/e8ccf41c-7b25-4630-aba6-8adfb4fc2ec4:16:9)",
+        "objectId": "2377935171182741568.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned page failure\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:457:97\n    at start (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:372:26)\n    at runUserScript (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:445:25)\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:446:5\n    at client (blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:74:5)\n    at blockads-userscript-460a5839-b5ff-4b6c-a294-796f84983be9.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/e8ccf41c-7b25-4630-aba6-8adfb4fc2ec4:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned page failure\n    at blockads-userscri…bfjmne/e8ccf41c-7b25-4630-aba6-8adfb4fc2ec4:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned page failure"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 456,
+      "columnNumber": 66,
+      "scriptId": "17",
+      "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 456,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 371,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 444,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 445,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "13",
+            "url": "chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:457:67\n    at start (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:372:26)\n    at runUserScript (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:445:25)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:446:5\n    at client (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:74:5)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)",
+        "objectId": "4061249138214414255.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:457:67\n    at start (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:372:26)\n    at runUserScript (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:445:25)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:446:5\n    at client (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:74:5)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…bfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 456,
+      "columnNumber": 66,
+      "scriptId": "17",
+      "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 456,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 371,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 444,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 445,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "13",
+            "url": "chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:457:67\n    at start (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:372:26)\n    at runUserScript (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:445:25)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:446:5\n    at client (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:74:5)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)",
+        "objectId": "2581994650186129939.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:457:67\n    at start (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:372:26)\n    at runUserScript (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:445:25)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:446:5\n    at client (blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:74:5)\n    at blockads-userscript-7ee64337-f131-4603-b3ed-2307d82d613e.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…bfjmne/235be729-5c22-4617-87b6-5491f14f70a6:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 456,
+      "columnNumber": 66,
+      "scriptId": "17",
+      "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 456,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 371,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 444,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 445,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "13",
+            "url": "chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:457:67\n    at start (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:372:26)\n    at runUserScript (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:445:25)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:446:5\n    at client (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:74:5)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)",
+        "objectId": "-3023627838509966076.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:457:67\n    at start (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:372:26)\n    at runUserScript (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:445:25)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:446:5\n    at client (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:74:5)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…bfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 456,
+      "columnNumber": 66,
+      "scriptId": "17",
+      "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 456,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 371,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 444,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 445,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "17",
+            "url": "blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "13",
+            "url": "chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:457:67\n    at start (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:372:26)\n    at runUserScript (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:445:25)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:446:5\n    at client (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:74:5)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)",
+        "objectId": "-7552991638153679279.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:457:67\n    at start (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:372:26)\n    at runUserScript (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:445:25)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:446:5\n    at client (blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:74:5)\n    at blockads-userscript-10082e41-0382-4953-9aee-a3d805e7a129.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://anfkjgepodobgfhihaedkoopejbfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…bfjmne/7220b1fc-1e49-47c0-8882-1826cb3aa289:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    }
+  ],
+  "layoutClosedPageErrors": [],
+  "layoutUnexpectedErrors": [],
+  "success": true,
+  "focus": "layout-only",
+  "cleanup": {
+    "browserPid": 37024,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finished": "2026-11-14T14:05:13.553Z"
+}

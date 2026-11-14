@@ -52,7 +52,7 @@
     const matches = unique((entries.match || []).flatMap(patterns));
     const excludeMatches = unique((entries['exclude-match'] || []).flatMap(patterns));
     const globs = key => unique(entries[key] || []).map(value => {
-      matching.includePattern(value);
+      warnings.push(...matching.includePattern(value).regex?.notes || []);
       return value;
     });
     const includes = globs('include'), excludes = globs('exclude');
@@ -62,13 +62,11 @@
     const unwrap = Boolean(entries.unwrap), topLevelAwait = Boolean(entries['top-level-await']);
     if (unwrap && topLevelAwait) fail('@unwrap cannot be combined with @top-level-await.');
     if (unwrap) {
-      // Raw global code cannot be gated by a function/block without changing its
-      // declarations. Only accept scopes the native registration enforces exactly.
-      const scopes = { matches, excludeMatches, includes, excludes }, native = matching.prefilter(scopes);
       if (runAt === 'document_body') fail('@unwrap supports document-start, document-end and document-idle, not document-body.');
-      if (includes.length || excludes.length || JSON.stringify(native.matches) !== JSON.stringify(matches) ||
-          native.excludeMatches.length !== excludeMatches.length) fail('@unwrap requires native @match / @exclude-match scopes: no includes, excludes, ports, fragments, IPv6, .tld or partial host wildcards.');
       warnings.push('@unwrap runs raw global code in the selected world. All @grant entries are ignored; no GM APIs or unsafeWindow alias are supplied.');
+      // Scopes the browser cannot enforce natively get a separate pre-check
+      // script; see BlockAdsMatching.rawGuard.
+      if (!matching.exact({ matches, excludeMatches, includes, excludes })) warnings.push('This @unwrap scope is checked before the raw script starts. On pages that only the browser’s broader scope admits, no script code runs. Firefox may log one “redeclaration” error in the console for a skipped isolated script.');
     }
     const grants = unwrap ? [] : unique(entries.grant || ['none']);
     for (const grant of grants) if (!GRANTS.includes(grant)) fail('Unsupported grant ' + grant + '. Use only the APIs listed under Supported userscript features.');
@@ -251,7 +249,7 @@
       }
       const terminal = ['load', 'error', 'abort', 'timeout'].includes(message.event);
       if (terminal) {
-        jobs.delete(job.id);
+        jobs.delete(job.id); job.release?.();
         if (message.event !== 'load' && job.uploadStarted && !job.uploadEnded) {
           job.uploadEnded = true;
           for (const name of [message.event, 'loadend']) try { job.details.upload?.['on' + name]?.(job.uploadProgress); } catch (error) { report(error); }
@@ -270,7 +268,7 @@
       job.sent = true;
       try {
         const { details } = job, payload = {};
-        for (const name of ['url', 'method', 'headers', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'redirect']) if (details[name] !== undefined) payload[name] = details[name];
+        for (const name of ['url', 'method', 'headers', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'redirect', 'user', 'password']) if (details[name] != null) payload[name] = details[name];
         if (details.upload) payload.upload = true;
         payload.url = new URL(String(details.url), location.href).href;
         if (downloading) {
@@ -312,7 +310,32 @@
             if (details.data.type && !Object.keys(payload.headers || {}).some(name => name.toLowerCase() === 'content-type')) payload.headers = { ...payload.headers, 'Content-Type': details.data.type };
           } else if (details.data instanceof ArrayBuffer) bytes = new Uint8Array(details.data);
           else if (ArrayBuffer.isView(details.data)) bytes = new Uint8Array(details.data.buffer, details.data.byteOffset, details.data.byteLength);
-          else throw new Error('Supported request data: string, URLSearchParams, FormData, Blob, ArrayBuffer or typed array.');
+          else if (typeof ReadableStream !== 'undefined' && details.data instanceof ReadableStream) {
+            // Read the whole stream within the upload limit, then send it as a
+            // binary body. The browser bridge does not stream request bodies.
+            const reader = details.data.getReader(), chunks = []; let total = 0, finished = false;
+            job.release = () => { void reader.cancel().catch(() => {}); };
+            try {
+              for (;;) {
+                const { value, done } = await reader.read();
+                // Abort cancels the reader, which ends a pending read as done.
+                if (!jobs.has(job.id) || !active()) break;
+                if (done) { finished = true; break; }
+                if (!ArrayBuffer.isView(value)) throw new TypeError('ReadableStream request data must produce Uint8Array chunks.');
+                total += value.byteLength;
+                if (total > 8388608) throw new Error('Request data exceeds 8 MiB.');
+                chunks.push(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+              }
+            } finally {
+              job.release = undefined;
+              if (!finished) void reader.cancel().catch(() => {});
+              reader.releaseLock();
+            }
+            if (!finished) return;
+            bytes = new Uint8Array(total); let offset = 0;
+            // Index copies avoid cross-world typed-array constructors in Firefox.
+            for (const chunk of chunks) for (let i = 0; i < chunk.length; i++) bytes[offset++] = chunk[i];
+          } else throw new Error('Supported request data: string, URLSearchParams, FormData, Blob, ArrayBuffer, typed array or ReadableStream.');
           if (bytes) {
             if (bytes.length > 8388608) throw new Error('Request data exceeds 8 MiB.');
             payload.body = encode(bytes);
@@ -325,9 +348,10 @@
     function create(details, modern) {
       if (!active()) throw new Error('This userscript is inactive. Reload the page.');
       if (!details || typeof details !== 'object' || Array.isArray(details) || details.url == null) throw new Error('Use request details with a URL.');
-      const allowed = downloading ? ['url', 'name', 'headers', 'timeout', 'anonymous', 'redirect', 'saveAs', 'conflictAction', 'context', ...callbacks]
-        : ['url', 'method', 'headers', 'data', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'redirect', 'upload', 'context', ...callbacks];
+      const allowed = downloading ? ['url', 'name', 'headers', 'timeout', 'anonymous', 'redirect', 'user', 'password', 'saveAs', 'conflictAction', 'context', ...callbacks]
+        : ['url', 'method', 'headers', 'data', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'redirect', 'user', 'password', 'upload', 'context', ...callbacks];
       if (Object.keys(details).some(name => !allowed.includes(name)) || callbacks.some(name => details[name] !== undefined && typeof details[name] !== 'function')) throw new Error('Unsupported request option or callback.');
+      if (['user', 'password'].some(name => details[name] != null && typeof details[name] !== 'string')) throw new TypeError('user and password must be strings.');
       if (details.upload !== undefined && (!details.upload || typeof details.upload !== 'object' || Array.isArray(details.upload) ||
           Object.keys(details.upload).some(name => !callbacks.includes(name) || name === 'onreadystatechange' || typeof details.upload[name] !== 'function'))) throw new Error('Use upload callbacks such as upload.onprogress.');
       if (jobs.size >= 4) throw new Error('At most four network requests per script instance.');
@@ -766,16 +790,36 @@
       } else lines.push(invoke(config));
       lines.push('})();');
     }
+    // Raw code that needs an exact scope check declares the guard's sentinel.
+    const sentinel = rawSentinel(script, metadata);
+    if (sentinel) lines.push(';let ' + sentinel + ';');
     lines.push('//# sourceURL=blockads-userscript-' + script.id + '.user.js');
     // Chrome still requires a nonempty matches array even for include-only
     // scripts. A reserved .invalid URL satisfies its schema without broadening
     // registration to every page; the exact guard never grants it extra scope.
     return { id: id + (metadata.pageBridge ? '-1' : ''), ...matching.prefilter(metadata), runAt: metadata.runAt === 'document_body' ? 'document_start' : metadata.runAt,
       allFrames: metadata.allFrames, world: nativeWorld(metadata),
-      ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { worldId: nativeId(script.id) } : {}), js: [{ code: lines.join('\n') }] };
+      ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { worldId: nativeId(script.id) } : {}),
+      js: [...(sentinel && !earlyGuard(metadata) ? [{ code: matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
   }
+  function rawSentinel(script, metadata) {
+    if (!metadata.unwrap || matching.exact(metadata)) return '';
+    // Page code can see this name on excluded pages. Derive it from the source,
+    // never the install ID, so it cannot identify the user across sites.
+    let first = 0x811c9dc5, second = 0x9747b28c;
+    for (let i = 0; i < script.source.length; i++) {
+      const code = script.source.charCodeAt(i);
+      first = Math.imul(first ^ code, 0x01000193); second = Math.imul(second ^ code, 0x5bd1e995) ^ second >>> 15;
+    }
+    return '__moduleEngineScope_' + [first, second].map(value => (value >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  // Page listeners registered before a later run-at would see the skipped
+  // script's error event. A separate document-start guard listens first.
+  const earlyGuard = metadata => metadata.world === 'MAIN' && metadata.runAt !== 'document_start';
   function registrations(script, order) {
-    const metadata = executionMetadata(script), runner = registration(script, order);
+    const metadata = executionMetadata(script), runner = registration(script, order), sentinel = rawSentinel(script, metadata);
+    if (sentinel && earlyGuard(metadata)) return [{ id: nativeId(script.id, order) + '-0', ...matching.prefilter(metadata), runAt: 'document_start',
+      allFrames: metadata.allFrames, world: 'MAIN', js: [{ code: matching.rawGuard(metadata, sentinel, true) }] }, runner];
     if (!metadata.pageBridge) return [runner];
     return [{ id: nativeId(script.id, order) + '-0', ...matching.prefilter(metadata), runAt: 'document_start', allFrames: metadata.allFrames, world: 'MAIN',
       js: [{ code: '(' + BlockAdsUserScriptPage.bootstrap.toString() + ')(' + JSON.stringify('me-page-start-' + script.id) + ');' }] }, runner];
@@ -785,9 +829,12 @@
     const url = new URL(value, base);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.href.length > 4096) throw new Error('Tab URLs require HTTP(S), without embedded credentials.');
     if (typeof options === 'boolean') options = { active: !options };
-    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key =>
-      !['active', 'insert', 'pinned'].includes(key) || options[key] !== undefined && typeof options[key] !== 'boolean')) throw new TypeError('Tab options support active, insert and pinned booleans.');
-    return { url: url.href, active: options.active !== false, insert: options.insert !== false, pinned: options.pinned === true };
+    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => !['active', 'insert', 'pinned', 'container'].includes(key) ||
+      options[key] !== undefined && (key === 'container' ? !Number.isSafeInteger(options[key]) || options[key] < 0 || options[key] > 2147483647 : typeof options[key] !== 'boolean')))
+      throw new TypeError('Tab options support active, insert and pinned booleans and a nonnegative integer container.');
+    // container is a Firefox userContextId: 0 is the default container.
+    return { url: url.href, active: options.active !== false, insert: options.insert !== false, pinned: options.pinned === true,
+      ...(options.container !== undefined ? { container: options.container } : {}) };
   }
   globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, parse, allows, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,

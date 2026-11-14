@@ -256,6 +256,8 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
   await fs.writeFile(path.join(profile, 'user.js'), [
     `user_pref("extensions.webextensions.uuids", ${JSON.stringify(JSON.stringify({ 'blockads-shield@local.extension': uuid }))});`,
     'user_pref("browser.shell.checkDefaultBrowser", false);',
+    // Containers exist only when enabled; userscript tab fixtures exercise them.
+    'user_pref("privacy.userContext.enabled", true);',
     ...(downloadDirectory ? [`user_pref("browser.download.dir", ${JSON.stringify(downloadDirectory)});`, 'user_pref("browser.download.folderList", 2);', 'user_pref("browser.download.useDownloadDir", true);'] : []),
     `user_pref("extensions.dnr.feedback", ${Boolean(ruleFeedback)});`,
     'user_pref("network.proxy.type", 1);',
@@ -316,10 +318,14 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
     // log.entryAdded never reports extension documents, and the console store
     // keeps only 250 messages, so collect uncaught errors from before install.
     await chromeEvaluate(`(() => {
-      const errors = window.moduleEngineErrors = [], prefix = ${JSON.stringify(`moz-extension://${uuid}/`)};
+      const errors = window.moduleEngineErrors = [], all = window.moduleEngineScriptErrors = [], prefix = ${JSON.stringify(`moz-extension://${uuid}/`)};
       Services.console.registerListener({ observe(message) {
-        if (message instanceof Ci.nsIScriptError && !(message.flags & (message.warningFlag | message.infoFlag)) &&
-          String(message.sourceName).startsWith(prefix)) errors.push({ text: message.errorMessage, source: message.sourceName });
+        if (!(message instanceof Ci.nsIScriptError) || message.flags & (message.warningFlag | message.infoFlag)) return;
+        if (String(message.sourceName).startsWith(prefix)) errors.push({ text: message.errorMessage, source: message.sourceName });
+        // Bounded view of every uncaught script error, including page and
+        // userscript sandboxes, for fixtures that must prove one stays absent.
+        all.push({ text: String(message.errorMessage).slice(0, 512), source: String(message.sourceName).slice(0, 512) });
+        if (all.length > 500) all.shift();
       } });
     })()`);
     await rpc.send('webExtension.install', { extensionData: { type: 'path', path: extension } });
@@ -347,6 +353,7 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
     return {
       version: session.capabilities, id: uuid, popup, evaluate, navigate, close, front, events: rpc.events,
       consoleErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineErrors)')),
+      scriptErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineScriptErrors)')),
       async userscriptPermissionPrompt(accept = false, kind = 'userscripts') {
         // Operate only the visible native prompt for this disposable extension.
         // This is a browser UI acceptance, not a permission-store/pref override.

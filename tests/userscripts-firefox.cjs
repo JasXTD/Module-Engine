@@ -39,7 +39,7 @@ const root = path.resolve(__dirname, '..');
     if (route(request, response)) return;
     if (request.url === '/ad.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }); response.end('window.fixtureAd=true;'); return; }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    response.end('<!doctype html><html><head><script>window.startObserved=document.documentElement.dataset.startMarker;</script></head><body><h1>Owned offline fixture</h1>' +
+    response.end('<!doctype html><html><head><script>window.startObserved=document.documentElement.dataset.startMarker;window.pageErrors=[];addEventListener("error",e=>pageErrors.push(String(e.message)));</script></head><body><h1>Owned offline fixture</h1>' +
       '<script src="http://localhost:' + port + '/ad.js"></script>' + (request.url === '/compat/frames' ? '<iframe src="/compat/child"></iframe>' : '') + '</body></html>');
   });
   await Promise.all([new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve)), new Promise(resolve => fixtures.listen(0, '127.0.0.1', resolve))]);

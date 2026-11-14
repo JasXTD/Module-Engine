@@ -91,7 +91,25 @@ async function runAssetsAndNetwork({ b, manager, send, check, until, browse, scr
       checks.document=(await request({url:other+'/usnet/html',responseType:'document'})).response.querySelector('h1').textContent==='Parsed offline';
       checks.httpError=(await request({url:other+'/usnet/missing'})).status===404;
       checks.invalidJSON=(await request({url:other+'/usnet/invalid-json',responseType:'json'})).response===null;
-      const events=[]; await new Promise((resolve,reject)=>GM_xmlhttpRequest({url:other+'/usnet/stream',onloadstart:()=>events.push('start'),
+      document.body.dataset.httpStep='auth';checks.basicAuth=(await request({url:other+'/usnet/json',user:'native',password:'secret',responseType:'json'})).response.authorization==='Basic bmF0aXZlOnNlY3JldA==';
+      checks.explicitAuth=(await request({url:other+'/usnet/json',user:'native',password:'secret',headers:{Authorization:'Bearer local'},responseType:'json'})).response.authorization==='Bearer local';
+      // Firefox's isolated sandbox cannot pass script-owned source objects to
+      // new ReadableStream(), so build streams from Blob and TransformStream.
+      const streamErrors=[], attempt=async test=>{try{return await test();}catch(error){streamErrors.push(error.message);return false;}};
+      const piped=chunks=>{const pipe=new TransformStream(),writer=pipe.writable.getWriter();for(const chunk of chunks)void writer.write(chunk).catch(()=>{});void writer.close().catch(()=>{});return pipe.readable;};
+      document.body.dataset.httpStep='blob stream';checks.blobStream=await attempt(async()=>(await request({url:other+'/usnet/json',method:'POST',data:new Blob(['blob stream ✓']).stream(),responseType:'json'})).response.body==='blob stream ✓');
+      // Firefox's sandbox boundary turns script-written stream chunks into
+      // undefined (see the probe below); they must fail clearly, never corrupt.
+      document.body.dataset.httpStep='script stream';checks.manualStream=navigator.userAgent.includes('Firefox/')
+        ? await request({url:other+'/usnet/json',method:'POST',data:piped([new Uint8Array([0x21])])}).then(()=>false,e=>e.message.includes('Uint8Array'))
+        : await attempt(async()=>(await request({url:other+'/usnet/json',method:'POST',data:piped([new TextEncoder().encode('manual '),new Uint8Array([0x21])]),responseType:'json'})).response.body==='manual !');
+      document.body.dataset.httpStep='text stream';checks.badStream=await attempt(()=>request({url:other+'/usnet/json',method:'POST',data:piped(['text'])}).then(()=>false,e=>e.message.includes('Uint8Array')));
+      if(streamErrors.length)document.body.dataset.streamErrors=JSON.stringify(streamErrors);
+      // Evidence: how a script-written chunk looks after a DOM stream round trip.
+      document.body.dataset.httpStep='chunk probe';document.body.dataset.streamChunkProbe=JSON.stringify(await (async()=>{try{const probe=(await piped([new Uint8Array([7,8])]).getReader().read()).value;
+        return{type:typeof probe,tag:Object.prototype.toString.call(probe),isView:ArrayBuffer.isView(probe),instance:probe instanceof Uint8Array,length:probe?.length,first:probe?.[0],
+          unwrapped:typeof XPCNativeWrapper==='function'?ArrayBuffer.isView(XPCNativeWrapper.unwrap(probe)):null};}catch(error){return{error:error.message};}})());
+      document.body.dataset.httpStep='legacy callbacks';const events=[]; await new Promise((resolve,reject)=>GM_xmlhttpRequest({url:other+'/usnet/stream',onloadstart:()=>events.push('start'),
         onreadystatechange:r=>{if(r.readyState===4)events.push('ready4');},onprogress:r=>{if(r.loaded>0)checks.progress=true;},
         onload:r=>{events.push('load');checks.legacyText=r.responseText.length===131072;},onloadend:()=>{events.push('end');resolve();},onerror:reject}));
       checks.callbacks=events.join(',')==='start,ready4,load,end';
@@ -113,9 +131,13 @@ async function runAssetsAndNetwork({ b, manager, send, check, until, browse, scr
     })().catch(error=>document.body.dataset.httpError=error.message);`);
   check('Native request fixture enabled', (await send({ type: 'US_ENABLE', id: httpScript.id, revision: httpScript.revision, enabled: true })).ok);
   const httpPage = await browse('/asset-page-http'); pages.push(httpPage);
-  await until('document.body.dataset.http||document.body.dataset.httpError', httpPage);
+  await until('document.body.dataset.http||document.body.dataset.httpError', httpPage).catch(async error => {
+    evidence.httpStep = await b.evaluate('document.body.dataset.httpStep||null', httpPage); throw error;
+  });
   const httpOutput = await b.evaluate('document.body.dataset.httpError||JSON.parse(document.body.dataset.http)', httpPage);
   evidence.http = httpOutput;
+  evidence.httpStreamErrors = await b.evaluate('document.body.dataset.streamErrors||null', httpPage);
+  evidence.httpStreamChunkProbe = await b.evaluate('document.body.dataset.streamChunkProbe||null', httpPage);
   check('Native HTTP fixture completed', typeof httpOutput === 'object');
   for (const [name, passed] of Object.entries(httpOutput)) check('Native HTTP: ' + name, passed);
   await b.evaluate('document.dispatchEvent(new Event("offline-start-slow"))', httpPage);

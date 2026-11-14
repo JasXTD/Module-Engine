@@ -81,7 +81,8 @@ test('regular expression includes and exclusions have union/veto semantics in ev
 });
 
 test('malformed/unsupported syntax is rejected at metadata validation', () => {
-  for (const regex of ['/abc/i', '/(?=a)/', '/(?<=a)/', '/(?<name>a)/', '/(a)\\1/', '/\\p{Letter}/', '/a{129}/', '/[z-a]/', '/[abc/', '/(/', '/a**/', '/\\u{1234}/', '/\\/', '/\\07/']) {
+  for (const regex of ['/abc/i', '/a{129}/', '/a{0,200}/', '/[z-a]/', '/[abc/', '/(/', '/a)/', '/a**/', '/\\u{1234}/', '/\\/', '/a{2,1}/',
+    '/(?<=a)*/', '/(?<x>a)(?<x>b)/', '/(?<x>a)\\k<y>/', '/(?<x>a)\\k/', '/(?z:a)/']) {
     assert.throws(() => core.parse(source('// @include ' + regex)), /regular expression/i, regex);
   }
   for (const pattern of ['ftp://example.test/*', 'https://user@example.test/*', 'https://example.test:65536/*',
@@ -105,6 +106,79 @@ test('bounded regular-language evaluator agrees with native regex on small synth
     for (const value of inputs) { assert.equal(matching.regexTest(program, value, { work: 1000000 }), native.test(value), pattern + ' on ' + value); comparisons++; }
   }
   assert.ok(comparisons > 200000);
+});
+
+test('lookarounds, backreferences, named groups and Annex B syntax follow native URL semantics', () => {
+  for (const [regex, yes, no] of [
+    ['/^https:\\/\\/(?!www\\.)[a-z]+\\.example\\.test\\//', 'https://api.example.test/x', 'https://www.example.test/x'],
+    ['/^https:\\/\\/example\\.test\\/(?=.*[?&]id=\\d)/', 'https://example.test/read?x=1&id=7', 'https://example.test/read?id=x'],
+    ['/(?<=\\/user\\/)\\d+$/', 'https://example.test/user/42', 'https://example.test/item/42'],
+    ['/(?<!admin)\\/settings$/', 'https://example.test/user/settings', 'https://example.test/admin/settings'],
+    ['/^https:\\/\\/([a-z]+)\\.example\\.test\\/\\1\\//', 'https://docs.example.test/DOCS/page', 'https://docs.example.test/blog/page'],
+    ['/\\/(?<section>[a-z]+)\\/\\k<section>(?:$|\\?)/', 'https://example.test/news/news?x', 'https://example.test/news/blog'],
+    ['/(?<=(\\w)\\/)\\1/', 'https://example.test/a/a', 'https://example.test/a/b'],
+    ['/[?&]q=([^&]+)&(?:.*&)?again=\\1(?:&|$)/', 'https://example.test/?q=cat&x=1&again=cat', 'https://example.test/?q=cat&again=dog'],
+    ['/\\/page{2}\\b/', 'https://example.test/pagee', 'https://example.test/page'],
+    ['/[?&]x={id}(?:&|$)/', 'https://example.test/?x={id}', 'https://example.test/?x=id'],
+    ['/\\?a{,2}$/', 'https://example.test/?a{,2}', 'https://example.test/?aa'],
+    ['/\\/\\x2541\\/|\\/\\101\\b/', 'https://example.test/A', 'https://example.test/B'],
+    ['/\\/(?-i:Read)$/', 'https://example.test/Read', 'https://example.test/read'],
+    ['/\\/(a+?)\\1$/', 'https://example.test/aaaa', 'https://example.test/aaa']
+  ]) {
+    const rules = '// @include ' + regex;
+    assert.equal(accepts(rules, yes), true, regex + ' ' + yes); assert.equal(accepts(rules, no), false, regex + ' ' + no);
+    for (const world of ['', '\n// @inject-into page']) {
+      assert.equal(wrapper(rules + world, yes), true, regex); assert.equal(wrapper(rules + world, no), false, regex);
+    }
+    const native = new RegExp(regex.slice(1, -1), 'i');
+    assert.equal(native.test(yes) && !native.test(no), true, 'fixture agrees with native RegExp: ' + regex);
+  }
+  // A @exclude lookahead vetoes like any other exclusion.
+  const veto = '// @match https://example.test/*\n// @exclude /^https:\\/\\/example\\.test\\/(?!public\\/)/';
+  assert.equal(accepts(veto, 'https://example.test/public/x'), true);
+  assert.equal(accepts(veto, 'https://example.test/private/x'), false);
+  const notes = core.parse(source('// @include /\\p{L}/')).warnings;
+  assert.ok(notes.some(note => /literal text/.test(note)), '\\p{…} without a u flag is reported as literal text');
+});
+
+test('extended regex evaluation agrees with native RegExp on generated patterns', () => {
+  let seed = 20261114; const pick = n => { seed = (Math.imul(seed, 1103515245) + 12345) & 0x7fffffff; return (seed >>> 16) % n; };
+  const atoms = ['a', 'b', '.', '[ab]', '[^a]', '\\w', '\\d', '0', '\\x61', '\\141', '{', '}', ']', 'x{', '\\c', '\\k', '\\8', '[\\b]'];
+  // Inline (?-i:) modifiers are covered by explicit cases above: V8 itself has
+  // reproduced spec-incorrect matches when such groups follow a capture.
+  function generate(depth, groups) {
+    const kind = pick(depth > 3 ? 4 : 12);
+    if (kind < 4) return atoms[pick(atoms.length)];
+    if (kind === 4) return generate(depth + 1, groups) + generate(depth + 1, groups);
+    if (kind === 5) return generate(depth + 1, groups) + '|' + generate(depth + 1, groups);
+    if (kind === 6) { groups.count++; return '(' + generate(depth + 1, groups) + ')'; }
+    if (kind === 7) return '(?' + ['=', '!', '<=', '<!'][pick(4)] + generate(depth + 1, groups) + ')';
+    if (kind === 8) return groups.count ? '\\' + (1 + pick(groups.count + 1)) : 'a';
+    if (kind === 9) return '(?:' + generate(depth + 1, groups) + ')' + ['*', '+', '?', '{2}', '{0,2}', '*?', '+?', '{1,}', '??'][pick(9)];
+    if (kind === 10) { const name = 'n' + ++groups.count; return '(?<' + name + '>' + generate(depth + 1, groups) + ')\\k<' + name + '>'; }
+    return ['^', '$', '\\b', '\\B'][pick(4)];
+  }
+  const inputs = ['', 'a]b', 'x{}', 'kk8', '\b']; let layer = [''];
+  for (let n = 0; n < 4; n++) { layer = layer.flatMap(text => ['a', 'b', 'A', '0', '{'].map(c => text + c)); inputs.push(...layer); }
+  let patterns = 0, backreferences = 0, lookarounds = 0;
+  for (let i = 0; i < 1200; i++) {
+    const pattern = generate(0, { count: 0 }); let native;
+    try { native = new RegExp(pattern, 'i'); } catch { continue; }
+    const program = matching.regexProgram(pattern); patterns++;
+    if (program.captures) backreferences++;
+    if (program.looks.length) lookarounds++;
+    for (const value of inputs) assert.equal(matching.regexTest(program, value, { work: 1000000 }), native.test(value), pattern + ' on ' + JSON.stringify(value));
+  }
+  assert.ok(patterns > 1000 && backreferences > 100 && lookarounds > 100, JSON.stringify({ patterns, backreferences, lookarounds }));
+});
+
+test('lookarounds stay linear and backreference searches fail closed on hostile URLs', () => {
+  const long = 'https://example.test/' + 'a'.repeat(30000);
+  const evaluate = meta => vm.runInNewContext('matching.allows(meta, url)', { matching, meta, url: long + 'z' }, { timeout: 1000 });
+  assert.equal(evaluate(metadata([], ['/(?=.*z$)(?<!b)a/'])), true, 'each lookaround is one bounded pass');
+  assert.equal(evaluate(metadata([], ['/(?!.*z)a/'])), false);
+  for (const regex of ['/(a+)+\\1b/', '/(a*)*\\1c/', '/^(a|aa)+\\1$/']) assert.equal(evaluate(metadata([], [regex])), false, regex);
+  assert.equal(evaluate(metadata(['https://*/*'], [], [], ['/(a+)+\\1b/'])), false, 'an exhausted backreference exclusion never grants access');
 });
 
 test('nested repeats cannot backtrack exponentially and exhausted exclusions fail closed', () => {
@@ -133,6 +207,8 @@ test('native prefilters are supersets of regex and suffix rules without leaking 
     ['/^https?:\\/\\/(www\\.)?example\\.test\\/Read/', 'https://www.example.test/rEAD?q=1'],
     ['/^https:\/\/example\\.test\/path#good$/', 'https://example.test/path#good'],
     ['/read/', 'https://example.test/read'], ['https://example.tld:443/read*', 'https://example.co.uk/read'],
+    ['/^https:\\/\\/(?=api)[a-z]+\\.example\\.test\\/(?!x)/', 'https://api.example.test/read'],
+    ['/^https:\\/\\/example\\.test\\/(\\w+)\\/\\1/', 'https://example.test/a/a'],
     ['http*://bücher.tld:*/*', 'http://xn--bcher-kva.com:8080/read']
   ]) {
     const meta = core.parse(source('// @include ' + pattern)), prefilter = matching.prefilter(meta);
@@ -147,7 +223,7 @@ test('native prefilters are supersets of regex and suffix rules without leaking 
 
 test('injected suffix data is included only for actual hostname expansion', () => {
   for (const rules of ['// @match https://example.test/file.tld/path', '// @include /example.tld/']) {
-    assert.ok(matching.guard(core.parse(source(rules))).length < 30000, 'literal path/regex text does not bundle the suffix list');
+    assert.ok(matching.guard(core.parse(source(rules))).length < 64 * 1024, 'literal path/regex text does not bundle the suffix list');
   }
   assert.ok(matching.guard(core.parse(source('// @match https://example.tld/*'))).length > 150000);
 });

@@ -73,6 +73,11 @@ async function runDesktop({ b, manager, send, check, until, browse, scriptSource
       d.downloadLegacy=String(typeof handle.abort==='function'&&handle.then===undefined);
     });
     document.addEventListener('desktop-download-again',()=>GM.download('/usnet/bytes.bin','desktop-modern.bin').then(()=>{d.downloadAgain='yes';},fail));
+    document.addEventListener('desktop-overwrite',()=>GM.download({url:'/usnet/bytes.bin',name:'desktop-overwrite.bin',conflictAction:'overwrite'})
+      .then(()=>GM.download({url:'/usnet/json?overwrite',name:'desktop-overwrite.bin',conflictAction:'overwrite',user:'desktop',password:'secret'}))
+      .then(()=>{d.overwritten='yes';},fail));
+    document.addEventListener('desktop-prompt',()=>GM.download({url:'/usnet/bytes.bin',name:'desktop-prompt.bin',conflictAction:'prompt'})
+      .then(()=>{d.prompted='saved';},error=>{d.prompted='rejected: '+error.message;}));
     document.addEventListener('desktop-abort',()=>{
       const handle=GM_download({url:'/usnet/slow?desktop-abort',name:'must-not-exist.bin',onabort:()=>{d.aborted=String(Number(d.aborted||0)+1);},onerror:fail});
       document.addEventListener('desktop-abort-now',()=>{handle.abort();handle.abort();},{once:true});
@@ -157,6 +162,30 @@ async function runDesktop({ b, manager, send, check, until, browse, scriptSource
       evidence.desktopDownloads.push({...record,sha256:hash(content)});
     }
     check('Repeated filename uses a separate file without overwriting', records.length===3 && new Set(records.map(record=>record.filename)).size===3);
+    const extraSaved=[];
+    await event('desktop-overwrite',page); await until('document.documentElement.dataset.overwritten||document.documentElement.dataset.desktopError',page);
+    const overwrites=await b.evaluate(api+'.downloads.search({}).then(items=>items.filter(item=>/desktop-overwrite/.test(item.filename)).map(({filename,state})=>({filename,state})))',manager);
+    const overwriteFiles=(await fs.readdir(path.join(temp,'exports'))).filter(name=>name.startsWith('desktop-overwrite'));
+    const overwritten=overwriteFiles.length===1?JSON.parse(await fs.readFile(path.join(temp,'exports',overwriteFiles[0]),'utf8')):null;
+    evidence.desktopOverwrite={records:overwrites,files:overwriteFiles,authorization:overwritten?.authorization};
+    check('conflictAction overwrite replaces the same file with the newer download', overwrites.length===2&&overwrites.every(record=>record.state==='complete')&&
+      new Set(overwrites.map(record=>record.filename)).size===1&&overwriteFiles.join()==='desktop-overwrite.bin'&&overwritten?.value===42);
+    check('Download credentials reach the server as Basic authentication', overwritten?.authorization==='Basic ZGVza3RvcDpzZWNyZXQ=');
+    extraSaved.push(...overwriteFiles);
+    const hitsBeforePrompt=fixtureState.hits.length;
+    await event('desktop-prompt',page); await until('document.documentElement.dataset.prompted',page);
+    const prompted=await b.evaluate('document.documentElement.dataset.prompted',page);
+    evidence.desktopPrompt=prompted;
+    if(evidence.browser==='firefox') {
+      check('Firefox rejects conflictAction prompt before transferring', /^rejected: Firefox does not support conflictAction "prompt"/.test(prompted)&&fixtureState.hits.length===hitsBeforePrompt);
+      // Confirm the early rejection matches Firefox's own downloads API.
+      evidence.firefoxNativePrompt=await b.evaluate('(async()=>{const url=URL.createObjectURL(new Blob(["probe"]));try{const id=await browser.downloads.download({url,filename:"native-prompt-probe.bin",conflictAction:"prompt"});'+
+        'await browser.downloads.cancel(id).catch(()=>{});await browser.downloads.removeFile(id).catch(()=>{});return "accepted";}catch(error){return "rejected: "+error.message;}finally{URL.revokeObjectURL(url);}})()',manager);
+      check('Firefox’s native downloads API also rejects conflictAction prompt', /^rejected/.test(evidence.firefoxNativePrompt));
+    } else {
+      check('conflictAction prompt saves a new filename without a dialog', prompted==='saved');
+      extraSaved.push('desktop-prompt.bin');
+    }
     const transferFile = await runTransfers({ b, page, check, until, base, fixtureState, temp, evidence });
     const beforeAborts=fixtureState.aborted;
     await event('desktop-abort',page);
@@ -174,7 +203,7 @@ async function runDesktop({ b, manager, send, check, until, browse, scriptSource
     await until('document.documentElement.dataset.revokedDownload',page);
     await event('desktop-permission-probe',page); await until('document.documentElement.dataset.deniedAgain',page);
     check('Native permission revocation cancels downloads and denies new ones',await b.evaluate('document.documentElement.dataset.revokedDownload==="rejected"&&document.documentElement.dataset.deniedAgain==="yes"',page));
-    const savedNames=new Set([...records.map(record=>path.basename(record.filename)), transferFile]), finalNames=await fs.readdir(path.join(temp,'exports'));
+    const savedNames=new Set([...records.map(record=>path.basename(record.filename)), transferFile, ...extraSaved]), finalNames=await fs.readdir(path.join(temp,'exports'));
     check('Failed and cancelled downloads leave no output files',finalNames.length===savedNames.size&&finalNames.every(name=>savedNames.has(name)));
     check('Ad blocking stays active throughout desktop helpers and revocation',(await send({type:'GET_STATE'})).settings.enabled&&await b.evaluate('window.fixtureAd===undefined',page));
     check('Desktop fixture reports no unexpected failures',!await b.evaluate('document.documentElement.dataset.desktopError',page));

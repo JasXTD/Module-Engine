@@ -1,0 +1,87 @@
+{
+  "taskDate": "2026-11-14",
+  "retainedAtUtc": "2026-11-14T14:07:12.199Z",
+  "runs": [
+    {
+      "name": "chrome-layout",
+      "success": true,
+      "checks": 635,
+      "evidence": "chrome-layout.json",
+      "sha256": "886159636e16d213b0e309a1aee767e30b355399a899fceb5f745875c7aa209f"
+    },
+    {
+      "name": "edge-layout",
+      "success": true,
+      "checks": 635,
+      "evidence": "edge-layout.json",
+      "sha256": "02483195f50a51a34acffc1f676344306e295f4d85c543f36da43388d9d5aa5e"
+    },
+    {
+      "name": "firefox-layout",
+      "success": true,
+      "checks": 602,
+      "evidence": "firefox-layout.json",
+      "sha256": "94045e65ceb92eae888beed1b3a844db5b0cbe771ddbed4a307a2ff1dd2b1830"
+    },
+    {
+      "name": "chrome-execution",
+      "success": true,
+      "checks": 52,
+      "evidence": "chrome-execution.json",
+      "sha256": "d169b9baaf2cf4ebfa35e55b08ab8a73a76ddca1a189d80d7e17af6cf9f52f05"
+    },
+    {
+      "name": "edge-execution",
+      "success": true,
+      "checks": 52,
+      "evidence": "edge-execution.json",
+      "sha256": "4eca51e57b1321e3ad59cec7601dfad75d2641e35d97079020503e89742dab5b"
+    },
+    {
+      "name": "firefox-execution",
+      "success": true,
+      "checks": 52,
+      "evidence": "firefox-execution.json",
+      "sha256": "d79277f3f7b55b34c8fc9b945d4c6b165a31c0fb491e1cef86e5ece150519cb3"
+    },
+    {
+      "name": "firefox-desktop",
+      "success": true,
+      "checks": 54,
+      "evidence": "firefox-desktop.json",
+      "sha256": "f441168e2f3158795b7b4c52efbee0511a665840f92c503ed4eec9c78dd85803"
+    },
+    {
+      "name": "firefox-blocker",
+      "success": true,
+      "checks": 733,
+      "evidence": "firefox-blocker.json",
+      "sha256": "df9b2def2845b6c16b016ddbc8bdf887b79298e4bae57e195ce5803e876f2604"
+    }
+  ],
+  "changedFileHashes": {
+    "README.md": "445162bfbdc3e54bd3339cd4e44424e34a613d6b50b65ff222b3306788fde5aa",
+    "docs/DEVELOPMENT.md": "dd88e5ba19a9dc5f30c976781557512b2c749ed268c41495437154f67df06786",
+    "docs/USER_GUIDE.md": "d1cfd256a0d49f42206dab016ebe4e9079ed9a2b5d19cb458a6b46d6d7d24168",
+    "docs/VERIFICATION.md": "94eb98e0c120e9bcaf5a94b7405524a87fd258c8b6746a97c2186ee00c7ce86d",
+    "src/ui/manager/manager.html": "d4431faa45aa158e3eaf4d660499f60a55ad932f5c3c4a67e86f51660cfc690d",
+    "src/ui/manager/manager.js": "a9de36deb4b66e660bbe2556ee395159cc4c45de58fd85f847a56bde85f232fa",
+    "src/userscripts/userscripts-actions.js": "5f37116fb8095058e4806d159b9c1fa19f4543f753dabd4dd7ee9a653d39e9e4",
+    "src/userscripts/userscripts-core.js": "aedd93eff5637862fb838ffe339f47644a555d3632cf02afd189861cd9b6a910",
+    "src/userscripts/userscripts-matching.js": "a5b57ba7fa946e5069db2bd74f7b7d3571cb0a630c5db3375b5601779098929d",
+    "src/userscripts/userscripts-network.js": "c6764812b02f33871744ecd707fba077163cd747ba116a82e704838b82ddb37d",
+    "src/userscripts/userscripts-runtime.js": "46a54d1e52daca74148e764d8fcaf04d4287af59d7be5bd45ec2d2870fee2223",
+    "tests/browser-smoke.cjs": "01fe46afa487887e0d5540afa76ec360691782cb02852ced877f36c06c0856a2",
+    "tests/userscripts-assets-network.cjs": "1954460f95af8da8810c0b0aefa5f288a3f7e9c5b09d858fd2afd812184c9118",
+    "tests/userscripts-browser.cjs": "5109cd3686ca71b792a61c30013f0cf5526b1d9f9e46d529a7a2bc2905e56dc0",
+    "tests/userscripts-desktop-browser.cjs": "f2750e2f2705166a23f09761b9115fb1633052adbf1c90bd87db94d738766ecf",
+    "tests/userscripts-execution-browser.cjs": "e7b51196068ea1b85e305d556c0e350f7f7e10c2308818cac4b4f86abfd1e717",
+    "tests/userscripts-execution.test.cjs": "bd29006b70e01eb5d37e1ffd7dd6ab528d38d34369eb3ca39acfc2ddb9b265be",
+    "tests/userscripts-firefox.cjs": "209f015e0e913c6fef757dfbec11c6f8bc80270568b1a225955ebbdb24f39f3e",
+    "tests/userscripts-helpers-browser.cjs": "7b4a3bd720997fe5084bf9b416d33be4012e9f3dfc285dcb7513a7af23737734",
+    "tests/userscripts-matching-browser.cjs": "967aa0b98560ee0bd9ddc35bdbc44814a5a5e8644dc142e8a2f434675fea0892",
+    "tests/userscripts-matching.test.cjs": "4e577d3c4e9c0a44c2949fd4d54e51d4722d236a8f0257d79011fe57e4bd8f16",
+    "tests/userscripts-network-fixtures.cjs": "38ca1d2d32b789feb8648a0854484a5bc1240647accf865fd23acc4974b811ab",
+    "tests/userscripts.test.cjs": "81784a235a3fc9e0e8f29c442d06fc446766a21f713542fd1047c168876d1be8"
+  }
+}

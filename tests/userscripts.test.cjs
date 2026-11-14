@@ -196,7 +196,10 @@ test('cookie authorization rejects foreign stores, undeclared destinations, pare
   const { h, r } = await cookieRealm({ helperPermissions: ['cookies'] });
   for (const code of [
     'cookie.modern.list({url:"https://unrelated.test/"})', 'cookie.modern.list({storeId:"other"})',
-    'cookie.modern.list({partitionKey:{topLevelSite:"https://example.test"}})',
+    'cookie.modern.list({partitionKey:{topLevelSite:"https://other.test"}})', 'cookie.modern.list({partitionKey:{}})',
+    'cookie.modern.list({partitionKey:{topLevelSite:"http://example.test"}})', 'cookie.modern.list({partitionKey:{topLevelSite:"https://example.test",extra:1}})',
+    'cookie.modern.list({partitionKey:{topLevelSite:"https://example.test",hasCrossSiteAncestor:1}})',
+    'cookie.modern.list({firstPartyDomain:"example.test"})',
     'cookie.modern.set({url:"javascript:alert(1)",name:"bad"})', 'cookie.modern.delete({})',
     'cookie.modern.set({domain:"test",name:"bad"})', 'cookie.modern.set({name:"bad",httpOnly:1})',
     'cookie.modern.set({url:"https://user:pass@example.test/",name:"bad"})'
@@ -206,6 +209,28 @@ test('cookie authorization rejects foreign stores, undeclared destinations, pare
   await other.r.run('cookie.modern.set({url:"https://child.other.test/",domain:"other.test",name:"explicit",value:"local fixture"})');
   assert.equal(other.h.state.cookieCalls.at(-1).details.url, 'https://child.other.test/');
   assert.equal(other.h.state.cookieCalls.at(-1).details.storeId, 'owned');
+});
+test('partitioned cookies are addressable only within the calling tab’s own top-level site', async () => {
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'] });
+  h.state.cookieJar = [{ name: 'plain' }, { name: 'own', partitionKey: { topLevelSite: 'https://example.test', hasCrossSiteAncestor: false } },
+    { name: 'foreign', partitionKey: { topLevelSite: 'https://other.test' } }];
+  assert.deepEqual(json(await r.run('cookie.modern.list({})')).map(cookie => cookie.name), ['plain'], 'no partition unless requested');
+  assert.deepEqual(json(await r.run('cookie.modern.list({partitionKey:{topLevelSite:"https://example.test"}})')).map(cookie => cookie.name), ['plain', 'own']);
+  assert.deepEqual(h.state.cookieCalls.at(-1).details.partitionKey, { topLevelSite: 'https://example.test' });
+  await r.run('cookie.modern.set({name:"chip",value:"1",secure:true,partitionKey:{topLevelSite:"https://example.test",hasCrossSiteAncestor:false}})');
+  assert.deepEqual(h.state.cookieCalls.at(-1).details.partitionKey, { topLevelSite: 'https://example.test', hasCrossSiteAncestor: false });
+  const { cookieOptions } = BlockAdsUserScriptActions, meta = core.parse(source('Partition', '// @grant GM_cookie\n'));
+  // A subframe uses its tab's top-level site, including registrable-domain folding.
+  assert.equal(cookieOptions('list', { partitionKey: { topLevelSite: 'https://example.co.uk' } }, meta, 'https://example.test/frame',
+    { topURL: 'https://www.shop.example.co.uk/page' }).partitionKey.topLevelSite, 'https://example.co.uk');
+  assert.throws(() => cookieOptions('list', { partitionKey: { topLevelSite: 'https://example.test' } }, meta, 'https://example.test/frame', { topURL: 'about:invalid' }), /top-level site/);
+  assert.equal(cookieOptions('list', { partitionKey: { topLevelSite: 'http://127.0.0.1' } }, meta, 'http://127.0.0.1:8080/', {}).partitionKey.topLevelSite, 'http://127.0.0.1');
+  assert.equal(cookieOptions('list', { partitionKey: { topLevelSite: 'https://example.test' } }, meta, 'https://a.b.example.test/', {}).partitionKey.topLevelSite, 'https://example.test',
+    'unknown suffixes use the default rule');
+  // Firefox first-party isolation: only unisolated ('') or this tab's domain.
+  for (const firstPartyDomain of ['', 'example.test']) assert.equal(cookieOptions('list', { firstPartyDomain }, meta, 'https://www.example.test/', { firefox: true }).firstPartyDomain, firstPartyDomain);
+  for (const firstPartyDomain of ['other.test', null, 1]) assert.throws(() => cookieOptions('list', { firstPartyDomain }, meta, 'https://www.example.test/', { firefox: true }), /firstPartyDomain/);
+  assert.throws(() => cookieOptions('list', { firstPartyDomain: '' }, meta, 'https://www.example.test/', {}), /only in Firefox/);
 });
 test('cookie grants cannot be borrowed from another script or an unwrapped registration', async () => {
   const h = harness(undefined, { helperPermissions: ['cookies'] });
@@ -573,9 +598,13 @@ test('desktop helper options and permission lists reject unsafe or unsupported i
   for (const details of [{ data: 1 }, { data: 'x', type: false }, { data: 'x', type: 'image/png' }, { data: 'x'.repeat(1048577) }]) assert.throws(() => normalize('clipboard', details));
   for (const details of [{ text: ' ' }, { text: 'x', image: false }, { text: 'x', image: 'https://example.test/icon.png' }, { text: 'x', zombieTimeout: 1 }]) assert.throws(() => normalize('notification', details));
   for (const name of ['../escape', 'C:\\file', 'file/', 'CON', 'nul.txt', 'COM1.bin', 'hidden:stream', 'ends.', ' leading', '', 'x'.repeat(241)]) assert.throws(() => normalize('download', { name }));
-  assert.throws(() => normalize('download', { name: 'ok.bin', conflictAction: 'overwrite' }));
+  for (const conflictAction of ['uniquify', 'overwrite', 'prompt']) assert.equal(normalize('download', { name: 'ok.bin', conflictAction }).conflictAction, conflictAction);
+  for (const conflictAction of [undefined, null]) assert.equal(normalize('download', { name: 'ok.bin', conflictAction }).conflictAction, 'uniquify');
+  for (const conflictAction of ['replace', '', 1]) assert.throws(() => normalize('download', { name: 'ok.bin', conflictAction }), /conflictAction/);
   assert.deepEqual(permissions(['GM_setClipboard', 'GM.notification', 'GM.download']), ['clipboardWrite', 'offscreen', 'notifications', 'downloads']);
   assert.deepEqual(permissions(['GM.setClipboard'], true), ['clipboardWrite']);
+  assert.deepEqual(permissions(['GM_openInTab']), [], 'Chromium tabs need no optional permission');
+  assert.deepEqual(permissions(['GM.openInTab'], true), ['cookies'], 'Firefox needs cookie access to keep containers');
 });
 
 test('clipboard legacy writes return void, modern writes confirm completion, preserve order and propagate failures', async () => {
@@ -728,6 +757,31 @@ test('downloads reject permission, scope, HTTP, redirect, oversized and filename
   assert.equal(h.state.downloads.size, 0);
 });
 
+test('downloads pass collision policies to the native save and send Basic credentials', async t => {
+  const { base, state } = await loopback(t), { h, api } = await desktopRealm();
+  const saved = [];
+  for (const conflictAction of ['overwrite', 'prompt']) {
+    const promise = api.GM.download({ url: base + '/usnet/bytes.bin?' + conflictAction, name: 'same.bin', conflictAction, user: 'u', password: 'p' });
+    await waitFor(() => h.state.downloads.size === saved.length + 1);
+    const native = h.state.downloads.get(saved.length + 1); saved.push(native.conflictAction);
+    assert.equal(native.filename, 'same.bin');
+    assert.equal(state.hits.at(-1).authorization, 'Basic dTpw');
+    completeDownload(h, native.id); await promise;
+  }
+  assert.deepEqual(saved, ['overwrite', 'prompt']);
+  assert.throws(() => api.GM.download({ url: base + '/usnet/bytes.bin', name: 'bad.bin', conflictAction: 'replace' }), /conflictAction/);
+});
+
+test('Firefox rejects the unimplemented prompt collision policy before transferring', async t => {
+  const { base, state } = await loopback(t), { h, api } = await desktopRealm({ firefox: true });
+  await assert.rejects(api.GM.download({ url: base + '/usnet/bytes.bin', name: 'prompt.bin', conflictAction: 'prompt' }), /Firefox does not support conflictAction "prompt"/);
+  assert.equal(state.hits.length, 0); assert.equal(h.state.downloads.size, 0);
+  const overwrite = api.GM.download({ url: base + '/usnet/bytes.bin', name: 'overwrite.bin', conflictAction: 'overwrite' });
+  await waitFor(() => h.state.downloads.size === 1);
+  assert.equal(h.state.downloads.get(1).conflictAction, 'overwrite');
+  completeDownload(h, 1); await overwrite;
+});
+
 test('Firefox downloads own a Blob URL only until native completion or cancellation', async t => {
   const { base } = await loopback(t), { h, api } = await desktopRealm({ firefox: true });
   const promise = api.GM.download(base + '/usnet/bytes.bin', 'firefox.bin');
@@ -800,13 +854,38 @@ async function tabRealm(options) {
   await eventually(() => realm.messages.some(message => message.type === 'ready'));
   return { h, script, realm, connectionId: realm.messages.find(message => message.type === 'ready').connectionId };
 }
+test('Firefox tabs keep the source container, honor container indexes and ignore them elsewhere', async () => {
+  const opened = async (options, parent, firefox = true, permissions = ['cookies']) => {
+    const { h, realm } = await tabRealm({ firefox, helperPermissions: permissions });
+    Object.assign(h.state.tabs.get(7), parent);
+    const control = realm.context.modernTab('https://example.test/next', options);
+    await eventually(() => h.state.createdTabs.length === 1 || control.closed);
+    return { tab: h.state.createdTabs[0], errors: realm.errors };
+  };
+  assert.equal((await opened(undefined, { cookieStoreId: 'firefox-container-3' })).tab.cookieStoreId, 'firefox-container-3', 'inherit the source container');
+  assert.equal((await opened({ container: 2 }, { cookieStoreId: 'firefox-default' })).tab.cookieStoreId, 'firefox-container-2');
+  assert.equal('cookieStoreId' in (await opened({ container: 0 }, { cookieStoreId: 'firefox-container-3' })).tab, false, 'container 0 is the default container');
+  assert.equal('cookieStoreId' in (await opened(undefined, { cookieStoreId: 'firefox-default' }, true, [])).tab, false, 'the default container needs no permission');
+  assert.equal('cookieStoreId' in (await opened(undefined, { cookieStoreId: 'firefox-private', incognito: true }, true, [])).tab, false, 'private windows keep their store');
+  const denied = await opened(undefined, { cookieStoreId: 'firefox-container-3' }, true, []);
+  assert.equal(denied.tab, undefined, 'a container tab is never silently opened outside its container');
+  assert.ok(denied.errors.some(error => /Firefox containers/.test(error)));
+  const privateContainer = await opened({ container: 1 }, { incognito: true });
+  assert.equal(privateContainer.tab, undefined); assert.ok(privateContainer.errors.some(error => /private windows/.test(error)));
+  assert.equal('cookieStoreId' in (await opened({ container: 2 }, {}, false, [])).tab, false, 'Chromium ignores Firefox containers');
+});
 test('tab options normalize defaults and background booleans while rejecting privileged URLs and unsupported options', () => {
   assert.deepEqual(core.tabOptions('/next', undefined, 'https://example.test/start'), { url: 'https://example.test/next', active: true, insert: true, pinned: false });
   assert.equal(core.tabOptions('/next', true, 'https://example.test/start').active, false);
   for (const url of ['javascript:alert(1)', 'data:text/html,test', 'file:///private', 'chrome://settings', 'moz-extension://other/page', 'https://user:secret@example.test/']) {
     assert.throws(() => core.tabOptions(url), /HTTP|URL/);
   }
-  for (const options of [{ active: 1 }, { container: 2 }, { tabId: 7 }, [], null]) assert.throws(() => core.tabOptions('https://example.test/', options), /options/);
+  assert.equal(core.tabOptions('/next', { container: 0 }, 'https://example.test/start').container, 0);
+  assert.equal(core.tabOptions('/next', { container: 2, active: false }, 'https://example.test/start').container, 2);
+  assert.equal('container' in core.tabOptions('/next', {}, 'https://example.test/start'), false, 'an omitted container inherits the source tab’s');
+  for (const options of [{ active: 1 }, { container: -1 }, { container: 1.5 }, { container: '1' }, { container: 2 ** 31 }, { tabId: 7 }, [], null]) {
+    assert.throws(() => core.tabOptions('https://example.test/', options), /options/);
+  }
 });
 test('both tab helpers return immediate owned handles with close-before-open and a single onclose notification', async () => {
   const { h, realm } = await tabRealm();
@@ -1095,6 +1174,54 @@ test('redirects check every destination, rewrite POST correctly and strip cross-
   assert.throws(()=>network.redirected(original,302,'https://secret@two.test/end'),/credentials/);
 });
 
+test('HTTP user/password send Basic credentials that explicit headers override and cross-origin redirects drop', async t => {
+  const { base, state } = await loopback(t), h = harness();
+  const script = await h.enable(await h.save('Auth', '// @connect 127.0.0.1\n// @grant GM.xmlHttpRequest\n', 'globalThis.request = GM.xmlHttpRequest;'));
+  const request = h.realm(script.id).context.request;
+  await request({ url: base + '/usnet/json?basic', user: 'ünï', password: 'p:ss' });
+  assert.equal(state.hits.at(-1).authorization, 'Basic ' + Buffer.from('ünï:p:ss').toString('base64'));
+  await request({ url: base + '/usnet/json?password-only', password: 'secret' });
+  assert.equal(state.hits.at(-1).authorization, 'Basic ' + Buffer.from(':secret').toString('base64'));
+  await request({ url: base + '/usnet/json?explicit', user: 'ignored', password: 'x', headers: { authorization: 'Bearer local' } });
+  assert.equal(state.hits.at(-1).authorization, 'Bearer local');
+  await request({ url: base + '/usnet/json?empty', user: '', password: null });
+  assert.equal(state.hits.at(-1).authorization, '');
+  assert.throws(() => request({ url: base, user: 1 }), /strings/);
+  const hits = state.hits.length;
+  await assert.rejects(request({ url: base + '/usnet/json', user: 'a:b' }), /colon/);
+  await assert.rejects(request({ url: base + '/usnet/json', password: 'x\n' }), /control/);
+  await assert.rejects(request({ url: base + '/usnet/json', user: 'x'.repeat(1025) }), /1 KiB/);
+  assert.equal(state.hits.length, hits, 'invalid credentials never reach the network');
+  const network = BlockAdsUserScriptNetwork, meta = core.parse(source('auth redirect', '// @connect *\n'));
+  const original = network.validate({ url: 'https://one.test/start', user: 'u', password: 'p' }, meta, 'https://page.test/');
+  assert.equal(original.headers.Authorization, 'Basic dTpw');
+  assert.equal(network.redirected(original, 302, '/next').headers.Authorization, 'Basic dTpw', 'same-origin redirects keep credentials');
+  assert.deepEqual(network.redirected(original, 302, 'https://two.test/next').headers, {}, 'cross-origin redirects drop credentials');
+});
+
+test('ReadableStream request data is read within the upload limit and cancelled with its request', async t => {
+  const { base, state } = await loopback(t), h = harness();
+  const script = await h.enable(await h.save('Streams', '// @connect 127.0.0.1\n// @grant GM.xmlHttpRequest\n', 'globalThis.request = GM.xmlHttpRequest;'));
+  const request = h.realm(script.id, 7, { globals: { ReadableStream } }).context.request;
+  const chunks = (...parts) => new ReadableStream({ start(controller) { for (const part of parts) controller.enqueue(part); controller.close(); } });
+  const echoed = await request({ url: base + '/usnet/json', method: 'POST', responseType: 'json',
+    data: chunks(new TextEncoder().encode('stream '), new Uint8Array([0xe2, 0x9c, 0x93]), new DataView(new Uint8Array([0x21]).buffer)) });
+  assert.equal(echoed.response.body, 'stream ✓!');
+  const hits = state.hits.length;
+  await assert.rejects(request({ url: base + '/usnet/json', method: 'POST', data: chunks('text chunk') }), /Uint8Array/);
+  const quarter = new Uint8Array(2 * 1024 * 1024);
+  await assert.rejects(request({ url: base + '/usnet/json', method: 'POST', data: chunks(quarter, quarter, quarter, quarter, new Uint8Array(1)) }), /8 MiB/);
+  await assert.rejects(request({ url: base + '/usnet/json', data: chunks(new Uint8Array(1)) }), /GET/);
+  let cancelled = 0;
+  const handle = request({ url: base + '/usnet/json', method: 'POST', data: new ReadableStream({ pull: () => new Promise(() => {}), cancel: () => { cancelled++; } }) });
+  await new Promise(resolve => setTimeout(resolve, 20));
+  handle.abort();
+  await assert.rejects(handle, /aborted/);
+  await waitFor(() => cancelled === 1);
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.equal(state.hits.length, hits, 'rejected and aborted stream uploads never reach the network');
+});
+
 test('FormData preserves ordered duplicate fields, Unicode, filenames and binary bytes', async t => {
   const {base,state}=await loopback(t),h=harness();
   const script=await h.enable(await h.save('FormData','// @grant GM.xmlHttpRequest\n','globalThis.request=GM.xmlHttpRequest;'));
@@ -1206,7 +1333,7 @@ test('extended wrapper and broker checks agree, including oversized regex exclus
   h.state.hooks.tabUpdated(7, { url: 'https://example.test/regex/private' });
   await eventually(() => realm.messages.some(item => item.type === 'revoked'));
   const before = h.state.data.userscriptManager.scripts.length;
-  await assert.rejects(h.command({ type: 'US_SAVE', source: source('Unsupported regex', '// @exclude /(a)\\1/\n') }), /backreferences/);
+  await assert.rejects(h.command({ type: 'US_SAVE', source: source('Unsupported regex', '// @exclude /(a)\\1/i\n') }), /without flags/);
   assert.equal(h.state.data.userscriptManager.scripts.length, before);
   const heavySave = await h.command({ type: 'US_SAVE', source: source('Heavy exclusion', '// @exclude /(?:a?){128}b/\n// @grant GM.getValue\n', 'globalThis.ran=true;') });
   const heavy = await h.enable(heavySave.scripts.find(item => item.id === heavySave.selectedId));

@@ -43,7 +43,8 @@ function fixtureHandler(state = { hits: [], aborted: 0 }) {
       response.writeHead(pathname === '/usnet/missing' ? 404 : 200, { 'Content-Type': 'application/json; charset=utf-8', 'X-Offline-Fixture': 'yes' });
       response.end(JSON.stringify({ value: 42, method: request.method, body: Buffer.concat(chunks).toString(),
         bodyBase64: pathname === '/usnet/multipart' ? Buffer.concat(chunks).toString('base64') : undefined,
-        contentType: request.headers['content-type'] || '', cookie: request.headers.cookie || '', header: request.headers['x-test'] || '' }));
+        contentType: request.headers['content-type'] || '', cookie: request.headers.cookie || '', header: request.headers['x-test'] || '',
+        authorization: request.headers.authorization || '' }));
     });
     return true;
   };

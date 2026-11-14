@@ -28,8 +28,11 @@
       if (!name || name !== name.trim() || /[<>:"/\\|?*\u0000-\u001f]/.test(name) || /[. ]$/.test(name) ||
           /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) throw new Error('Use a single valid filename, without directories or reserved device names.');
       if (input.saveAs !== undefined && typeof input.saveAs !== 'boolean') throw new TypeError('saveAs must be a boolean.');
-      if (input.conflictAction !== undefined && input.conflictAction !== 'uniquify') throw new Error('Downloads use uniquify; overwriting existing files is unsupported.');
-      return { name, saveAs: input.saveAs === true, conflictAction: 'uniquify' };
+      // The filename has no directories, so overwrite can only replace a file
+      // with this exact name in the browser's download folder.
+      const conflictAction = input.conflictAction ?? 'uniquify';
+      if (!['uniquify', 'overwrite', 'prompt'].includes(conflictAction)) throw new Error('conflictAction must be uniquify, overwrite or prompt.');
+      return { name, saveAs: input.saveAs === true, conflictAction };
     }
     throw new Error('Unknown helper.');
   }
@@ -37,17 +40,30 @@
     const has = name => grants.includes('GM_' + name) || grants.includes('GM.' + name);
     const network = has('xmlhttpRequest') || grants.includes('GM.xmlHttpRequest');
     return [...new Set([...(has('setClipboard') ? ['clipboardWrite', ...(!firefox ? ['offscreen'] : [])] : []),
-      ...(has('notification') ? ['notifications'] : []), ...(has('download') ? ['downloads'] : []), ...(has('cookie') ? ['cookies'] : []),
+      ...(has('notification') ? ['notifications'] : []), ...(has('download') ? ['downloads'] : []),
+      // Firefox requires cookie access to open a tab in a container.
+      ...(has('cookie') || firefox && has('openInTab') ? ['cookies'] : []),
       ...(firefox && (network || has('download')) ? ['webRequestBlocking'] : []), ...(!firefox && network ? ['offscreen'] : [])])];
   }
-  function cookieOptions(method, input, metadata, pageURL) {
+  // The calling tab's top-level site and registrable domain. Unknown suffixes
+  // use the Public Suffix List default rule (the last label), like browsers.
+  function topLevel(value) {
+    const url = new URL(value), host = url.hostname; let domain = host;
+    if (!host.startsWith('[') && !/^\d+(?:\.\d+){3}$/.test(host) && host.includes('.')) {
+      const suffix = BlockAdsMatching.publicSuffix(host) || host.slice(host.lastIndexOf('.') + 1);
+      if (host !== suffix) domain = host.split('.').slice(-suffix.split('.').length - 1).join('.');
+    }
+    return { site: url.protocol + '//' + domain, domain };
+  }
+  function cookieOptions(method, input, metadata, pageURL, context = {}) {
+    const shared = ['url', 'name', 'storeId', 'partitionKey', 'firstPartyDomain'];
     const options = {
-      list: ['url', 'name', 'domain', 'path', 'secure', 'session', 'storeId'],
-      set: ['url', 'name', 'value', 'domain', 'path', 'secure', 'httpOnly', 'sameSite', 'expirationDate', 'storeId'],
-      delete: ['url', 'name', 'storeId']
+      list: [...shared, 'domain', 'path', 'secure', 'session'],
+      set: [...shared, 'value', 'domain', 'path', 'secure', 'httpOnly', 'sameSite', 'expirationDate'],
+      delete: shared
     };
     if (!Object.hasOwn(options, method) || !input || typeof input !== 'object' || Array.isArray(input) ||
-        Object.keys(input).some(key => !options[method].includes(key))) throw new Error('Unsupported cookie operation or option. Partitioned cookies and firstPartyDomain are not supported.');
+        Object.keys(input).some(key => !options[method].includes(key))) throw new Error('Unsupported cookie operation or option.');
     const details = { ...input }, own = new URL(pageURL);
     if (details.url !== undefined && (typeof details.url !== 'string' || details.url.length > 4096 || /[\s\u0000-\u001f]/.test(details.url))) throw new Error('Use an absolute HTTP(S) cookie URL without credentials.');
     const url = new URL(details.url ?? pageURL);
@@ -72,10 +88,28 @@
     for (const name of ['secure', 'httpOnly', 'session']) if (details[name] !== undefined && typeof details[name] !== 'boolean') throw new Error('Cookie ' + name + ' must be a boolean.');
     if (details.sameSite !== undefined && !['unspecified', 'no_restriction', 'lax', 'strict'].includes(details.sameSite)) throw new Error('Unsupported cookie sameSite value.');
     if (details.expirationDate !== undefined && (!Number.isFinite(details.expirationDate) || details.expirationDate < 0)) throw new Error('Use a finite, nonnegative cookie expirationDate.');
+    // Partitioned storage is limited to the calling page's own top-level site.
+    // An omitted or empty topLevelSite would address every partition.
+    if (details.partitionKey !== undefined || details.firstPartyDomain !== undefined) {
+      const top = topLevel(context.topURL ?? pageURL), key = details.partitionKey;
+      if (key !== undefined) {
+        if (!key || typeof key !== 'object' || Array.isArray(key) || Object.keys(key).some(name => !['topLevelSite', 'hasCrossSiteAncestor'].includes(name)) ||
+            key.topLevelSite !== top.site || key.hasCrossSiteAncestor !== undefined && typeof key.hasCrossSiteAncestor !== 'boolean')
+          throw new Error('partitionKey.topLevelSite must be this tab’s top-level site, ' + top.site + '. Other partitions are not exposed.');
+        details.partitionKey = { ...key };
+      }
+      if (details.firstPartyDomain !== undefined) {
+        if (!context.firefox) throw new Error('firstPartyDomain is available only in Firefox.');
+        if (details.firstPartyDomain !== '' && details.firstPartyDomain !== top.domain) throw new Error('firstPartyDomain must be empty or this tab’s first-party domain, ' + top.domain + '.');
+      }
+    }
     return details;
   }
   async function cookieRequest(api, method, input, metadata, sender, pageURL, verify, onWriteDispatch) {
-    const details = cookieOptions(method, input, metadata, pageURL);
+    // A subframe's partition is keyed by its tab's top-level page. Without a
+    // tab URL, partition options fail closed instead of using the frame's site.
+    const topURL = sender.frameId === 0 ? pageURL : sender.tab?.url;
+    const details = cookieOptions(method, input, metadata, pageURL, { topURL: topURL ?? 'about:invalid', firefox: typeof api.runtime.getBrowserInfo === 'function' });
     const check = async () => {
       if (!api.cookies || !await api.permissions.contains({ permissions: ['cookies'] })) throw new Error('Allow cookie access in Modules & scripts before using GM_cookie.');
       await verify();
@@ -95,9 +129,10 @@
       return { ok: true };
     }
     await check();
-    // Firefox can return partitioned entries alongside unpartitioned cookies.
-    // Do not expose a different top-level site's partition through this API.
-    const cookies = result.filter(cookie => !cookie.partitionKey?.topLevelSite && !cookie.firstPartyDomain);
+    // Browsers can return partitioned entries alongside unpartitioned cookies.
+    // Keep only the partition this call was allowed to address.
+    const cookies = result.filter(cookie => (!cookie.partitionKey?.topLevelSite || cookie.partitionKey.topLevelSite === details.partitionKey?.topLevelSite) &&
+      (!cookie.firstPartyDomain || cookie.firstPartyDomain === details.firstPartyDomain));
     if (cookies.length > 256 || new TextEncoder().encode(JSON.stringify(cookies)).length > 1048576) throw new Error('Cookie results exceed 256 entries or 1 MiB. Narrow the URL or name filter.');
     return { ok: true, cookies };
   }
@@ -286,6 +321,8 @@
       if (kind === 'download') {
         const { name, saveAs, conflictAction, ...networkDetails } = message.details || {};
         file = normalize('download', { name, saveAs, conflictAction });
+        // Reject before transferring: Firefox has not implemented this native value.
+        if (file.conflictAction === 'prompt' && typeof api.runtime.getBrowserInfo === 'function') throw new Error('Firefox does not support conflictAction "prompt". Use saveAs: true to choose the destination.');
         details = BlockAdsUserScriptNetwork.validate(networkDetails, metadata, connection.sender.url, true);
         if (details.method !== 'GET' || details.responseType !== 'blob' || details.body !== undefined || details.formData || details.upload) throw new Error('Downloads require a GET request for binary data.');
       } else details = normalize(kind, message.details);

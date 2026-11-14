@@ -38,7 +38,7 @@ async function runHelpers({ b, manager, send, check, until, browse, scriptSource
     document.addEventListener('helper-close-blocked',()=>blocked.close());
     document.addEventListener('helper-invalid',()=>{
       data.invalidUrls=String(['javascript:alert(1)','data:text/html,test','file:///private','chrome://settings'].every(url=>{try{GM.openInTab(url);return false;}catch{return true;}}));
-      data.invalidOptions=String((()=>{try{GM_openInTab('/never',{container:1});return false;}catch{return true;}})());
+      data.invalidOptions=String([{container:-1},{container:'1'},{tabId:7}].every(options=>{try{GM_openInTab('/never',options);return false;}catch{return true;}}));
     });
     document.addEventListener('helper-last',()=>{last=GM.openInTab('/helper-child-kept',{active:false});});
     document.addEventListener('helper-revoked',()=>{
@@ -101,7 +101,7 @@ async function runHelpers({ b, manager, send, check, until, browse, scriptSource
     await wait('document.documentElement.dataset.blockedClosed==="true"');
     check('Blocked userscript tabs report closure and keep the source tab intact', !(await tabs()).some(tab => tab.id === failure.tabId) && (await tabs()).some(tab => tab.id === parent.id));
     const count = (await tabs()).length; await event('helper-invalid');
-    check('Disallowed schemes and unsupported container options are rejected before opening', await evaluate('document.documentElement.dataset.invalidUrls==="true" && document.documentElement.dataset.invalidOptions==="true"') && (await tabs()).length === count);
+    check('Disallowed schemes and invalid tab options are rejected before opening', await evaluate('document.documentElement.dataset.invalidUrls==="true" && document.documentElement.dataset.invalidOptions==="true"') && (await tabs()).length === count);
     await event('helper-last');
     await until(api + '.tabs.query({}).then(t=>t.some(x=>x.url===' + JSON.stringify(origin + '/helper-child-kept') + '))', manager);
     const script = await get(id);

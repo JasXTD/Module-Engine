@@ -48,6 +48,8 @@ async function runMatching({ b, manager, send, check, until, port, aliasState, e
       ['Wrong port guard', '// @match http://127.0.0.1:' + (port === 65535 ? 65534 : port + 1) + '/matching/port*\n// @include ' + base + '/matching/yes', base + '/matching/yes', base + '/matching/port'],
       ['Fragment match and exclusion', '// @match http://127.0.0.1:' + port + '/matching/fragment#good*\n// @exclude-match http://127.0.0.1:' + port + '/matching/fragment#good-deny', base + '/matching/fragment#good', base + '/matching/fragment#good-deny'],
       ['Regex includes and exclusion', '// @include /^http:\\/\\/127\\.0\\.0\\.1:' + port + '\\/matching\\/(?:regex|denied)\\/[a-z]+(?:\\?id=\\d+)?$/\n// @exclude /\\/denied\\//', base + '/matching/ReGeX/one?id=12', base + '/matching/denied/one'],
+      ['Regex lookarounds', '// @include /^http:\\/\\/127\\.0\\.0\\.1:' + port + '\\/matching\\/(?!blocked\\/)[a-z]+\\/(?<=\\/[a-z]{3}\\/)look$/', base + '/matching/one/look', base + '/matching/blocked/look'],
+      ['Regex named backreference', '// @include /^http:\\/\\/127\\.0\\.0\\.1:' + port + '\\/matching\\/(?<word>[a-z]+)\\/\\k<word>$/', base + '/matching/echo/ECHO', base + '/matching/echo/other'],
       ['Public suffix match', '// @match http://matching.example.tld:' + port + '/matching/suffix*', 'http://matching.example.com:' + port + '/matching/suffix', 'http://matching.example.com.evil.invalid:' + port + '/matching/suffix'],
       ['Public suffix include', '// @include http://matching.example.tld:' + port + '/matching/suffix*', 'http://matching.example.org:' + port + '/matching/suffix', 'http://matching.example.com.evil.invalid:' + port + '/matching/suffix']
     ]) {
@@ -68,6 +70,48 @@ async function runMatching({ b, manager, send, check, until, port, aliasState, e
         for (const target of [good, bad]) { await b.closePage(target); pages.delete(target); }
       }
     }
+    // Raw @unwrap code with a scope the browser cannot express: the guard must
+    // stop every statement and declaration on admitted-but-excluded pages.
+    for (const world of ['content', 'page']) {
+      const name = 'Guarded raw scope (' + world + ')';
+      const id = await install(name, '// @include /^http:\\/\\/127\\.0\\.0\\.1:' + port + '\\/matching\\/raw\\/(?!skip)/',
+        'var matchingRawVar=1;let matchingRawLexical=2;function matchingRawFunction(){}document.body.dataset.matchingRan=typeof matchingRawLexical+typeof matchingRawFunction;',
+        'none', '// @unwrap\n// @inject-into ' + world + '\n');
+      const good = await page(base + '/matching/raw/run');
+      await until('document.body.dataset.matchingRan==="numberfunction"', good);
+      check(name + ': in-scope raw code keeps global declarations', world === 'content' ||
+        await b.evaluate('matchingRawVar===1&&typeof matchingRawFunction==="function"&&matchingRawLexical===2', good));
+      const earlier = b.scriptErrors ? (await b.scriptErrors()).length : 0;
+      const bad = await page(base + '/matching/raw/skip');
+      check(name + ': excluded page runs no statement and creates no binding', await b.evaluate(
+        'document.body.dataset.matchingRan===undefined&&!("matchingRawVar" in window)&&!("matchingRawFunction" in window)&&typeof matchingRawLexical==="undefined"', bad));
+      (evidence.rawGuardPageErrors ||= {})[world] = await b.evaluate('window.pageErrors', bad);
+      check(name + ': page error listeners do not see the skipped script', Array.isArray(evidence.rawGuardPageErrors[world]) &&
+        !evidence.rawGuardPageErrors[world].some(text => text.includes('moduleEngineScope')));
+      if (b.events && bad.session) {
+        // A deliberate page error proves this session's exceptions are captured.
+        const reported = () => b.events.filter(event => event.method === 'Runtime.exceptionThrown' && event.sessionId === bad.session)
+          .map(event => event.params.exceptionDetails?.exception?.description || event.params.exceptionDetails?.text || '');
+        await b.evaluate('setTimeout(()=>{throw new Error("Owned page failure: matching guard control")},0),true', bad);
+        for (let i = 0; i < 60 && !reported().some(text => text.includes('Owned page failure: matching guard control')); i++) await new Promise(resolve => setTimeout(resolve, 50));
+        (evidence.rawGuardExceptions ||= {})[world] = reported();
+        check(name + ': the skipped raw script reports no console error', reported().some(text => text.includes('Owned page failure: matching guard control')) &&
+          !reported().some(text => text.includes('moduleEngineScope')));
+      } else if (b.scriptErrors) {
+        const control = 'Owned page failure: matching guard control-' + world;
+        await b.evaluate('(setTimeout(()=>{throw new Error(' + JSON.stringify(control) + ')},0),true)', bad);
+        let errors = [];
+        for (let i = 0; i < 60 && !errors.some(error => error.text.includes(control)); i++) { errors = (await b.scriptErrors()).slice(earlier); await new Promise(resolve => setTimeout(resolve, 50)); }
+        (evidence.rawGuardExceptions ||= {})[world] = errors.filter(error => /moduleEngineScope|Owned page failure: matching guard control/.test(error.text));
+        // Firefox reports sandbox errors to the console without a cancelable
+        // window event, so an isolated skip may log its one redeclaration.
+        const skipped = errors.filter(error => error.text.includes('moduleEngineScope'));
+        check(name + ': the skipped raw script logs at most its expected redeclaration', errors.some(error => error.text.includes(control)) &&
+          skipped.length <= (world === 'content' ? 1 : 0) && skipped.every(error => /redeclaration of non-configurable global property __moduleEngineScope_[0-9a-f]{16}$/.test(error.text)));
+      }
+      await remove(id);
+      for (const target of [good, bad]) { await b.closePage(target); pages.delete(target); }
+    }
     const stale = await install('Regex scope revokes after history change', '// @include /^http:\\/\\/127\\.0\\.0\\.1:' + port + '\\/matching\\/allowed$/',
       marker + 'document.addEventListener("matching-probe",()=>GM.getValue("probe").then(()=>document.body.dataset.matchingProbe="accepted",()=>document.body.dataset.matchingProbe="denied"));', 'GM.getValue');
     const current = await page(base + '/matching/allowed'); await until('document.body.dataset.matchingRan==="true"', current);
@@ -82,8 +126,8 @@ async function runMatching({ b, manager, send, check, until, port, aliasState, e
     await until('document.getElementById("matchingChild").contentDocument.body.dataset.matchingProbe==="denied"', parent);
     check('Native GM broker checks the current child-frame URL after history changes', await b.evaluate('document.getElementById("matchingChild").contentDocument.body.dataset.matchingProbe==="denied"', parent));
     await remove(stale);
-    const bad = await send({ type: 'US_SAVE', source: '// ==UserScript==\n// @name Rejected regex\n// @include /(?=unsafe)/\n// ==/UserScript==\n' });
-    check('Unsupported regex imports fail visibly without creating a script', !bad.ok && /lookarounds/.test(bad.error));
+    const bad = await send({ type: 'US_SAVE', source: '// ==UserScript==\n// @name Rejected regex\n// @include /unsafe/i\n// ==/UserScript==\n' });
+    check('Unsupported regex imports fail visibly without creating a script', !bad.ok && /without flags/.test(bad.error));
     check('Fixed suffix aliases were served only by loopback', evidence.matchingAliasRequests?.length >= 8 && evidence.matchingAliasRequests.every(item => item.destination === '127.0.0.1:' + port));
     check('Ad blocking is still enabled after matching checks', (await send({ type: 'GET_STATE' })).settings.enabled);
     evidence.matchingCompleted = true;

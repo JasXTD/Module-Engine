@@ -184,7 +184,7 @@
   }
   function validate(details, metadata, pageURL, download = false) {
     if (!details || typeof details !== 'object' || Array.isArray(details)) fail('Use a request details object.');
-    const allowed = ['url', 'method', 'headers', 'body', 'formData', 'upload', 'redirect', 'timeout', 'anonymous', 'responseType', 'overrideMimeType'];
+    const allowed = ['url', 'method', 'headers', 'body', 'formData', 'upload', 'redirect', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'user', 'password'];
     if (Object.keys(details).some(key => !allowed.includes(key))) fail('Unsupported request option.');
     const url = destination(details.url, metadata, pageURL);
     const method = String(details.method || 'GET').toUpperCase();
@@ -197,6 +197,16 @@
           /^(?:x-http-method|x-http-method-override|x-method-override)$/i.test(name) && /\b(?:CONNECT|TRACE|TRACK)\b/i.test(value) ||
           typeof value !== 'string' || value.length > 8192 || /[\r\n\0]/.test(value)) fail('Unsupported or invalid request header: ' + name);
       safeHeaders[name] = value;
+    }
+    for (const name of ['user', 'password']) if (details[name] !== undefined && (typeof details[name] !== 'string' ||
+        core.bytes(details[name]) > 1024 || /[\u0000-\u001f\u007f]/.test(details[name]))) fail('Use a ' + name + ' string of at most 1 KiB without control characters.');
+    if (details.user?.includes(':')) fail('HTTP user names cannot contain a colon.');
+    // Credentials are sent preemptively as Basic authentication; an explicit
+    // Authorization header wins. Cross-origin redirects drop it with all
+    // other caller headers. Challenge-based schemes such as Digest are not used.
+    if ((details.user || details.password) && !Object.keys(safeHeaders).some(name => name.toLowerCase() === 'authorization')) {
+      const credentials = new TextEncoder().encode((details.user || '') + ':' + (details.password || ''));
+      safeHeaders.Authorization = 'Basic ' + btoa(String.fromCharCode(...credentials));
     }
     if (core.bytes(JSON.stringify(safeHeaders)) > 32768) fail('Request headers exceed 32 KiB.');
     const responseType = details.responseType || 'text';

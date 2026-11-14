@@ -105,9 +105,14 @@ async function runExecution({ b, manager, send, check, until, browse, scriptSour
     check('Promise list confirms the native cookie value and flags', read.ok && read.value.length === 1 && read.value[0].value === 'synthetic' && read.value[0].httpOnly && read.value[0].sameSite === 'lax');
     check('Legacy deletion callback succeeds', (await request(cookies, 'delete', { name: 'offline_execution_set' }, true)).ok);
     check('Native cookie deletion is observable', (await request(cookies, 'list', { name: 'offline_execution_set' })).value.length === 0);
-    for (const details of [{ url: 'https://unrelated.invalid/' }, { storeId: 'foreign-store' }, { partitionKey: { topLevelSite: 'https://unrelated.invalid' } }]) {
-      check('Cookie scope/options fail closed: ' + Object.keys(details)[0], !(await request(cookies, 'list', details)).ok);
+    for (const details of [{ url: 'https://unrelated.invalid/' }, { storeId: 'foreign-store' }, { partitionKey: { topLevelSite: 'https://unrelated.invalid' } }, { partitionKey: {} }]) {
+      check('Cookie scope/options fail closed: ' + JSON.stringify(details), !(await request(cookies, 'list', details)).ok);
     }
+    const ownSite = await b.evaluate('location.protocol+"//"+location.hostname', cookies);
+    evidence.ownPartitionList = await request(cookies, 'list', { partitionKey: { topLevelSite: ownSite } });
+    check('Cookie lists can address the calling tab’s own top-level partition', evidence.ownPartitionList.ok);
+    const firstParty = await request(cookies, 'list', { firstPartyDomain: '' });
+    check('firstPartyDomain is accepted only by Firefox', evidence.browser === 'firefox' ? firstParty.ok : !firstParty.ok && /only in Firefox/.test(firstParty.error));
     await b.evaluate('history.pushState({},"","/execution/outside-cookie-scope")', cookies);
     check('Same-document scope exit revokes cookie access', !(await request(cookies, 'set', { name: 'offline_execution_denied' })).ok);
     cookies = await page('/execution/cookies-again'); await until('document.documentElement.dataset.cookieReady', cookies);
@@ -120,6 +125,22 @@ async function runExecution({ b, manager, send, check, until, browse, scriptSour
     const url = await b.evaluate('location.href', cookies);
     check('Rejected cookie writes never reached the native jar', (await b.evaluate(api + '.cookies.getAll({url:' + JSON.stringify(url) + ',name:"offline_execution_denied"})', manager)).length === 0);
     check('No privileged cookie API leaks into the page world', await b.evaluate('typeof GM_cookie==="undefined"&&typeof GM==="undefined"', cookies));
+    if (evidence.browser === 'firefox') {
+      // Firefox containers: inherit the source container, or honor an index.
+      // The cookies permission is granted above; Firefox requires it for this.
+      const origin = await b.evaluate('location.origin', cookies);
+      await save('Firefox containers', '/execution/container-*', '// @grant GM.openInTab\n',
+        'const tag=location.pathname.split("-").pop();GM.openInTab(location.origin+"/execution/target-"+tag,tag==="explicit"?{container:2,active:false}:{active:false});');
+      const opened = api + '.tabs.query({}).then(tabs=>tabs.filter(tab=>/\\/execution\\/(container|target)-/.test(tab.url)))';
+      await b.evaluate(api + '.tabs.create({url:' + JSON.stringify(origin + '/execution/container-inherit') + ',cookieStoreId:"firefox-container-1",active:false}).then(()=>true)', manager);
+      await page('/execution/container-explicit');
+      await until(opened + '.then(tabs=>["inherit","explicit"].every(tag=>tabs.some(tab=>tab.url.endsWith("/execution/target-"+tag))))');
+      const stores = await b.evaluate(opened + '.then(tabs=>Object.fromEntries(tabs.map(tab=>[tab.url.replace(/^.*\\/execution\\//,""),tab.cookieStoreId])))', manager);
+      evidence.firefoxContainers = stores;
+      check('Firefox GM.openInTab keeps the source tab’s container', stores['container-inherit'] === 'firefox-container-1' && stores['target-inherit'] === 'firefox-container-1');
+      check('Firefox GM.openInTab honors an explicit container index', stores['container-explicit'] === 'firefox-default' && stores['target-explicit'] === 'firefox-container-2');
+      await b.evaluate(opened + '.then(tabs=>' + api + '.tabs.remove(tabs.filter(tab=>tab.cookieStoreId!=="firefox-default"||/target-/.test(tab.url)).map(tab=>tab.id))).then(()=>true)', manager);
+    }
     check('Ad blocker remains enabled during execution compatibility tests', (await send({ type: 'GET_STATE' })).settings.enabled);
   } finally {
     for (const id of ids) {

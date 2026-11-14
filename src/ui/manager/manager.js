@@ -230,11 +230,14 @@
     el('checkUpdate').hidden = el('updateHelp').hidden = !linked;
     el('checkUpdate').disabled = locked || !linked || changed || stale() || Boolean(assetJob);
     preview();
-    try { helperPermissions = editor ? BlockAdsUserScriptActions.permissions(core.parse(el('scriptSource').value).grants, /Firefox\//.test(navigator.userAgent)) : []; }
+    let grants = [];
+    try { grants = editor ? core.parse(el('scriptSource').value).grants : []; helperPermissions = BlockAdsUserScriptActions.permissions(grants, /Firefox\//.test(navigator.userAgent)); }
     catch { helperPermissions = []; } // The source preview displays invalid metadata.
     const missing = helperPermissions.filter(permission => !allowedPermissions.has(permission));
+    // Firefox tab helpers need the cookies permission only to keep containers.
     const helperLabels = { clipboardWrite: 'copy to the clipboard', notifications: 'show notifications', downloads: 'save files',
-      offscreen: 'report upload progress', webRequestBlocking: 'check Firefox redirect destinations', cookies: 'read and change cookies, including HttpOnly cookies' };
+      offscreen: 'report upload progress', webRequestBlocking: 'check Firefox redirect destinations',
+      cookies: grants.some(grant => /^GM[._]cookie$/.test(grant)) ? 'read and change cookies, including HttpOnly cookies' : 'open tabs in Firefox containers' };
     el('helperAccess').hidden = !helperPermissions.length;
     el('helperAccess').classList.toggle('needed', missing.length > 0);
     el('helperAccessText').textContent = missing.length

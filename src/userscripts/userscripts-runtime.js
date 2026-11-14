@@ -206,6 +206,18 @@
         // Preserve the originating window, including its private-browsing mode.
         const options = { url: details.url, active: details.active, pinned: details.pinned, windowId: parent.windowId };
         if (details.insert) Object.assign(options, { index: parent.index + 1, openerTabId: parent.id });
+        // Firefox containers: keep the source tab's container unless the script
+        // chooses one. Other browsers have no containers and ignore the option.
+        if (typeof api.runtime.getBrowserInfo === 'function') {
+          if (parent.incognito && details.container !== undefined) throw new Error('Firefox containers are unavailable in private windows.');
+          const store = details.container === undefined ? parent.cookieStoreId : details.container === 0 ? 'firefox-default' : 'firefox-container-' + details.container;
+          if (!parent.incognito && store && store !== 'firefox-default') {
+            // Firefox requires the cookies permission for any cookieStoreId.
+            if (!await api.permissions.contains({ permissions: ['cookies'] })) throw new Error('Allow helper access in Modules & scripts to open tabs in Firefox containers.');
+            if (tabs.get(job.key) !== job) return;
+            options.cookieStoreId = store;
+          }
+        }
         const created = await api.tabs.create(options);
         if (tabs.get(job.key) !== job) return;
         if (!Number.isInteger(created?.id)) throw new Error('The browser did not return the created tab.');
