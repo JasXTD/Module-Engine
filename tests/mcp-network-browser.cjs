@@ -1,0 +1,47 @@
+/* Real MCP reads of native webRequest metadata; only owned loopback requests. */
+async function runNetworkReads({ b, manager, page, client, pair, click, check, until, browse, pages, evidence, transport, fixtureState }) {
+  const get=(expression,target=page)=>b.evaluate(expression,target);
+  const snapshot=()=>get("(globalThis.browser||chrome).storage.session.get('moduleEngineNetworkLog')",manager);
+  check('Existing script/log approval does not grant network access', (await client.tool('get_network_log')).ok===false);
+  const network=await b.open(await get("(globalThis.browser||chrome).runtime.getURL('src/ui/network/network.html')",manager));pages.push(network);
+  await until("state?.available&&!busy&&!reading&&!document.getElementById('startCapture').disabled",network);
+  check('MCP approval has not started native capture',await get('!state.active',network));
+  check('Network sidebar opens MCP separately to preserve capture',await get("(()=>{const a=document.querySelector('.rail-pages a[href=\"../mcp/debug.html\"]');return a?.textContent.trim()==='MCP'&&a.target==='_blank'&&a.rel.includes('noopener')})()",network));
+  check('MCP sidebar opens Network separately to preserve approval',await get("document.querySelector('.rail-pages a[href=\"../network/network.html\"]').target==='_blank'"));
+  await click('disconnect',page);await pair(page,['status','network']);
+  const prior=await snapshot(),idle=await client.tool('get_network_log');
+  check('A network read reports stopped capture without starting it',idle.ok&&!idle.capture.active);
+  check('Reading a stopped log does not write or clear session storage',JSON.stringify(await snapshot())===JSON.stringify(prior));
+  check('Network-only approval cannot read installed source or diagnostic logs',(await client.tool('get_logs')).ok===false&&(await client.tool('list_scripts')).ok===false);
+  await click('startCapture',network);await until('state.active&&!busy',network);
+  const fixture=await browse('/net/page');pages.push(fixture);
+  await get("fetch('/net/post?mcp-private-query=1#mcp-private-fragment',{method:'POST',headers:{'X-Fixture-Secret':'mcp-private-header'},body:'mcp-private-body'}).then(r=>r.text())",fixture);
+  await get("fetch('/net/redirect').then(r=>r.text())",fixture);
+  await get("fetch('/net/http-error').then(r=>r.text())",fixture);
+  await get("fetch('/net/fail').then(()=>false,()=>true)",fixture);
+  const blocked=await get("fetch('http://localhost:'+location.port+'/net/ad.js').then(()=>false,()=>true)",fixture);
+  check('Local ad canary stays blocked while MCP and capture run',blocked&&!fixtureState.networkHits.some(h=>h.path==='/net/ad.js'));
+  await until("latest.some(r=>r.url.endsWith('/net/post')&&r.state==='complete')&&latest.some(r=>r.url.endsWith('/net/fail')&&r.state==='error')",network);
+  const live=await client.tool('get_network_log',{url:'/net/post'});
+  check('Live MCP read sees metadata without taking ownership or stopping capture',live.ok&&live.capture.active&&live.entries.length===1&&await get('state.active&&state.ownsCapture',network));
+  await click('stopCapture',network);await until('!state.active&&!busy',network);
+  const before=await snapshot();
+  const result=await client.tool('get_network_log',{url:'/net/',limit:100});
+  (evidence.mcpNetwork||=[]).push({transport,result});
+  const post=result.entries?.find(r=>r.url.endsWith('/net/post'));
+  check('MCP returns native method, status, type and timing',result.ok&&post?.method==='POST'&&post.statusCode===201&&post.type==='xmlhttprequest'&&post.startedAt!==null&&post.endedAt>=post.startedAt);
+  check('MCP retains redirects, HTTP errors and network failures',result.entries.some(r=>r.state==='redirect'&&r.redirectTo.endsWith('/net/final'))&&result.entries.some(r=>r.statusCode===418)&&result.entries.some(r=>r.url.endsWith('/net/fail')&&r.error));
+  check('MCP metadata excludes credentials, queries, fragments, headers and bodies',!/private-|mcp-private|requestBody|requestHeaders|responseHeaders/.test(JSON.stringify(result.entries))&&result.entries.every(r=>!r.url.includes('?')&&!r.url.includes('#')));
+  const filtered=await client.tool('get_network_log',{url:'/net/post',method:'post',type:'xmlhttprequest',statusCode:201,state:'complete',tabId:post.tabId});
+  check('MCP combines request filters without making requests',filtered.ok&&filtered.entries.length===1&&filtered.entries[0].id===post.id);
+  const limited=await client.tool('get_network_log',{url:'/net/',limit:1});
+  check('MCP entry limit selects newest matching records and reports omitted matches',limited.entries.length===1&&limited.matched>1&&limited.truncated&&limited.entries[0].id===result.entries.at(-1).id);
+  for(const args of [{start:true},{clear:true},{stop:true},{limit:101}])check('MCP rejects capture controls or oversized reads: '+JSON.stringify(args),(await client.tool('get_network_log',args)).error?.code===-32602);
+  check('MCP advertises no capture control tool',(await client.tool('start_network_capture')).error?.code===-32602);
+  check('Network MCP reads leave captured session data identical',JSON.stringify(await snapshot())===JSON.stringify(before));
+  check('MCP page lists the read without persisting request contents',await get("document.getElementById('reads').textContent.includes('module_engine_get_network_log')&&!document.getElementById('reads').textContent.includes('/net/post')"));
+  await click('disconnect',page);check('Disconnect revokes network reads immediately',(await client.tool('get_network_log')).ok===false);
+  await pair(page);check('Reconnecting without network consent cannot inherit it',(await client.tool('get_network_log')).ok===false);
+  await b.closePage(network);pages.splice(pages.indexOf(network),1);
+}
+module.exports={runNetworkReads};

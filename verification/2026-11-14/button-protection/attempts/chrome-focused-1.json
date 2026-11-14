@@ -1,0 +1,610 @@
+{
+  "browser": "chrome",
+  "temporary": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-JEFPCd",
+  "sourceHashes": {
+    "manifest.json": "d4cb6eb9abfecafea41ebecfbf8e37a647ce9abde7f5a51e06cb178aeefbebe6",
+    "modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "vendor/publicsuffix/LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "vendor/publicsuffix/provenance.json": "26c1b30fa717beaf478f604dc55bb92bfb311084cdece5608f97ec8dcf9945c7",
+    "vendor/publicsuffix/suffixes.js": "13a92053d42e95d9bfeb080abcd3bfb33b98f80ad9ad9e5d1984c1016d08d0b9",
+    "userscripts-matching.js": "3c1f971a1d8d2c7d69b489e852439d3ffc6bc62774de121a4a05dd4a1b538f55",
+    "userscripts-page.js": "5f420f000021145dafba8ff383a3ec3e124159c79046c28fbde27a1f2a21dd24",
+    "userscripts-core.js": "8aacde5ee477baa09e8977421a3810509de7d9099284d58d5920b199b46ec447",
+    "userscripts-network.js": "a8ee44d29d856db80272c2c7e45263696278a5bc2838e8ce8de111249e3ab7fd",
+    "userscripts-offscreen.js": "43e5bf89a46a5d828537fbf118275e06b9444a0feed8a24568dc852f2dce9fe3",
+    "userscripts-xhr.js": "d3f79824c20450617bd10a64b299932f05422c1d33c16eb2e23ee520d802bbfb",
+    "clipboard.html": "a3cf31b81b68cd77c6ed2c33076a63ea70e89b81b11885cf0b717733844d7ead",
+    "clipboard.js": "a4306ab66e7dcc0bd2b9156f1f46e6898d9a9ba719827a0b5569d79a4307f8b3",
+    "userscripts-actions.js": "7f716258123e896e9c3d21adc1a9bde53f6ae100ef83d6da6fbc27d176c1e057",
+    "userscripts-runtime.js": "97150fe6012be3f47a390a43eb45b6ffdd76ac1d7f447ef357d2dae1754146ce",
+    "debug-protocol.js": "f1513979bbf5b411ad3977e53da49232d3354f2fb686162d0f8ce3f0817d8f1a",
+    "debug-runtime.js": "514f4c6ec0ee725c23f5c17e3a1c853c7a1db6c9957ea91a44ea11e1e3c56b63",
+    "debug.html": "58ea24560bf800987355289fdb7353d88fcca5ea6e13335b1c2d47b73e922968",
+    "debug.css": "16bb0fa54480af29eadca06064eb42392dc6cd2bd7d195c7d0c4ba0577c7a145",
+    "debug.js": "7bbce8cb84429fd7a325f5d820d3b014d04be02c4383b37647038e945c2ab548",
+    "docs/MCP.md": "618164b2e9d816efc1e8728f4304ec23f27314545120f18bb798e9dce4c63088",
+    "manager.html": "7925f5b17c96c2aba0c912d042054f4cef9be7d83a8aabf04cff6acdc2b68f5d",
+    "manager.css": "ca356c5fd73dafddad630134317114978a6a266740d6eceed481e24c175d4ee9",
+    "manager.js": "2d65f7f699f19116c6d9235c6959e71f10cb639456110a9cc8f3ba29453b340d",
+    "userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "userscripts-editor-worker.js": "d9eea4c4ee605d9c55da85e15c89abaab5a5c656f15dbf66ac9e56d2d3732eb9",
+    "userscripts-lint.js": "2d04a82b9e75736af3708537631ae21e18ce6e09fb5037baeba83b1192cf7501",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "overlays.js": "339c309b5c4dd90c412d8dc16a85708d694c7051aba53c9e8a69fe5a775205cf",
+    "reddit.js": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+    "prompts.js": "e0510454f1260759b14dbd1b849e2467ac0ef17eafb32000111376c95fb99378",
+    "buttons.js": "27c7f200477c7be8bfafade026b28646b18b66ea51b58ba9471061934efa9151",
+    "notification-guard.js": "c8257c83c9fd1a13633e037bf4be1ad4fdf7403e39c885267bd11b8328a1aacc",
+    "picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "background.js": "312f35e8d7a52b48e000d7fa92c3382e1d3cb003ddf342059378ba067bf0eb00",
+    "content.js": "e3f772c87ee45a0489030f4a0988c58ec2c45674b8ad9fb9379549ecc39de2ec",
+    "youtube.js": "6dc49f0fd662b3eacba8e2e4310c70252b9012006a6105587709461e36de3823",
+    "popups.js": "853f41f22727d19292335c3f996c008f7c6889996445967c02a86da187482826",
+    "flags.js": "b54594940e068fde9bde81914bf19db16c22c89ccab4c35c07d27117a5edf6e1",
+    "popup.js": "3a8c1f556bfac67c2ea0e3c90c6b3dc1604c8533d70c33c0dc3cf4676e0a7812",
+    "popup.html": "ee67280eecad879ae0ab29eb78aebe1ae910bdbfe04f6200992abddf2f485ec4",
+    "popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "ui.css": "f37433547f44e83938d09536798078b967a60bbfa4864ca8fe5bb1adac93e2d4",
+    "log.html": "b0df4d128f44f33acc2110a8e063e54e3c1e74cd338b69d208c077ed018a5bb6",
+    "log.js": "6deca74725505ace3d04dd6b31ee946eff6eddcb67ab60a3cc78d0b640137880",
+    "log.css": "89676dd265630f2875c38b2d2847ccb986ef84cefdec706f7af23f81a457d54e",
+    "lists.html": "fa226d1d17a26e77afbe57d17985d967ea0100339f8ef4c04a642097726d0755",
+    "lists.js": "14d961c4c21c2de0b473ca633a9917e7578d5654f84cdca9255be1da7924ab1d",
+    "rules/community-cosmetic.json": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "rules/threat-evidence.json": "a4ca45a6c065ac4192674528e6029d1f845e13077f3ba63850d574200c7fac74",
+    "rules/threat-policy.json": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "rules/ads.json": "b6d34d80f60a024fa256469c2653eb0c413f138e45212fe989fa4ecfe91a7a83",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/community.json": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94"
+  },
+  "fixtureOverrides": [
+    {
+      "file": "reddit.js",
+      "purpose": "Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route",
+      "originalSha256": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+      "fixtureSha256": "956a8243654d1a7dd475e536002637bab787f40201761302834ad860ca85e03c"
+    }
+  ],
+  "checks": [
+    "extension loads and reports verified state (Reddit hostname alias is limited to the local fixture)",
+    "popup has no startup error",
+    "recognized advertising Download control is stopped before page handlers and navigation",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "deceptive adPlay left activation stops before early page handlers and navigation",
+    "adPlay left activation creates no tab",
+    "adPlay left reports the fixed blocking reason",
+    "deceptive adDownload Enter activation stops before early page handlers and navigation",
+    "adDownload Enter activation creates no tab",
+    "adDownload Enter reports the fixed blocking reason",
+    "deceptive adPlay Space activation stops before early page handlers and navigation",
+    "adPlay Space activation creates no tab",
+    "adPlay Space reports the fixed blocking reason",
+    "deceptive adDownload middle activation stops before early page handlers and navigation",
+    "adDownload middle activation creates no tab",
+    "adDownload middle reports the fixed blocking reason",
+    "deceptive sponsored left activation stops before early page handlers and navigation",
+    "sponsored left activation creates no tab",
+    "sponsored left reports the fixed blocking reason",
+    "deceptive cover left activation stops before early page handlers and navigation",
+    "cover left activation creates no tab",
+    "cover left reports the fixed blocking reason",
+    "deceptive cover left activation stops before early page handlers and navigation",
+    "cover left activation creates no tab",
+    "cover left reports the fixed blocking reason",
+    "deceptive playInstaller left activation stops before early page handlers and navigation",
+    "playInstaller left activation creates no tab",
+    "playInstaller left reports the fixed blocking reason",
+    "feedback uses one nonmodal, click-through notice and adds no page locks",
+    "ordinary legitPlay receives a native click through page capture and target handlers",
+    "ordinary legitDownload receives a native click through page capture and target handlers",
+    "ordinary vendor receives a native click through page capture and target handlers",
+    "ordinary installer receives a native click through page capture and target handlers",
+    "ordinary playMedia receives a native click through page capture and target handlers",
+    "ordinary articleDownload receives a native click through page capture and target handlers",
+    "ordinary formDownload receives a native click through page capture and target handlers",
+    "normal form submission and real local video playback remain functional",
+    "ordinary realDownload receives a native click through page capture and target handlers",
+    "a normal browser download saves byte-exact local CSV in the disposable directory",
+    "ordinary dynamic receives a native click through page capture and target handlers",
+    "deceptive dynamic left activation stops before early page handlers and navigation",
+    "dynamic left activation creates no tab",
+    "dynamic left reports the fixed blocking reason",
+    "ordinary dynamic receives a native click through page capture and target handlers",
+    "ordinary hiddenLabel receives a native click through page capture and target handlers",
+    "ordinary newsDownload receives a native click through page capture and target handlers",
+    "deceptive shadowPlay left activation stops before early page handlers and navigation",
+    "shadowPlay left activation creates no tab",
+    "shadowPlay left reports the fixed blocking reason",
+    "ordinary cover receives a native click through page capture and target handlers",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "switching the guard off removes its notice",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "trusted button exception leaves cosmetic ad blocking active",
+    "button settings preserve the ad-network ruleset",
+    "deceptive adDownload left activation stops before early page handlers and navigation",
+    "adDownload left activation creates no tab",
+    "adDownload left reports the fixed blocking reason",
+    "ordinary legitPlay receives a native click through page capture and target handlers",
+    "button guard coexists with selected-site popup and notification guards",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "native button toggle leaves notification, install and ad filters on",
+    "ordinary adDownload receives a native click through page capture and target handlers",
+    "new popup button control fits the narrow layout and renders verified state",
+    "deceptive playInstaller left activation stops before early page handlers and navigation",
+    "playInstaller left activation creates no tab",
+    "playInstaller left reports the fixed blocking reason",
+    "the feedback notice expires and removes itself",
+    "no uncaught errors during the focused button fixture checks",
+    "isolated browser process is closed after testing"
+  ],
+  "startedAt": "2026-11-13T16:59:17.148Z",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.79",
+    "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.43"
+  },
+  "launch": {
+    "transport": "pipe",
+    "networkMode": "offline",
+    "launcherPid": 33928,
+    "browserPid": 33928,
+    "relaunched": false
+  },
+  "success": true,
+  "stderr": "",
+  "cleanup": {
+    "browserPid": 33928,
+    "forced": true,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "networkGuard": {
+    "policy": "deny all proxy; only loopback bypass; speculative DNS disabled",
+    "denied": [
+      {
+        "method": "GET",
+        "destination": "clients2.google.com"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.gstatic.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "accounts.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "accounts.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "optimizationguide-pa.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "accounts.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "accounts.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "content-autofill.googleapis.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "www.google.com:443"
+      },
+      {
+        "method": "CONNECT",
+        "destination": "update.googleapis.com:443"
+      }
+    ],
+    "peerResets": 0,
+    "errors": []
+  }
+}

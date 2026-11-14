@@ -1,5 +1,5 @@
 const { test } = require('node:test'), assert = require('node:assert/strict');
-require('../userscripts-offscreen.js');
+require('../src/userscripts/userscripts-offscreen.js');
 const event = () => { const listeners = new Set(); return { addListener: fn => listeners.add(fn), fire: value => { for(const fn of listeners) fn(value); } }; };
 function fixture() {
   const state={open:false,creates:0,closes:0,connects:0,granted:true,ports:[]};

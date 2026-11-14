@@ -78,7 +78,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       async executeScript(options) {
         await fault('executeScript');
         state.executions.push(clone(options));
-        if (options.files?.includes('picker.js')) return [{ frameId:0, result:true }];
+        if (options.files?.includes('src/blocking/picker.js')) return [{ frameId:0, result:true }];
         return [];
       },
       async getRegisteredContentScripts() {
@@ -91,6 +91,15 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
         await fault('scripts');
         if (scripts.some(script => state.scripts.some(existing => existing.id === script.id))) throw new Error('Duplicate script ID');
         state.scripts.push(...clone(scripts));
+      },
+      async updateContentScripts(scripts) {
+        await fault('scripts');
+        if (scripts.some(script => !state.scripts.some(existing => existing.id === script.id))) throw new Error('Missing script ID');
+        state.scripts = state.scripts.map(existing => {
+          const result = { ...existing, ...clone(scripts.find(script => script.id === existing.id) || {}) };
+          if (!result.excludeMatches?.length) delete result.excludeMatches;
+          return result;
+        });
       },
       async unregisterContentScripts({ ids }) {
         await fault('scripts');
@@ -105,7 +114,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     delete api.declarativeNetRequest.onRuleMatchedDebug;
     api.declarativeNetRequest.testMatchOutcome = () => { throw new Error('Firefox feedback is disabled'); };
   }
-  const context = vm.createContext({ chrome: api, URL, TextEncoder, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), fetch: async url => {
+  const context = vm.createContext({ chrome: api, URL, TextEncoder, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), clearTimeout: clearImmediate, fetch: async url => {
     if (url === 'chrome-extension://test/rules/community-cosmetic.json') {
       state.fetches.push(url);
       await fault('cosmetic');
@@ -121,9 +130,9 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     await fault('policy');
     return { ok: true, text: async () => state.policyText };
   } });
-  for (const file of ['shared.js', 'flags.js', 'cosmetic.js', 'network.js', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'background.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of manifest.background.scripts) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   const ready = vm.runInContext('operationQueue', context);
-  const send = async (message, sender = { id: 'test', url: 'chrome-extension://test/popup.html' }) => { await ready; return new Promise(resolve => {
+  const send = async (message, sender = { id: 'test', url: 'chrome-extension://test/src/ui/popup/popup.html' }) => { await ready; return new Promise(resolve => {
     const retained = listeners.message(clone(message), sender, response => resolve(clone(response)));
     if (!retained) resolve(undefined);
   }); };
@@ -145,7 +154,7 @@ test('modules preserve ad blocking and saved settings when userscript access is 
 test('every module and script management command requires an extension page', async () => {
   const h=harness();
   for(const type of ['MODULES_GET','MODULE_SET','US_LIST','US_SAVE','US_ENABLE','US_DELETE','US_MENU_LIST','US_MENU_RUN','US_PREPARE_ASSETS','US_CANCEL_ASSETS','US_ASSET_READ','US_FETCH_SOURCE','US_CHECK_UPDATE','US_CANCEL_SOURCE','US_APPLY_SOURCE']) {
-    for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}},{id:'other',url:'chrome-extension://test/manager.html'}]) {
+    for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}},{id:'other',url:'chrome-extension://test/src/ui/manager/manager.html'}]) {
       assert.equal((await h.send({type,id:'blocking',enabled:false},sender)).ok,false);
     }
   }
@@ -192,7 +201,7 @@ test('custom network saves serialize with other editors and refuse a stale base'
 test('network filters keep extension-only authority and reject invalid saves atomically', async () => {
   const h=harness();
   const command={type:'SAVE_NETWORK_FILTERS',previous:'',text:'||example.test^'};
-  for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}}, {id:'other',url:'chrome-extension://test/lists.html'}]) {
+  for(const sender of [{id:'test',url:'https://example.test/',tab:{id:1}}, {id:'other',url:'chrome-extension://test/src/ui/lists/lists.html'}]) {
     assert.equal((await h.send(command,sender)).ok,false);
   }
   assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{customNetworkFilters:command.text}})).ok,false);
@@ -260,7 +269,7 @@ test('only the extension interface can start a picker on a supported active page
 test('picker sessions bind exact host, top frame, document, URL and short-lived authority', async () => {
   const h = harness(), session = await openPicker(h), sender = pickerSender();
   assert.equal(session.domain,'www.example.com');
-  assert.deepEqual(h.state.executions.at(-1),{target:{tabId:1,frameIds:[0]},files:['cosmetic.js','picker-core.js','picker.js']});
+  assert.deepEqual(h.state.executions.at(-1),{target:{tabId:1,frameIds:[0]},files:['src/blocking/cosmetic.js','src/blocking/picker-core.js','src/blocking/picker.js']});
   for (const altered of [{...sender,frameId:2},{...sender,documentId:'other'},{...sender,url:'https://other.example/'},{...sender,id:'other'}]) {
     assert.equal((await h.send({type:'SAVE_PICKER_FILTER',token:session.token,selector:'.picked'},altered)).ok,false);
   }
@@ -508,7 +517,7 @@ for (const failure of ['dynamic', 'static', 'scripts', 'save', 'ignoreDynamic'])
     } });
     assert.equal(response.ok, false);
     assert.deepEqual(h.state.dynamic, before.dynamic);
-    assert.deepEqual(h.state.scripts, before.scripts);
+    assert.deepEqual(h.state.scripts.toSorted((a, b) => a.id.localeCompare(b.id)), before.scripts.toSorted((a, b) => a.id.localeCompare(b.id)));
     assert.deepEqual(h.state.enabled.sort(), before.enabled.sort());
     assert.deepEqual(h.state.storage.customBlockedDomains, before.storage.customBlockedDomains);
     assert.deepEqual(h.state.storage.rulesets, before.storage.rulesets);
@@ -553,7 +562,7 @@ test('master pause clears network rules, restart reconciliation restores saved s
 test('untrusted callers, malformed patches and quota violations cannot change settings', async () => {
   const h = harness({}, 2);
   await h.send({ type: 'GET_STATE' });
-  for (const sender of [{ id: 'other', url: 'chrome-extension://test/popup.html' }, { id: 'test', url: 'https://example.test/' }]) {
+  for (const sender of [{ id: 'other', url: 'chrome-extension://test/src/ui/popup/popup.html' }, { id: 'test', url: 'https://example.test/' }]) {
     assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }, sender)).ok, false);
   }
   for (const patch of [{ enabled: 'false' }, { rulesets: { typo: false } }, { extra: true }, { customBlockedDomains: 'bad' }]) {
@@ -567,13 +576,13 @@ test('untrusted callers, malformed patches and quota violations cannot change se
 test('cosmetic state respects a cross-origin top-page exception using browser sender metadata', async () => {
   const h = harness({ whitelistedDomains: ['parent.example'] });
   const frame = { id: 'test', url: 'https://child.example/frame', tab: { id: 1, url: 'https://shop.parent.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: false });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: false, notificationPrompts: false, installPrompts: false, deceptiveButtons: false });
   const other = { ...frame, tab: { id: 1, url: 'https://unrelated.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: true, rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, id: 'external' })).ok, false);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }, frame)).ok, false);
 });
@@ -707,26 +716,187 @@ test('crossing expiry during an edit and storage rollback never restores expired
   assert.equal((await h.send({ type: 'GET_STATE' })).threatStatus.available, false);
 });
 
+test('prompt protection migrates on without changing ad preferences and registers only the top document', async () => {
+  const h = harness({ rulesets: { ads_ruleset: false }, cosmeticFiltering: false });
+  const result = await h.send({ type: 'GET_STATE' });
+  assert.equal(result.ok, true);
+  assert.equal(result.settings.notificationPromptBlocking, true);
+  assert.equal(result.settings.deceptivePromptBlocking, true);
+  assert.equal(result.settings.rulesets.ads_ruleset, false);
+  assert.equal(result.settings.cosmeticFiltering, false);
+  assert.deepEqual(result.settings.promptAllowedDomains, []);
+  const guard = h.state.scripts.find(script => script.id === 'notification-guard');
+  assert.deepEqual(guard.matches, ['http://*/*', 'https://*/*']);
+  assert.deepEqual(guard.js, ['src/blocking/notification-guard.js']);
+  assert.equal(guard.world, 'MAIN'); assert.equal(guard.runAt, 'document_start');
+  assert.equal(guard.allFrames, false, 'cross-origin top-page exceptions cannot be read by a frame registration');
+  const frame = { id: 'test', url: 'https://child.example/', tab: { id: 1, url: 'https://top.example/' } };
+  const page = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.equal(page.notificationPrompts, true); assert.equal(page.installPrompts, true); assert.equal(page.enabled, false);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { notificationPromptBlocking: false } });
+  assert.equal(h.state.scripts.some(script => script.id === 'notification-guard'), false);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).installPrompts, true);
+});
+
+test('prompt exceptions inherit parent scopes, remove exact list entries, and preserve network filtering', async () => {
+  const h = harness({ promptAllowedDomains: ['parent.example', 'shop.parent.example', 'neighbor.example'], customBlockedDomains: ['blocked.example'] });
+  await h.ready;
+  const network = clone(h.state.dynamic);
+  const guard = () => h.state.scripts.find(script => script.id === 'notification-guard');
+  assert.ok(guard().excludeMatches.includes('*://*.parent.example/*'));
+  const frame = { id: 'test', url: 'https://child.example/', tab: { id: 1, url: 'https://shop.parent.example/' } };
+  let state = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
+  assert.equal(state.notificationPrompts, false); assert.equal(state.installPrompts, false); assert.equal(state.ads, true);
+  state = await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, { ...frame, tab: { id: 1, url: 'https://other.example/' } });
+  assert.equal(state.notificationPrompts, true, 'page-supplied hostname cannot create an exception');
+  await h.send({ type: 'REMOVE_PROMPT_SITE', domain: 'shop.parent.example' });
+  assert.deepEqual(h.state.storage.promptAllowedDomains, ['neighbor.example', 'parent.example']);
+  await h.send({ type: 'SET_SITE_PROMPTS', domain: 'shop.parent.example', allowed: false });
+  assert.deepEqual(h.state.storage.promptAllowedDomains, ['neighbor.example']);
+  await h.send({ type: 'SET_SITE_PROMPTS', domain: 'https://www.trusted.example/path', allowed: true });
+  assert.ok(guard().excludeMatches.includes('*://*.trusted.example/*'));
+  assert.deepEqual(h.state.dynamic, network);
+  await h.send({ type: 'SET_SITE_PAUSED', domain: 'top.example', paused: true });
+  assert.ok(guard().excludeMatches.includes('*://*.top.example/*'));
+  const paused = await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, tab: { id: 1, url: 'https://top.example/' } });
+  assert.equal(paused.notificationPrompts, false); assert.equal(paused.installPrompts, false);
+});
+
+test('button protection migrates on, follows trusted native frame/top exceptions, and remains independent of cosmetics and ads', async () => {
+  const h = harness({cosmeticFiltering:false,notificationPromptBlocking:false,deceptivePromptBlocking:false});
+  await h.ready;
+  const frame={id:'test',url:'https://child.example/',tab:{id:1,url:'https://shop.parent.example/'}};
+  const state=() => h.send({type:'GET_COSMETIC_STATE'},frame);
+  assert.equal((await h.send({type:'GET_STATE'})).settings.deceptiveButtonBlocking,true);
+  assert.equal((await state()).deceptiveButtons,true);
+  const network=clone(h.state.dynamic), rules=clone(h.state.enabled);
+  await h.send({type:'UPDATE_SETTINGS',patch:{deceptiveButtonBlocking:false}});
+  assert.equal((await state()).deceptiveButtons,false);
+  assert.deepEqual(h.state.dynamic,network);assert.deepEqual(h.state.enabled,rules);
+  await h.send({type:'UPDATE_SETTINGS',patch:{deceptiveButtonBlocking:true,promptAllowedDomains:['parent.example']}});
+  assert.equal((await state()).deceptiveButtons,false);assert.equal((await state()).ads,true);
+  await h.send({type:'UPDATE_SETTINGS',patch:{promptAllowedDomains:['child.example']}});
+  assert.equal((await state()).deceptiveButtons,false);
+  await h.send({type:'UPDATE_SETTINGS',patch:{promptAllowedDomains:[]}});
+  assert.equal((await h.send({type:'GET_COSMETIC_STATE',domain:'parent.example'},frame)).deceptiveButtons,true);
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{deceptiveButtonBlocking:false}},frame)).ok,false);
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{deceptiveButtonBlocking:'yes'}})).ok,false);
+  h.state.faults.save=1;
+  assert.equal((await h.send({type:'UPDATE_SETTINGS',patch:{deceptiveButtonBlocking:false}})).ok,false);
+  assert.equal((await state()).deceptiveButtons,true);
+  await h.send({type:'UPDATE_SETTINGS',patch:{enabled:false}});
+  assert.equal((await state()).deceptiveButtons,false);
+});
+
+test('only extension pages can change prompt protection and invalid values fail visibly', async () => {
+  const h = harness(); await h.ready;
+  const frame = { id: 'test', url: 'https://page.example/', tab: { id: 1 } };
+  for (const message of [
+    { type: 'SET_SITE_PROMPTS', domain: 'page.example', allowed: true },
+    { type: 'REMOVE_PROMPT_SITE', domain: 'page.example' },
+    { type: 'UPDATE_SETTINGS', patch: { notificationPromptBlocking: false, deceptivePromptBlocking: false } }
+  ]) assert.equal((await h.send(message, frame)).ok, false);
+  for (const message of [
+    { type: 'SET_SITE_PROMPTS', domain: 'page.example', allowed: 'yes' },
+    { type: 'SET_SITE_PROMPTS', domain: '*.example', allowed: true },
+    { type: 'UPDATE_SETTINGS', patch: { notificationPromptBlocking: 1 } },
+    { type: 'UPDATE_SETTINGS', patch: { deceptivePromptBlocking: null } }
+  ]) assert.equal((await h.send(message)).ok, false);
+  assert.deepEqual(h.state.storage.promptAllowedDomains, []);
+  assert.equal(h.state.storage.notificationPromptBlocking, true);
+  assert.equal(h.state.storage.deceptivePromptBlocking, true);
+});
+
+for (const fault of ['scripts', 'save']) test(`prompt ${fault} update failure restores notification registration and ads`, async () => {
+  const h = harness({ customBlockedDomains: ['kept.example'] }); await h.ready;
+  const before = clone(h.state);
+  h.state.faults[fault] = 1;
+  const result = await h.send({ type: 'SET_SITE_PROMPTS', domain: 'new.example', allowed: true });
+  assert.equal(result.ok, false);
+  assert.deepEqual(h.state.scripts, before.scripts);
+  assert.deepEqual(h.state.dynamic, before.dynamic);
+  assert.deepEqual(h.state.enabled, before.enabled);
+  assert.deepEqual(h.state.storage.promptAllowedDomains, []);
+  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
+});
+
 test('YouTube page filter is registered only while the ad layer is active', async () => {
   const h = harness();
   await h.ready;
-  assert.equal(h.state.scripts.length, 1);
+  assert.equal(h.state.scripts.length, 2);
   const [script] = h.state.scripts;
   assert.deepEqual(script.matches, ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*']);
-  assert.deepEqual(script.js, ['youtube.js']);
+  assert.deepEqual(script.js, ['src/blocking/youtube.js']);
   assert.equal(script.world, 'MAIN');
   assert.equal(script.runAt, 'document_start');
   assert.equal('excludeMatches' in script, false);
   await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(h.state.scripts, []);
+  assert.deepEqual(h.state.scripts.map(script => script.id), ['notification-guard']);
   await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: true } } });
-  assert.equal(h.state.scripts.length, 1);
+  assert.equal(h.state.scripts.length, 2);
   await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
   assert.deepEqual(h.state.scripts, []);
   await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: true } });
   h.state.scripts = [];
   await h.listeners.startup();
-  assert.equal(h.state.scripts.length, 1, 'startup restores a missing registration');
+  assert.equal(h.state.scripts.length, 2, 'startup restores a missing registration');
+});
+
+test('unrelated page-script changes never unregister the YouTube filter, including rollback', async () => {
+  const h = harness(); await h.ready;
+  const writes = [];
+  for (const method of ['registerContentScripts', 'updateContentScripts', 'unregisterContentScripts']) {
+    const original = h.api.scripting[method];
+    h.api.scripting[method] = async args => {
+      writes.push({ method, args: clone(args) });
+      assert.ok(h.state.scripts.some(script => script.id === 'youtube-ads'), 'filter present before every asynchronous write');
+      const result = await original(args);
+      assert.ok(h.state.scripts.some(script => script.id === 'youtube-ads'), 'filter present after every asynchronous write');
+      return result;
+    };
+  }
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'owned.example', blocked: true })).ok, true);
+  assert.equal((await h.send({ type: 'SET_SITE_PROMPTS', domain: 'owned.example', allowed: true })).ok, true);
+  h.state.faults.save = 1;
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'second.example', blocked: true })).ok, false);
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'owned.example', blocked: false })).ok, true);
+  assert.ok(writes.length >= 5);
+  assert.ok(writes.every(write => !JSON.stringify(write.args).includes('youtube-ads')), 'unchanged registration is never written');
+});
+
+test('YouTube pause updates in place, clears exclusions on resume and rolls back failed saves', async () => {
+  const h = harness(); await h.ready;
+  const writes = [];
+  const update = h.api.scripting.updateContentScripts;
+  h.api.scripting.updateContentScripts = async scripts => { writes.push(clone(scripts)); return update(scripts); };
+  h.api.scripting.unregisterContentScripts = async () => { throw Error('Must update in place'); };
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'youtube.com', paused: true })).ok, true);
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'youtube.com', paused: false })).ok, true);
+  assert.deepEqual(writes.at(-1).find(script => script.id === 'youtube-ads').excludeMatches, [], 'empty array explicitly clears native exclusions');
+  h.state.faults.save = 1;
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'youtube.com', paused: true })).ok, false);
+  assert.ok(!h.state.scripts.find(script => script.id === 'youtube-ads').excludeMatches?.length);
+  h.state.faults.scripts = 1;
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'youtube.com', paused: true })).ok, false);
+  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
+});
+
+test('startup replaces root-level script registrations while preserving saved settings and userscript data', async () => {
+  const h = harness();
+  await h.ready;
+  assert.equal((await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'ads.example.test' })).ok, true);
+  assert.equal((await h.send({ type: 'SET_SITE_POPUPS', domain: 'media.example.test', blocked: true })).ok, true);
+  const saved = await h.send({ type: 'US_SAVE', source: '// ==UserScript==\n// @name Kept during relocation\n// @match https://example.test/*\n// @grant GM.getValue\n// ==/UserScript==\nvoid 0;' });
+  assert.equal(saved.ok, true);
+  h.state.storage.userscriptManager.scripts[0].values = { kept: 'owned fixture' };
+  const before = clone({ storage: h.state.storage, scripts: h.state.scripts, enabled: h.state.enabled, dynamic: h.state.dynamic });
+  h.state.scripts = h.state.scripts.map(script => ({ ...script, js: script.js.map(file => path.posix.basename(file)) }));
+  h.state.fullUrlScripts = true;
+  await h.listeners.startup();
+  assert.deepEqual(h.state.scripts, before.scripts, 'all native paths are replaced, retaining their IDs, scope and timing');
+  assert.deepEqual(h.state.storage, before.storage, 'preferences, saved scripts and GM values remain intact');
+  assert.deepEqual(h.state.enabled, before.enabled);
+  assert.deepEqual(h.state.dynamic, before.dynamic);
 });
 
 test('pausing YouTube excludes only the paused YouTube scope from the page filter', async () => {
@@ -748,7 +918,7 @@ test('page filter verification accepts full extension URLs in readback', async (
   await h.ready;
   const result = await h.send({ type: 'GET_STATE' });
   assert.equal(result.ok, true);
-  assert.equal(h.state.scripts.length, 1);
+  assert.equal(h.state.scripts.length, 2);
 });
 
 const settle = async () => { for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve)); };
@@ -1126,10 +1296,10 @@ test('per-site pop-up blocking registers the page script only for chosen sites, 
   await h.send({ type: 'SET_SITE_POPUPS', domain: '127.0.0.1', blocked: true });
   await h.send({ type: 'SET_SITE_POPUPS', domain: 'localhost', blocked: true });
   assert.deepEqual(popupScript().matches, ['*://127.0.0.1/*', '*://localhost/*', '*://*.uukanshu.cc/*']);
-  assert.deepEqual([popupScript().js, popupScript().world, popupScript().runAt], [['popups.js'], 'MAIN', 'document_start']);
+  assert.deepEqual([popupScript().js, popupScript().world, popupScript().runAt], [['src/blocking/popups.js'], 'MAIN', 'document_start']);
   // The pop-up blocker does not depend on the ad layer.
   await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(h.state.scripts.map(script => script.id), ['popup-blocker']);
+  assert.deepEqual(h.state.scripts.map(script => script.id).sort(), ['notification-guard', 'popup-blocker']);
   await h.send({ type: 'SET_SITE_PAUSED', domain: 'm.uukanshu.cc', paused: true });
   assert.deepEqual(popupScript().excludeMatches, ['*://*.m.uukanshu.cc/*']);
   await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } });
@@ -1151,7 +1321,7 @@ test('cross-origin frames receive the pop-up guard from browser sender metadata'
   const result = await h.send({ type: 'GET_COSMETIC_STATE', installPopupGuard: true }, frame);
   assert.deepEqual([result.ok, result.popupGuard], [true, true]);
   assert.deepEqual(h.state.executions, [{
-    target: { tabId: 9, frameIds: [7] }, files: ['popups.js'], world: 'MAIN'
+    target: { tabId: 9, frameIds: [7] }, files: ['src/blocking/popups.js'], world: 'MAIN'
   }]);
   await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, frameId: 8, tab: { id: 9, url: 'https://other.example/' } });
   assert.equal(h.state.executions.length, 1, 'a frame outside the selected top site is not injected');

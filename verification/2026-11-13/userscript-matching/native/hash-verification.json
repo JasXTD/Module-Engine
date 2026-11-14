@@ -1,0 +1,74 @@
+[
+  {
+    "name": "chrome-userscripts",
+    "command": "node tests/userscripts-browser.cjs chrome --skip-desktop",
+    "checks": 401,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/chrome-userscripts.json"
+  },
+  {
+    "name": "edge-userscripts",
+    "command": "node tests/userscripts-browser.cjs edge --skip-desktop",
+    "checks": 401,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/edge-userscripts.json"
+  },
+  {
+    "name": "firefox-userscripts",
+    "command": "node tests/userscripts-firefox.cjs firefox --skip-desktop",
+    "checks": 322,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/firefox-userscripts.json"
+  },
+  {
+    "name": "chrome-blocker",
+    "command": "node tests/browser-smoke.cjs chrome",
+    "checks": 573,
+    "success": true,
+    "sourceFilesVerified": 51,
+    "evidence": "native/chrome-blocker.json"
+  },
+  {
+    "name": "edge-blocker",
+    "command": "node tests/browser-smoke.cjs edge",
+    "checks": 573,
+    "success": true,
+    "sourceFilesVerified": 51,
+    "evidence": "native/edge-blocker.json"
+  },
+  {
+    "name": "firefox-blocker",
+    "command": "node tests/browser-smoke.cjs firefox",
+    "checks": 567,
+    "success": true,
+    "sourceFilesVerified": 51,
+    "evidence": "native/firefox-blocker.json"
+  },
+  {
+    "name": "chrome-tabs",
+    "command": "node tests/blocked-tabs-browser.cjs chrome",
+    "checks": 25,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/chrome-tabs.json"
+  },
+  {
+    "name": "edge-tabs",
+    "command": "node tests/blocked-tabs-browser.cjs edge",
+    "checks": 25,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/edge-tabs.json"
+  },
+  {
+    "name": "firefox-tabs",
+    "command": "node tests/blocked-tabs-browser.cjs firefox",
+    "checks": 28,
+    "success": true,
+    "sourceFilesVerified": 44,
+    "evidence": "native/firefox-tabs.json"
+  }
+]

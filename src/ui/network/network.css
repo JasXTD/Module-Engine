@@ -1,0 +1,63 @@
+.page { max-width: 1600px; }
+.capture-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.capture-controls, .filters { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
+.capture-controls { margin-bottom: 12px; }
+.capture-controls label { flex: 1 1 240px; max-width: 440px; }
+label { display: grid; gap: 5px; font-size: 12px; color: var(--text-2); min-width: 0; }
+.live-check { display: inline-flex; align-items: center; gap: 7px; }
+select, input[type="search"] { width: 100%; min-width: 0; }
+.filters { margin-bottom: 16px; }
+.filters label { flex: 1 1 140px; }
+.filters .search-label { flex: 2 1 260px; }
+.capture-card p + p { margin-top: 5px; }
+.recording { color: var(--accent-text); background: var(--accent-soft); }
+#notice:not(.error) { color: var(--text-2); background: var(--surface); border-color: var(--line); }
+.empty { padding: 30px 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); text-align: center; color: var(--text-2); }
+#requestTable { width: 100%; table-layout: fixed; }
+#requestTable th:nth-child(1) { width: 105px; }
+#requestTable th:nth-child(3) { width: 130px; }
+#requestTable th:nth-child(4) { width: 140px; }
+#requestTable th:nth-child(5) { width: 86px; }
+#requestTable th:nth-child(6) { width: 100px; }
+#requestTable td { vertical-align: top; overflow-wrap: anywhere; }
+.time, .duration, .tab-id, .method { font-family: var(--mono); font-size: 12px; }
+.time, .duration { white-space: nowrap; color: var(--text-2); }
+.tab-id { white-space: nowrap; }
+.request-url { padding: 0; border: 0; background: none; box-shadow: none; color: var(--accent-text); text-align: left; font: inherit; display: block; width: 100%; overflow-wrap: anywhere; min-height: 24px; }
+.request-url:hover { text-decoration: underline; background: none; border: 0; }
+.request-url:focus-visible { outline-offset: 3px; }
+.path, .resource-type, .request-error { display: block; margin-top: 3px; color: var(--text-2); font-size: 11.5px; }
+.path { font-family: var(--mono); }
+.result-error { color: var(--danger); }
+.result-redirect { color: var(--warn); }
+.result-complete { color: var(--text); }
+.result-request, .result-sent, .result-response, .result-interrupted { color: var(--text-2); }
+tr[aria-selected="true"] { background: var(--accent-soft); }
+.pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+#detailsFields { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 8px 16px; }
+#detailsFields dt { color: var(--text-2); }
+#detailsFields dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; }
+.coverage p { margin-top: 12px; color: var(--text-2); }
+@media (max-width: 1100px) {
+  #requestTable th:nth-child(1) { width: 84px; }
+  #requestTable th:nth-child(3) { width: 96px; }
+  #requestTable th:nth-child(4) { width: 110px; }
+  #requestTable th:nth-child(5) { width: 70px; }
+}
+@media (max-width: 700px) {
+  .capture-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .capture-controls label { max-width: none; grid-column: 1 / -1; }
+  #startCapture { grid-column: 1 / -1; grid-row: 2; }
+  .filters label { flex: 1 1 calc(50% - 10px); }
+  .filters .search-label { flex-basis: 100%; }
+  #requestTable, #requestTable tbody { display: block; min-width: 0; }
+  #requestTable thead { display: none; }
+  #requestTable tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  #requestTable td { display: block; padding: 0; border: 0; }
+  #requestTable td:nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
+  #requestTable td:nth-child(1)::before { content: "Time "; }
+  #requestTable td:nth-child(5)::before { content: "Duration "; }
+  #requestTable td:nth-child(6)::before { content: "Tab "; color: var(--text-2); }
+  #detailsFields { grid-template-columns: 1fr; gap: 4px; }
+  #detailsFields dd { margin-bottom: 9px; }
+}

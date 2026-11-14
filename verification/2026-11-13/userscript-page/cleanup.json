@@ -1,0 +1,100 @@
+{
+  "finishedUtc": "2026-11-13T14:31:26.5857164Z",
+  "tempRoot": "C:\\Users\\Tommy\\AppData\\Local\\Temp",
+  "processReferences": 0,
+  "reparsePoints": 0,
+  "results": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-3i8PNa",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-fI7A29",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-TeeoE6",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-3gl3L1",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-IdjOvA",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-GKy908",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-NORMdU",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-sfyJ7v",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-RFDsXt",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-eBdJq5",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-KNsIuy",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-x7t18f",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-lti6Xt",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-QqzYJC",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-GSqVfE",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-eTkhS1",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-vHqPE0",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-I0bfqj",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-DuPHGi",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-KeZ0Wp",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-sjiKiy",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-f1wEGd",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-MoJe6Z",
+      "removed": true
+    }
+  ]
+}

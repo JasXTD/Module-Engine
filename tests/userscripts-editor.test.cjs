@@ -1,7 +1,15 @@
 const { test } = require('node:test'), assert = require('node:assert/strict');
 globalThis.acorn = require('../vendor/acorn/acorn.js');
-require('../userscripts-core.js'); require('../userscripts-lint.js');
+require('../vendor/publicsuffix/suffixes.js'); require('../src/userscripts/userscripts-matching.js'); require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/userscripts-core.js'); require('../src/userscripts/userscripts-lint.js');
 const source = code => '// ==UserScript==\n// @name Offline editor\n// @match https://example.test/*\n// @grant none\n// ==/UserScript==\n' + code;
+test('Windows CRLF metadata parses identically and diagnostics retain raw-source offsets', () => {
+  const lf = source('const broken = ;'), crlf = lf.replaceAll('\n', '\r\n');
+  const windows = BlockAdsUserScriptCore.parse(crlf), unix = BlockAdsUserScriptCore.parse(lf);
+  assert.equal(windows.metaStr, unix.metaStr.replaceAll('\n', '\r\n'));
+  assert.deepEqual({ ...windows, metaStr: unix.metaStr }, unix);
+  const problem = BlockAdsLint.inspect(crlf).diagnostics[0];
+  assert.equal(problem.kind, 'syntax'); assert.equal(problem.offset, crlf.lastIndexOf(';')); assert.equal(problem.line, 6);
+});
 test('lint returns precise locations and treats source as inert text', () => {
   const input = source('const broken = ;\nglobalThis.__lintExecuted = true;');
   const result = BlockAdsLint.inspect(input), problem = result.diagnostics[0];

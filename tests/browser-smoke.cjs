@@ -1,3 +1,4 @@
+const { files: extensionFiles } = require('../scripts/extension-files.cjs');
 /* Real-browser integration checks. Node 22+; no packages or personal profiles. */
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
@@ -196,7 +197,7 @@ async function chromium(extension, profile, denyPort, { headless = true, network
       if (!ready) throw new Error('New page did not finish its initial navigation.');
       return { id: targetId, session: sessionId };
     };
-    const popup = await attach(`chrome-extension://${id}/popup.html`);
+    const popup = await attach(`chrome-extension://${id}/src/ui/popup/popup.html`);
     const { targetInfos } = await rpc.send('Target.getTargets');
     for (const target of targetInfos.filter(info => info.type === 'service_worker' && info.url.startsWith(`chrome-extension://${id}/`))) {
       const worker = await rpc.send('Target.attachToTarget', { targetId: target.targetId, flatten: true });
@@ -218,16 +219,16 @@ async function chromium(extension, profile, denyPort, { headless = true, network
       version, id, popup, evaluate, front, open: attach, close, events: rpc.events,
       closePage: target => rpc.send('Target.closeTarget', { targetId: target.id }),
       send: (method, params, target) => rpc.send(method, params, target?.session),
-      async clickAt(x, y, target = popup) {
+      async clickAt(x, y, target = popup, button = 'left', clickCount = 1) {
         await front(target);
         for (const type of ['mouseMoved','mousePressed','mouseReleased']) await rpc.send('Input.dispatchMouseEvent',
-          {type,x,y,button:type === 'mouseMoved' ? 'none' : 'left',clickCount:type === 'mouseMoved' ? 0 : 1},target.session);
+          {type,x,y,button:type === 'mouseMoved' ? 'none' : button,clickCount:type === 'mouseMoved' ? 0 : clickCount},target.session);
       },
       async typeText(text, target = popup) { await rpc.send('Input.insertText', {text}, target.session); },
-      async pressKey(key, target = popup) {
-        const code = {Escape:27,Tab:9,Enter:13,PageDown:34}[key];
-        for (const type of ['keyDown','keyUp']) await rpc.send('Input.dispatchKeyEvent',{type,key,code:key,windowsVirtualKeyCode:code,
-          ...(type === 'keyDown' && key === 'Enter' ? {text:'\r',unmodifiedText:'\r'} : {})},target.session);
+      async pressKey(key, target = popup, { control = false } = {}) {
+        const code = {Escape:27,Tab:9,Enter:13,Space:32,PageDown:34,ArrowDown:40,ArrowUp:38}[key] || (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0);
+        for (const type of ['keyDown','keyUp']) await rpc.send('Input.dispatchKeyEvent',{type,key:key === 'Space' ? ' ' : key,code:key.length === 1 ? 'Key'+key.toUpperCase() : key,windowsVirtualKeyCode:code,modifiers:control ? 2 : 0,
+          ...(type === 'keyDown' && !control && ['Enter','Space'].includes(key) ? {text:key === 'Enter' ? '\r' : ' ',unmodifiedText:key === 'Enter' ? '\r' : ' '} : {})},target.session);
       },
       launch: { transport: useSocket ? 'loopback-websocket' : 'pipe', networkMode, launcherPid: child.pid, browserPid, relaunched: child.pid !== browserPid },
       async screenshot(file) {
@@ -325,7 +326,7 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
     const { contexts } = await rpc.send('browsingContext.getTree');
     const popup = { id: contexts[0].context, extensionPage: true };
     const navigate = (target, url) => rpc.send('browsingContext.navigate', { context: target.id, url, wait: 'complete' });
-    await navigate(popup, `moz-extension://${uuid}/popup.html`);
+    await navigate(popup, `moz-extension://${uuid}/src/ui/popup/popup.html`);
     const evaluate = async (expression, target = popup) => {
       const result = await rpc.send('script.evaluate', {
         expression: `(async () => JSON.stringify(await (${expression})))()`,
@@ -382,7 +383,10 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
         const { x, y } = await evaluate(`(r => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 }))(document.querySelector('h1').getBoundingClientRect())`, target);
         await this.clickAt(x, y, target);
         const popupBrowser = `document.querySelector('.webextension-popup-browser')`;
-        const opened = `${popupBrowser}?.closest('panel').state === 'open' && ${popupBrowser}.getBoundingClientRect().height > 0`;
+        // Firefox first opens a 16x8 placeholder panel, before the extension
+        // document finishes loading and reports its preferred dimensions.
+        const expectedURI = await evaluate('browser.runtime.getURL("src/ui/popup/popup.html")', target);
+        const opened = `${popupBrowser}?.closest('panel').state === 'open' && ${popupBrowser}.currentURI.spec === ${JSON.stringify(expectedURI)} && !${popupBrowser}.webProgress.isLoadingDocument && ${popupBrowser}.getBoundingClientRect().height > 300`;
         for (let i = 0; i < 300 && !(await chromeEvaluate(opened)); i++) await pause(50);
         const panel = JSON.parse(await chromeEvaluate(`(() => { const node = ${popupBrowser}, box = node?.getBoundingClientRect();
           return JSON.stringify({ state: node?.closest('panel').state, width: box?.width, height: box?.height, uri: node?.currentURI.spec }); })()`));
@@ -396,20 +400,20 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
         }
         return panel;
       },
-      async clickAt(x, y, target = popup) {
+      async clickAt(x, y, target = popup, button = 'left') {
         await front(target);
         await rpc.send('input.performActions',{context:target.id,actions:[{type:'pointer',id:'fixture-mouse',parameters:{pointerType:'mouse'},actions:[
-          {type:'pointerMove',origin:'viewport',x:Math.round(x),y:Math.round(y),duration:0},{type:'pointerDown',button:0},{type:'pointerUp',button:0}]}]});
+          {type:'pointerMove',origin:'viewport',x:Math.round(x),y:Math.round(y),duration:0},{type:'pointerDown',button:{left:0,middle:1,right:2}[button]},{type:'pointerUp',button:{left:0,middle:1,right:2}[button]}]}]});
       },
       async typeText(text, target = popup) {
         await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:
           [...text].flatMap(value=>[{type:'keyDown',value},{type:'keyUp',value}])}]});
       },
-      async pressKey(key, target = popup) {
+      async pressKey(key, target = popup, { control = false } = {}) {
         await front(target);
         // Use the main Return key (code Enter), not keypad Enter.
-        const value = {Escape:'\uE00C',Tab:'\uE004',Enter:'\uE006',Space:' ',PageDown:'\uE00F'}[key];
-        await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:[{type:'keyDown',value},{type:'keyUp',value}]}]});
+        const value = {Escape:'\uE00C',Tab:'\uE004',Enter:'\uE006',Space:' ',PageDown:'\uE00F',ArrowDown:'\uE015',ArrowUp:'\uE013'}[key] || key;
+        await rpc.send('input.performActions',{context:target.id,actions:[{type:'key',id:'fixture-keyboard',actions:[...(control ? [{type:'keyDown',value:'\uE009'}] : []),{type:'keyDown',value},{type:'keyUp',value},...(control ? [{type:'keyUp',value:'\uE009'}] : [])]}]});
       },
       closePage: target => rpc.send('browsingContext.close', { context: target.id }),
       async open(url) {
@@ -450,16 +454,16 @@ if (require.main === module) (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-verify-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   await fs.mkdir(extension);
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules', 'icons']) {
+  for (const file of extensionFiles) {
     await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   }
   const testedManifest = JSON.parse(await fs.readFile(path.join(extension, 'manifest.json'), 'utf8'));
   const sourceHashes = {};
-  for (const file of ['manifest.json', 'modules.js', 'userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js', 'clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js', 'manager.html', 'manager.css', 'manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE', 'shared.js', 'cosmetic.js', 'network.js', 'evidence.js', 'procedural.js', 'reddit.js', 'picker-core.js', 'picker.js', 'background.js', 'content.js', 'youtube.js', 'popups.js', 'flags.js', 'popup.js', 'popup.html', 'popup.css', 'ui.css', 'log.html', 'log.js', 'log.css', 'lists.html', 'lists.js', 'rules/community-cosmetic.json', 'rules/threat-evidence.json', 'rules/threat-policy.json',
-    ...testedManifest.declarative_net_request.rule_resources.map(rule => rule.path)]) {
+  for (const file of extensionFiles) {
     sourceHashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   }
   const redditFixture = await require('./reddit-browser.cjs').aliasFixture(extension);
+  const youtubeFixtures = process.argv.includes('--youtube-only') ? await require('./youtube-browser.cjs').aliasFixture(extension) : [];
   const requests = [];
   // This proxy never resolves or forwards a destination. Every non-loopback
   // request from the isolated browser profile is rejected here, including CONNECT.
@@ -484,6 +488,9 @@ if (require.main === module) (async () => {
   denyProxy.on('clientError', (error, socket) => { onProxyError(error); socket.destroy(); });
   denyProxy.listen(0, '127.0.0.1'); await once(denyProxy, 'listening');
   const server = http.createServer((req, res) => {
+    if (require('./youtube-browser.cjs').serve(req, res)) return;
+    if (require('./buttons-browser.cjs').serve(req, res)) return;
+    if (require('./prompts-browser.cjs').serve(req, res)) return;
     requests.push(req.url);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/html');
@@ -546,12 +553,14 @@ if (require.main === module) (async () => {
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const fixtureUrl = `http://127.0.0.1:${server.address().port}/fixture`;
-  const evidence = { browser: browserName, temporary, sourceHashes, fixtureOverrides: [redditFixture], checks: [], startedAt: new Date().toISOString() };
+  const evidence = { browser: browserName, temporary, sourceHashes, fixtureOverrides: [redditFixture, ...youtubeFixtures], checks: [], startedAt: new Date().toISOString() };
   let browser;
   const check = (condition, description) => { assert.ok(condition, description); evidence.checks.push(description); };
   try {
+    const downloadDirectory = path.join(temporary, 'downloads');
+    await fs.mkdir(downloadDirectory);
     browser = await (browserName === 'firefox' ? firefox : chromium)(extension, path.join(temporary, 'profile'), denyProxy.address().port,
-      { headless: !process.argv.includes('--headed') });
+      { headless: !process.argv.includes('--headed'), downloadDirectory });
     evidence.version = browser.version;
     if (browser.launch) evidence.launch = browser.launch;
     await until(browser, 'typeof currentSettings !== "undefined" && currentSettings !== null && !busy');
@@ -561,6 +570,28 @@ if (require.main === module) (async () => {
       `api.declarativeNetRequest.testMatchOutcome(${JSON.stringify({ url, type, initiator })})`);
     check((await state()).ok, 'extension loads and reports verified state (Reddit hostname alias is limited to the local fixture)');
     check(!(await browser.evaluate('errorPanel.hidden === false')), 'popup has no startup error');
+    if (process.argv.includes('--youtube-only')) {
+      await require('./youtube-browser.cjs').verify({ browser, send, state, until, check, origin: new URL(fixtureUrl).origin });
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during native YouTube fixture checks');
+      evidence.success = true; return;
+    }
+    if (process.argv.includes('--buttons-only')) {
+      const page = await browser.open(fixtureUrl);
+      await require('./buttons-browser.cjs').verify({ browser, page, send, state, until, check, temporary, baseline: process.argv.includes('--buttons-baseline') });
+      await browser.closePage(page);
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during the focused button fixture checks');
+      evidence.success = true; return;
+    }
+    if (process.argv.includes('--prompts-only')) {
+      const page = await browser.open(fixtureUrl);
+      await require('./prompts-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
+      await browser.closePage(page);
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during the focused prompt fixture checks');
+      evidence.success = true; return;
+    }
     if (process.argv.includes('--reddit-only')) {
       const page = await browser.open(fixtureUrl);
       await require('./reddit-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
@@ -573,6 +604,36 @@ if (require.main === module) (async () => {
     check((await match('https://customer.azioncdn.net/app.js')).matchedRules.length === 0, 'shared CDN customer is allowed');
     check((await match('https://legitimate.example.tk/app.js')).matchedRules.length === 0, 'country-code TLD is not blanket blocked');
     check((await match('https://fixture.example/ordinary.js')).matchedRules.length === 0, 'ordinary resource is allowed');
+
+    // Native rule evaluation only: these strings are never navigated or fetched.
+    evidence.requestedDomainMatches = [];
+    const requestedDomainHit = async (url, type = 'main_frame') => {
+      // As with the threat probes below, Firefox's simulator needs the HTTP(S)
+      // handshake URL. The actual requested-rule WebSocket is tested on loopback.
+      const testedUrl = browserName === 'firefox' && type === 'websocket' ? url.replace(/^ws/, 'http') : url;
+      const matchedRules = (await match(testedUrl, type)).matchedRules;
+      evidence.requestedDomainMatches.push({ url, testedUrl, type, matchedRules });
+      // The older exact pxl rule and the new domain rule overlap at equal priority.
+      // Accept either user-requested block; unrelated community rules cannot satisfy this check.
+      return matchedRules.some(rule => rule.rulesetId === 'ads_ruleset' && [200001, 200002].includes(rule.ruleId));
+    };
+    for (const [url, type] of [['https://wheelroot.com/fixture', 'main_frame'], ['http://wheelroot.com:8080/fixture', 'sub_frame'],
+      ['https://www.wheelroot.com/fixture', 'script'], ['https://a.b.wheelroot.com/fixture', 'media'],
+      ['https://user:pass@wheelroot.com./fixture', 'main_frame'], ['wss://pxl.wheelroot.com/fixture', 'websocket'],
+      ['wss://socket.wheelroot.com/fixture', 'websocket']])
+      check(await requestedDomainHit(url, type), 'user-requested domain block matches natively: ' + url);
+    for (const url of ['https://notwheelroot.com/fixture', 'https://wheelroot.com.other.net/fixture',
+      'https://fixture.example/?next=wheelroot.com/fixture', 'https://wheelroot.com@fixture.example/fixture'])
+      check(!await requestedDomainHit(url), 'user-requested domain block preserves hostname boundary: ' + url);
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: false } } });
+    check(!await requestedDomainHit('https://wheelroot.com/fixture'), 'ad-layer switch disables the user-requested domain block');
+    await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { ads_ruleset: true } } });
+    check(await requestedDomainHit('https://wheelroot.com/fixture'), 'ad-layer switch restores the user-requested domain block');
+    await send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'wheelroot.com' });
+    check(!await requestedDomainHit('https://child.wheelroot.com/fixture'), 'explicit allow preference overrides the reported domain request');
+    await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'wheelroot.com' });
+    check(await requestedDomainHit('https://child.wheelroot.com/fixture'), 'removing the allow preference restores the reported domain block');
+    check(!denied.some(request => request.destination?.includes('wheelroot.com')), 'no wheelroot host was requested during offline rule evaluation');
 
     // Community lists: a domain from the built snapshot is blocked by its own switchable ruleset.
     const communityRules = JSON.parse(await fs.readFile(path.join(root, 'rules/community.json'), 'utf8'));
@@ -592,14 +653,14 @@ if (require.main === module) (async () => {
     await until(browser, `/EasyList.*rules/.test(document.getElementById('communityStatus').textContent)`);
     check(true, 'popup describes the community snapshot');
     const pageScripts = () => browser.evaluate('api.scripting.getRegisteredContentScripts()');
-    const [youtubeScript] = await pageScripts();
+    const youtubeScript = (await pageScripts()).find(script => script.id === 'youtube-ads');
     evidence.youtubeScript = youtubeScript;
     check(youtubeScript?.id === 'youtube-ads' && youtubeScript.world === 'MAIN' && youtubeScript.runAt === 'document_start' &&
       youtubeScript.matches.includes('*://*.youtube.com/*'), 'YouTube page filter is registered in the page world at document start');
     await send({ type: 'SET_SITE_PAUSED', domain: 'www.youtube.com', paused: true });
-    check((await pageScripts())[0]?.excludeMatches?.includes('*://*.youtube.com/*'), 'pausing YouTube excludes it from the page filter');
+    check((await pageScripts()).find(script => script.id === 'youtube-ads')?.excludeMatches?.includes('*://*.youtube.com/*'), 'pausing YouTube excludes it from the page filter');
     await send({ type: 'SET_SITE_PAUSED', domain: 'youtube.com', paused: false });
-    check(!(await pageScripts())[0]?.excludeMatches?.length, 'resuming YouTube restores the page filter');
+    check(!(await pageScripts()).find(script => script.id === 'youtube-ads')?.excludeMatches?.length, 'resuming YouTube restores the page filter');
 
     const threatHosts = JSON.parse(await fs.readFile(path.join(root, 'lists/reported-threats.json'), 'utf8')).domains.map(entry => entry.host);
     const threatState = await state();
@@ -677,7 +738,7 @@ if (require.main === module) (async () => {
     evidence.concurrent = { responses: concurrent, state: changed };
     check(concurrent.every(item => item.ok) && !changed.settings.rulesets.ads_ruleset && !changed.settings.rulesets.trackers_ruleset,
       'simultaneous switch updates both persist');
-    check((await pageScripts()).length === 0, 'ad switch removes the YouTube page filter');
+    check(!(await pageScripts()).some(script => script.id === 'youtube-ads'), 'ad switch removes the YouTube page filter');
     check(changed.settings.customBlockedDomains.length === 2, 'simultaneous domain additions both persist');
     check((await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'bücher.example' })).ok, 'IDN is accepted as punycode');
     check((await match('https://xn--bcher-kva.example/file.js')).matchedRules.length > 0, 'IDN request is actually matched');
@@ -760,7 +821,7 @@ if (require.main === module) (async () => {
     evidence.cosmetic = { genericSelectors: bundleCosmetic.generic.length, toggleRoundTripMs: Date.now() - toggleStarted,
       styleCharacters: await browser.evaluate('document.getElementById("blockads-cosmetic-shield").textContent.length', page) };
 
-    const listsPage = await browser.open(await browser.evaluate('api.runtime.getURL("lists.html")'));
+    const listsPage = await browser.open(await browser.evaluate('api.runtime.getURL("src/ui/lists/lists.html")'));
     await until(browser, 'typeof settings !== "undefined" && settings !== null && !busy', listsPage);
     await browser.evaluate('(document.getElementById("customFilterPanel").open = true, true)', listsPage);
     const editDraft = async text => {
@@ -829,6 +890,8 @@ if (require.main === module) (async () => {
     }
     await require('./procedural-browser.cjs')({ browser, page, send, state, until, check, root });
     await require('./reddit-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
+    await require('./prompts-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
+    await require('./buttons-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
     await require('./picker-browser.cjs')({ browser, page, send, state, until, check, temporary });
     await require('./network-browser.cjs')({ browser, page, send, state, match, until, check, temporary, requests, threatHosts });
     await send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
@@ -863,6 +926,17 @@ if (require.main === module) (async () => {
     check(!blockedSocket && !socketUpgrades.includes('/ws-blocked'), 'reported-rule regex blocks a real loopback WebSocket before handshake');
     await browser.evaluate('api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[9001],addRules:[]})');
     check(await socketProbe('ws-blocked'), 'removing the isolated regex rule restores the WebSocket handshake');
+
+    const requestedSocketRule = JSON.parse(await fs.readFile(path.join(root, 'rules/ads.json'), 'utf8')).find(rule => rule.id === 200002);
+    requestedSocketRule.id = 9002;
+    requestedSocketRule.condition.regexFilter = requestedSocketRule.condition.regexFilter.replace('wheelroot\\.com', 'localhost');
+    requestedSocketRule.condition.resourceTypes = ['websocket'];
+    await browser.evaluate(`api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[],addRules:[${JSON.stringify(requestedSocketRule)}]})`);
+    evidence.requestedSocketRule = await browser.evaluate('api.declarativeNetRequest.getDynamicRules().then(rules => rules.filter(rule => rule.id === 9002))');
+    assert.equal(evidence.requestedSocketRule.length, 1, 'requested-domain fixture rule is installed before the real WebSocket probe');
+    check(!await socketProbe('ws-requested-blocked') && !socketUpgrades.includes('/ws-requested-blocked'), 'requested-domain regex blocks a real loopback WebSocket before handshake');
+    await browser.evaluate('api.declarativeNetRequest.updateDynamicRules({removeRuleIds:[9002],addRules:[]})');
+    check(await socketProbe('ws-requested-blocked'), 'removing the requested-domain fixture rule restores the WebSocket handshake');
 
     // Per-site pop-up blocking. Network observations, including a synthetic
     // click inside the cross-origin child frame, establish what was refused.
@@ -912,7 +986,7 @@ if (require.main === module) (async () => {
       check(true, 'activity log records the blocked request with its layer and path');
     }
     check((await send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Custom block added localhost'), 'activity log records the settings change');
-    const logPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/log.html`);
+    const logPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/src/ui/log/log.html`);
     if (browserName === 'firefox') {
       await until(browser, `[...document.querySelectorAll('#entryTable tbody td')].some(cell => cell.textContent === 'Custom block added localhost')`, logPage);
       check(await browser.evaluate(`!document.getElementById('notice').hidden && !document.getElementById('notice').classList.contains('error') &&
@@ -925,12 +999,12 @@ if (require.main === module) (async () => {
         row.textContent.includes('localhost') && row.textContent.includes('Remove it from Custom Blocked Domains') && !row.querySelector('button'))`, logPage),
         'log page does not offer Allow for a custom-blocked server');
     }
-    check(await browser.evaluate('document.getElementById("logLink").getAttribute("href") === "log.html"'), 'popup links to the activity log');
-    check(await browser.evaluate('document.getElementById("listsLink").getAttribute("href") === "lists.html"'), 'popup links to the lists page');
+    check(await browser.evaluate('document.getElementById("logLink").pathname === "/src/ui/log/log.html"'), 'popup links to the activity log');
+    check(await browser.evaluate('document.getElementById("listsLink").pathname === "/src/ui/lists/lists.html"'), 'popup links to the lists page');
 
     // My lists page: tables show, add and exactly remove entries, and follow changes made elsewhere.
     const siteHostInfo = JSON.parse(await fs.readFile(path.join(root, 'rules/site-ad-hosts-info.json'), 'utf8'));
-    const listsPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/lists.html`);
+    const listsPage = await browser.open(`${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/src/ui/lists/lists.html`);
     const rowsOf = key => `document.querySelectorAll('section[data-list="${key}"] tbody tr').length`;
     await until(browser, `document.querySelectorAll('#siteHosts tbody tr').length === ${siteHostInfo.length}`, listsPage);
     check(siteHostInfo.length > 0, 'lists page shows the site-check hosts with their sites');
@@ -1008,7 +1082,7 @@ if (require.main === module) (async () => {
     check(!(await browser.evaluate(fetchExpression, page)), 'master pause allows the previously blocked local request');
     await send({ type: 'UPDATE_SETTINGS', patch: defaults });
     await until(browser, '!busy && currentSettings.enabled');
-    await browser.navigate(browser.popup, `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/popup.html`);
+    await browser.navigate(browser.popup, `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/src/ui/popup/popup.html`);
     await until(browser, 'typeof currentSettings !== "undefined" && currentSettings !== null && !busy');
     check((await state()).ok, 'reopened popup reconciles and verifies saved state');
     check(!(await browser.evaluate('document.documentElement.scrollWidth > innerWidth')), 'popup has no horizontal overflow');
@@ -1031,17 +1105,21 @@ if (require.main === module) (async () => {
     evidence.success = true;
     const loggedErrors = browser.events.filter(event => event.method === 'Runtime.exceptionThrown' ||
       event.method === 'log.entryAdded' && event.params.level === 'error');
-    // Firefox labels an intentionally DNR-blocked fetch as a CORS network error.
+    // Firefox reports intentionally DNR-blocked fetches and WebSockets as network errors.
     // Keep that evidence, but distinguish it from unexpected runtime errors.
     evidence.expectedNetworkErrors = loggedErrors.filter(event => event.params?.source?.context === page.id &&
       (event.params.text?.startsWith('Cross-Origin Request Blocked:') &&
         (event.params.text.includes(`http://localhost:${server.address().port}/blocked-probe.`) ||
          event.params.text.includes('https://blockads-network-guard.invalid/probe.')) ||
-       event.params.text?.includes(`ws://localhost:${server.address().port}/ws-blocked`)));
+       event.params.text?.includes(`ws://localhost:${server.address().port}/ws-blocked`) ||
+       event.params.text === `Firefox can’t establish a connection to the server at ws://localhost:${server.address().port}/ws-requested-blocked.`));
     evidence.events = loggedErrors.filter(event => !evidence.expectedNetworkErrors.includes(event));
     check(evidence.events.length === 0, 'no uncaught extension runtime exceptions');
   } catch (error) {
     evidence.success = false; evidence.error = error.stack;
+    if (browser) evidence.failurePopup = await browser.evaluate(`({url:location.href,ready:document.readyState,
+      status:document.getElementById('statusText')?.textContent,error:document.getElementById('errorPanel')?.textContent,
+      busy:document.body.getAttribute('aria-busy')})`).catch(problem => ({error:problem.message}));
     evidence.failureEvents = browser?.events.filter(event => event.method === 'Runtime.exceptionThrown' ||
       event.method === 'Runtime.consoleAPICalled' || event.method === 'log.entryAdded');
     process.exitCode = 1;

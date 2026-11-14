@@ -1,0 +1,7 @@
+{
+  "browser": "edge",
+  "success": false,
+  "checks": 16,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-YD49zQ\\evidence.json",
+  "error": "Error: Condition timed out: clicks === 1 && !v.muted && v.playbackRate === 1.25\nPlayer state: {\"className\":\"html5-video-player\",\"muted\":false,\"rate\":1,\"time\":0,\"duration\":null,\"ready\":0,\"seekable\":[],\"controls\":\"<button class=\\\"ytp-skip-ad-button\\\">Skip local ad</button>\"}\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:448:9)\n    at async wait (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\youtube-browser.cjs:75:13)\n    at async Object.verify (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\youtube-browser.cjs:105:67)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:574:7"
+}

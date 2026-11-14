@@ -67,7 +67,7 @@ module.exports = async function verifyProcedures({ browser, page, send, state, u
   await patch({ genericCosmeticFiltering: true });
 
   // Exercise the actual editor and popup setting, including cross-window state.
-  const editor = await browser.open(await browser.evaluate('api.runtime.getURL("lists.html")'));
+  const editor = await browser.open(await browser.evaluate('api.runtime.getURL("src/ui/lists/lists.html")'));
   await until(browser, 'settings && !busy && !document.getElementById("proceduralFiltering").disabled', editor);
   await browser.evaluate('(document.getElementById("proceduralFiltering").click(), true)', editor);
   await visible('ba-match');
@@ -119,8 +119,8 @@ module.exports = async function verifyProcedures({ browser, page, send, state, u
 
   // The same source runs against a real browser DOM here, with smaller limits
   // to deterministically test each independent budget and lifecycle branch.
-  await evaluate('(() => {\n' + (await fs.readFile(path.join(root, 'cosmetic.js'), 'utf8')) + '\n' +
-    (await fs.readFile(path.join(root, 'procedural.js'), 'utf8')) + '\nreturn true; })()');
+  await evaluate('(() => {\n' + (await fs.readFile(path.join(root, 'src/blocking/cosmetic.js'), 'utf8')) + '\n' +
+    (await fs.readFile(path.join(root, 'src/blocking/procedural.js'), 'utf8')) + '\nreturn true; })()');
   const simple = [{ selector: '#ba-fixture .ba-card:has-text(never-matches)' }];
   for (const limits of [{ candidates: 2 }, { operations: 1 }, { characters: 2 }, { milliseconds: -1 }]) {
     await evaluate(`(() => { window.baProblems = []; window.baEngine = BlockAdsProcedural.create({document,

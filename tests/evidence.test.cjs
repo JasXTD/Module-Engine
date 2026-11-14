@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {webcrypto,createHash}=require('node:crypto');
 let requests=0;
 const context=vm.createContext({URL,Uint8Array,TextDecoder,crypto:webcrypto,fetch(){ requests++; throw new Error('Evidence must stay offline'); }});
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../evidence.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/blocking/evidence.js'),'utf8'),context);
 const verify=context.BlockAdsEvidence.verify;
 const original=['threat-evidence.json','threats.json','threat-policy.json'].map(file=>fs.readFileSync(path.join(__dirname,'../rules',file)));
 const json=bytes=>JSON.parse(bytes.toString()),bytes=value=>Buffer.from(JSON.stringify(value));

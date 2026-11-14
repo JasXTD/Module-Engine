@@ -30,7 +30,7 @@ api.runtime.onMessage.addListener((message,sender) => {
   return false;
 }); })();
 `;
-  for (const [name, prefix] of [['clipboard.js', capture], ['background.js', listener]]) {
+  for (const [name, prefix] of [['src/userscripts/clipboard.js', capture], ['src/background/background.js', listener]]) {
     const file = path.join(extension, name), original = await fs.readFile(file), fixture = Buffer.concat([Buffer.from(prefix), original]);
     await fs.writeFile(file, fixture);
     (evidence.fixtureOverrides ||= {})[name] = { sourceHash: hash(original), fixtureHash: hash(fixture), reason: 'Intercept clipboard writes without changing native permissions or the userscript bridge.' };

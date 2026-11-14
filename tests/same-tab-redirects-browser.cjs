@@ -201,7 +201,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     await until(() => browser.evaluate('document.getElementById("togglePopups")?.checked && !document.getElementById("togglePopups").disabled'), 'popup selected-site state');
     check(await browser.evaluate('document.getElementById("togglePopups").getAttribute("aria-label").includes("redirects")'), 'the existing per-site switch clearly includes redirect protection');
     await browser.screenshot(path.join(temp, 'popup.png'));
-    const listPage = await browser.open('chrome-extension://' + browser.id + '/lists.html#listPopups');
+    const listPage = await browser.open('chrome-extension://' + browser.id + '/src/ui/lists/lists.html#listPopups');
     for (const width of [1100, 390]) {
       await browser.send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: false }, listPage);
       await browser.evaluate('document.getElementById("listPopups").scrollIntoView()', listPage);

@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-require('../cosmetic.js');
+require('../src/blocking/cosmetic.js');
 const { parse, resolve, safeSelector, LIMITS } = globalThis.BlockAdsCosmetic;
 
 test('generic hiding respects inherited and global selector exceptions', () => {

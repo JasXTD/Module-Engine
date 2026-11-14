@@ -2,10 +2,10 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-const source = require('node:fs').readFileSync(require('node:path').join(__dirname, '../clipboard.js'), 'utf8');
+const source = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/userscripts/clipboard.js'), 'utf8');
 function fixture() {
   const state = { copies: [], listeners: new Set(), fields: new Set(), refused: false }, url = 'chrome-extension://test/';
-  const context = vm.createContext({ TextEncoder, location: { href: url + 'clipboard.html' },
+  const context = vm.createContext({ TextEncoder, location: { href: url + 'src/userscripts/clipboard.html' },
     chrome: { runtime: { id: 'test', getURL: path => url + path, onMessage: { addListener: callback => { state.message = callback; } } } },
     document: { addEventListener: (_name, callback) => state.listeners.add(callback), removeEventListener: (_name, callback) => state.listeners.delete(callback),
       body: { append: field => state.fields.add(field) },
@@ -24,10 +24,10 @@ test('privileged clipboard helper copies literal HTML and always removes its eve
 });
 test('offscreen clipboard responds only to its extension service worker', () => {
   const { state } = fixture(), message = { type: 'ME_CLIPBOARD_WRITE', details: { data: 'fixture', type: 'text/plain' } };
-  for (const sender of [{ id: 'other' }, { id: 'test', tab: { id: 1 } }, { id: 'test', documentId: 'page' }, { id: 'test', url: 'chrome-extension://test/manager.html' }]) {
+  for (const sender of [{ id: 'other' }, { id: 'test', tab: { id: 1 } }, { id: 'test', documentId: 'page' }, { id: 'test', url: 'chrome-extension://test/src/ui/manager/manager.html' }]) {
     state.message(message, sender, () => assert.fail('Untrusted sender received a response'));
   }
   assert.equal(state.copies.length, 0);
-  let response; state.message(message, { id: 'test', url: 'chrome-extension://test/background.js' }, value => { response = value; });
+  let response; state.message(message, { id: 'test', url: 'chrome-extension://test/src/background/background.js' }, value => { response = value; });
   assert.equal(response.ok, true); assert.equal(state.copies.length, 1);
 });

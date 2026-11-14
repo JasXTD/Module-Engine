@@ -6,13 +6,13 @@ const path = require('node:path');
 const { createHash } = require('node:crypto');
 
 async function aliasFixture(extension) {
-  const file = path.join(extension, 'reddit.js');
+  const file = path.join(extension, 'src/blocking/reddit.js');
   const original = await fs.readFile(file, 'utf8');
   const needle = 'hostname = doc.location.hostname,';
   if (original.split(needle).length !== 2) throw new Error('Reddit fixture alias no longer matches the factory');
   const modified = original.replace(needle, 'hostname = doc.location.hostname === "127.0.0.1" && doc.location.pathname === "/reddit-fixture" ? "www.reddit.com" : doc.location.hostname,');
   await fs.writeFile(file, modified);
-  return { file: 'reddit.js', purpose: 'Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route',
+  return { file: 'src/blocking/reddit.js', purpose: 'Only the factory hostname defaults to www.reddit.com on the owned loopback /reddit-fixture route',
     originalSha256: createHash('sha256').update(original).digest('hex'), fixtureSha256: createHash('sha256').update(modified).digest('hex') };
 }
 
@@ -137,7 +137,7 @@ async function verify({ browser, page: existing, send, state, until, check, temp
     check(await evaluate('!document.documentElement.inert && getComputedStyle(document.body).pointerEvents !== "none"'),
       'Document-root inertness and class-based locks are released for the app prompt');
     await evaluate('(document.getElementById("app-promo").remove(), true)');
-    await wait('!document.querySelector("h2") && ![...document.querySelectorAll("style")].some(s => s.textContent.includes("data-module-engine-reddit-"))');
+    await wait('!document.querySelector("h2") && ![...document.querySelectorAll("style")].some(s => s.textContent.includes("data-module-engine-overlay-"))');
     check(await evaluate('getComputedStyle(document.body).overflowY !== "hidden" && getComputedStyle(document.body).pointerEvents !== "none" && document.body.classList.contains("app-locked")'),
       'An orphaned class lock stays neutralized after prompt removal without deleting page classes');
     await evaluate('(document.body.classList.remove("app-locked"), true)');

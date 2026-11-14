@@ -51,7 +51,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
       // Firefox BiDi has no viewport command in this harness. A same-origin
       // iframe exercises the actual dialog CSS at a narrow document width.
       await b.evaluate(`new Promise(resolve=>{const f=document.createElement('iframe');f.id='installNarrow';f.style='position:fixed;left:0;top:0;width:390px;height:900px;z-index:99999';
-        f.onload=async()=>{const d=f.contentDocument;await Promise.all(['ui.css','manager.css'].map(name=>new Promise(loaded=>{const link=d.createElement('link');link.rel='stylesheet';link.href=new URL(name,location.href).href;link.onload=loaded;d.head.append(link);})));const original=document.getElementById('installDialog');const copy=d.importNode(original,true);copy.querySelector('#installNarrow')?.remove();copy.removeAttribute('open');d.body.append(copy);copy.showModal();resolve();};
+        f.onload=async()=>{const d=f.contentDocument;await Promise.all(['src/ui/shared/ui.css','src/ui/manager/manager.css'].map(name=>new Promise(loaded=>{const link=d.createElement('link');link.rel='stylesheet';link.href=(globalThis.browser||chrome).runtime.getURL(name);link.onload=loaded;d.head.append(link);})));const original=document.getElementById('installDialog');const copy=d.importNode(original,true);copy.querySelector('#installNarrow')?.remove();copy.removeAttribute('open');d.body.append(copy);copy.showModal();resolve();};
         f.src='about:blank';document.getElementById('installDialog').append(f);})`, manager);
     }
     if (b.send || width !== 390) await b.evaluate('document.getElementById("installDialog").scrollTop=' + (bottom ? 'document.getElementById("installDialog").scrollHeight' : '0'), manager);
@@ -102,7 +102,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
       let version;
       for (let i = 0; i < 100 && !version; i++) {
         version = b.events.filter(event => event.method === 'ServiceWorker.workerVersionUpdated').flatMap(event => event.params.versions)
-          .find(item => item.scriptURL === 'chrome-extension://' + b.id + '/background.js' && item.runningStatus === 'running');
+          .find(item => item.scriptURL === 'chrome-extension://' + b.id + '/src/background/background.js' && item.runningStatus === 'running');
         if (!version) await new Promise(resolve => setTimeout(resolve, 50));
       }
       check('Found the native worker before update approval', Boolean(version));
@@ -124,7 +124,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
 
     fixtureState.sources['/usnet/install.user.js'].body = v2 + '\n// same version changed'; await update();
     check('Same-version edits are disclosed for explicit review', /without a newer version/.test(await status()));
-    const other = await b.open((b.send ? 'chrome-extension://' : 'moz-extension://') + b.id + '/manager.html'); pages.push(other);
+    const other = await b.open((b.send ? 'chrome-extension://' : 'moz-extension://') + b.id + '/src/ui/manager/manager.html'); pages.push(other);
     await until('!document.getElementById("refresh").disabled', other);
     script = await current();
     const edited = await b.evaluate('(globalThis.browser||chrome).runtime.sendMessage(' + JSON.stringify({ type: 'US_SAVE', id: script.id, revision: script.revision, source: v2 + '\n// local edit' }) + ')', other);

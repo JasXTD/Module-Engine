@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-require('../cosmetic.js');
+require('../src/blocking/cosmetic.js');
 const filters = globalThis.BlockAdsCosmetic;
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');

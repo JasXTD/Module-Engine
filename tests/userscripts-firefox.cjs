@@ -9,16 +9,20 @@ const { firefox } = require('./browser-smoke.cjs');
 const { runCompatibility, files, scriptSource } = require('./userscripts-compatibility.cjs');
 const { fixtureHandler } = require('./userscripts-network-fixtures.cjs');
 const { runAssetsAndNetwork } = require('./userscripts-assets-network.cjs');
+const { executionFixture, runExecution } = require('./userscripts-execution-browser.cjs');
+const { pageFixture, runPage } = require('./userscripts-page-browser.cjs');
 const root = path.resolve(__dirname, '..');
 (async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'module-engine-userscripts-firefox-')), extension = path.join(temp, 'extension');
   await fs.mkdir(extension);
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: 'firefox', temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
-  for (const file of files.filter(file => !['rules', 'icons'].includes(file))) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
-  if (!process.argv.includes('--install-only')) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
+  for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
+  if (!['--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
   await fs.mkdir(path.join(temp, 'exports'));
-  const proxy = http.createServer((_request, response) => { evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
+  const aliasState = {};
+  const { forwardMatching, runMatching } = require('./userscripts-matching-browser.cjs');
+  const proxy = http.createServer((request, response) => { if (forwardMatching(request, response, aliasState, evidence)) return; evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
   proxy.on('connect', (_request, socket) => {
     socket.on('error', error => { if (!['ECONNRESET', 'EPIPE'].includes(error.code)) evidence.proxyErrors.push(error.message); });
     evidence.deniedRequests++; socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
@@ -29,6 +33,9 @@ const root = path.resolve(__dirname, '..');
   await new Promise(resolve => secondOrigin.listen(0, '127.0.0.1', resolve));
   let port;
   const fixtures = http.createServer((request, response) => {
+    if (require('./network-log-browser.cjs').networkLogFixture(request, response, fixtureState)) return;
+    if (pageFixture(request, response)) return;
+    if (executionFixture(request, response)) return;
     if (route(request, response)) return;
     if (request.url === '/ad.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }); response.end('window.fixtureAd=true;'); return; }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -51,7 +58,7 @@ const root = path.resolve(__dirname, '..');
   try {
     b = await firefox(extension, path.join(temp, 'profile'), proxy.address().port, { ruleFeedback: false, downloadDirectory: path.join(temp, 'exports') });
     evidence.version = b.version;
-    manager = await b.open('moz-extension://' + b.id + '/manager.html');
+    manager = await b.open('moz-extension://' + b.id + '/src/ui/manager/manager.html');
     await until('!document.getElementById("refresh").disabled');
     check('Firefox keeps userscripts optional and initially off', !(await send({ type: 'US_LIST' })).enabled);
     check('Firefox has no automatic userscript permission grant', !(await b.evaluate("browser.permissions.contains({permissions:['userScripts']})", manager)));
@@ -71,9 +78,42 @@ const root = path.resolve(__dirname, '..');
     check('Offline ad canary configured', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
     const browse = pathname => b.open('http://127.0.0.1:' + port + pathname);
     const recordConsole = async stage => { (evidence.consoleStages ||= []).push({stage, errors: await b.consoleErrors()}); };
+    if (process.argv.includes('--network-log-only')) {
+      await require('./network-log-browser.cjs').runNetworkLog({ b, manager, send, check, until, browse, scriptSource, evidence, temp, port, fixtureState });
+      evidence.success=true; evidence.focus='network-log-only'; return;
+    }
+    if (process.argv.includes('--layout-only')) {
+      await require('./userscripts-layout-browser.cjs').runLayout({ b, manager, send, check, until, browse, scriptSource, evidence, temp, click, port, aliasState, fixtureState,
+        base:'http://127.0.0.1:'+port, other:'http://127.0.0.1:'+secondOrigin.address().port });
+      await recordConsole('layout'); evidence.success=true; evidence.focus='layout-only'; return;
+    }
+    if (process.argv.includes('--page-only')) {
+      await runPage({ b, manager, send, check, until, browse, scriptSource, evidence, temp, click });
+      evidence.success = true; evidence.focus = 'page-only'; return;
+    }
+    if (process.argv.includes('--mcp-only')) {
+      await require('./mcp-browser.cjs').runMCPTransports({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState });
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      evidence.success = true; evidence.focus = 'mcp-only'; return;
+    }
+    if (!['--editor-only', '--install-only', '--desktop-only', '--matching-only'].some(flag => process.argv.includes(flag))) {
+      await runExecution({ b, manager, send, check, until, browse, scriptSource, evidence, click, temp });
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      if (process.argv.includes('--execution-only')) { evidence.success = true; evidence.focus = 'execution-only'; return; }
+    }
+    if (!['--editor-only', '--install-only', '--desktop-only'].some(flag => process.argv.includes(flag))) {
+      await runMatching({ b, manager, send, check, until, port, aliasState, evidence });
+      evidence.extensionErrors = await b.consoleErrors(); check('No uncaught Firefox matching errors', evidence.extensionErrors.length === 0);
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      if (process.argv.includes('--matching-only')) { evidence.success = true; evidence.focus = 'matching-only'; return; }
+    }
     if(!process.argv.includes('--desktop-only')&&!process.argv.includes('--install-only')) await require('./userscripts-editor-browser.cjs').runEditor({b,manager,send,check,until,browse,scriptSource,click,temp,evidence});
     await recordConsole('editor');
-    if(process.argv.includes('--editor-only')) { evidence.success=true;evidence.focus='editor-only';return; }
+    if(process.argv.includes('--editor-only')) {
+      evidence.extensionErrors=await b.consoleErrors();check('No uncaught Firefox editor errors',evidence.extensionErrors.length===0);
+      check('Deny proxy has no unexpected socket errors',evidence.proxyErrors.length===0);
+      evidence.success=true;evidence.focus='editor-only';return;
+    }
     if (!process.argv.includes('--desktop-only')) await require('./userscripts-install-browser.cjs').runInstallation({ b, manager, send, check, until, browse, temp, evidence, fixtureState, base: 'http://127.0.0.1:' + port });
     await recordConsole('installation');
     if (process.argv.includes('--install-only')) {
@@ -86,7 +126,7 @@ const root = path.resolve(__dirname, '..');
       await require('./userscripts-helpers-browser.cjs').runHelpers({ b, manager, send, check, until, browse, scriptSource, evidence });
       await recordConsole('tab helpers');
     }
-    await require('./userscripts-desktop-browser.cjs').runDesktop({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState, click, base: 'http://127.0.0.1:' + port });
+    if (!process.argv.includes('--skip-desktop')) await require('./userscripts-desktop-browser.cjs').runDesktop({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState, click, base: 'http://127.0.0.1:' + port });
     await recordConsole('desktop and transfers');
     if(process.argv.includes('--desktop-only')) { evidence.success=true; evidence.focus='desktop-only'; return; }
     await runAssetsAndNetwork({ b, manager, send, check, until, browse, scriptSource, temp, evidence, fixtureState,

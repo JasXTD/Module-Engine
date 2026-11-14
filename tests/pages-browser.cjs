@@ -4,10 +4,10 @@
 const path=require('node:path');
 // Each page shows in its DOM that its first verified state has arrived.
 const loaded={
-  'popup.html':"doc.body.getAttribute('aria-busy') === 'false' && !doc.getElementById('masterToggle').disabled",
-  'manager.html':"!doc.getElementById('newScript').disabled",
-  'lists.html':"doc.querySelectorAll('#siteHosts tbody tr').length > 0 && !doc.querySelector('section[data-list] input').disabled",
-  'log.html':"doc.querySelectorAll('#entryTable tbody tr').length > 0"
+  'src/ui/popup/popup.html':"doc.body.getAttribute('aria-busy') === 'false' && !doc.getElementById('masterToggle').disabled",
+  'src/ui/manager/manager.html':"!doc.getElementById('newScript').disabled",
+  'src/ui/lists/lists.html':"doc.querySelectorAll('#siteHosts tbody tr').length > 0 && !doc.querySelector('section[data-list] input').disabled",
+  'src/ui/log/log.html':"doc.querySelectorAll('#entryTable tbody tr').length > 0"
 };
 // The page background proves the scheme's @media block won, not just its default.
 const background={dark:'rgb(13, 15, 18)',light:'rgb(242, 243, 238)'};
@@ -56,9 +56,9 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     if (!browser.send) return browser.setColorScheme(scheme);
     for (const target of targets) await browser.send('Emulation.setEmulatedMedia',{features:scheme?[{name:'prefers-color-scheme',value:scheme}]:[]},target);
   };
-  const open={'popup.html':browser.popup};
-  for (const file of ['manager.html','lists.html','log.html']) open[file]=await browser.open(url(file));
-  const {'popup.html':popup,'manager.html':manager,'lists.html':lists,'log.html':log}=open;
+  const open={'src/ui/popup/popup.html':browser.popup};
+  for (const file of ['src/ui/manager/manager.html','src/ui/lists/lists.html','src/ui/log/log.html']) open[file]=await browser.open(url(file));
+  const {'src/ui/popup/popup.html':popup,'src/ui/manager/manager.html':manager,'src/ui/lists/lists.html':lists,'src/ui/log/log.html':log}=open;
   const extras=[];
   try {
     for (const [file,target] of Object.entries(open)) await wait(`(doc => ${loaded[file]})(document)`,target);
@@ -76,13 +76,13 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
         if (switches.count===0 || switches.problems.length) throw new Error(`${file} ${scheme} switches: ${JSON.stringify(switches)}`);
         check(true,`${file} shows ${switches.count} restyled switches in ${scheme}, ${switches.checked} on`);
         check(await browser.evaluate('document.documentElement.scrollWidth <= document.documentElement.clientWidth',target),`${file} has no horizontal overflow in ${scheme}`);
-        if (!browser.send) await browser.screenshot(path.join(temporary,`${file.replace('.html','')}-${scheme}.png`),target);
+        if (!browser.send) await browser.screenshot(path.join(temporary,`${path.basename(file,'.html')}-${scheme}.png`),target);
       }
     }
     await setColourScheme(null,Object.values(open));
 
     const shown=selector=>`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).display !== 'none'`;
-    // ui.css: a table with no rows gives way to its empty message.
+    // src/ui/shared/ui.css: a table with no rows gives way to its empty message.
     const tableStates=async target=>(await browser.evaluate(tablesFollowRows,target)).every(([empty,hidden])=>empty===hidden);
     check(await tableStates(lists) && await tableStates(log),'every table hides while empty and shows once it has rows');
     const allowedWrap='section[data-list="allowedDomains"] .table-wrap';
@@ -94,7 +94,7 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     await wait(`!${shown(allowedWrap)}`,lists);
     check(true,':has(tbody:empty) hides the table again when its last row goes');
 
-    // popup.css: messages take no room until one shows.
+    // src/ui/popup/popup.css: messages take no room until one shows.
     await wait('!busy');
     await browser.evaluate("(lastError='',renderUI(),true)");
     check(!(await browser.evaluate(shown('.messages'))),':has() collapses the popup message area when nothing is showing');
@@ -102,7 +102,7 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     check(await browser.evaluate(shown('.messages')),':has() opens the popup message area for a visible message');
     await browser.evaluate("(lastError='',renderUI(),true)");
 
-    // popup.css: a switch that is off limits dims its label, unless it only waits on a save.
+    // src/ui/popup/popup.css: a switch that is off limits dims its label, unless it only waits on a save.
     const label="getComputedStyle(document.getElementById('toggleAds').closest('.layer-row').querySelector('.layer-name')).color";
     await send({type:'UPDATE_SETTINGS',patch:{enabled:false}});
     await wait('!busy && toggleAds.disabled');
@@ -146,26 +146,26 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
       check(true,'the space key toggles a focused restyled switch');
       // A tab shares the popup's code, not its container.
       const panel=await browser.openToolbarPopup(log,path.join(temporary,'toolbar-popup.png'));
-      check(panel.state==='open' && panel.uri===url('popup.html') && panel.width===350 && panel.height>300 && panel.height<=600,`the real toolbar popup opens at ${panel.width} by ${panel.height}`);
+      check(panel.state==='open' && panel.uri===url('src/ui/popup/popup.html') && panel.width===350 && panel.height>300 && panel.height<=600,`the real toolbar popup opens at ${panel.width} by ${panel.height}`);
     }
 
     // Narrow layouts: extension pages cannot set a viewport in every browser, but a frame has its own.
-    const host=await browser.open(url('log.html')); extras.push(host);
-    await wait(`(doc => ${loaded['log.html']})(document)`,host);
-    for (const [file,widths] of [['popup.html',[350]],['manager.html',[1100,380]],['lists.html',[1100,380]],['log.html',[1100,380]]]) for (const width of widths) {
+    const host=await browser.open(url('src/ui/log/log.html')); extras.push(host);
+    await wait(`(doc => ${loaded['src/ui/log/log.html']})(document)`,host);
+    for (const [file,widths] of [['src/ui/popup/popup.html',[350]],['src/ui/manager/manager.html',[1100,380]],['src/ui/lists/lists.html',[1100,380]],['src/ui/log/log.html',[1100,380]]]) for (const width of widths) {
       await browser.evaluate(`(() => {document.getElementById('layoutFrame')?.remove();const frame=document.createElement('iframe');frame.id='layoutFrame';
-        frame.style.cssText='position:fixed;left:0;top:0;width:${width}px;height:900px;border:0';frame.src=${JSON.stringify(file)};document.body.append(frame);return true;})()`,host);
+        frame.style.cssText='position:fixed;left:0;top:0;width:${width}px;height:900px;border:0';frame.src=${JSON.stringify(url(file))};document.body.append(frame);return true;})()`,host);
       await wait(`(doc => doc.location.pathname.endsWith(${JSON.stringify(file)}) && doc.readyState === 'complete' && ${loaded[file]})(document.getElementById('layoutFrame').contentDocument)`,host);
       const layout=await browser.evaluate(`(() => {const frame=document.getElementById('layoutFrame'),view=frame.contentWindow,doc=frame.contentDocument,root=doc.documentElement,shell=doc.querySelector('.shell');
         doc.getAnimations().forEach(animation=>animation.finish());
         return {width:view.innerWidth,client:root.clientWidth,scroll:root.scrollWidth,columns:shell&&view.getComputedStyle(shell).gridTemplateColumns.split(' ').length,rail:shell&&view.getComputedStyle(doc.querySelector('.rail')).position};})()`,host);
       check(layout.width===width && layout.scroll<=layout.client,`${file} fits a ${width}px viewport`);
-      if (file!=='popup.html') check(width>860?layout.columns===2 && layout.rail==='sticky':layout.columns===1 && layout.rail==='static',`${file} ${width>860?'keeps its side menu':'stacks its menu above the page'} at ${width}px`);
-      if (!browser.send && width<860) await browser.screenshot(path.join(temporary,`${file.replace('.html','')}-${width}.png`),host,{width,height:900});
-      if (file==='log.html') check(await browser.evaluate(`document.getElementById('layoutFrame').contentDocument.querySelector('#entryTable tbody tr').cells[3].getBoundingClientRect().width >= 180`,host),`log.html keeps its Details column readable at ${width}px`);
-      if (file==='lists.html') check(await browser.evaluate(`(() => {const doc=document.getElementById('layoutFrame').contentDocument,rows=[...doc.querySelectorAll('#siteHosts tbody tr')];
+      if (file!=='src/ui/popup/popup.html') check(width>860?layout.columns===2 && layout.rail==='sticky':layout.columns===1 && layout.rail==='static',`${file} ${width>860?'keeps its side menu':'stacks its menu above the page'} at ${width}px`);
+      if (!browser.send && width<860) await browser.screenshot(path.join(temporary,`${path.basename(file,'.html')}-${width}.png`),host,{width,height:900});
+      if (file==='src/ui/log/log.html') check(await browser.evaluate(`document.getElementById('layoutFrame').contentDocument.querySelector('#entryTable tbody tr').cells[3].getBoundingClientRect().width >= 180`,host),`src/ui/log/log.html keeps its Details column readable at ${width}px`);
+      if (file==='src/ui/lists/lists.html') check(await browser.evaluate(`(() => {const doc=document.getElementById('layoutFrame').contentDocument,rows=[...doc.querySelectorAll('#siteHosts tbody tr')];
         const lines=cell=>{const range=doc.createRange();range.selectNodeContents(cell);return new Set([...range.getClientRects()].map(rect=>Math.round(rect.top))).size;};
-        return rows.length>0 && rows.every(row=>[0,1,3].every(index=>lines(row.cells[index])===1) && row.cells[2].getBoundingClientRect().width>=180);})()`,host),`lists.html keeps site-check hosts on one line at ${width}px`);
+        return rows.length>0 && rows.every(row=>[0,1,3].every(index=>lines(row.cells[index])===1) && row.cells[2].getBoundingClientRect().width>=180);})()`,host),`src/ui/lists/lists.html keeps site-check hosts on one line at ${width}px`);
     }
 
     // A long entry must not squeeze short columns until "Event" wraps as "Even / t".
@@ -204,7 +204,7 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     await managerReady();
     check(await browser.evaluate(`(() => {const status=document.getElementById('status'),badge=document.getElementById('blockerStatus');
       return status.classList.contains('success') && badge.textContent==='Active' && badge.classList.contains('active') && document.getElementById('blockingEnabled').checked;})()`,manager),'manager reports ad blocking active on its verified state');
-    check(await browser.evaluate(`document.querySelector('.rail-links a[aria-current="page"]').getAttribute('href') === 'manager.html' && [...document.querySelectorAll('.rail-links a')].map(link=>link.getAttribute('href')).join() === 'manager.html,lists.html,log.html'`,manager),'manager side menu links every page and marks the current one');
+    check(await browser.evaluate(`document.querySelector('.rail-links a[aria-current="page"]').pathname === '/src/ui/manager/manager.html' && [...document.querySelectorAll('.rail-links a')].map(link=>link.pathname).join() === '/src/ui/manager/manager.html,/src/ui/lists/lists.html,/src/ui/log/log.html,/src/ui/network/network.html,/src/ui/mcp/debug.html'`,manager),'manager side menu links every page and marks the current one');
     check(await browser.evaluate("!document.getElementById('accessPanel').hidden && !document.getElementById('grantAccess').hidden && !document.getElementById('userscriptsEnabled').checked",manager),'manager explains that userscript access has not been granted');
     const editorEmpty="(() => {const shown=id=>document.getElementById(id).getClientRects().length>0;return shown('editorEmpty') && !shown('editorBody') && !shown('runControl');})()";
     check(await browser.evaluate(editorEmpty,manager),'with no script open the editor shows an empty state, not disabled controls');

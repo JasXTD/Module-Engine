@@ -1,0 +1,16 @@
+.page { max-width: 1120px; }
+.card { display: flex; flex-direction: column; gap: 14px; }
+#connectForm { display: flex; flex-direction: column; gap: 12px; }
+#pairingCode { width: 100%; font-family: var(--mono); }
+fieldset { border: 1px solid var(--line); padding: 14px; border-radius: var(--radius-sm); display: grid; gap: 12px; }
+legend { padding: 0 5px; }
+fieldset label { display: flex; align-items: center; gap: 12px; }
+fieldset input { flex-shrink: 0; }
+#reads { padding-left: 22px; overflow-wrap: anywhere; }
+#reads li { padding: 6px 0; }
+#sessionDetail:empty { display: none; }
+details.card { display: block; }
+details.card p { margin-top: 14px; }
+.badge { padding: 5px 10px; border: 1px solid var(--line); border-radius: 20px; }
+.badge.active { color: var(--accent-text); background: var(--accent-soft); }
+@media (max-width: 860px) { .rail-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

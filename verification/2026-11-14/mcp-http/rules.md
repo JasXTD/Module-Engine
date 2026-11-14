@@ -1,0 +1,13 @@
+# Offline rule test output
+
+```text
+Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22449 site hiding rules from 2 list(s).
+Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22449 site hiding rules from 2 list(s).
+Built 16 ad rules (7 from site checks; 2 user requests), 1 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 1 unverified domains are observation only; 9331 community rules and 22449 site hiding rules from 2 list(s).
+Built 102 ad rules (0 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22449 site hiding rules from 2 list(s).
+Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9 community rules and 3 site hiding rules from 1 list(s).
+Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 0 community rules and 0 site hiding rules from 0 list(s).
+Imported 247 observation-only domains into source. Backup: C:\Users\Tommy\AppData\Local\Temp\blockads-rules-test-980b0f8c412344f88f4e4247c70a9dec\CyberAssist\.artifacts\domain-imports\ecade749103c4abaac1e7273bb95bb3a. Build required; no running application was changed.
+PASS: CyberAssist catalog matches all 247 reviewed domains.
+PASS: 237 offline rule/import assertions. No fetching branch, DNS or external requests executed.
+```

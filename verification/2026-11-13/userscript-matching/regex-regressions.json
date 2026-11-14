@@ -1,0 +1,38 @@
+[
+  {
+    "name": "epsilon evaluation",
+    "patternLength": 615,
+    "results": [
+      {
+        "stage": "before",
+        "sha256": "2deb2593abb35852b58978d0892469b81dc05e3ea833f2997104e2e886dd576d",
+        "durationMs": 303.9227,
+        "error": "Script execution timed out after 300ms"
+      },
+      {
+        "stage": "after",
+        "sha256": "3c1f971a1d8d2c7d69b489e852439d3ffc6bc62774de121a4a05dd4a1b538f55",
+        "durationMs": 8.725799999999992,
+        "value": false
+      }
+    ]
+  },
+  {
+    "name": "empty-group compilation",
+    "patternLength": 36,
+    "results": [
+      {
+        "stage": "before",
+        "sha256": "6c21b3c5fdff2640915eb91aa4406a646357960fc0f21f942654a50898862f74",
+        "durationMs": 301.33649999999994,
+        "error": "Script execution timed out after 300ms"
+      },
+      {
+        "stage": "after",
+        "sha256": "3c1f971a1d8d2c7d69b489e852439d3ffc6bc62774de121a4a05dd4a1b538f55",
+        "durationMs": 3.192700000000059,
+        "error": "URL regular expression: pattern exceeds the compilation work limit (character 37)."
+      }
+    ]
+  }
+]

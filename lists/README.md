@@ -16,14 +16,16 @@ patterns. Six ad URL heuristics remain in `browser-patterns.json`, with their or
 third-party and resource-type conditions; they are never exported as domain indicators.
 
 `requested-ad-hosts.json` separately records explicit user ad-block requests, including
-the request date and reason. It currently blocks exactly `pxl.wheelroot.com`, including
-page navigation; the parent, sibling and child hosts are not included. This is a user
-preference, not a malware classification. These entries are never exported to the
+the request date and reason. The 12 November exact `pxl.wheelroot.com` request is
+retained; the 14 November user report adds `wheelroot.com` and all its subdomains,
+including page navigation. The report is not independent malware verification.
+These entries are never exported to the
 reviewed-domain contract or threat list. They use priority 4 in the ad ruleset, like
 custom request filters: community exceptions cannot undo them, while explicit
 Always Allowed and custom request exceptions still take precedence. Turning off
-the ad layer or pausing protection disables them. The builder accepts only exact,
-canonical DNS hosts, rejects duplicate or malformed entries, and performs no lookups.
+the ad layer or pausing protection disables them. The builder accepts canonical DNS
+hosts with explicit `exact` or `subdomains` scope, rejects duplicate or malformed
+entries, and performs no lookups.
 
 The separate `passive-domain-review-2026-10-18.json` records a later passive search of
 all 73 unverified entries. No entry met the user-selected recent dated-evidence

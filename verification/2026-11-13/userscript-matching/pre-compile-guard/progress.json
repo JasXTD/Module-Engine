@@ -1,0 +1,124 @@
+{
+  "started": "2026-11-12T19:37:24.732Z",
+  "jobs": [
+    {
+      "name": "chrome-userscripts",
+      "args": [
+        "tests/userscripts-browser.cjs",
+        "chrome",
+        "--skip-desktop"
+      ],
+      "exitCode": 0,
+      "browser": "chrome",
+      "success": true,
+      "checks": 401,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-kbyj0c\\evidence.json"
+    },
+    {
+      "name": "edge-userscripts",
+      "args": [
+        "tests/userscripts-browser.cjs",
+        "edge",
+        "--skip-desktop"
+      ],
+      "exitCode": 0,
+      "browser": "edge",
+      "success": true,
+      "checks": 401,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-oNR5oC\\evidence.json"
+    },
+    {
+      "name": "firefox-userscripts",
+      "args": [
+        "tests/userscripts-firefox.cjs",
+        "firefox",
+        "--skip-desktop"
+      ],
+      "exitCode": 0,
+      "browser": "firefox",
+      "success": true,
+      "checks": 322,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-jlCRNJ\\evidence.json"
+    },
+    {
+      "name": "chrome-blocker",
+      "args": [
+        "tests/browser-smoke.cjs",
+        "chrome"
+      ],
+      "exitCode": 0,
+      "browser": "chrome",
+      "success": true,
+      "checks": 573,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-QfHZvl\\evidence.json"
+    },
+    {
+      "name": "edge-blocker",
+      "args": [
+        "tests/browser-smoke.cjs",
+        "edge"
+      ],
+      "exitCode": 0,
+      "browser": "edge",
+      "success": true,
+      "checks": 573,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-rSpPxV\\evidence.json"
+    },
+    {
+      "name": "firefox-blocker",
+      "args": [
+        "tests/browser-smoke.cjs",
+        "firefox"
+      ],
+      "exitCode": 0,
+      "browser": "firefox",
+      "success": true,
+      "checks": 567,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-irFkwS\\evidence.json"
+    },
+    {
+      "name": "chrome-tabs",
+      "args": [
+        "tests/blocked-tabs-browser.cjs",
+        "chrome"
+      ],
+      "exitCode": 0,
+      "browser": "chrome",
+      "success": true,
+      "checks": 25,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-chrome-Bsr7Gu\\evidence.json"
+    },
+    {
+      "name": "edge-tabs",
+      "args": [
+        "tests/blocked-tabs-browser.cjs",
+        "edge"
+      ],
+      "exitCode": 0,
+      "browser": "edge",
+      "success": true,
+      "checks": 25,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-edge-CMMQGr\\evidence.json"
+    },
+    {
+      "name": "firefox-tabs",
+      "args": [
+        "tests/blocked-tabs-browser.cjs",
+        "firefox"
+      ],
+      "exitCode": 0,
+      "browser": "firefox",
+      "success": true,
+      "checks": 28,
+      "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-sOUcjM\\evidence.json"
+    }
+  ],
+  "active": null,
+  "interruptions": [
+    {
+      "job": "edge-blocker",
+      "reason": "Tool turn interrupted; confirmed no owned test process remained before resuming."
+    }
+  ],
+  "finished": "2026-11-12T19:45:17.043Z"
+}

@@ -1,0 +1,412 @@
+{
+  "date": "2026-11-13",
+  "timezone": "Asia/Kuala_Lumpur",
+  "version": "1.9.0",
+  "features": [
+    "unsafeWindow in the selected native world",
+    "GM_cookie and GM.cookie list/set/delete with optional permission",
+    "Async @top-level-await",
+    "Raw native-scope @unwrap"
+  ],
+  "native": [
+    {
+      "name": "chrome-userscripts",
+      "file": "chrome-userscripts.json",
+      "success": true,
+      "checks": 443,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "cleanup": {
+        "browserPid": 24364,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "edge-userscripts",
+      "file": "edge-userscripts.json",
+      "success": true,
+      "checks": 443,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "cleanup": {
+        "browserPid": 14560,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "firefox-userscripts",
+      "file": "firefox-userscripts.json",
+      "success": true,
+      "checks": 362,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 22800,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-fscdsR\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "chrome-blocker",
+      "file": "chrome-blocker.json",
+      "success": true,
+      "checks": 573,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "cleanup": {
+        "browserPid": 20080,
+        "forced": true,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 51,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "edge-blocker",
+      "file": "edge-blocker.json",
+      "success": true,
+      "checks": 573,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "cleanup": {
+        "browserPid": 20796,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 51,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "firefox-blocker",
+      "file": "firefox-blocker.json",
+      "success": true,
+      "checks": 567,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 26864,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-Fffy1y\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "sourceHashCount": 51,
+      "currentSourceMismatches": []
+    }
+  ],
+  "attempts": [
+    {
+      "name": "initial-chrome-launch-failed",
+      "file": "initial-chrome-launch-failed.json",
+      "success": false,
+      "checks": 0,
+      "sourceHashCount": 44,
+      "currentSourceMismatches": [
+        "userscripts-core.js",
+        "userscripts-actions.js",
+        "manager.html",
+        "manager.js"
+      ],
+      "error": "Error: Command failed: taskkill.exe /PID 26020 /T /F\nERROR: Access denied\r\r\n\n    at genericNodeError (node:internal/errors:986:15)\n    at wrappedFn (node:internal/errors:540:14)\n    at ChildProcess.exithandler (node:child_process:417:12)\n    at ChildProcess.emit (node:events:514:28)\n    at maybeClose (node:internal/child_process:1172:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:335:5)"
+    },
+    {
+      "name": "chrome-obsolete-negative-test-failed",
+      "file": "chrome-obsolete-negative-test-failed.json",
+      "success": false,
+      "checks": 257,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "cleanup": {
+        "browserPid": 464,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": [],
+      "error": "AssertionError [ERR_ASSERTION]: Unsupported directives are rejected without execution\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:76:44)\n    at runCompatibility (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-compatibility.cjs:162:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:203:7"
+    },
+    {
+      "name": "initial-chrome-feature-probe",
+      "file": "initial-chrome-feature-probe.json",
+      "success": true,
+      "checks": 49,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "cleanup": {
+        "browserPid": 5668,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": [
+        "userscripts-core.js",
+        "userscripts-actions.js",
+        "manager.html",
+        "manager.js"
+      ]
+    },
+    {
+      "name": "edge-feature-probe",
+      "file": "edge-feature-probe.json",
+      "success": true,
+      "checks": 49,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "cleanup": {
+        "browserPid": 20760,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": []
+    },
+    {
+      "name": "firefox-feature-probe",
+      "file": "firefox-feature-probe.json",
+      "success": true,
+      "checks": 45,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 15388,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-woqOhk\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceHashCount": 44,
+      "currentSourceMismatches": []
+    }
+  ],
+  "reviews": [
+    "Trust and scope: native worlds, cookie grants/stores/partitions, live frame authorization, unwrapped hoisting and native exclusions.",
+    "Simplification and resource use: shared compiler/linter bindings and cookie scope presentation; reduced cookie frame probes from six to three after initial authorization; bounded uncancellable work.",
+    "Integration and final diff: metadata/import/update review, optional permission, diagnostics, UI at 1280/390 pixels, dependency order and late-result revocation; preserved the pre-existing matching work."
+  ],
+  "limits": [
+    "Content/auto unsafeWindow cannot access page JavaScript globals; MAIN forbids privileged GM grants.",
+    "Unwrap ignores all grants and rejects extended scopes, document-body and top-level await.",
+    "Cookie access defaults to the current host with a URL filter, requires explicit connect for other hosts, and stays in the calling tab store; partition options are unsupported.",
+    "Already-submitted native cookie writes cannot be undone. Async JavaScript itself cannot be cancelled by disabling a script.",
+    "Offline fixtures do not establish arbitrary live-site or full Violentmonkey compatibility."
+  ],
+  "safety": {
+    "thirdPartyCodeCopied": false,
+    "softwareInstalled": [],
+    "malwareSitesVisited": false,
+    "externalFixtureDownloads": false,
+    "traffic": "Disposable profiles; loopback fixtures and fixed example aliases forwarded directly to loopback; external proxy traffic denied.",
+    "data": "Cookie values are synthetic and belong only to disposable test profiles. Personal profiles and real cookies were not read or modified."
+  },
+  "omitted": [
+    "Optional clipboard/notification/download/upload-progress desktop suites were not rerun.",
+    "Rule builder/PowerShell suites were not rerun; rules and list inputs were unchanged."
+  ],
+  "unit": {
+    "tests": 370,
+    "passed": 370,
+    "failed": 0,
+    "skipped": 0,
+    "file": "unit-tests.out"
+  },
+  "processAudit": {
+    "checkedAt": "2026-11-12T20:33:40.1648204Z",
+    "profiles": [
+      {
+        "profile": "blockads-userscripts-chrome-qt8C2r",
+        "matchingProcessIds": []
+      },
+      {
+        "profile": "blockads-userscripts-edge-tgtZMA",
+        "matchingProcessIds": []
+      },
+      {
+        "profile": "module-engine-userscripts-firefox-fscdsR",
+        "matchingProcessIds": []
+      },
+      {
+        "profile": "blockads-verify-chrome-f2hfQq",
+        "matchingProcessIds": []
+      },
+      {
+        "profile": "blockads-verify-edge-OU1zWp",
+        "matchingProcessIds": []
+      },
+      {
+        "profile": "blockads-verify-firefox-Fffy1y",
+        "matchingProcessIds": []
+      }
+    ]
+  },
+  "initialFailureNotes": [
+    "Four new execution tests failed against the original unsupported implementation before changes.",
+    "An existing unit fixture rejected GM_cookie and an existing native fixture rejected top-level await. They now test genuinely unsupported names; positive tests cover the newly supported features.",
+    "The sandbox could not launch/clean up the first disposable Chrome process. Scoped elevated execution succeeded; the recorded old process ID was confirmed absent."
+  ],
+  "changes": [
+    {
+      "path": "README.md",
+      "before": "601299c7ad0a4df510c6ab70be952f9414edc1521b2052f141371fc1352b8357",
+      "after": "f4b53f3bf7f59ed104a43d8b9d36abc03cbdeb97febd5acc92bf5df48529968b"
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "before": "9dbcc53ad8ef13f3afa56b8bef85d0c2f80b13b83137f40cafb51da13babb6a2",
+      "after": "aece21b4e77237569a36e8e174312e0928c0d7cd844aed104ce40f73b4b3e936"
+    },
+    {
+      "path": "docs/USER_GUIDE.md",
+      "before": "ca164f773b9debf437fa108144ccecef8e207be808f9824cc45f22bf9f5bed8c",
+      "after": "566fedd466cb0fe3284c9d3628d3c943f0a3dd05c86530613c93616fbb3fc7af"
+    },
+    {
+      "path": "docs/VERIFICATION.md",
+      "before": "d51d2552e756562f352a4be285bfb02ef969ef650c15b218e2967f76a05b89dd",
+      "after": "f1a92ad7d44c597c29d3b58c207c22622197658ad9e1887c904930e3db6eacda"
+    },
+    {
+      "path": "manager.html",
+      "before": "4760386e215d08f6730d09af38287bafc33b3aa3c22b4c2948d9b9ab67115ec3",
+      "after": "5bddba1934f8795a1255b948469becc55ced40c7e56daf55c90b3d12f81249b3"
+    },
+    {
+      "path": "manager.js",
+      "before": "13af3c0c212c1b3e1fe1edd1c73420aadb1d799b938a231956db44989a63d888",
+      "after": "85a3c87fcb2ca20643ad643983ec149520db6966eef0ec7b4b482ce1ff834a78"
+    },
+    {
+      "path": "manifest.json",
+      "before": "808e5343df408151be4a2b906a8e77266a764836806b5346d9d5382daed927c8",
+      "after": "fc4162b55b0b919d1b9af92bf5f91cc8d28f777df7c9cb7f5ed9970354ab4e45"
+    },
+    {
+      "path": "tests/userscripts-browser.cjs",
+      "before": "3fa6854f1b00581591384dcb1a2b3b736f37d29dd0dad62317db22fa9fe24a77",
+      "after": "1c4a82e70d769af53ca87358290987c8a9d1b924e1e7e1cec5fa1460015c2f41"
+    },
+    {
+      "path": "tests/userscripts-compatibility.cjs",
+      "before": "44495e0f85c7e8f7eafa800b2286d5031093526ce2783403f51dcef1db2184a0",
+      "after": "4c6d0eaf04621c10198b4d0a97948d4827ac889a0c3e001f971d46a34bb0b71f"
+    },
+    {
+      "path": "tests/userscripts-firefox.cjs",
+      "before": "12b70aa0de6c1f9abf07628fad8f2ef0698c961a6a8f1b80c1e5f7092f069690",
+      "after": "96e2f35a6329ba43012102d01031528beab21f8c0279b4494c55820637b5ea48"
+    },
+    {
+      "path": "tests/userscripts.test.cjs",
+      "before": "87918b45d69790a32045174222cbbb9304877098519211788226ebd5a8b35325",
+      "after": "bc0cd3f8befb18ca4df06fb6b433072b17612171dbebb2c14a6b1ac322fd44e6"
+    },
+    {
+      "path": "userscripts-actions.js",
+      "before": "62a8b9011374892bd30e7ebfdd983f5d1326d15438207fc84dcde6d71bb37bc7",
+      "after": "7f779b43bb0e9109653ad6d939e3380b0c36ed6175efc7dd46e7608529f9042e"
+    },
+    {
+      "path": "userscripts-core.js",
+      "before": "8a9299bbd585db6dd0967f41b60e9813fa88da512bc26570d4a3d1003d31a4da",
+      "after": "0428216d839f624a3b93642bc0d2a6d88da8621ec6a96e315035fe466610d730"
+    },
+    {
+      "path": "userscripts-lint.js",
+      "before": "7a0304f7b97d68a2d8f8883980a500d0a4441a60162525e067e4bef6faa2f4f8",
+      "after": "2d04a82b9e75736af3708537631ae21e18ce6e09fb5037baeba83b1192cf7501"
+    },
+    {
+      "path": "userscripts-runtime.js",
+      "before": "7f485b42794ca50ee33575c57d38d9d2586d6b5b16d5cdd6adf5a972e6c0f221",
+      "after": "4fcee23c65e2f5565b491bdfb67374bcf22f47e8f4993d44bd6eb545b87851b6"
+    },
+    {
+      "path": "tests/userscripts-execution.test.cjs",
+      "before": null,
+      "after": "77fcbc18cfe39eba3068d133a0f390907a42eea8a3d51890a6990de294415f6c"
+    },
+    {
+      "path": "tests/userscripts-execution-browser.cjs",
+      "before": null,
+      "after": "90e57d34356a9a11ff3e049931c6fbc43b97044a627efa2d9ddcc3a69dd29bd5"
+    }
+  ],
+  "snapshot": {
+    "files": 136,
+    "directory": ".artifacts/2026-11-13-execution-before",
+    "unchangedFiles": 121
+  },
+  "finished": "2026-11-12T20:33:56.717Z"
+}

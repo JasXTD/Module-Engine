@@ -9,15 +9,13 @@ const { chromium, firefox } = require('./browser-smoke.cjs');
 const root = path.resolve(__dirname, '..'), browserName = process.argv[2] || 'chrome';
 if (!['chrome', 'edge', 'firefox'].includes(browserName)) throw new Error('Choose chrome, edge or firefox.');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const files = ['manifest.json','shared.js','flags.js','cosmetic.js','network.js','evidence.js','procedural.js', 'reddit.js','picker-core.js','picker.js',
-  'background.js','content.js','youtube.js','popups.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
-  'lists.html','lists.js','modules.js','userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js','clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js','manager.html','manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE','manager.css','rules','icons'];
+const files = require('../scripts/extension-files.cjs').files;
 (async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'blockads-tabs-' + browserName + '-'));
   const extension = path.join(temp, 'extension'); await fs.mkdir(extension);
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], requests: [], deniedRequests: 0, proxyErrors: [], hashes: {} };
-  for (const file of files.filter(file => !['rules', 'icons'].includes(file))) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
+  for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   const proxy = http.createServer((_request, response) => { evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
   proxy.on('connect', (_request, socket) => {
     socket.on('error', error => { if (!['ECONNRESET','EPIPE'].includes(error.code)) evidence.proxyErrors.push(error.message); });

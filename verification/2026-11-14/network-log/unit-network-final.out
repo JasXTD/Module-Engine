@@ -1,0 +1,31 @@
+✔ capture is off by default and registers only passive metadata observers (9.3063ms)
+✔ only the exact extension Network page can connect and viewers are bounded (0.4944ms)
+✔ request and response stages correlate without recording headers, bodies or URL secrets (1.8466ms)
+✔ URL and retained-record projections remove arbitrary metadata and bound fields (0.4966ms)
+✔ redirects sharing a browser ID retain separate hops and request methods (1.111ms)
+✔ missing start events produce partial failures without invented timings or block attribution (0.9055ms)
+✔ capture scope uses native tab IDs and closing that tab stops capture (1.1766ms)
+✔ closing the owner stops capture while another viewer can retain and review it (0.9632ms)
+✔ clear discards rows and prevents tracked in-flight replies from restoring them (0.8419ms)
+✔ stop freezes records and a new explicit start replaces the earlier capture (0.8478ms)
+✔ capture expires at its deadline even before the expiry timer runs (1.6913ms)
+✔ entry and byte bounds evict older rows and report the loss (86.0255ms)
+✔ storage restores only bounded metadata and never resumes capture (3.8714ms)
+✔ failed reads do not overwrite the retained log and can be retried (0.9052ms)
+✔ storage failure stops capture visibly and explicit retry recovers (0.7659ms)
+✔ a slow save followed by clear cannot publish the older snapshot last (0.7368ms)
+✔ disconnect during asynchronous start cannot enable a stale capture (0.5404ms)
+✔ malformed commands cannot supply capture events or arbitrary storage fields (0.2742ms)
+✔ capture cannot start for a restricted tab (0.8366ms)
+✔ partial observer attachment failure removes listeners without throwing into the blocker (0.5639ms)
+✔ per-page pending commands are bounded while a native tab lookup is unresolved (0.6178ms)
+✔ duplicate pending command IDs revoke the owner and cannot start stale work (0.5261ms)
+✔ WebSocket handshake metadata contains no frames or protocol headers (0.546ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 255.6997

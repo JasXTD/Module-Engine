@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 
 const context = vm.createContext({ URL });
-for (const file of ['shared.js', 'flags.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+for (const file of ['src/shared/shared.js', 'src/blocking/flags.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
 const { requestSignals, REASONS } = context.BlockAdsFlags;
 const signals = (url, type, pageHost = 'uukanshu.cc') => [...requestSignals({ url, type, pageHost })].sort();
 

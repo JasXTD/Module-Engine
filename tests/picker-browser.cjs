@@ -154,7 +154,7 @@ module.exports = async function verifyPicker({browser,page,send,state,until,chec
   await wait(`!document.querySelector('[data-blockads-picker]') && ${display('ba-pick-first')} === 'none'`);
   check((await state()).settings.customCosmeticFilters === '127.0.0.1##.ba-unrelated\n127.0.0.1###ba-pick-first', 'retry saves the exact site rule while retaining concurrent editor changes');
   check(await evaluate("!document.getElementById('ba-pick-first').getAttributeNames().some(name=>name.startsWith('data-blockads-preview-'))"),'successful save removes temporary preview markers');
-  const editor=await browser.open(await browser.evaluate('api.runtime.getURL("lists.html")'));
+  const editor=await browser.open(await browser.evaluate('api.runtime.getURL("src/ui/lists/lists.html")'));
   await until(browser,'settings && !busy',editor);
   check(await browser.evaluate("document.getElementById('customFilters').value.includes('127.0.0.1###ba-pick-first')",editor),'saved picker rules appear in the existing custom-filter editor');
   await browser.closePage(editor);

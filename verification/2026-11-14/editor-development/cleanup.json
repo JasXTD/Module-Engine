@@ -1,0 +1,67 @@
+{
+  "finishedUtc": "2026-11-13T20:27:52.2661991Z",
+  "processReferences": 0,
+  "reparsePoints": 0,
+  "results": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-r0XclF",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-OuSyQo",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-iI9x2G",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-v2D0F7",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-3pQput",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-WV84DD",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-jieyGz",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ibPDl0",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-6UUWKM",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-BPeA5L",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-evqAGr",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-U8XWHL",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-editor-preview-XcT6qQ",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-editor-preview-c9fTjN",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-editor-preview-qnHBlH",
+      "removed": true
+    }
+  ]
+}

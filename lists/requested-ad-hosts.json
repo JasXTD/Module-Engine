@@ -7,6 +7,12 @@
       "match": "exact",
       "requestedOn": "2026-11-12",
       "reason": "User requested ad blocking. No independent malware classification or live-site inspection."
+    },
+    {
+      "domain": "wheelroot.com",
+      "match": "subdomains",
+      "requestedOn": "2026-11-14",
+      "reason": "User reported this domain as malicious and requested blocking, including subdomains. No independent malware verification or live-site inspection."
     }
   ]
 }

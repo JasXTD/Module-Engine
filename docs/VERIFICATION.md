@@ -1,8 +1,291 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest records are from 13 November 2026, covering the userscript editor, tags/order, HTTP/download compatibility and blocker regressions. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest records are from 14 November 2026, covering userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Userscript startup, navigation and reconnects — 14 November 2026
+
+Hardened the existing page/GM bridge and shared userscript runner. Trusted lifecycle transitions now control suspension; synthetic events cannot close the bridge or create duplicate channels. Delayed startup runs once after the DOM becomes available. Navigation invalidates unsent queued work and stale read results, while submitted storage/cookie mutations retain their real completion status without returning old value snapshots. Port ownership, handshake timers, finite reconnects and terminal cleanup prevent stale callbacks from stopping a resumed script. Grants, native authorization, default injection mode and auto fallback policy are unchanged.
+
+**542 Node tests passed**, with no failures, cancellations or skips. Seven lifecycle regressions failed before implementation; final review reproduced an eighth failure where retry exhaustion retained a document-body observer. Tests also cover bounded pending calls, stale replies, preserved mutation outcomes, queued-write cancellation, delayed startup, synthetic events, duplicate restoration and old timer callbacks. Intermediate failures caught the existing cookie-write completion contract; the final implementation preserves it rather than weakening those assertions.
+
+The final combined offline suites passed **590 Edge / 590 Chrome / 557 Firefox** checks. They cover matching, editor/external-file workflows, installation/update review, GM storage/listeners/menus, DOM/tab helpers, dependencies/HTTP, page-world execution and both read-only MCP transports, including network reads. All three browsers actually restored a cached document (`persisted: true`, unchanged instance marker) and retained one source execution, current values and working menus. Edge and Chrome also passed real extension-worker restart probes; Firefox's background document does not use that Chromium probe. Disabling a script while away prevented GM access on return. No unexpected runtime or proxy errors remained.
+
+The existing full Edge blocker suite separately passed **739 checks**, and local ad canaries stayed blocked in all three combined userscript suites. All 76 runtime-file hashes match the final checkout in the four final runs. Manifest permissions, blocker/rule files, the native authorization broker and production MCP code are unchanged. Three focused review rounds covered lifetime ownership, response semantics, resource cleanup and affected consumers.
+
+An early native fixture used `menuId` instead of the command's actual `id`; it was corrected. The first combined Edge run later exposed an existing MCP test-helper race: it requested a replacement pairing code before asynchronous disconnect completed. The helper now waits for the server's disconnected state; the final Edge run observed that wait once. Earlier failed/pre-final runs and their source differences are retained, alongside final evidence.
+
+Tests used installed browsers, disposable profiles, owned loopback pages, synthetic data and deny proxies. No live third-party userscripts/sites, personal profiles, operating-system clipboard writes or desktop notifications were exercised. No dependency installation, commit or push was performed. This hardens the existing page execution path; it does not add raw `@unwrap` features, full Violentmonkey parity or new isolation from page code. [Evidence and source hashes](../verification/2026-11-14/page-lifecycle/summary.json).
+
+## YouTube registration and player fallback — 14 November 2026
+
+Fixed the unregister/re-register window during unrelated protection changes: retained scripts update in place, new/obsolete IDs alone are added/removed, exclusions clear explicitly, and rollback uses the same verified reconciliation. The page filter now handles bounded nested/batched player data, preserves late initial responses, skips getters/frozen branches safely, and filters supported same-origin player API text before a cached parser consumes it. The isolated fallback observes player/control changes as well as media events, guards seeks, restores owned media state and releases observers on disable/navigation. See [the implementation bounds and test commands](DEVELOPMENT.md#youtube-filtering-and-registration).
+
+**532 Node tests passed**, with no failures, cancellations or skips. Six new regression cases failed against the original code and passed after the fix. Four older assertions initially assumed registration array order; they now compare complete registrations by ID. Additional cases exercise native-parse contracts, traversal limits, independent setter failures, unseekable/live media, resource limits and cleanup.
+
+Focused native fixtures passed **40 Edge / 40 Chrome / 39 Firefox** checks. They exercise first-inline-script filtering at document start, nested batches, real fetch JSON/text/clone/body-consumption behavior, locally generated media decoding/seeking, dynamic skip controls, sound/rate restoration, replacement media, site/ad/cosmetic controls, simultaneous navigation/settings changes, trusted history navigation and synthetic-event rejection. Firefox has one fewer check because the Chromium launcher exposes an additional process-close assertion.
+
+The unchanged full blocker suites passed **739 Edge / 739 Chrome / 733 Firefox** checks. Runtime hashes match the final checkout in all six successful native runs. Manifest permissions, rule bundles and userscript implementations are unchanged; the manifest adds only the isolated fallback module. Three focused review rounds covered transactions, bounded work/lifecycle, affected consumers and fixture correctness.
+
+The first two Edge fixture attempts correctly refused a seek because the initial local media server exposed a `[0, 0]` seekable range; byte-range serving fixed the fixture. The third used an incorrect speed baseline after native `load()` reset it; the baseline is now established after that reset. These failures and the final passing evidence are retained. No guard was relaxed to pass a test.
+
+All browser tests used disposable profiles, owned loopback pages, locally generated silent media and an external-traffic deny proxy. YouTube policy is aliased only onto the owned fixture route in disposable copies, with original and fixture hashes recorded separately. No live YouTube page, personal browser session or real failing ad was tested, so this is not a claim of complete live YouTube coverage. No dependency installation, commit or push was performed. [Evidence and source hashes](../verification/2026-11-14/youtube/summary.json).
+
+## MCP network reads — 14 November 2026
+
+Added `module_engine_get_network_log` under a separate, initially unchecked **Captured network request metadata** scope. Existing Scripts/Logs approval does not grant it. The tool copies the latest matching sanitized records, with URL/method/tab/type/status/state filters, a 100-entry / 128 KiB response bound, `matched` / `truncated`, and capture status. It has no access to capture-control commands and cannot start, stop, clear or extend capture, replay requests, or change protection. The MCP contract version is 1.1.0; stdio remains the default.
+
+**517 Node tests passed**, with no failures, cancellations or skips. New checks verify separate approval, no storage/timer/capture mutations, retained-data sanitization, newest-match filtering, byte bounds, read failures and suppression of pending results after revocation. The initial focused run caught one remaining six-tool assertion, which was updated for the seventh read-only tool; the passing rerun is retained alongside it.
+
+The final native MCP suites passed **133 Chrome / 133 Edge / 129 Firefox** checks. Each suite runs real stdio and localhost HTTP server processes against an isolated browser. Locally authored requests exercise live/stopped reads, GET/POST metadata, redirects, HTTP errors, network failures, filters and redaction. The blocked localhost canary does not reach its server. Reads of stopped capture leave its session data identical, capture-control arguments are refused, and disconnect/reapproval cannot inherit the network scope. Existing script/source/matching and managed-error reads still work. Both server processes close cleanly, with no unexpected output or uncaught browser runtime errors.
+
+The complete blocker/UI regressions also passed **739 Chrome / 739 Edge / 733 Firefox** checks, including the changed sidebar navigation and narrow layout, native filtering, settings transactions and existing page protections. Tested versions were Chrome 157.0.8103.79, Edge 157.0.4341.46 and Firefox 160.0. All 75 packaged file hashes match the final runtime, and both MCP transports match the current server/contract hashes.
+
+**MCP** now appears in the sidebar on all full extension pages, alongside the existing top-right manager button. MCP and Network links between those pages open separately to preserve their independently owned connection/capture lifetimes. Desktop and narrow Chrome/Edge layouts and the Firefox desktop page were inspected. The native MCP run does not resize Firefox's extension viewport; shared narrow navigation remains covered by the blocker/UI suite.
+
+Three review rounds covered the capability boundary, asynchronous lifecycle and response bounds, then UI/consumer consistency. Cached entry sizes avoid reserializing records just to select a bounded response; one shared transport runner replaces duplicated harness loops. Snapshot comparison confirms unchanged blocking/userscript implementations, manifest permissions/version/identity and the stdio/HTTP transport implementations. The first passing Chrome attempt precedes the final cached-size optimization, docs and runtime-error assertion; the final run uses matching package hashes.
+
+Testing was offline with installed browsers, disposable profiles, local fixtures and deny proxies. No public threat sites, new dependencies, personal profiles or real client configuration were involved. The test approvals apply only to disposable browser profiles. Users must reload the extension, restart their configured MCP server and explicitly approve Network sharing in their own browser. Results contain no headers, cookies or bodies; paths can still be private. The tool has no pagination cursor and does not expose Windows-wide traffic or a complete request history. Nothing was committed or pushed.
+
+[Evidence, hashes, screenshots and retained attempts](../verification/2026-11-14/mcp-network/summary.json). The starting snapshot remains at `.artifacts/2026-11-14-mcp-network-before`. [Setup and read filters](MCP.md#reading-captured-network-requests).
+
+## Network metadata capture — 14 November 2026
+
+Added an optional **Network** page with all-browser or selected-tab capture, request/response timing, status/error details, redirect hops, filters, live-view pause, pagination and filtered JSON exports. Capture is independent of blocking and userscripts. It starts off, stops with its owning page/selected tab or after 30 minutes, and retains only sanitized metadata in bounded session storage. It does not request new permissions, alter requests or expose entries through MCP.
+
+**510 Node tests passed**, with no failures, cancellations or skips. The 23 network-log tests cover native sender authorization, projection/redaction, redirect/partial events, stop/clear/restore, asynchronous disconnects, storage errors and ordering, observer attachment failure, and entry/byte/viewer/command limits.
+
+| Browser | Native Network and GM checks | Full blocker and UI checks |
+| --- | ---: | ---: |
+| Chrome 157.0.8103.79 | 49 | 739 |
+| Edge 157.0.4341.46 | 49 | 739 |
+| Firefox 160.0 | 46 | 733 |
+
+The native fixture sends local GET/POST requests, redirects, HTTP errors and connection failures, holds a response across Clear, exports through the real browser download mechanism, and exercises tab scope, owner/viewer disconnects, filters, keyboard details, paging and paused views. An authored userscript uses GM storage and HTTP during capture; the blocked localhost canary never reaches its server. All three browsers reported a failure for that blocked canary. Generic errors are displayed without claiming blocker attribution. Final native runs had no unexpected uncaught runtime errors.
+
+Desktop light/dark, empty and disconnected screenshots were inspected, along with narrow Chrome/Edge layouts. Firefox's narrow page was measured inside a same-origin extension frame because its automation API cannot resize extension viewports. The final UI preserves table nodes when polling unchanged data and keeps long native tab IDs on one line. Full blocker suites check the changed sidebar and existing protections. Snapshot comparison confirms unchanged blocking/userscript implementations, rules, vendor files, manifest permissions, version and identity; only the intended integration, UI, tests and documentation changed.
+
+Retained unsuccessful attempts include the background unit fixture's missing `clearTimeout`, a Firefox test expression incompatible with its automation wrapper, and reading Firefox's export before the native `.part` download finished. These harness issues were fixed and the affected checks rerun. Initial passing Chrome/Edge captures preceded the final polling/layout refinement; the final runs match all 75 packaged runtime file hashes.
+
+Testing used installed browsers, disposable profiles, owned loopback fixtures and deny proxies. No public threat sites, personal profiles, downloads of third-party code or additional dependencies were involved. WebSocket handshake projection, background restore, expiry and storage failures were unit-tested; native WebSocket frames and live-site completeness were not tested. The browser API cannot provide other-app traffic, every request, headers/bodies or WebSocket message contents through this feature. The earlier source-layout pass covers the broader userscript/MCP workflows; desktop OS helpers were not repeated here. Nothing was committed or pushed.
+
+[Evidence, hashes, retained attempts and screenshots](../verification/2026-11-14/network-log/summary.json). The starting snapshot remains at `.artifacts/2026-11-14-network-log-before`. [Repeat the offline capture checks](DEVELOPMENT.md#network-metadata-capture).
+
+## Source layout — 14 November 2026
+
+Moved 50 application JavaScript, HTML and CSS files into `src/background`, `src/blocking`, `src/userscripts`, `src/ui` and `src/shared`. The root `manifest.json` and the folder loaded by the browser stay in place. Manifest entries, HTML assets/navigation, worker imports, dynamic injections, private helper authorization paths, Node helpers, tests and current documentation use the new locations. One shared runtime inventory replaces eight duplicated package lists.
+
+**487 Node tests passed**, with no failures, cancellations or skips. Five new checks cover packaged resource resolution and startup replacement of old root-level native registrations while retaining settings, userscript source and saved GM values. **637 offline PowerShell assertions passed**: 21 cosmetic, 237 rule/import, 338 threat/build and 41 requested-host checks. The rule compiler imports the relocated production parser.
+
+| Browser | Blocker and UI checks | Userscript layout and MCP checks |
+| --- | ---: | ---: |
+| Chrome 157 | 739 | 523 |
+| Edge 157 | 739 | 523 |
+| Firefox 160 | 733 | 491 |
+
+The combined userscript suites exercise matching, editor workers and metadata suggestions, external-file review, installation/updates, storage/listeners/menus, execution order, DOM/tab helpers, cached dependencies, HTTP, page-world access, synthetic cookies, FormData uploads, the private helper document and both MCP transports. Local ad canaries remain blocked throughout. The blocker suites cover native rules, settings transactions, page protections, injected helpers and relocated page navigation. Desktop/narrow screenshots, Firefox's actual toolbar popup, themes and editor/MCP states were inspected.
+
+Snapshot comparison confirms that moved JavaScript ASTs change only in paths, HTML changes only resource/navigation references, and CSS remains identical. Manifest permissions, version, extension identity, storage keys and native registration IDs are unchanged. Rules, lists, icons, vendored assets and the external-file helper match the starting snapshot. The three Node MCP entry points and the compiler also change only import paths. Tested package hashes match the final runtime files.
+
+Retained attempts include an old raw-link assertion corrected to compare resolved URLs, a Firefox toolbar check that sampled its 16-by-8 placeholder before layout, and Firefox closed-page promise diagnostics now recorded separately using exact source/message checks already reflected in the blocker suite. One combined Chrome run timed out on a native cookie write; the isolated page test passed 78 checks, then the complete suite passed without changing cookie code. One Firefox automation startup timed out before extension loading; a fresh run passed. The causes of those two transient timeouts were not established, and their evidence remains separate from the final passing runs.
+
+Testing used installed browsers, disposable profiles, locally authored fixtures and deny proxies. No public threat sites or third-party userscripts were opened. Operating-system clipboard writes, desktop notifications and larger downloads were not repeated in this path-only pass. Existing personal profiles were not changed; upgrade preservation was checked through the registration regression and unchanged persistence contracts. No dependency was installed, and nothing was committed or pushed.
+
+[Evidence, mapping, hashes, retained attempts and screenshots](../verification/2026-11-14/src-layout/summary.json). The local starting snapshot remains at `.artifacts/2026-11-14-src-layout-before`. [Repeat the offline checks](DEVELOPMENT.md#source-layout-regression).
+
+## Editor and development tools — 14 November 2026
+
+Metadata suggestions use the supported core directives and GM APIs and preserve native textarea undo. The optional external-editor helper reads one chosen UTF-8 `.user.js` file through an authenticated loopback session. Changes wait for **Load into draft**, and the normal explicit **Save** still validates revisions and pauses the script. MCP, blocker code/rules and manifest permissions are unchanged. See [setup and boundaries](USER_GUIDE.md#editing-and-organizing-scripts).
+
+**482 Node tests passed** with no failures, cancellations or skips. The 16 focused editor/helper checks include inert syntax inspection, CRLF metadata, token replacements, body/selection boundaries, strict pairing codes, Host/Origin/authentication checks, malformed requests, one-use and expired sessions, concurrent pairing, atomic replacement, missing/oversized/non-UTF8 files, junction redirection, a real CLI process, and slow clients that send partial bodies.
+
+Final disposable native editor suites passed **83 checks in Chrome**, **83 in Edge**, and **73 in Firefox**, with no uncaught editor errors or unexpected proxy socket errors. They exercise native keyboard and pointer completion, undo/redo, composition-state guards, CRLF draft state, actual file-helper HTTP pairing, synthetic-click rejection, explicit source review, cancellation, file changes during confirmation, unchanged saved execution during review, paused saves, retained tags, continued tracking across saves, stale revisions, stop/reconnect and switching drafts. The local ad canary stayed blocked during script execution and external review in all three browsers. The comprehensive blocker suite recorded below was not repeated in this pass; its implementation and rules match the starting snapshot.
+
+The CRLF regression was reproduced before its parser fix: a closing-marker regex could consume the newline after the last metadata entry and leave a stray carriage return. The additional Firefox pointer test also failed before its fix: a compatibility `mousedown` moved focus away after cancelled `pointerdown`, hiding the list before click. Retained event traces show the corrected click retaining textarea focus. Early failed tests and intermediate browser runs remain in the evidence. Two early mockup launches failed at sandbox process control or extension loading; a minimal static preview then rendered successfully in a disposable profile.
+
+Desktop and narrow Chrome/Edge layouts, Firefox desktop layouts, native focus/disabled/error states and screenshots were inspected. Composition-event handling was exercised; a physical OS input method was not. Testing used only locally authored scripts/files/pages, installed browsers, Node core and deny proxies. No public threat sites or third-party userscripts were opened, no package was installed, no personal browser/MCP configuration was changed, and nothing was committed or pushed. This does not establish general JavaScript IntelliSense, live-site compatibility or protection against software already controlling the same user account.
+
+[Evidence, source hashes, screenshots and retained attempts](../verification/2026-11-14/editor-development/summary.json). A task-specific starting snapshot is kept locally under `.artifacts/2026-11-14-editor-dev-before`.
+
+## Localhost MCP and requested domain — 14 November 2026
+
+Stdio remains the default. The optional HTTP endpoint requires an environment bearer token, binds only `127.0.0.1`, validates the exact Host, rejects supplied Origins and exposes the same six read-only tools. The separate browser bridge still requires explicit approval and its own token. Session expiry and authenticated DELETE revoke browser access, pending reads and unused pairing codes; reconnecting cannot inherit approval. No new dependency or browser permission was added. See [setup and transport limits](MCP.md).
+
+**469 Node tests passed**, with no failures, cancellations or skips. The 23 focused MCP tests cover both transports, closed schemas, authentication, header/body validation, bounds, concurrent initialization, cancellation, dropped connections, expiry, stale results, startup failure and cleanup. **637 offline PowerShell assertions passed**: 21 cosmetic, 237 rule/import, 338 threat-evidence/build and 41 requested-host checks.
+
+| Browser | HTTP MCP | Default stdio MCP | Full blocker regression |
+| --- | ---: | ---: | ---: |
+| Chrome 157 | 44 | 40 | 739 |
+| Edge 157 | 44 | 40 | 739 |
+| Firefox 160 | 41 | 37 | 733 |
+
+The native MCP runs launch the actual server process, approve a disposable extension with trusted input, inspect owned scripts and captured errors, and verify scope rejection, unchanged saved configuration, revocation, reapproval and continued ad blocking. Packaged extension bytes, the ad rules and the separate server source hashes match the final checkout. Desktop and narrow MCP screenshots were inspected. HTTP test helpers DELETE their session before the fixture terminates them; unit tests also cover graceful shutdown. Personal Codex configuration was not changed, and a real Codex model tool call was not tested.
+
+`wheelroot.com` and all its subdomains are now blocked through the existing user-requested ad rules. The earlier exact `pxl.wheelroot.com` entry remains as request history. This records the user's report and blocking preference, without an independent malware classification. Native rule evaluation verifies navigation, resources, subdomains, lookalikes, credentials, explicit allow preferences and the ad-layer switch. Disabling that layer or pausing protection disables these blocks.
+
+Review exposed a raw query/fragment boundary issue in the new regex; a failing offline fixture now passes after restricting authority characters. Native tests also accounted for the older exact rule winning over the overlapping domain rule. Firefox's simulator uses the HTTP(S) handshake representation for WebSockets, as in the existing threat tests; evidence retains both URLs. Each browser additionally blocks a real localhost WebSocket using the new rule pattern with only the hostname, rule ID and resource scope adjusted for the fixture, then successfully reconnects after removal. Firefox's exact intentional connection-error message is retained as expected network evidence for that owned page; unrelated errors still fail.
+
+Earlier attempts include one Chrome manager-startup timeout, one Firefox browser-automation startup timeout, a test-only process-start deadline, and fixture errors around intentional socket closure and expected network-error classification. The startup causes were not established; independent final runs passed, and failed attempts remain separate from passing evidence. Three review rounds checked shared RPC ownership, hostname boundaries and preserved preferences, then native behavior, packaging, documentation and cleanup.
+
+All browser tests used disposable profiles and denied external traffic. No reported domain was visited or resolved for verification, no new package was installed, and nothing was committed or pushed. These results verify the local source snapshot, not live-site reputation or universal protection. See [retained results and limitations](../verification/2026-11-14/mcp-http/summary.json).
+
+## Button protection — 14 November 2026
+
+Deceptive play/download protection starts enabled, shares the existing prompt exceptions and remains independent of cosmetic hiding and network rules. It requires an ad placement, an external link covering a real video player, or a Play action pointing to an installer/script filename. No new dependency or browser permission was added. The master switch, full site pause and trusted-site exceptions remain effective.
+
+**454 Node tests passed**, without failures, cancellations or skips. **622 offline PowerShell assertions passed**: 21 cosmetic, 237 rule/import, 338 threat-evidence/build and 26 requested-host checks. The full browser blocker suites passed **721 Chrome 157**, **721 Edge 157** and **715 Firefox 160** checks. Existing page-script/GM compatibility also passed **78 Chrome**, **78 Edge** and **75 Firefox** checks.
+
+Owned loopback fixtures verify native left/middle/double clicks, Enter/Space, empty player-covering links, fresh reason feedback, early page-handler suppression and absence of delayed/transient tabs. Coverage includes dynamically changed controls, open shadow roots, HTTP frames, navigation away/back, notice expiry, live settings, trusted-site exceptions and selected-site popup/notification guard coexistence. Negative fixtures preserve actual local video playback, a byte-exact CSV download, ordinary external Download navigation, installer/media links, form submission, hidden labels, article labels and distant wrapper labels. Existing ads, network filters, Reddit repair, prompt cleanup, picker and light/dark/narrow UI regressions remain in the full suites. New control and notice screenshots were inspected.
+
+The initial Chrome fixture demonstrated the original gap: a marked ad Download reached early page handlers and fragment navigation. Firefox diagnostics found that centered video input could hit its browser-owned Picture-in-Picture UI without page events. Final tests target the page link away from that native control and require a fresh trusted-input notice on every blocked gesture. A separate ordinary link verifies permitted new-tab behavior. One fresh Chrome attempt timed out before initial extension state arrived; no runtime error was reported, its cause was not established, and the full rerun passed unchanged assertions. All attempts remain separate from final passing evidence.
+
+Three review rounds bounded text traversal by elements as well as text, removed unnecessary child enumeration, narrowed loose ad-label ancestry, checked state ownership and rollback, and reviewed packaging, UI and documentation. No page-wide button observer or per-click extension request was added. Final packages contain no diagnostic event tracing.
+
+All browser tests use disposable profiles and deny external traffic. No suspicious site was visited, no executable was downloaded or opened, no external reputation service was used, and nothing was committed or pushed. Detection is conservative; live sites, native touch devices, browser-owned controls, context-menu navigation and deliberate evasion are not covered by these results. See [usage and limits](USER_GUIDE.md#deceptive-play-and-download-buttons) and the [retained evidence](../verification/2026-11-14/button-protection/summary.json).
+
+## Prompt protection — 14 November 2026
+
+Both new prompt switches start enabled and have a shared trusted-site exception list. Notification API hooks run at document start in top pages; DOM prompt policies share the existing Reddit cleanup engine so scroll, pointer and inert repairs have one owner. Network ad filtering, Reddit's site scope and userscript settings retain their existing controls.
+
+**448 Node tests passed**, with no failures, cancellations or skips. **622 offline PowerShell assertions passed**: 21 cosmetic, 237 rule/import, 338 threat-evidence/build and 26 requested-host assertions.
+
+| Browser | Full blocker, Reddit, prompt and UI checks | Page-script compatibility |
+| --- | ---: | ---: |
+| Chrome 157 | 607 | 78 |
+| Edge 157 | 607 | 78 |
+| Firefox 160.0 | 601 | 75 |
+
+The browser runs use installed browsers, disposable profiles, authored loopback fixtures and deny-all external proxies. They verify first-page-script notification interception, asynchronous callback/promise denial without changing saved permission, a trusted click, accessible iframe APIs and rejection of the page's PushManager subscription before any push-service call. DOM checks include native modal/backdrop cleanup, decorative scrims, real clicks and scrolling, unrelated modal/widget preservation, independently switched policies, live exceptions, reloaded native APIs, reused dialogs, open shadow roots and ad canaries. Ordinary download/extension dialogs, warnings, quoted articles, inline content, camera prompts, CAPTCHA controls and non-rendered script data remain visible. Actual popup switches and exception controls, light/dark styles, narrow layouts and keyboard focus are included; prompt screenshots were inspected.
+
+The tests found and fixed concatenated text-node boundaries that missed a notification overlay. Earlier attempts also record a fixture restoration error, Firefox fixture-expression syntax, a Firefox startup timeout before extension loading and an Edge process-inventory timeout after behavior checks. The page-order regression now waits for both document-end scripts before asserting their exact order; native navigation completion alone can precede those tasks in Firefox. The final full runs pass and close their disposable browsers; the attempts remain separate from passing evidence.
+
+No dependencies or browser permissions were added. No listed or suspicious site was visited, no downloaded executable was opened, no external push service was contacted and nothing was pushed. Native behavior for an already granted permission is unit-tested with a controlled API; saved browser permission changes and real desktop notifications were not exercised. Page hooks require reload to change, do not revoke prior permissions, and are not a browser-wide or tamper-proof policy. Pattern matching is conservative, English-only and bounded; live scam coverage is unverified. See [usage and limitations](USER_GUIDE.md#notification-and-install-prompts).
+
+The [retained evidence](../verification/2026-11-14/prompt-protection/summary.json) includes final source hashes, fixture-override verification, screenshots, initial attempts and cleanup records.
+
+## Page-script compatibility — 13 November 2026
+
+Page scripts can combine real `unsafeWindow` access with granted GM APIs. Wrapped `auto` tries page first and falls back only when page startup is refused. The page bridge preserves site CSP and Trusted Types; exceptions after startup never rerun the source. Default content mode, raw `@unwrap` behavior and the existing ad-blocking modules remain intact. Older saved auto scripts retain isolation until individually re-enabled.
+
+**408 Node tests passed**, with no failures, cancellations or skips. Coverage includes capability separation, fixed native routing/identity, pending-work bounds, suspension/reconnection, no retry after uncertain completion, safe upgrade behavior, native grant/scope revocation and accurate MCP mode reporting.
+
+| Browser | Page compatibility | Userscripts, excluding desktop helpers | MCP page-error capture | Blocker suite |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome 157 | 78 | 443 | 40 | 573 |
+| Edge 157 | 78 | 443 | 40 | 573 |
+| Firefox 160 | 75 | 362 | 37 | 567 |
+
+All native checks used installed browsers, disposable profiles, project-owned loopback fixtures and deny proxies. Page checks exercised actual page objects and lexical globals, modern/legacy storage, menus, cross-tab listeners, FormData/Blob uploads with redirects, synthetic HttpOnly cookies and optional permissions, timing, configured execution order, frames, policy fallback and live revocation. Local ad canaries remained blocked. MCP tests launched the actual project stdio process and captured an exception from a real page-bridge script; each server exited cleanly. No personal MCP client or browser profile was configured.
+
+Initial Chrome probes showed that USER_SCRIPT insertion alone could not run the page wrapper. A native MAIN bootstrap resolved that without relaxing policy. The first full Firefox pass found a Trusted Types refusal during string-based cleanup; removing child nodes fixed it, and the final Firefox policy fixtures passed. These attempts and the final runs are retained in the [evidence and source-hash report](../verification/2026-11-13/userscript-page/summary.json).
+
+Three focused review rounds covered authorization/migration, lifecycle and simplification, then packaging/UI/documentation. Explicit page compilation omits its unused isolated fallback body. Final production hashes match all 12 final native test packages; existing disposable clipboard-sink prefixes and the local Reddit fixture alias were separately verified. The manager warning was visually inspected at 1280 and 390 pixels in Chrome and at Firefox's native desktop width, with no clipped text or horizontal page overflow. After evidence retention and process, resolved-path and reparse-point checks, all 23 disposable run directories were removed. The pre-task working snapshot remains in ignored `.artifacts/2026-11-13-page-before`.
+
+Page mode shares trust with the site: page code can observe or invoke its script's granted helpers. It is not an isolation boundary. Raw `@unwrap` auto remains isolated; explicitly select page for raw page globals. Clipboard/notification/download desktop suites and unchanged rule builders were not rerun; the full blocker and ordinary userscript regressions passed. No public sites or third-party userscripts were executed. No packages were installed, and nothing was committed or pushed.
+
+## Read-only MCP — 13 November 2026
+
+Added **MCP → Read-only debugging** with an optional Node-core stdio server, one-time pairing, explicit browser scopes, 30-minute sessions and page-close/disconnect revocation. Status inspection does not repair registrations or write settings. Scripts and logs use explicit field projections; cookies, saved GM values, page content and arbitrary evaluation/extension commands are outside this interface. See [setup and capture limits](MCP.md).
+
+**401 Node tests passed**, with no failures, cancellations or skips. The 18 new checks cover the MCP lifecycle, malformed framing, Host/Origin/token validation, scope restrictions, expiry, cancellation, size/concurrency limits, redaction, read-only drift detection, diagnostic authentication, floods, preserved exceptions and stale approval/result rejection.
+
+| Browser | Native MCP | Userscripts, excluding desktop helpers | Blocker suite |
+| --- | ---: | ---: | ---: |
+| Chrome 157 | 39 | 443 | 573 |
+| Edge 157 | 39 | 443 | 573 |
+| Firefox 160 | 36 | 362 | 567 |
+
+Native MCP tests launched the actual stdio server with a project-owned JSON-RPC client and the production extension files in disposable browser profiles. They connected using trusted native input, read source/metadata/status/matching/activity, captured an actual userscript exception, verified unchanged persisted configuration, refused unapproved scopes, revoked access after disconnect/page closure, and kept an owned local ad canary blocked. Each server exited cleanly. This does not claim that a personal Codex/MCP client was configured or that live sites were tested.
+
+Visual inspection covered the final MCP page at 1280 and 390 pixels in Chromium and at Firefox's native desktop width. Firefox's harness cannot resize extension pages through its viewport API; its desktop screenshot and the Chromium narrow layouts are recorded separately. The initial Chrome/Edge MCP passes preceded the requested naming/layout update; final runs use the current UI. The [evidence and source hashes](../verification/2026-11-13/mcp/summary.json) retain both snapshots.
+
+Three focused review rounds checked trust boundaries/data projection, resource lifetime and simplification, and packaging/UI/documentation. Final runtime hashes match the actual MCP and blocker test packages. The full userscript suites preserve their existing disposable clipboard-sink prefix in `background.js`; its source/fixture hashes and unchanged production suffix were verified separately. Existing Reddit fixture aliases remain confined to the offline blocker package. All 11 disposable test directories were removed after evidence retention, process/path checks and reparse-point checks. Personal browser profiles and OS clipboard data were not used. No tools/dependencies were installed, and nothing was committed or pushed by this task.
+
+Captured errors are limited to existing native messaging worlds: wrapper exceptions, top-level-await rejections and errors reported by managed GM callbacks. General page-console messages, raw/page-world scripts and unrelated asynchronous errors remain outside capture. Source and error text may contain private content and are untrusted data. Desktop clipboard/notification/download helper suites and unchanged rule builders were not rerun. All native tests used owned fixtures behind deny proxies.
+
+## Cookie write revocation fix — 13 November 2026
+
+Fixed the audit finding where a native cookie write could complete after access was revoked while the caller received a rejection. Authorization still precedes dispatch. Submitted writes now preserve the native result; a timeout explicitly reports an unknown outcome, without retry or rollback. Revoked reads and new calls remain blocked. The two-second deadline still releases the broker queue, while native work retains its capacity slot until settlement.
+
+**383 Node tests passed**, with no failures or skips. All eight delayed set/delete cases failed before the fix and passed afterward. The **21 focused cookie checks** cover promise/callback results, permission loss, scope exit, page suspension, connection revocation, native failures, rejection before dispatch, late-read suppression, deadlines, capacity release and shutdown. Delays are injected into the native API mock; actual browser cookie operations use synthetic cookies in fresh profiles.
+
+| Browser | Full userscript suite, excluding desktop helpers | Full blocker |
+| --- | ---: | ---: |
+| Chrome 157 | 443 | 573 |
+| Edge 157 | 443 | 573 |
+| Firefox 160 | 362 | 567 |
+
+The first Edge run lost a native script-selection click and later timed out at the tag editor. The test now confirms the selected script before typing and records bounded click retries. Chrome also passed **43 focused editor checks** with the updated fixture. A later Chrome run attempted to read an export that was still downloading; that check now waits for the matching native download completion before checking its exact contents. Full reruns passed. Both failed runs are retained in the [verification report](../verification/2026-11-13/cookie-revocation/summary.json).
+
+Three review rounds checked authorization/result delivery, simplification and resource lifetime, and affected callers/documentation. Recorded source hashes for final passing runs match the workspace, including concurrent edits to the log and list pages that this fix preserved. The three cookie runtime files also match the actual tested packages. The retained failed Edge run records its earlier snapshot separately. Existing clipboard/Reddit test overrides remain confined to disposable packages. All browser tests used owned fixtures and deny proxies; no personal cookies or profiles were accessed. No tools or dependencies were installed, and nothing was committed or pushed.
+
+A submitted browser write remains uncancellable, and an unloaded caller may never receive its result. Optional clipboard, notification and download desktop suites and unchanged rule builders were not rerun. These offline checks do not establish live-site coverage. Reload the extension and affected pages to activate the fix.
+
+## Userscript execution compatibility — 13 November 2026
+
+Added `unsafeWindow` in the selected native world, `GM_cookie` / `GM.cookie` list/set/delete, `@top-level-await` and native-scope `@unwrap`. Implementation is original and follows the documented subset in the [user guide](USER_GUIDE.md#execution-compatibility). Cookies require a new **optional** permission, the script's exact grant and current-frame authorization; they stay within the calling tab's native store. Personal browser profiles and real cookies were not accessed.
+
+**370 Node tests passed**, with no failures or skips. New coverage includes execution flags and diagnostics, preserved unwrapped globals, cached dependency order, asynchronous errors, cookie grants/callbacks/store selection, host and parent-domain scope, unsupported partitions, permission changes, late-result suppression, deadlines and revocation after an await.
+
+| Browser | Userscripts, including execution and cookies | Full blocker |
+| --- | ---: | ---: |
+| Chrome 157 | 443 | 573 |
+| Edge 157 | 443 | 573 |
+| Firefox 160 | 362 | 567 |
+
+All native suites used installed browsers, disposable profiles, owned loopback pages and locally authored scripts behind deny proxies. Existing matching fixtures route fixed example aliases directly to loopback without resolving public names. The new fixtures verify actual page/isolated globals, real GM awaits, raw declarations observed by page scripts, exclusions/noframes, synthetic HttpOnly cookies, native permission controls, scope exits and revocation. Manager cookie review was visually inspected at 1280 and 390 pixels. Final package source hashes match the workspace; existing clipboard/Reddit fixture overrides remain confined to disposable copies and are separately recorded.
+
+Three focused review rounds covered trust/scope, simplification/resource use and final consumers/documentation. Compiler/linter bindings and cookie scope presentation are shared. Duplicate frame probes were removed without dropping the checks before native operations or result delivery. In-flight reads are discarded after permission loss, scope exit or page suspension; expired native calls retain bounded slots and cannot perform later writes. Writes already submitted to the browser cannot be cancelled.
+
+The initial four execution tests failed against the original unsupported implementation. Existing negative tests for `GM_cookie` and top-level await were updated to test genuinely unsupported names, while positive tests exercise the newly supported behavior. The first sandboxed Chrome launch failed with Windows access restrictions; scoped execution resolved it, and its old process ID was confirmed absent. Retained attempts are labeled; only completed passing runs appear above.
+
+The optional desktop-helper suites and unchanged PowerShell/rule builders were not rerun in this pass. No external test assets, third-party scripts or packages were downloaded or installed; no malware site was visited. Live-site compatibility and complete Violentmonkey parity are not claimed. Page-world privileged GM APIs remain unavailable; unwrapped scripts reject extended scopes and document-body; cookie partition options are unsupported. Reload the extension and affected pages to activate the changes.
+
+See the [verification report, hashes, attempts and screenshots](../verification/2026-11-13/userscript-execution/summary.json). Nothing was committed or pushed.
+
+```powershell
+node --test tests/*.test.cjs
+node tests/userscripts-browser.cjs chrome --execution-only
+node tests/userscripts-browser.cjs edge --execution-only
+node tests/userscripts-firefox.cjs firefox --execution-only
+node tests/userscripts-browser.cjs chrome --skip-desktop
+node tests/userscripts-browser.cjs edge --skip-desktop
+node tests/userscripts-firefox.cjs firefox --skip-desktop
+node tests/browser-smoke.cjs chrome
+node tests/browser-smoke.cjs edge
+node tests/browser-smoke.cjs firefox
+```
+
+## Broader userscript matching — 13 November 2026
+
+Added bounded regex includes/excludes, extended HTTP(S) match patterns (host wildcards, ports, IPv6, internationalized hosts and fragments) and `.tld` matching with a pinned local Public Suffix List. Inclusion remains a union and exclusions take precedence. The wrapper and GM broker use the same matcher; `@connect`, script timing and blocker policies retain their contracts.
+
+**358 Node tests passed**, without failures or skips, including more than 200,000 small regex comparisons, suffix wildcard/exception/private-domain cases, deceptive hosts, exact wrapper/broker agreement and renderer-probe failure paths. The three offline PowerShell suites passed **21 cosmetic, 237 rule/import and 338 threat assertions**. The suffix generator's integrity and reproducibility check passed.
+
+| Browser | Userscripts, including matching | Full blocker | Blocked-tab cleanup |
+| --- | ---: | ---: | ---: |
+| Chrome 157 | 401 | 573 | 25 |
+| Edge 157 | 401 | 573 | 25 |
+| Firefox 160 | 322 | 567 | 28 |
+
+Native checks use locally authored pages and scripts. Fixed example-domain aliases reach only an owned loopback server through an explicit proxy route; no public alias is resolved or contacted. All other proxied traffic is denied. Tests cover both isolated and page-world scripts, ports, fragments, regex and suffix inclusion/exclusion, real GM calls, history changes in top/child frames and a blocked local ad canary. IPv6 and IDN normalization also have focused unit coverage. The core suites retain editor, install/update, storage, menu, tab-helper, request and shutdown-pressure regressions. Optional clipboard, notification, download and upload-progress permission suites were not rerun in this matching pass; their earlier evidence is separate below.
+
+A native Chrome failure exposed a stale sender URL after `pushState`. It is fixed by checking the current frame in the broker with the existing scripting permission. Probes fail closed on errors, changed documents or a two-second timeout; unresolved calls retain bounded slots, and late results cannot perform expired operations. Adversarial local regex fixtures also reproduced excessive empty-alternative work and empty-group compilation. Both now have explicit work limits; duplicate epsilon visits count and identical empty branches are deduplicated. Earlier failures and interrupted runs are retained, with no passing result claimed for incomplete attempts.
+
+Three final review rounds covered matching/security boundaries, lifecycle/resource use, and loaders/documentation/compatibility. Only actual `.tld` hostname rules include the suffix data in injected wrappers. Manager layouts were inspected at 1280 and 390 pixels. The approved data's pinned Git blob/SHA-256 checks and user-reported clean Malwarebytes scan are recorded; no new software was installed and no independent antivirus scan is claimed.
+
+See the [report, source hashes, attempts and regression evidence](../verification/2026-11-13/userscript-matching/summary.json). These tests do not establish live-site compatibility or full Violentmonkey parity. Reload the extension and affected pages to use the changes. No commit or push was made.
+
+Focused commands (from the repository root):
+
+```powershell
+node scripts/build-userscript-suffixes.cjs --check
+node --test tests/userscripts-matching.test.cjs tests/userscripts.test.cjs
+node tests/userscripts-browser.cjs chrome --matching-only
+node tests/userscripts-browser.cjs edge --matching-only
+node tests/userscripts-firefox.cjs firefox --matching-only
+```
 
 ## Userscript editor and transfers — 13 November 2026
 
@@ -192,6 +475,8 @@ node tests/popup-guard-browser.cjs chrome
 node tests/popup-guard-browser.cjs edge
 # Focused Reddit fixtures only; still loopback-only with a disposable profile.
 node tests/browser-smoke.cjs edge --reddit-only
+# Focused notification/install prompt fixtures, also available for edge and firefox.
+node tests/browser-smoke.cjs chrome --prompts-only
 node tests/live-network-browser.cjs chrome
 node tests/live-network-browser.cjs edge
 node tests/userscripts-browser.cjs chrome --native-helper-prompt

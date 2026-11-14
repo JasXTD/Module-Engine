@@ -1,0 +1,12 @@
+✔ the shared inventory includes runtime files and excludes local tooling and transient files (25.0771ms)
+✔ all manifest entry points and bundled rules resolve inside the package (2.6793ms)
+✔ HTML scripts, styles, icons and navigation links resolve relative to their own page (5.8777ms)
+✔ static worker imports, extension URLs, offscreen documents and injected scripts resolve correctly (475.1901ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1009.0028

@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 8,
+  "error": "Error: {\"columnNumber\":39,\"exception\":{\"type\":\"error\"},\"lineNumber\":305,\"stackTrace\":{\"callFrames\":[]},\"text\":\"SyntaxError: missing ) in parenthetical\"}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:335:46)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async shot (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-log-browser.cjs:42:5)\n    at async Object.runNetworkLog (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-log-browser.cjs:56:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:82:7",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-cSf22o\\evidence.json"
+}

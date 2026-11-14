@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modules &amp; scripts · Module Engine</title>
+  <link rel="stylesheet" href="../shared/ui.css"><link rel="stylesheet" href="manager.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Module Engine">
+  <a class="rail-brand" href="manager.html"><img src="../../../icons/icon48.png" width="28" height="28" alt=""><span>Module Engine</span></a>
+  <ul class="rail-links rail-pages">
+    <li><a href="manager.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-grid"></span></span>Modules &amp; scripts</a></li>
+    <li><a href="../lists/lists.html"><span class="tile" aria-hidden="true"><span class="ic ic-list"></span></span>My lists</a></li>
+    <li><a href="../log/log.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Activity log</a></li>
+    <li><a href="../network/network.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Network</a></li>
+    <li><a href="../mcp/debug.html" target="_blank" rel="noopener"><span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>MCP</a></li>
+  </ul>
+  <p class="rail-foot">Runs on this computer. No Module Engine telemetry.</p>
+</nav>
+<main class="page">
+  <header class="page-head">
+    <div><h1>Modules &amp; scripts</h1><p class="muted">Your blocker. Your page customizations.</p></div>
+    <div class="actions"><a class="button-link" href="../mcp/debug.html" target="_blank" rel="noopener">MCP</a><button id="refresh"><span class="ic ic-refresh" aria-hidden="true"></span>Refresh status</button></div>
+  </header>
+  <p id="status" class="notice" role="status" aria-live="polite">Loading your modules…</p>
+  <section class="modules" aria-label="Installed modules">
+    <article class="card module" id="blockerCard">
+      <div class="module-head">
+        <span class="tile" aria-hidden="true"><span class="ic ic-shield"></span></span>
+        <h2>Ad blocking</h2>
+        <label class="module-switch"><span id="blockerStatus" class="badge">Checking</span><input id="blockingEnabled" type="checkbox" aria-label="Enable ad blocking" disabled></label>
+        <p class="muted">Network filters, page hiding, YouTube filtering and the element picker.</p>
+      </div>
+      <div class="module-foot">
+        <div class="actions">
+          <a href="../popup/popup.html" class="button-link"><span class="ic ic-sliders" aria-hidden="true"></span>Protection settings</a>
+          <a href="../lists/lists.html" class="button-link"><span class="ic ic-list" aria-hidden="true"></span>My lists</a>
+        </div>
+      </div>
+    </article>
+    <article class="card module" id="scriptsCard">
+      <div class="module-head">
+        <span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>
+        <h2>Userscripts</h2>
+        <label class="module-switch"><span id="scriptsStatus" class="badge">Checking</span><input id="userscriptsEnabled" type="checkbox" aria-label="Enable userscripts" disabled></label>
+        <p class="muted">Run your scripts on the sites you choose. Each script has its own switch.</p>
+      </div>
+      <div class="module-foot"><span id="scriptCount" class="stat muted">Local script library</span><span id="scriptAccess" class="muted"></span></div>
+    </article>
+  </section>
+  <section id="accessPanel" class="notice" hidden aria-label="Userscript browser access"><p id="accessHelp"></p><div class="actions"><button id="grantAccess">Allow userscript access</button><button id="extensionDetails">Open extension details</button></div></section>
+  <p id="worldLimitWarning" class="notice" hidden>More than 10 isolated scripts are enabled. Chrome and Edge support 10 isolated script worlds per document; keep their site scopes from overlapping beyond that limit.</p>
+  <section class="workspace" aria-label="Userscript library and editor">
+    <aside class="card library" aria-labelledby="libraryHeading">
+      <div class="toolbar"><h2 id="libraryHeading">Script library</h2><span id="libraryCount" class="muted">0 scripts</span></div>
+      <div class="actions library-actions">
+        <button id="newScript" class="primary" disabled><span class="ic ic-plus" aria-hidden="true"></span>New script</button>
+        <button id="importScript" title="Import a local .user.js file" disabled><span class="ic ic-upload" aria-hidden="true"></span>Import</button>
+        <button id="installURL" type="button" disabled><span class="ic ic-link" aria-hidden="true"></span>Install from URL</button>
+        <input type="file" id="scriptFile" accept=".user.js,.js,text/javascript,text/plain" hidden>
+      </div>
+      <label class="sr-only" for="searchScripts">Find a script</label>
+      <div class="search"><span class="ic ic-search" aria-hidden="true"></span><input id="searchScripts" type="search" placeholder="Search names, sites or tags" autocomplete="off"></div>
+      <label class="tag-filter">Tag <select id="tagFilter" aria-label="Filter scripts by tag"><option value="">All tags</option></select></label>
+      <ul id="scriptList" aria-label="Saved scripts"></ul>
+      <p id="emptyLibrary" class="muted empty">No scripts yet.<br>Create one or import a local .user.js file.</p>
+    </aside>
+    <section class="card editor" aria-labelledby="editorHeading">
+      <div class="editor-head">
+        <div class="editor-title">
+          <div class="editor-name"><h2 id="editorHeading">Script editor</h2><span id="draftState" class="draft-state" hidden>No script open</span></div>
+          <p id="editorIntro" class="muted" hidden>Review the code and sites before turning a script on.</p>
+        </div>
+        <label id="runControl" class="run" hidden><span class="run-text"><span class="run-name">Run this script</span><span id="activationHelp" class="muted">Open a script to change this</span></span><input id="scriptEnabled" type="checkbox" aria-label="Run this script" aria-describedby="activationHelp" disabled></label>
+      </div>
+      <div id="editorEmpty" class="editor-empty">
+        <span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>
+        <p><strong>No script open</strong></p>
+        <p class="muted">Choose a script from the library, or create a new one.</p>
+      </div>
+      <!-- Shown while a script or draft is open: its source, actions and details. -->
+      <div id="editorBody" class="editor-body" hidden>
+        <section id="organization" class="organization" aria-label="Script organization" hidden>
+          <div class="tag-editor"><label for="scriptTags">Your tags <span class="muted">(comma separated)</span></label><div class="actions"><input id="scriptTags" type="text" maxlength="1054" autocomplete="off" aria-describedby="tagsHelp"><button id="saveTags" type="button">Save tags</button></div><p id="tagsHelp" class="muted">Local labels stay with this script through updates.</p></div>
+          <div class="script-order"><span id="orderPosition"></span><div class="actions"><button id="moveEarlier" type="button">Move earlier</button><button id="moveLater" type="button">Move later</button></div></div>
+          <p class="muted order-help">Library order applies within each run-at phase on new page loads. Saved-value loading and asynchronous work can finish later.</p>
+        </section>
+        <div class="source-head"><label for="scriptSource">Source</label><span id="sourceHelp" class="muted">Metadata suggestions: Ctrl+Space</span><button id="showSuggestions" type="button" disabled>Suggestions</button></div>
+        <div id="sourceEditor" class="source-editor">
+          <pre id="sourceLines" aria-hidden="true">1</pre>
+          <div class="source-viewport"><div id="sourceErrorLine" aria-hidden="true" hidden></div><pre id="sourceHighlight" aria-hidden="true"></pre><textarea id="scriptSource" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" aria-autocomplete="list" aria-describedby="sourceHelp syntaxStatus completionStatus" disabled></textarea><ul id="sourceSuggestions" role="listbox" aria-label="Metadata suggestions" hidden></ul></div>
+        </div>
+        <p id="completionStatus" class="visually-hidden" role="status" aria-live="polite"></p>
+        <div class="syntax-status"><p id="syntaxStatus" class="muted" role="status" aria-live="polite"></p><button id="syntaxJump" type="button" hidden>Go to error</button></div>
+        <div class="editor-actions">
+          <div class="actions"><button id="saveScript" class="primary" disabled><span class="ic ic-save" aria-hidden="true"></span>Save</button><button id="discardDraft" disabled><span class="ic ic-undo" aria-hidden="true"></span>Discard draft</button></div>
+          <div class="actions"><button id="exportScript" disabled><span class="ic ic-download" aria-hidden="true"></span>Export</button><button id="deleteScript" class="danger" disabled><span class="ic ic-trash" aria-hidden="true"></span>Delete</button></div>
+          <p id="saveHint" class="save-hint">Saved scripts start turned off. Reload open pages after changing a script.</p>
+        </div>
+        <details id="externalEditor" class="pane external-editor">
+          <summary>External editor</summary>
+          <p>Track one local .user.js file. Changes arrive for review; your draft stays untouched until you load them.</p>
+          <label for="externalCode">Helper pairing code</label>
+          <div class="actions"><input id="externalCode" type="password" maxlength="55" autocomplete="off" spellcheck="false" placeholder="MEF1.…" aria-describedby="externalSetup externalStatus"><button id="externalConnect" type="button">Start tracking</button><button id="externalStop" type="button" disabled>Stop</button></div>
+          <p id="externalStatus" role="status" aria-live="polite">Not connected. Your draft is unchanged.</p>
+          <button id="externalLoad" type="button" hidden>Load into draft</button>
+          <details id="externalSetup"><summary>Set up your local file</summary>
+            <ol><li>Export this script as a .user.js file, then open it in your editor.</li><li>From the Module Engine project folder, run the included helper with Node.js 22 or later, replacing the example path:</li></ol>
+            <pre><code>node development/server.cjs --file "C:\path\script.user.js"</code></pre>
+            <p>Paste its pairing code above within two minutes. Keep this page and terminal open. The connection expires after 30 minutes. Stop the helper with Ctrl+C; restart it for a new code.</p>
+            <p>Only the chosen UTF-8 file is read (up to 128 KiB). The helper never writes or runs it. Saving a draft turns the script off until you enable it.</p>
+          </details>
+        </details>
+        <section class="pane" aria-labelledby="detailsHeading">
+          <h3 id="detailsHeading">Script details</h3>
+          <div id="scriptPreview" class="preview" aria-live="polite"><p class="muted">Choose a saved script or create one.</p></div>
+        </section>
+      </div>
+      <!-- Each section shows itself when it applies. A dependency download can outlive
+           the open draft, so its section and Cancel button stay outside the editor body. -->
+      <section id="helperAccess" class="pane" hidden aria-labelledby="helperHeading">
+        <div class="pane-head"><h3 id="helperHeading">Helper access</h3><button id="grantHelpers" type="button">Allow helper access</button></div>
+        <p id="helperAccessText"></p>
+      </section>
+      <section id="dependencies" class="pane" aria-labelledby="dependenciesHeading" hidden>
+        <div class="pane-head"><h3 id="dependenciesHeading">Dependencies</h3><div class="actions"><button id="prepareAssets" type="button">Prepare dependencies</button><button id="cancelAssets" type="button" hidden>Cancel download</button></div></div>
+        <p class="muted">Nothing downloads until you prepare them. Downloads use the listed URLs without cookies or redirects, and page loads use the cached copies. Review each file before enabling the script.</p>
+        <ul id="dependencyList"></ul>
+        <p id="dependencyStatus" class="dependency-status" role="status"></p>
+      </section>
+      <section id="scriptUpdates" class="pane" aria-labelledby="updatesHeading" hidden>
+        <div class="pane-head"><h3 id="updatesHeading">Source &amp; updates</h3><button id="checkUpdate" type="button">Check for updates</button></div>
+        <p id="installedSource" class="muted"></p>
+        <p id="updateHelp" class="muted">Checks are manual and use the installed URL only. Updates need your review and approval.</p>
+      </section>
+    </section>
+  </section>
+  <details class="card compatibility"><summary>Supported userscript features</summary>
+    <div class="features">
+      <section><h3>Metadata and timing</h3><p>@name, @namespace, @version, @description, HTTP(S) @match / @exclude-match, URL globs or bounded /regex/ rules in @include / @exclude, @run-at and @noframes. Matching supports http*, host wildcards, ports, IPv6, internationalized hosts, fragments and .tld suffixes. Timing supports document-start, document-body, document-end (the default) and document-idle. Scripts use separate isolated worlds by default. Page mode can combine unsafeWindow with granted GM APIs.</p></section>
+      <section><h3>Execution compatibility</h3><p>@grant unsafeWindow exposes the actual page window in page mode and the isolated global in content mode. Wrapped @inject-into auto scripts try page first and fall back to content if page startup is blocked; runtime errors never trigger a second run. Older saved auto scripts stay isolated until individually re-enabled. Page code can interfere with a page script, observe its data or invoke its granted helpers. Use content mode for isolation. @top-level-await enables an async function body. @unwrap runs raw global code, ignores grants and cannot combine with top-level await or document-body; its auto mode stays isolated. It requires native match/exclude-match patterns: no include/exclude rules, ports, fragments, IPv6, .tld or partial host wildcards.</p></section>
+      <section><h3>Cookies</h3><p>GM_cookie / GM.cookie provides list, set and delete with callbacks, or promises when no callback is supplied. Requires the exact grant and optional helper access. Reads and changes include HttpOnly cookies. Access defaults to the current host; other hosts require @connect. Only the calling tab's cookie store is accessible. Partitioned cookies and firstPartyDomain are unsupported. See the user guide for options and bounds.</p></section>
+      <section><h3>APIs</h3><p>GM.info / GM_info, GM.addStyle / GM_addStyle, GM.addElement / GM_addElement and GM.openInTab / GM_openInTab; getValue, setValue, deleteValue, listValues and their bulk getValues, setValues and deleteValues forms; addValueChangeListener / removeValueChangeListener; registerMenuCommand / unregisterMenuCommand. Request each API with @grant, using GM.name or GM_name.</p></section>
+      <section><h3>Elements and tabs</h3><p>Element helpers return real DOM nodes, accept an optional parent or shadow root, and preserve browser CSP. Tab helpers return a control with close(), closed and onclose. They accept HTTP(S) URLs, background booleans or active/insert/pinned options. Only that instance's created tabs can be closed. Limits: 8 connected handles per instance, 16 per script, 64 overall, and 32 opening attempts per script per minute. Container selection is not supported. Disabling or losing the native connection invalidates handles and leaves existing tabs open.</p></section>
+      <section><h3>Saved values</h3><p>GM_name value reads are synchronous after saved values load. GM.name storage methods return promises. Legacy writes update the local cache immediately and save in the background; save failures appear in the page console. Scripts using legacy reads or value listeners wait for their values before running, which can delay document-start. Values are JSON-compatible, local and private to each script (256 keys / 64 KiB).</p></section>
+      <section><h3>Menu commands</h3><p>Open the extension popup on a matching page to use its script commands. Refresh commands if a script adds or removes them while the popup is open. Changes from other tabs notify value listeners.</p></section>
+      <section><h3>Dependencies</h3><p>@require and named @resource files are prepared explicitly from absolute HTTPS URLs (HTTP is allowed on localhost). Optional #sha256=hex pins verify downloaded bytes. Limits: 8 libraries, 16 resources, 256 KiB per file and 1 MiB per script. Resource APIs: GM_getResourceText / GM.getResourceText and GM_getResourceURL / GM.getResourceUrl.</p></section>
+      <section><h3>Editor and organization</h3><p>Syntax highlighting and inline errors check source without running it. Use Go to error to jump to its location. Search and filter author @tag metadata and your local tags. Earlier and Later set the start order within each timing phase; saved-value loading and asynchronous work may finish later.</p></section>
+      <section><h3>Network requests</h3><p>GM_xmlhttpRequest provides callbacks and abort(); GM.xmlHttpRequest returns an abortable promise. Requests support FormData, upload callbacks, text, JSON, arraybuffer, Blob and document responses, with a 30-second timeout, 8 MiB upload and 8 MiB response limit. Up to five redirects follow by default; redirect: 'error' rejects them. Every destination must satisfy @connect when supplied; without it, the grant permits any HTTP(S) destination. anonymous: true omits cookies. Upload progress needs helper access; Firefox also needs it to follow redirects. See the user guide for all options and bounds.</p></section>
+      <section><h3>Clipboard, notifications and downloads</h3><p>These helpers require their exact @grant and Allow helper access in the script editor. GM_setClipboard / GM.setClipboard writes text or HTML (1 MiB); the modern form confirms completion with a promise. GM_notification / GM.notification returns a remove() control with onclick and ondone callbacks. GM_download / GM.download saves an HTTP(S) response through the browser, with a filename, callbacks and abort(); the modern form returns a promise. Downloads use @connect, a 16 MiB response limit, a 120-second HTTP timeout and unique filenames. They never open files automatically. See the user guide for supported options and lifecycle limits.</p></section>
+      <section><h3>Limits</h3><p>Full Violentmonkey compatibility is not claimed. Chrome and Edge support 10 isolated script worlds per document, including page bridges; broad regex or host rules can consume worlds on nearby URLs. Regex lookarounds, backreferences, named groups and flags are unsupported. .tld uses the bundled list of known public and private suffixes. Automatic updates remain unsupported. Disabling prevents future runs and revokes live APIs, requests and menus; it cannot undo JavaScript or cookie writes already accepted by the browser.</p></section>
+      <section class="trust"><h3>Trust</h3><p>Only enable scripts and dependencies whose code and site access you trust. Scripts can read and change matching pages, and a network grant lets them send data to their permitted destinations.</p></section>
+    </div>
+  </details>
+</main>
+</div>
+<dialog id="confirmDialog"><form method="dialog"><h2 id="confirmTitle">Discard changes?</h2><p id="confirmText"></p><div class="actions"><button value="cancel" autofocus>Cancel</button><button id="confirmAccept" value="accept" class="danger">Continue</button></div></form></dialog>
+<dialog id="assetDialog" aria-labelledby="assetTitle"><form method="dialog"><h2 id="assetTitle" tabindex="-1" autofocus>Dependency contents</h2><p id="assetDigest" class="muted"></p><label for="assetSource">Read-only text preview</label><textarea id="assetSource" readonly spellcheck="false"></textarea><p class="muted">Binary files may not have a readable text preview. Preparing a dependency does not run it.</p><button>Close</button></form></dialog>
+<dialog id="installDialog" aria-labelledby="installTitle">
+  <h2 id="installTitle" tabindex="-1">Install from URL</h2>
+  <form id="fetchSourceForm">
+    <label for="sourceURL">Direct userscript URL</label>
+    <div class="url-entry"><input id="sourceURL" type="url" required maxlength="2048" placeholder="https://example.com/script.user.js" autocomplete="off" spellcheck="false"><button id="fetchSource" type="submit">Fetch for review</button></div>
+    <p class="muted">HTTPS required; HTTP is allowed on localhost. Fetching only reads the source. Nothing is installed or run until you approve it.</p>
+  </form>
+  <p id="installStatus" class="notice" role="status" aria-live="polite"></p>
+  <section id="installReview" hidden aria-label="Review script changes">
+    <p id="reviewURL" class="muted"></p>
+    <div class="review-table-wrap"><table class="review-table"><caption id="reviewCaption">Script access and settings · changed rows are marked</caption><thead><tr><th scope="col">Setting</th><th scope="col">Current</th><th scope="col">Proposed</th></tr></thead><tbody id="reviewChanges"></tbody></table></div>
+    <div class="review-code">
+      <div id="previousCode"><label for="reviewBefore">Current source · read only</label><textarea id="reviewBefore" readonly spellcheck="false"></textarea></div>
+      <div><label for="reviewAfter">Proposed source · read only</label><textarea id="reviewAfter" readonly spellcheck="false"></textarea></div>
+    </div>
+    <p id="reviewEffect" class="muted"></p>
+  </section>
+  <div class="actions"><button id="cancelSource" type="button">Cancel</button><button id="applySource" type="button" class="primary" hidden disabled>Install script</button></div>
+</dialog>
+<script src="../../../vendor/publicsuffix/suffixes.js"></script><script src="../../userscripts/userscripts-matching.js"></script><script src="../../userscripts/userscripts-page.js"></script><script src="../../userscripts/userscripts-core.js"></script><script src="../../userscripts/userscripts-actions.js"></script><script src="userscripts-completion.js"></script><script src="userscripts-editor.js"></script><script src="userscripts-external.js"></script><script src="manager.js"></script>
+</body>
+</html>

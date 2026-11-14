@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 489,
+  "error": "AssertionError [ERR_ASSERTION]: No unexpected runtime errors during relocated userscript and MCP tests\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:47:44)\n    at Object.runLayout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-layout-browser.cjs:35:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:81:7",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZRFP4g\\evidence.json"
+}

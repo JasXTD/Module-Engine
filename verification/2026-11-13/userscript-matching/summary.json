@@ -1,0 +1,162 @@
+{
+  "date": "2026-11-13",
+  "timezone": "Asia/Kuala_Lumpur",
+  "project": "Module Engine",
+  "baseCommit": "e2fd0e13c85e0f1b92c7d6c5e5e387c1a9e10cdc",
+  "scope": [
+    "Bounded regex include/exclude matching",
+    "Extended HTTP(S) host, port, IPv6, IDN and fragment patterns",
+    "Known public/private suffix matching with pinned local data",
+    "Exact wrapper and current-frame GM authorization"
+  ],
+  "status": "Complete",
+  "unit": {
+    "command": "node --test tests/*.test.cjs",
+    "passed": 358,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "all-unit.out"
+  },
+  "powershell": [
+    {
+      "suite": "cosmetic-rules",
+      "assertions": 21
+    },
+    {
+      "suite": "rules",
+      "assertions": 237
+    },
+    {
+      "suite": "threat-rules",
+      "assertions": 338
+    }
+  ],
+  "native": [
+    {
+      "name": "chrome-userscripts",
+      "command": "node tests/userscripts-browser.cjs chrome --skip-desktop",
+      "checks": 401,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/chrome-userscripts.json"
+    },
+    {
+      "name": "edge-userscripts",
+      "command": "node tests/userscripts-browser.cjs edge --skip-desktop",
+      "checks": 401,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/edge-userscripts.json"
+    },
+    {
+      "name": "firefox-userscripts",
+      "command": "node tests/userscripts-firefox.cjs firefox --skip-desktop",
+      "checks": 322,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/firefox-userscripts.json"
+    },
+    {
+      "name": "chrome-blocker",
+      "command": "node tests/browser-smoke.cjs chrome",
+      "checks": 573,
+      "success": true,
+      "sourceFilesVerified": 51,
+      "evidence": "native/chrome-blocker.json"
+    },
+    {
+      "name": "edge-blocker",
+      "command": "node tests/browser-smoke.cjs edge",
+      "checks": 573,
+      "success": true,
+      "sourceFilesVerified": 51,
+      "evidence": "native/edge-blocker.json"
+    },
+    {
+      "name": "firefox-blocker",
+      "command": "node tests/browser-smoke.cjs firefox",
+      "checks": 567,
+      "success": true,
+      "sourceFilesVerified": 51,
+      "evidence": "native/firefox-blocker.json"
+    },
+    {
+      "name": "chrome-tabs",
+      "command": "node tests/blocked-tabs-browser.cjs chrome",
+      "checks": 25,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/chrome-tabs.json"
+    },
+    {
+      "name": "edge-tabs",
+      "command": "node tests/blocked-tabs-browser.cjs edge",
+      "checks": 25,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/edge-tabs.json"
+    },
+    {
+      "name": "firefox-tabs",
+      "command": "node tests/blocked-tabs-browser.cjs firefox",
+      "checks": 28,
+      "success": true,
+      "sourceFilesVerified": 44,
+      "evidence": "native/firefox-tabs.json"
+    }
+  ],
+  "sourceHashes": "source-hashes.json",
+  "sourceFilesHashed": 62,
+  "regressionEvidence": [
+    "regex-regressions.json",
+    "attempts/01-chrome.json",
+    "attempts/05-firefox.json",
+    "attempts/10-edge-blocker-interrupted.json"
+  ],
+  "failuresAndFixes": [
+    "Chrome stale native sender URL after pushState reproduced and fixed with current-frame isolated probes; top/child frames pass.",
+    "Empty alternatives and empty-group compilation exceeded a 300 ms fixture cutoff before the fixes; bounded evaluation/compilation now completes or rejects promptly.",
+    "An initial Firefox fixture used a statement where its evaluation helper requires an expression; corrected to an IIFE.",
+    "Interrupted blocker runs were preserved and rerun; incomplete runs are not counted as passes."
+  ],
+  "reviewRounds": [
+    {
+      "focus": "Matching and trust boundaries",
+      "result": "One shared matcher; exact guard in every world; native prefilters stay supersets; known-suffix and exclusion precedence reviewed."
+    },
+    {
+      "focus": "Resource limits and lifecycle",
+      "result": "Count repeated epsilon visits; deduplicate identical empty branches; cap compilation, state count, URL size and evaluation; current-frame probes have deadlines and bounded outstanding slots."
+    },
+    {
+      "focus": "Simplicity, consumers and evidence",
+      "result": "Removed old duplicate matching logic; embed suffix data only for actual hostname rules; checked all loaders and package lists; corrected guide duplication; verified native package hashes and scoped diff."
+    }
+  ],
+  "dependency": {
+    "name": "Public Suffix List",
+    "revision": "905c2f8950fc646b8df073321ea567dadefaa3a2",
+    "license": "MPL-2.0",
+    "provenance": "../../../vendor/publicsuffix/provenance.json",
+    "scan": "User-reported Malwarebytes result: no threats found; no independent antivirus scan claimed.",
+    "integrity": "Pinned Git blob and SHA-256 verified; deterministic offline generation rechecked."
+  },
+  "isolation": "Disposable profiles, locally authored scripts/pages, loopback-only alias forwarding, deny proxies; no live or suspicious site testing.",
+  "limits": [
+    "Not full Violentmonkey compatibility: regex lookarounds, backreferences, named groups, Unicode property escapes and flags remain unsupported.",
+    "HTTP(S) only; existing path/query behavior retained; known-suffix data has manual updates only.",
+    "Native current-frame checks fail closed if the renderer is unavailable or the two-second deadline expires.",
+    "Chromium ten-world limit remains; broad native prefilters can overlap.",
+    "Optional desktop-helper permission/OS clipboard/notification/download/upload-progress suites were not rerun in this matching pass.",
+    "Live-site behavior and minimum supported browser versions were not tested."
+  ],
+  "softwareInstalled": [],
+  "committed": false,
+  "pushed": false,
+  "cleanup": {
+    "removed": 29,
+    "alreadyAbsent": 1,
+    "evidence": "cleanup.json"
+  },
+  "finalReview": "All 62 source hashes match the final files. Native copied-source hashes verified for every suite. Local documentation links and scoped diff checked."
+}

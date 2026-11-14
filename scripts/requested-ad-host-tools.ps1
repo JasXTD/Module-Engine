@@ -15,11 +15,12 @@ function Read-RequestedAdHosts([string]$Path) {
         foreach ($entry in $root.GetProperty('hosts').EnumerateArray()) {
             Assert-JsonKeys $entry @('domain','match','requestedOn','reason')
             $domain = Get-JsonString $entry.GetProperty('domain')
+            $match = Get-JsonString $entry.GetProperty('match')
             $requested = Get-JsonString $entry.GetProperty('requestedOn') 10
             $reason = Get-JsonString $entry.GetProperty('reason') 200
             $date = [DateTime]::MinValue
             if ((ConvertTo-ReviewedHostname $domain) -cne $domain -or !$seen.Add($domain) -or
-                (Get-JsonString $entry.GetProperty('match')) -cne 'exact' -or
+                $match -cnotin @('exact','subdomains') -or
                 ![DateTime]::TryParseExact($requested, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$date)) {
                 throw 'Invalid or duplicate user-requested ad host.'
             }
@@ -29,7 +30,7 @@ function Read-RequestedAdHosts([string]$Path) {
             $rules.Add([ordered]@{
                 id=200001+$rules.Count; priority=4; action=@{type='block'}
                 condition=[ordered]@{
-                    regexFilter='^(http|https|ws|wss)://([^/@]*@)?' + [regex]::Escape($domain) + '\.?(:[0-9]+)?/'
+                    regexFilter='^(http|https|ws|wss)://([^/?#@]*@)?' + $(if ($match -ceq 'subdomains') { '([a-z0-9_-]+\.)*' } else { '' }) + [regex]::Escape($domain) + '\.?(:[0-9]+)?/'
                     resourceTypes=@('main_frame','sub_frame','stylesheet','script','image','font','object','xmlhttprequest','ping','media','websocket','other')
                 }
             })

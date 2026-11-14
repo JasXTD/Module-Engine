@@ -1,0 +1,290 @@
+✔ compiled page GM code never exports native capability bytes into the page or DOM (14.5606ms)
+✔ page bridge fixes identity, capability, native router and connection name (5.5078ms)
+✔ pending page calls stay bounded and shutdown rejects without retrying submitted operations (3.4233ms)
+✔ pagehide suspends native ports and pageshow allows a fresh connection without re-execution (2.7106ms)
+✔ fallback occurs only before startup claim, never after user side effects or errors (10.8024ms)
+✖ synthetic lifecycle events cannot close or suspend the page bridge (3.4978ms)
+✖ page startup waits through suspension and resumes exactly once when the DOM root is ready (2.6137ms)
+✖ a bridge call queued before navigation is canceled before reaching native messaging (3.7615ms)
+✖ suspension rejects in-flight page calls, suppresses late replies and does not replay them on restore (2.5407ms)
+✔ debug inspection detects drift without repairing registrations or writing storage (17.2579ms)
+✔ diagnostics require active capture, current capability, matching native world and messaging grants (25.0757ms)
+✔ diagnostic flood stays bounded and does not prevent disabling scripts (6.3614ms)
+✔ synchronous script errors preserve their native throw and publish diagnostics only to active capture (35.4334ms)
+✔ a diagnostic awaiting native frame verification cannot leak into a later approval (7.0365ms)
+✔ GM cookies require optional permission, preserve callback shapes and bind the native store (20.7413ms)
+✔ cookie authorization rejects foreign stores, undeclared destinations, parent scope and partition options (22.3608ms)
+✔ cookie grants cannot be borrowed from another script or an unwrapped registration (8.9765ms)
+✔ cookie list filters partitions, bounds output, and loses access after revocation or history scope changes (16.0597ms)
+✔ a timed-out native cookie lookup cannot perform a late write or stall shutdown indefinitely (2020.9172ms)
+✔ in-flight cookie reads discard results after permission loss, scope exit or document suspension (31.1531ms)
+▶ submitted cookie writes preserve native success after access is revoked
+  ✔ set after permission (10.2063ms)
+  ✔ set after scope (8.7408ms)
+  ✔ set after pagehide (7.5554ms)
+  ✔ set after navigation (8.1195ms)
+  ✔ delete after permission (8.5269ms)
+  ✔ delete after scope (10.0894ms)
+  ✔ delete after pagehide (8.0491ms)
+  ✔ delete after navigation (7.8413ms)
+✔ submitted cookie writes preserve native success after access is revoked (70.1993ms)
+✔ submitted cookie writes preserve native failures after document suspension (21.4681ms)
+✔ cookie revocation before write submission prevents the mutation (24.1773ms)
+✔ timed-out submitted cookie writes keep capacity until settlement and are never replayed (4025.3241ms)
+✔ a revoked submitted cookie write still has a deadline and cannot stall shutdown (2016.3838ms)
+✔ an asynchronous userscript cannot use GM cookies after disabling while it awaits (8.7292ms)
+✔ tags normalize old libraries and keep local organization separate from author metadata (5.7583ms)
+✔ ordering survives restart, toggles and rollback while keeping stable script worlds and values (42.8051ms)
+✔ install URLs and version comparisons handle ambiguous input without fetching or precision loss (0.7462ms)
+✔ URL fetching is inert, cookie-free, redirect-free, bounded and validates source before review (68.2468ms)
+✔ manual updates preserve fresh GM values, identity and matching cached dependencies, and revoke old APIs (24.8921ms)
+✔ reviews survive worker restart, use exactly reviewed bytes and leave failures unchanged (13.686ms)
+✔ updates reject changed identity, stale reviews and downgrades but expose same-version changes (8.5845ms)
+✔ installing an existing identity previews replacement and links local scripts without losing values (8.921ms)
+✔ source downloads cancel without blocking controls, and bounded admission releases slots (63.5772ms)
+✔ source download timeout discards bytes and preserves the installed record (30009.5941ms)
+✔ desktop helper options and permission lists reject unsafe or unsupported inputs (2.1735ms)
+✔ clipboard legacy writes return void, modern writes confirm completion, preserve order and propagate failures (12.741ms)
+✔ desktop actions require exact grants and native document-bound connections (16.1566ms)
+✔ notification handles return synchronously, dispatch owned callbacks and remove exactly once (11.6271ms)
+✔ notification tags replace only the same document and forged native IDs cannot clear another notification (17.2816ms)
+✔ Firefox notifications omit the unsupported native silent field (8.2384ms)
+✔ notification removal before ready creates no native notification (6.8649ms)
+✔ pending native notifications are cleaned after script revocation and controls remain responsive (9.3034ms)
+✔ notification permission denial and revocation settle pending actions without losing other helpers (12.9905ms)
+✔ desktop action admission remains bounded while native creation is stalled (16.6001ms)
+✔ clipboard rate limits survive completed actions without blocking manager controls (45.6425ms)
+✔ downloads preserve bytes and resolve only after the native save completes (38.2626ms)
+✔ downloads reject permission, scope, HTTP, redirect, oversized and filename failures before saving (69.8409ms)
+✔ Firefox downloads own a Blob URL only until native completion or cancellation (39.0623ms)
+✔ download abort settles once during both fetch and native save, preserving unrelated records (62.0203ms)
+✔ downloads accepted during revocation are cancelled when their native IDs arrive (14.9109ms)
+✔ native download failures, interrupts and early completion reconcile once (31.8606ms)
+✔ a restarted helper broker clears stale notifications only and binds APIs granted after startup (1.1071ms)
+✔ tab options normalize defaults and background booleans while rejecting privileged URLs and unsupported options (0.6637ms)
+✔ both tab helpers return immediate owned handles with close-before-open and a single onclose notification (10.5686ms)
+✔ tab permissions and handles cannot cross grants, documents, connections or native tab IDs (19.3251ms)
+✔ tab creation and close failures release capacity and leave unrelated tabs alone (9.5272ms)
+✔ a post-creation lookup failure does not fabricate closure of a tab moved to another window (7.6112ms)
+✔ manager disable does not wait for tab lookup and prevents an opening that has not reached the browser (6.7403ms)
+✔ revocation during an accepted browser creation never closes or claims ownership of the resulting page (10.1004ms)
+✔ pending native openings remain bounded across connection revocation (13.2704ms)
+✔ native connection loss invalidates tab handles without replaying or fabricating a close (6.92ms)
+✔ rapid open-and-close cycles are bounded per script without blocking manager controls (56.9431ms)
+✔ default timing, GM_info grant metadata and case-insensitive globs match compatibility contracts (3.2036ms)
+✔ menu icons accept bounded raster data and ignore remote or executable content (10.0112ms)
+✔ dependencies require explicit preparation, retain order, expose granted resources and reuse offline cache (18.7619ms)
+✔ dependency hash pins, corrupt caches, changed declarations and invalid file responses fail closed (15.5538ms)
+✔ slow dependency jobs are cancellable, do not hold controls, and cannot commit after an edit (62.4411ms)
+✔ startup integrity failure preserves cached data and removes previously registered scripts (9.2469ms)
+✔ network API sends bounded real loopback requests with modern results and legacy callback ordering (36.6936ms)
+✔ request validation rejects forbidden targets, options, headers, redirects and oversized responses without retries (62.2949ms)
+✔ redirects check every destination, rewrite POST correctly and strip cross-origin headers (25.4162ms)
+✔ FormData preserves ordered duplicate fields, Unicode, filenames and binary bytes (438.3933ms)
+✔ larger Firefox downloads preserve exact bytes and release their shared buffer budget (179.5164ms)
+✔ abort, timeout, port loss and module disable settle network promises once and release capacity (397.6607ms)
+✔ Firefox redirect permission removal cancels an active transfer without replay (31.4525ms)
+✔ include scopes form a union with matches; both exclusion forms win in the wrapper and broker (9.3031ms)
+✔ extended wrapper and broker checks agree, including oversized regex exclusions and stale navigation (102.8593ms)
+✔ broker denies stale top/subframe URLs, replaced documents and failed live scope probes (8.6164ms)
+✔ a stalled frame probe releases manager controls, never authorizes later and does not accumulate probes (2016.582ms)
+✔ native glob prefilter preserves match scopes and is a superset for literal query and fragment globs (0.6924ms)
+✔ include-only native registration satisfies Chromium without granting scope to its reserved placeholder (2.5935ms)
+✔ missing native messaging fails closed before a privileged source body runs (2.625ms)
+✔ legacy reads are synchronous after hydration; ordered writes and bulk defaults survive reload (22.2798ms)
+✔ value listeners distinguish local and remote commits, deletes, no-ops and removal (17.2805ms)
+✔ failed value persistence rolls back optimistic reads and never notifies other tabs (20.7207ms)
+✔ a delayed write acknowledgement cannot overwrite a newer remote value or mislabel its listener (14.013ms)
+✔ reentrant listener writes keep their order and callback failures do not swallow other listeners (11.435ms)
+✔ native channel reconnection hydrates values and republishes menus without rerunning source (319.0417ms)
+✔ bulk writes are atomic, prototype-safe and require the specific declared grant (16.8369ms)
+✔ menus update and unregister in their native tab, reject forged sessions, and expire on disable (15.591ms)
+✔ document-body waits once and document-start without a storage snapshot stays immediate (9.8322ms)
+✔ native subscriptions reject other worlds, frames and excluded URLs before exposing saved values (21.0467ms)
+✔ menu-only scripts run immediately, publish after connection, and enforce bounded command storage (7.5325ms)
+✔ native connection floods cannot reserve control capacity or keep disabled capabilities alive (35.5039ms)
+✔ many matching legacy scripts can hydrate together without consuming ordinary GM request slots (378.5865ms)
+✔ menu changes coalesce while a native publication acknowledgement is pending (19.1211ms)
+✔ menu traffic has bounded native admission, preserves value slots, and yields to disable (44.5805ms)
+✔ document-body observer cancels on pagehide and resumes once on back-forward cache restore (4.1758ms)
+✖ synthetic or duplicate pageshow does not replace a live channel or rerun source (9.6652ms)
+✖ navigation invalidates queued writes and late replies without replay after restoration (13.6633ms)
+✖ pagehide clears a pending channel timeout and a queued old timeout cannot stop the resumed channel (5.4884ms)
+✔ GM flood cannot block module shutdown (5.9339ms)
+✔ GM flood cannot block script shutdown (5.8948ms)
+✔ GM flood cannot block delete shutdown (5.1819ms)
+✔ GM backpressure applies across scripts and frames in the same native tab (178.5195ms)
+✔ GM backpressure follows a script across native tabs and releases failed requests (13.1454ms)
+✔ global GM backpressure reserves status and shutdown capacity across many tabs (180.2245ms)
+✔ malformed storage messages do not take valid request capacity (10ms)
+✔ shutdown waits for the active write, preserves it, and rejects queued old capabilities (8.8811ms)
+✔ failed shutdown restores the old capability and allows a clean retry under GM load (10.2765ms)
+✔ control FIFO order and capability revocation survive immediate disable and re-enable (9.1962ms)
+✔ old auto scripts stay isolated until individually re-enabled, including across module toggles (11.9726ms)
+✔ page relay registrations preserve native authorization, live scope and capability revocation (6.6474ms)
+✔ metadata produces explicit site, timing, world, frame and grant scope (0.3514ms)
+✔ rejects missing scope before registration (0.1377ms)
+✔ rejects insecure dependency before registration (0.1194ms)
+✔ rejects unsupported grant before registration (0.129ms)
+✔ rejects duplicate singleton before registration (0.1018ms)
+✔ rejects mixed none grant before registration (0.1055ms)
+✔ rejects bad host before registration (0.1006ms)
+✔ rejects code before metadata before registration (0.0967ms)
+✔ rejects source quota before registration (0.2488ms)
+✔ asset and update metadata is ignored visibly without fetching anything (0.1014ms)
+✔ generated GM helpers reject lossy values in the script world before native transport (3.0714ms)
+✔ first use defaults off and can save, export source, edit and delete without browser access (0.8321ms)
+✔ module and script switches register exact scope, persist intent and revoke old capabilities (6.4476ms)
+✔ stale saves, toggles and deletions cannot overwrite another editor (1.3292ms)
+✔ register failure rolls back browser state and saved intent, then retries (18.8728ms)
+✔ afterRegister failure rolls back browser state and saved intent, then retries (10.7923ms)
+✔ ignoredRegister failure rolls back browser state and saved intent, then retries (11.2124ms)
+✔ world failure rolls back browser state and saved intent, then retries (10.6511ms)
+✔ save failure rolls back browser state and saved intent, then retries (12.1514ms)
+✔ afterSave failure rolls back browser state and saved intent, then retries (13.9591ms)
+✔ failure removing registrations leaves the prior enabled script and record intact (4.1479ms)
+✔ worker restart and extension update restore saved scripts without losing values (6.1889ms)
+✔ GM values are isolated by capability, grants, native sender, frame and URL scope (23.5194ms)
+✔ revoked browser access and disabled/deleted scripts cannot use their former GM storage (7.9112ms)
+✔ wildcard-heavy scopes cannot stall the shared extension worker (1.2597ms)
+✔ Edge permission denial still allows disabling the module (3.8073ms)
+✔ concurrent GM writes retain both values and quota errors preserve the old data (8.2752ms)
+✔ invalid stored data is preserved while stale native registrations are removed (8.4313ms)
+✔ native registrations from other bundled modules are left untouched (0.4045ms)
+✔ a module failure stays local and cannot invoke an unregistered adapter (0.4143ms)
+ℹ tests 153
+ℹ suites 0
+ℹ pass 146
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53826.4984
+
+✖ failing tests:
+
+test at tests\userscripts-page.test.cjs:120:1
+✖ synthetic lifecycle events cannot close or suspend the page bridge (3.4978ms)
+  Error: Page bridge is closed. Reload the page.
+      at emit (blockads-userscript-12345678-1234-1234-1234-123456789abc.user.js:9:25)
+      at blockads-userscript-12345678-1234-1234-1234-123456789abc.user.js:41:17
+      at new Promise (<anonymous>)
+      at Object.sendMessage (blockads-userscript-12345678-1234-1234-1234-123456789abc.user.js:38:16)
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:125:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests\userscripts-page.test.cjs:130:1
+✖ page startup waits through suspension and resumes exactly once when the DOM root is ready (2.6137ms)
+  AssertionError [ERR_ASSERTION]: hidden document must not start
+  + actual - expected
+  
+  + {
+  +   connect: [Function: connect],
+  +   sendMessage: [Function: sendMessage]
+  + }
+  - undefined
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:134:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts-page.test.cjs:141:1
+✖ a bridge call queued before navigation is canceled before reaching native messaging (3.7615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'fulfilled'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:147:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'fulfilled',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts-page.test.cjs:152:1
+✖ suspension rejects in-flight page calls, suppresses late replies and does not replay them on restore (2.5407ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'fulfilled'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:158:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'fulfilled',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:1559:1
+✖ synthetic or duplicate pageshow does not replace a live channel or rerun source (9.6652ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:1565:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:1572:1
+✖ navigation invalidates queued writes and late replies without replay after restoration (13.6633ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok((await result).every(item => item.status === 'rejected'))
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:1583:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:1591:1
+✖ pagehide clears a pending channel timeout and a queued old timeout cannot stop the resumed channel (5.4884ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:1597:54)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

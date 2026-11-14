@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const context = vm.createContext({URL});
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../network.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/blocking/network.js'),'utf8'),context);
 const parse = text => JSON.parse(JSON.stringify(context.BlockAdsNetwork.parse(text)));
 
 test('network rules retain destination, resource, party and initiating-frame scope', () => {

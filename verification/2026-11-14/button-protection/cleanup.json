@@ -1,0 +1,84 @@
+{
+  "finishedUtc": "2026-11-13T17:26:00.3175127Z",
+  "tempRoot": "C:\\Users\\Tommy\\AppData\\Local\\Temp",
+  "processReferences": 0,
+  "reparsePoints": 0,
+  "results": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-7PRejL",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-JEFPCd",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-b7lyHq",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-UvI3VE",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-lXzNei",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-jMXQ79",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-T4Jndw",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-4szeWg",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-ett5yB",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-Gu4sV3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-sfD8QZ",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-bzX890",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-uESP6w",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-4ub6td",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-kuzOxv",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-Giqsse",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-2a3cEF",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-requested-hosts-11f95d6c0fdc4edc82d94a63c5eef0f3",
+      "removed": true
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-threat-rules-03a7f38bd93c43d19ba2d1790bb61531",
+      "removed": true
+    }
+  ]
+}

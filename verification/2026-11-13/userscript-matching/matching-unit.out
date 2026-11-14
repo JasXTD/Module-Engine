@@ -1,0 +1,18 @@
+✔ suffix lookup is reproducible from the pinned, integrity-checked data (81.3796ms)
+✔ extended match patterns normalize schemes, IDNs, IPv6 and default ports (130.7249ms)
+✔ existing path/query and include-glob behavior is retained (1.5237ms)
+✔ .tld uses longest known public/private suffixes and rejects deceptive or unknown hosts (155.2716ms)
+✔ regular expression includes and exclusions have union/veto semantics in every wrapper world (208.7844ms)
+✔ malformed/unsupported syntax is rejected at metadata validation (4.6025ms)
+✔ bounded regular-language evaluator agrees with native regex on small synthetic inputs (390.2552ms)
+✔ nested repeats cannot backtrack exponentially and exhausted exclusions fail closed (138.547ms)
+✔ native prefilters are supersets of regex and suffix rules without leaking the reserved placeholder (2.9951ms)
+✔ injected suffix data is included only for actual hostname expansion (1.7915ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1773.4439

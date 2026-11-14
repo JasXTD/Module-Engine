@@ -1,0 +1,105 @@
+{
+  "checkedAtUtc": "2026-11-13T21:10:52.1489156Z",
+  "retainedArtifactsVerified": 69,
+  "removed": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-MnjNyR",
+      "files": 458,
+      "bytes": 22602591,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-2xndQr",
+      "files": 473,
+      "bytes": 23174504,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-m8G2ib",
+      "files": 470,
+      "bytes": 23892558,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-XXhzUa",
+      "files": 293,
+      "bytes": 86175508,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-cDiSpW",
+      "files": 296,
+      "bytes": 85812355,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-XeM2WE",
+      "files": 318,
+      "bytes": 26485479,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-mPV0zb",
+      "files": 460,
+      "bytes": 28490037,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-NLsMGw",
+      "files": 467,
+      "bytes": 25652953,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-3EpOpR",
+      "files": 467,
+      "bytes": 27233474,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZRFP4g",
+      "files": 265,
+      "bytes": 83625284,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-lV6yuw",
+      "files": 147,
+      "bytes": 46444726,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-KJJtNC",
+      "files": 264,
+      "bytes": 83579167,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-threat-rules-30e5db7ea05b4886971671f14c08af0b",
+      "files": 13,
+      "bytes": 4145302,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-requested-hosts-30069027fca842f9897a7b7819ec463d",
+      "files": 2,
+      "bytes": 107,
+      "processReferences": 0,
+      "reparsePoints": 0
+    }
+  ],
+  "totalBytes": 567314045.0
+}

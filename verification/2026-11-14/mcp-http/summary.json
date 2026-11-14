@@ -1,0 +1,255 @@
+{
+  "taskDate": "2026-11-14",
+  "retainedAtUtc": "2026-11-13T19:37:04.131Z",
+  "unitTests": {
+    "passed": 469,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ruleAssertions": 637,
+  "constraints": {
+    "offlineFixtures": true,
+    "newDependencies": false,
+    "newBrowserPermissions": false,
+    "personalClientConfigurationChanged": false,
+    "pushed": false,
+    "committed": false
+  },
+  "reviews": [
+    "Share the closed read-only RPC lifecycle; keep client and browser credentials separate; preserve request ownership across cancellation, disconnect and expiry.",
+    "Reproduce and tighten hostname boundaries; keep user reports separate from independently evidenced threats; retain exact-host history and existing exceptions.",
+    "Verify both transports in all three browsers, unchanged saved configuration and ad blocking, native rule boundaries, final package/server hashes, cleanup and setup documentation."
+  ],
+  "findings": [
+    "A new raw URL negative fixture exposed query/fragment characters being admitted into the requested-host regex; authority characters were restricted before final native runs.",
+    "The dropped-response test initially treated its intentional ECONNRESET as a test failure; it now waits for close while retaining the assertion that the pending browser read survives.",
+    "A CLI process exceeded the test-only three-second startup deadline during concurrent suites. The startup allowance is now ten seconds with explicit spawn-error reporting; HTTP body and browser-read deadlines are unchanged.",
+    "One initial Chrome run stopped at manager startup before MCP checks, with no recorded runtime exception. A Firefox stdio attempt timed out in browsingContext.getTree before extension checks. Independent final runs passed; the original startup causes were not established.",
+    "Chrome selected the earlier exact pxl rule instead of the overlapping new domain rule. The native assertion now accepts either explicit requested block and separately tests a new WebSocket subdomain.",
+    "Firefox testMatchOutcome returned no match for a raw wss URL. The fixture now uses the existing HTTP(S)-handshake representation and records both URLs. All three full suites also exercise a real local WebSocket with the new rule pattern aliased to localhost, including successful control and restore handshakes.",
+    "The first real Firefox WebSocket denial passed its block/restore assertions but its intentional connection error reached the unexpected-error check. The fixture now retains that exact local endpoint message as an expected network error, constrained to the owned page context; unrelated errors still fail."
+  ],
+  "limits": [
+    "Native test clients exercised real server processes and browser approval. Personal Codex registration and an end-to-end Codex model tool call were not performed.",
+    "HTTP is authenticated loopback-only configured bearer access, not OAuth, TLS, a remote service or a defense against software already controlling the same user account.",
+    "The new domain entry records the user report and request, without live-site visits or an independent malware reputation claim. It belongs to the ad layer and respects explicit allow/pause preferences.",
+    "Offline fixtures verify these source snapshots and do not establish universal live-site protection."
+  ],
+  "runs": [
+    {
+      "name": "chrome-blocker-before-socket-probe",
+      "final": false,
+      "browser": "chrome",
+      "success": true,
+      "checks": 737,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-blocker-before-socket-probe.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-blocker-final",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 739,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "chrome-blocker-final.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-blocker-first",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 12,
+      "error": "AssertionError [ERR_ASSERTION]: user-requested domain block matches natively: wss://pxl.wheelroot.com/fixture\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:602:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-blocker-first.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-blocker-rule-trace",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 12,
+      "error": "AssertionError [ERR_ASSERTION]: user-requested domain block matches natively: wss://pxl.wheelroot.com/fixture\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:607:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-blocker-rule-trace.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-http-final",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 44,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "chrome-http-final.json",
+      "screenshots": [
+        "chrome-http-final-debug-1280.png",
+        "chrome-http-final-debug-390.png"
+      ]
+    },
+    {
+      "name": "chrome-http",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 0,
+      "error": "Error: Timed out: !document.getElementById('newScript').disabled\nManager: Loading your modules…\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:82:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:138:5",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-http.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-stdio-final",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 40,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "chrome-stdio-final.json",
+      "screenshots": [
+        "chrome-stdio-final-debug-1280.png",
+        "chrome-stdio-final-debug-390.png"
+      ]
+    },
+    {
+      "name": "edge-blocker-before-socket-probe",
+      "final": false,
+      "browser": "edge",
+      "success": true,
+      "checks": 737,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/edge-blocker-before-socket-probe.json",
+      "screenshots": []
+    },
+    {
+      "name": "edge-blocker-final",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 739,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "edge-blocker-final.json",
+      "screenshots": []
+    },
+    {
+      "name": "edge-http-final",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 44,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "edge-http-final.json",
+      "screenshots": [
+        "edge-http-final-debug-1280.png",
+        "edge-http-final-debug-390.png"
+      ]
+    },
+    {
+      "name": "edge-stdio-final",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 40,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "edge-stdio-final.json",
+      "screenshots": [
+        "edge-stdio-final-debug-1280.png",
+        "edge-stdio-final-debug-390.png"
+      ]
+    },
+    {
+      "name": "firefox-blocker-expected-network-error",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 732,
+      "error": "AssertionError [ERR_ASSERTION]: no uncaught extension runtime exceptions\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:1105:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-blocker-expected-network-error.json",
+      "screenshots": []
+    },
+    {
+      "name": "firefox-blocker-final",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 733,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "firefox-blocker-final.json",
+      "screenshots": []
+    },
+    {
+      "name": "firefox-blocker-simulator-attempt",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 11,
+      "error": "AssertionError [ERR_ASSERTION]: user-requested domain block matches natively: wss://pxl.wheelroot.com/fixture\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:610:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-blocker-simulator-attempt.json",
+      "screenshots": []
+    },
+    {
+      "name": "firefox-http-final",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 41,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "firefox-http-final.json",
+      "screenshots": [
+        "firefox-http-final-debug-1366.png"
+      ]
+    },
+    {
+      "name": "firefox-stdio-final",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 37,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "firefox-stdio-final.json",
+      "screenshots": [
+        "firefox-stdio-final-debug-1366.png"
+      ]
+    },
+    {
+      "name": "firefox-stdio-startup-attempt",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 0,
+      "error": "Error: Timeout: browsingContext.getTree\nFirefox launcher PID 37220, exit 0. Startup output: *** You are running in headless mode.\r\nDynamically enable window occlusion 0\r\nWebDriver BiDi listening on ws://127.0.0.1:55027\r\n[WARN  rkv::backend::impl_safe::environment] `load_ratio()` is irrelevant for this storage backend.\n1794597493248\tRemoteAgent\tINFO\tPerform WebSocket upgrade for incoming connection from 127.0.0.1:55028\r\n[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt\r\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[WARN  glean_core::error_recording] gfx.adapter.primary.driver_files: Value length 771 exceeds maximum of 255)\nconsole.error: RSLoader: \r\n  Failed to retrieve recipes from Remote Settings\r\n  Message: Error: Shutdown started\r\n  Stack:\r\n    ShutdownStartedError@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1577:5\r\n#throwDuringShutdown@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1148:13\r\n#raceShutdown@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:743:30\r\ngetRecipesFromCollection@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:795:41\r\ngetRecipesFromAllCollections@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:651:39\r\nobserve@resource://gre/modules/AsyncShutdown.sys.mjs:588:17\r\nquit@chrome://remote/content/shared/Browser.sys.mjs:102:22\r\nonPacket@chrome://remote/content/webdriver-bidi/WebDriverBiDiConnection.sys.mjs:256:20\r\n\r\nconsole.error: ExperimentAPI: \r\n  Failed to enable RemoteSettingsExperimentLoader:\r\n  Message: Error: Shutdown started\r\n  Stack:\r\n    ShutdownStartedError@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1577:5\r\n#throwDuringShutdown@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1148:13\r\n#raceShutdown@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:743:30\r\ngetRecipesFromCollection@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:795:41\r\ngetRecipesFromAllCollections@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:651:39\r\nobserve@resource://gre/modules/AsyncShutdown.sys.mjs:588:17\r\nquit@chrome://remote/content/shared/Browser.sys.mjs:102:22\r\nonPacket@chrome://remote/content/webdriver-bidi/WebDriverBiDiConnection.sys.mjs:256:20\r\n\r\n\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:44:69)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-stdio-startup-attempt.json",
+      "screenshots": []
+    }
+  ]
+}

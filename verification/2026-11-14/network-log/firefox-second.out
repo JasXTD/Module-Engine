@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 21,
+  "error": "SyntaxError: Unexpected end of JSON input\n    at JSON.parse (<anonymous>)\n    at Object.runNetworkLog (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-log-browser.cjs:85:180)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:82:7",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-5d9dFI\\evidence.json"
+}

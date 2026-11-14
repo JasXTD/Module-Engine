@@ -1,0 +1,24 @@
+{
+  "name": "Public Suffix List",
+  "source": "https://github.com/publicsuffix/list",
+  "revision": "905c2f8950fc646b8df073321ea567dadefaa3a2",
+  "revisionDate": "2026-11-11",
+  "license": "MPL-2.0",
+  "signature": "GitHub reports this commit signature as verified and valid",
+  "files": {
+    "public_suffix_list.dat": {
+      "bytes": 339472,
+      "gitBlob": "36405fdbe60fb98644ce393361c17a1e9a453588",
+      "sha256": "6f07d903f26d18c551c8320d59baa1ae97ab288653ac110a3e9fee00c396a7b7"
+    },
+    "LICENSE": {
+      "bytes": 16727,
+      "gitBlob": "ee6256cdb62a765749a71aae3abea32884301cd1",
+      "sha256": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172"
+    }
+  },
+  "approval": "Pinned data and license approved by the user on 2026-11-13",
+  "malwareScan": { "product": "Malwarebytes", "result": "No threats found", "reportedBy": "user", "date": "2026-11-13" },
+  "updates": "Manual only; no runtime downloads",
+  "usage": "Parsed as domain data only. Both ICANN and private suffix sections are retained."
+}

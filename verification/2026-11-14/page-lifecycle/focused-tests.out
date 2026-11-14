@@ -1,0 +1,399 @@
+✔ compiled page GM code never exports native capability bytes into the page or DOM (17.0849ms)
+✔ page bridge fixes identity, capability, native router and connection name (6.5061ms)
+✖ pending page calls stay bounded and shutdown rejects without retrying submitted operations (5.0768ms)
+✖ pagehide suspends native ports and pageshow allows a fresh connection without re-execution (3.1468ms)
+✔ fallback occurs only before startup claim, never after user side effects or errors (11.0797ms)
+✔ synthetic lifecycle events cannot close or suspend the page bridge (3.1302ms)
+✔ page startup waits through suspension and resumes exactly once when the DOM root is ready (1.8264ms)
+✔ a bridge call queued before navigation is canceled before reaching native messaging (2.3263ms)
+✔ suspension rejects in-flight page calls, suppresses late replies and does not replay them on restore (2.6882ms)
+✔ debug inspection detects drift without repairing registrations or writing storage (18.4533ms)
+✔ diagnostics require active capture, current capability, matching native world and messaging grants (26.8776ms)
+✔ diagnostic flood stays bounded and does not prevent disabling scripts (7.2184ms)
+✔ synchronous script errors preserve their native throw and publish diagnostics only to active capture (40.8288ms)
+✔ a diagnostic awaiting native frame verification cannot leak into a later approval (4.6359ms)
+✔ GM cookies require optional permission, preserve callback shapes and bind the native store (20.4338ms)
+✔ cookie authorization rejects foreign stores, undeclared destinations, parent scope and partition options (30.8837ms)
+✔ cookie grants cannot be borrowed from another script or an unwrapped registration (8.3305ms)
+✔ cookie list filters partitions, bounds output, and loses access after revocation or history scope changes (15.4143ms)
+✔ a timed-out native cookie lookup cannot perform a late write or stall shutdown indefinitely (2016.1397ms)
+✖ in-flight cookie reads discard results after permission loss, scope exit or document suspension (29.9337ms)
+▶ submitted cookie writes preserve native success after access is revoked
+  ✔ set after permission (12.4865ms)
+  ✔ set after scope (13.2938ms)
+  ✖ set after pagehide (10.5948ms)
+  ✖ set after navigation (12.125ms)
+  ✔ delete after permission (12.5238ms)
+  ✔ delete after scope (16.8108ms)
+  ✖ delete after pagehide (10.1892ms)
+  ✖ delete after navigation (9.605ms)
+✖ submitted cookie writes preserve native success after access is revoked (99.1772ms)
+✖ submitted cookie writes preserve native failures after document suspension (9.0519ms)
+✖ cookie revocation before write submission prevents the mutation (29.8237ms)
+✔ timed-out submitted cookie writes keep capacity until settlement and are never replayed (4042.2886ms)
+✖ a revoked submitted cookie write still has a deadline and cannot stall shutdown (2021.0755ms)
+✔ an asynchronous userscript cannot use GM cookies after disabling while it awaits (8.1934ms)
+✔ tags normalize old libraries and keep local organization separate from author metadata (7.974ms)
+✔ ordering survives restart, toggles and rollback while keeping stable script worlds and values (53.4001ms)
+✔ install URLs and version comparisons handle ambiguous input without fetching or precision loss (0.8396ms)
+✔ URL fetching is inert, cookie-free, redirect-free, bounded and validates source before review (71.5713ms)
+✔ manual updates preserve fresh GM values, identity and matching cached dependencies, and revoke old APIs (29.4346ms)
+✔ reviews survive worker restart, use exactly reviewed bytes and leave failures unchanged (17.8493ms)
+✔ updates reject changed identity, stale reviews and downgrades but expose same-version changes (11.0638ms)
+✔ installing an existing identity previews replacement and links local scripts without losing values (10.4713ms)
+✔ source downloads cancel without blocking controls, and bounded admission releases slots (57.9955ms)
+✔ source download timeout discards bytes and preserves the installed record (30009.4478ms)
+✔ desktop helper options and permission lists reject unsafe or unsupported inputs (2.0979ms)
+✔ clipboard legacy writes return void, modern writes confirm completion, preserve order and propagate failures (14.543ms)
+✔ desktop actions require exact grants and native document-bound connections (17.7355ms)
+✔ notification handles return synchronously, dispatch owned callbacks and remove exactly once (12.788ms)
+✔ notification tags replace only the same document and forged native IDs cannot clear another notification (16.2449ms)
+✔ Firefox notifications omit the unsupported native silent field (14.0463ms)
+✔ notification removal before ready creates no native notification (7.1279ms)
+✔ pending native notifications are cleaned after script revocation and controls remain responsive (10.3543ms)
+✔ notification permission denial and revocation settle pending actions without losing other helpers (14.2842ms)
+✔ desktop action admission remains bounded while native creation is stalled (18.291ms)
+✔ clipboard rate limits survive completed actions without blocking manager controls (51.9301ms)
+✔ downloads preserve bytes and resolve only after the native save completes (34.8539ms)
+✔ downloads reject permission, scope, HTTP, redirect, oversized and filename failures before saving (82.904ms)
+✔ Firefox downloads own a Blob URL only until native completion or cancellation (41.9318ms)
+✔ download abort settles once during both fetch and native save, preserving unrelated records (47.3042ms)
+✔ downloads accepted during revocation are cancelled when their native IDs arrive (31.2947ms)
+✔ native download failures, interrupts and early completion reconcile once (31.346ms)
+✔ a restarted helper broker clears stale notifications only and binds APIs granted after startup (1.2513ms)
+✔ tab options normalize defaults and background booleans while rejecting privileged URLs and unsupported options (0.6381ms)
+✔ both tab helpers return immediate owned handles with close-before-open and a single onclose notification (10.9231ms)
+✔ tab permissions and handles cannot cross grants, documents, connections or native tab IDs (22.5201ms)
+✔ tab creation and close failures release capacity and leave unrelated tabs alone (10.307ms)
+✔ a post-creation lookup failure does not fabricate closure of a tab moved to another window (8.2967ms)
+✔ manager disable does not wait for tab lookup and prevents an opening that has not reached the browser (10.0993ms)
+✔ revocation during an accepted browser creation never closes or claims ownership of the resulting page (8.0359ms)
+✔ pending native openings remain bounded across connection revocation (14.6474ms)
+✔ native connection loss invalidates tab handles without replaying or fabricating a close (7.3725ms)
+✔ rapid open-and-close cycles are bounded per script without blocking manager controls (68.8885ms)
+✔ default timing, GM_info grant metadata and case-insensitive globs match compatibility contracts (3.3825ms)
+✔ menu icons accept bounded raster data and ignore remote or executable content (7.4356ms)
+✔ dependencies require explicit preparation, retain order, expose granted resources and reuse offline cache (18.159ms)
+✔ dependency hash pins, corrupt caches, changed declarations and invalid file responses fail closed (15.7393ms)
+✔ slow dependency jobs are cancellable, do not hold controls, and cannot commit after an edit (54.5567ms)
+✔ startup integrity failure preserves cached data and removes previously registered scripts (14.5206ms)
+✔ network API sends bounded real loopback requests with modern results and legacy callback ordering (31.2166ms)
+✔ request validation rejects forbidden targets, options, headers, redirects and oversized responses without retries (75.0284ms)
+✔ redirects check every destination, rewrite POST correctly and strip cross-origin headers (28.6113ms)
+✔ FormData preserves ordered duplicate fields, Unicode, filenames and binary bytes (362.3789ms)
+✔ larger Firefox downloads preserve exact bytes and release their shared buffer budget (192.4587ms)
+✔ abort, timeout, port loss and module disable settle network promises once and release capacity (401.5298ms)
+✔ Firefox redirect permission removal cancels an active transfer without replay (47.5738ms)
+✔ include scopes form a union with matches; both exclusion forms win in the wrapper and broker (12.5926ms)
+✔ extended wrapper and broker checks agree, including oversized regex exclusions and stale navigation (112.4441ms)
+✔ broker denies stale top/subframe URLs, replaced documents and failed live scope probes (9.1176ms)
+✔ a stalled frame probe releases manager controls, never authorizes later and does not accumulate probes (2015.3446ms)
+✔ native glob prefilter preserves match scopes and is a superset for literal query and fragment globs (0.6512ms)
+✔ include-only native registration satisfies Chromium without granting scope to its reserved placeholder (2.5468ms)
+✔ missing native messaging fails closed before a privileged source body runs (2.6597ms)
+✔ legacy reads are synchronous after hydration; ordered writes and bulk defaults survive reload (22.6907ms)
+✔ value listeners distinguish local and remote commits, deletes, no-ops and removal (16.9256ms)
+✔ failed value persistence rolls back optimistic reads and never notifies other tabs (17.1901ms)
+✔ a delayed write acknowledgement cannot overwrite a newer remote value or mislabel its listener (13.9224ms)
+✔ reentrant listener writes keep their order and callback failures do not swallow other listeners (12.6761ms)
+✔ native channel reconnection hydrates values and republishes menus without rerunning source (329.9705ms)
+✔ bulk writes are atomic, prototype-safe and require the specific declared grant (17.0448ms)
+✔ menus update and unregister in their native tab, reject forged sessions, and expire on disable (17.0969ms)
+✔ document-body waits once and document-start without a storage snapshot stays immediate (12.1658ms)
+✔ native subscriptions reject other worlds, frames and excluded URLs before exposing saved values (18.6004ms)
+✔ menu-only scripts run immediately, publish after connection, and enforce bounded command storage (9.1941ms)
+✔ native connection floods cannot reserve control capacity or keep disabled capabilities alive (43.0812ms)
+✔ many matching legacy scripts can hydrate together without consuming ordinary GM request slots (421.7637ms)
+✔ menu changes coalesce while a native publication acknowledgement is pending (20.7394ms)
+✔ menu traffic has bounded native admission, preserves value slots, and yields to disable (47.17ms)
+✔ document-body observer cancels on pagehide and resumes once on back-forward cache restore (5.1295ms)
+✔ synthetic or duplicate pageshow does not replace a live channel or rerun source (10.4849ms)
+✔ navigation invalidates queued writes and late replies without replay after restoration (10.1971ms)
+✔ pagehide clears a pending channel timeout and a queued old timeout cannot stop the resumed channel (8.7248ms)
+✔ GM flood cannot block module shutdown (6.8701ms)
+✔ GM flood cannot block script shutdown (5.8041ms)
+✔ GM flood cannot block delete shutdown (5.6747ms)
+✔ GM backpressure applies across scripts and frames in the same native tab (182.2634ms)
+✔ GM backpressure follows a script across native tabs and releases failed requests (13.5603ms)
+✔ global GM backpressure reserves status and shutdown capacity across many tabs (189.7301ms)
+✔ malformed storage messages do not take valid request capacity (9.585ms)
+✔ shutdown waits for the active write, preserves it, and rejects queued old capabilities (8.8229ms)
+✔ failed shutdown restores the old capability and allows a clean retry under GM load (9.2975ms)
+✔ control FIFO order and capability revocation survive immediate disable and re-enable (11.67ms)
+✔ old auto scripts stay isolated until individually re-enabled, including across module toggles (13.1619ms)
+✔ page relay registrations preserve native authorization, live scope and capability revocation (5.8909ms)
+✔ metadata produces explicit site, timing, world, frame and grant scope (0.34ms)
+✔ rejects missing scope before registration (0.1719ms)
+✔ rejects insecure dependency before registration (0.1255ms)
+✔ rejects unsupported grant before registration (0.1125ms)
+✔ rejects duplicate singleton before registration (0.1341ms)
+✔ rejects mixed none grant before registration (0.1095ms)
+✔ rejects bad host before registration (0.11ms)
+✔ rejects code before metadata before registration (0.0831ms)
+✔ rejects source quota before registration (0.2925ms)
+✔ asset and update metadata is ignored visibly without fetching anything (0.0992ms)
+✖ generated GM helpers reject lossy values in the script world before native transport (3.7435ms)
+✔ first use defaults off and can save, export source, edit and delete without browser access (0.9999ms)
+✔ module and script switches register exact scope, persist intent and revoke old capabilities (7.3898ms)
+✔ stale saves, toggles and deletions cannot overwrite another editor (1.3465ms)
+✔ register failure rolls back browser state and saved intent, then retries (21.5185ms)
+✔ afterRegister failure rolls back browser state and saved intent, then retries (13.5868ms)
+✔ ignoredRegister failure rolls back browser state and saved intent, then retries (12.5107ms)
+✔ world failure rolls back browser state and saved intent, then retries (10.6015ms)
+✔ save failure rolls back browser state and saved intent, then retries (15.0416ms)
+✔ afterSave failure rolls back browser state and saved intent, then retries (14.1877ms)
+✔ failure removing registrations leaves the prior enabled script and record intact (5.2601ms)
+✔ worker restart and extension update restore saved scripts without losing values (6.4086ms)
+✔ GM values are isolated by capability, grants, native sender, frame and URL scope (24.15ms)
+✔ revoked browser access and disabled/deleted scripts cannot use their former GM storage (6.7335ms)
+✔ wildcard-heavy scopes cannot stall the shared extension worker (1.266ms)
+✔ Edge permission denial still allows disabling the module (3.5264ms)
+✔ concurrent GM writes retain both values and quota errors preserve the old data (13.0183ms)
+✔ invalid stored data is preserved while stale native registrations are removed (3.3398ms)
+✔ native registrations from other bundled modules are left untouched (0.3495ms)
+✔ a module failure stays local and cannot invoke an unregistered adapter (0.3855ms)
+ℹ tests 153
+ℹ suites 0
+ℹ pass 141
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44696.5067
+
+✖ failing tests:
+
+test at tests\userscripts-page.test.cjs:86:1
+✖ pending page calls stay bounded and shutdown rejects without retrying submitted operations (5.0768ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /closed/. Input:
+  
+  'Error: Page bridge is inactive. Reload or return to the page.'
+  
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:96:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Page bridge is inactive. Reload or return to the page.
+        at Object.sendMessage (blockads-userscript-12345678-1234-1234-1234-123456789abc.user.js:46:54)
+        at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:96:37)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /closed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\userscripts-page.test.cjs:98:1
+✖ pagehide suspends native ports and pageshow allows a fresh connection without re-execution (3.1468ms)
+  Error: Page bridge is inactive. Reload or return to the page.
+      at Object.sendMessage (blockads-userscript-12345678-1234-1234-1234-123456789abc.user.js:46:54)
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts-page.test.cjs:104:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests\userscripts.test.cjs:245:1
+✖ in-flight cookie reads discard results after permission loss, scope exit or document suspension (29.9337ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Allow cookie|scope|expired|inactive/. Input:
+  
+  'Error: This userscript navigated away; the submitted operation may still complete and was not retried.'
+  
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:258:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: This userscript navigated away; the submitted operation may still complete and was not retried.
+        at send (blockads-userscript-cf307c7d-11d5-42fc-aad1-7fe8e253e153.user.js:346:63)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:258:16)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /Allow cookie|scope|expired|inactive/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:263:13
+✖ set after pagehide (10.5948ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: 'This userscript navigated away; the submitted operation may still complete and was not retried.',
+  +   ok: false
+  -   ok: true
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:282:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:263:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { ok: false, error: 'This userscript navigated away; the submitted operation may still complete and was not retried.' },
+    expected: { ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:263:13
+✖ set after navigation (12.125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: 'This userscript navigated away; the submitted operation may still complete and was not retried.',
+  +   ok: false
+  -   ok: true
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:282:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:263:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { ok: false, error: 'This userscript navigated away; the submitted operation may still complete and was not retried.' },
+    expected: { ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:263:13
+✖ delete after pagehide (10.1892ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: 'This userscript navigated away; the submitted operation may still complete and was not retried.',
+  +   ok: false
+  -   ok: true
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:282:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:263:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { ok: false, error: 'This userscript navigated away; the submitted operation may still complete and was not retried.' },
+    expected: { ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:263:13
+✖ delete after navigation (9.605ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: 'This userscript navigated away; the submitted operation may still complete and was not retried.',
+  +   ok: false
+  -   ok: true
+    }
+  
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:282:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:263:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { ok: false, error: 'This userscript navigated away; the submitted operation may still complete and was not retried.' },
+    expected: { ok: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:292:1
+✖ submitted cookie writes preserve native failures after document suspension (9.0519ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Native cookie write refused/. Input:
+  
+  'Error: This userscript navigated away; the submitted operation may still complete and was not retried.'
+  
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:301:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: This userscript navigated away; the submitted operation may still complete and was not retried.
+        at send (blockads-userscript-a45b88fc-fdf9-40f6-9622-c8b4e0bd8c7b.user.js:346:63)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:301:5)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /Native cookie write refused/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:305:1
+✖ cookie revocation before write submission prevents the mutation (29.8237ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Allow cookie|scope|expired|inactive/. Input:
+  
+  'Error: This userscript navigated away; the submitted operation may still complete and was not retried.'
+  
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:317:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: This userscript navigated away; the submitted operation may still complete and was not retried.
+        at send (blockads-userscript-dc6f1fc3-46d4-46a7-8dbb-f69043af48b8.user.js:346:63)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:317:16)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /Allow cookie|scope|expired|inactive/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:339:1
+✖ a revoked submitted cookie write still has a deadline and cannot stall shutdown (2021.0755ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /outcome is unknown/. Input:
+  
+  'Error: This userscript navigated away; the submitted operation may still complete and was not retried.'
+  
+      at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:350:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: This userscript navigated away; the submitted operation may still complete and was not retried.
+        at send (blockads-userscript-819a8296-8da3-4efe-ad1a-a0e86dee92a5.user.js:346:63)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:350:5)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /outcome is unknown/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\userscripts.test.cjs:1776:1
+✖ generated GM helpers reject lossy values in the script world before native transport (3.7435ms)
+  blockads-userscript-f29dfe66-f1a8-4c87-9505-9979b90fd625.user.js:651
+        addEventListener('pagehide', event => {
+        ^
+  
+  ReferenceError: addEventListener is not defined
+      at runUserScript (blockads-userscript-f29dfe66-f1a8-4c87-9505-9979b90fd625.user.js:651:7)
+      at blockads-userscript-f29dfe66-f1a8-4c87-9505-9979b90fd625.user.js:661:5
+      at blockads-userscript-f29dfe66-f1a8-4c87-9505-9979b90fd625.user.js:911:3
+      at Script.runInContext (node:vm:149:12)
+      at Object.runInContext (node:vm:301:6)
+      at TestContext.<anonymous> (C:\Users\Tommy\Desktop\BlockAds\tests\userscripts.test.cjs:1781:6)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)

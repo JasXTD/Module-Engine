@@ -1,0 +1,485 @@
+{
+  "date": "2026-11-13",
+  "unitTests": {
+    "passed": 408,
+    "failed": 0,
+    "skipped": 0
+  },
+  "constraints": {
+    "offlineBrowserFixtures": true,
+    "installedDependenciesOnly": true,
+    "pushed": false
+  },
+  "reviews": [
+    "Native authorization, capability separation, safe migration and denial/rollback paths.",
+    "Lifecycle, pending-work bounds, Trusted Types cleanup; explicit page compilation omits its unused fallback body.",
+    "Caller/package coverage, MCP projections, rendered manager warnings, documentation and final source hashes."
+  ],
+  "limits": [
+    "Page code can invoke its approved script helpers; content is the isolation mode.",
+    "Default mode and raw unwrap auto stay isolated.",
+    "No live site or third-party script was tested. OS desktop-helper suites were not rerun."
+  ],
+  "runs": [
+    {
+      "name": "chrome-blocker",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 573,
+      "cleanup": {
+        "browserPid": 6036,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "chrome-blocker.json",
+      "screenshots": []
+    },
+    {
+      "name": "chrome-mcp",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 40,
+      "cleanup": {
+        "browserPid": 16072,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "chrome-mcp.json",
+      "screenshots": [
+        "chrome-debug-1280.png",
+        "chrome-debug-390.png"
+      ]
+    },
+    {
+      "name": "chrome-page-final",
+      "final": false,
+      "browser": "chrome",
+      "success": true,
+      "checks": 71,
+      "cleanup": {
+        "browserPid": 36020,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "userscripts-core.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-page-final.json"
+    },
+    {
+      "name": "chrome-page-first",
+      "final": false,
+      "browser": "chrome",
+      "success": true,
+      "checks": 63,
+      "cleanup": {
+        "browserPid": 10492,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "userscripts-page.js",
+        "userscripts-core.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-page-first.json"
+    },
+    {
+      "name": "chrome-page-optimized",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 78,
+      "cleanup": {
+        "browserPid": 19316,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "chrome-page-optimized.json",
+      "screenshots": [
+        "chrome-page-review-1280.png",
+        "chrome-page-review-390.png"
+      ]
+    },
+    {
+      "name": "chrome-probe-current-script",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 9,
+      "error": "AssertionError [ERR_ASSERTION]: Synchronous cross-world event acknowledged only when CSP allows inline page code: open\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:78:44)\n    at runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:27:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:191:7",
+      "cleanup": {
+        "browserPid": 16168,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "manifest.json",
+        "background.js",
+        "userscripts-core.js",
+        "clipboard.html",
+        "userscripts-runtime.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html",
+        "manager.js",
+        "userscripts-editor-worker.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-probe-current-script.json"
+    },
+    {
+      "name": "chrome-probe-main-bootstrap",
+      "final": false,
+      "browser": "chrome",
+      "success": true,
+      "checks": 15,
+      "cleanup": {
+        "browserPid": 2156,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "manifest.json",
+        "background.js",
+        "userscripts-core.js",
+        "clipboard.html",
+        "userscripts-runtime.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html",
+        "manager.js",
+        "userscripts-editor-worker.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-probe-main-bootstrap.json"
+    },
+    {
+      "name": "chrome-probe",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 9,
+      "error": "AssertionError [ERR_ASSERTION]: Synchronous cross-world event acknowledged only when CSP allows inline page code: open\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:78:44)\n    at runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:26:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:191:7",
+      "cleanup": {
+        "browserPid": 22884,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "manifest.json",
+        "background.js",
+        "userscripts-core.js",
+        "clipboard.html",
+        "userscripts-runtime.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html",
+        "manager.js",
+        "userscripts-editor-worker.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/chrome-probe.json"
+    },
+    {
+      "name": "chrome-userscripts",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 443,
+      "cleanup": {
+        "browserPid": 33104,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "background.js",
+        "clipboard.js"
+      ],
+      "evidence": "chrome-userscripts.json",
+      "screenshots": []
+    },
+    {
+      "name": "edge-blocker",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 573,
+      "cleanup": {
+        "browserPid": 32420,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "edge-blocker.json",
+      "screenshots": []
+    },
+    {
+      "name": "edge-mcp",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 40,
+      "cleanup": {
+        "browserPid": 9512,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "edge-mcp.json",
+      "screenshots": [
+        "edge-debug-1280.png",
+        "edge-debug-390.png"
+      ]
+    },
+    {
+      "name": "edge-page-final",
+      "final": false,
+      "browser": "edge",
+      "success": true,
+      "checks": 71,
+      "cleanup": {
+        "browserPid": 33600,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "userscripts-core.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/edge-page-final.json"
+    },
+    {
+      "name": "edge-page-first",
+      "final": false,
+      "browser": "edge",
+      "success": true,
+      "checks": 63,
+      "cleanup": {
+        "browserPid": 31056,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [
+        "userscripts-page.js",
+        "userscripts-core.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/edge-page-first.json"
+    },
+    {
+      "name": "edge-page-optimized",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 78,
+      "cleanup": {
+        "browserPid": 30708,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "edge-page-optimized.json",
+      "screenshots": [
+        "edge-page-review-1280.png",
+        "edge-page-review-390.png"
+      ]
+    },
+    {
+      "name": "edge-userscripts",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 443,
+      "cleanup": {
+        "browserPid": 33520,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "background.js",
+        "clipboard.js"
+      ],
+      "evidence": "edge-userscripts.json",
+      "screenshots": []
+    },
+    {
+      "name": "firefox-blocker",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 567,
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "reddit.js"
+      ],
+      "evidence": "firefox-blocker.json",
+      "screenshots": []
+    },
+    {
+      "name": "firefox-mcp",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 37,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "firefox-mcp.json",
+      "screenshots": [
+        "firefox-debug-1366.png"
+      ]
+    },
+    {
+      "name": "firefox-page-final",
+      "final": false,
+      "browser": "firefox",
+      "success": true,
+      "checks": 68,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [
+        "userscripts-core.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-page-final.json"
+    },
+    {
+      "name": "firefox-page-first",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 29,
+      "error": "Error: Timed out: document.documentElement.dataset.autoReady\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:50:11)\n    at async runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:100:63)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:80:7",
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [
+        "userscripts-page.js",
+        "userscripts-core.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-page-first.json"
+    },
+    {
+      "name": "firefox-page-fixed",
+      "final": false,
+      "browser": "firefox",
+      "success": true,
+      "checks": 61,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [
+        "userscripts-core.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-page-fixed.json"
+    },
+    {
+      "name": "firefox-page-optimized",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 75,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [],
+      "evidence": "firefox-page-optimized.json",
+      "screenshots": [
+        "firefox-page-review-1366.png"
+      ]
+    },
+    {
+      "name": "firefox-probe",
+      "final": false,
+      "browser": "firefox",
+      "success": true,
+      "checks": 13,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [
+        "manifest.json",
+        "background.js",
+        "userscripts-core.js",
+        "clipboard.html",
+        "userscripts-runtime.js",
+        "debug-runtime.js",
+        "docs/MCP.md",
+        "manager.html",
+        "manager.js",
+        "userscripts-editor-worker.js"
+      ],
+      "fixtureOverridesVerified": [],
+      "evidence": "attempts/firefox-probe.json"
+    },
+    {
+      "name": "firefox-userscripts",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 362,
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceMismatches": [],
+      "fixtureOverridesVerified": [
+        "background.js",
+        "clipboard.js"
+      ],
+      "evidence": "firefox-userscripts.json",
+      "screenshots": []
+    }
+  ]
+}

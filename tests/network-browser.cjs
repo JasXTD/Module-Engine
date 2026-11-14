@@ -8,7 +8,7 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
     if (!response.ok) throw new Error(response.error);
   };
   const change=async patch=>{const response=await send({type:'UPDATE_SETTINGS',patch});if(!response.ok)throw new Error(response.error);};
-  const editor=await browser.open(await browser.evaluate("api.runtime.getURL('lists.html')"));
+  const editor=await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/lists/lists.html')"));
   const evaluate=expression=>browser.evaluate(expression,editor),wait=expression=>until(browser,expression,editor);
   const click=async selector=>{
     const element=`document.querySelector(${JSON.stringify(selector)})`;
@@ -104,7 +104,8 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
   check(await action('https://case.request-probe.test/Upper.js')==='','master pause removes custom network rules');
   await wait("document.getElementById('networkActivity').textContent.includes('paused') && document.getElementById('threatEvidenceStatus').textContent.includes('inactive')");
   check(true,'network editor and evidence status accurately show the master pause');
-  await change({enabled:true,cosmeticFiltering:false,customBlockedDomains:[],rulesets:{ads_ruleset:false,trackers_ruleset:false,community_ruleset:false,threats_ruleset:false}});
+  await change({enabled:true,cosmeticFiltering:false,notificationPromptBlocking:false,deceptivePromptBlocking:false,deceptiveButtonBlocking:false,
+    customBlockedDomains:[],rulesets:{ads_ruleset:false,trackers_ruleset:false,community_ruleset:false,threats_ruleset:false}});
   check(await action('https://case.request-probe.test/Upper.js')==='block','custom request filters are independent of cosmetic and list toggles');
   await until(browser,"!busy && currentSettings && !currentSettings.cosmeticFiltering && !Object.values(currentSettings.rulesets).some(Boolean)");
   check(await browser.evaluate("document.getElementById('statusText').textContent === 'Filtering enabled'"),'popup counts custom request blocks when all other filtering is off');
@@ -112,10 +113,15 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
   await save(allowOnly);
   await until(browser,`!busy && currentSettings.customNetworkFilters === ${JSON.stringify(allowOnly)}`);
   check(await browser.evaluate("document.getElementById('statusText').textContent === 'No filters enabled'"),'popup does not count comments or request exceptions as blocking protection');
+  await change({notificationPromptBlocking:true});
+  await until(browser,"!busy && currentSettings.notificationPromptBlocking");
+  check(await browser.evaluate("document.getElementById('statusText').textContent === 'Filtering enabled'"),'popup counts notification protection when network and cosmetic filters are off');
+  await change({notificationPromptBlocking:false});
   await save(filters);
   await until(browser,`!busy && currentSettings.customNetworkFilters === ${JSON.stringify(filters)}`);
   check(await browser.evaluate("document.getElementById('statusText').textContent === 'Filtering enabled'"),'an already-open popup follows custom request-filter changes');
-  await change({cosmeticFiltering:baseline.cosmeticFiltering,customBlockedDomains:baseline.customBlockedDomains,rulesets:baseline.rulesets});
+  await change({cosmeticFiltering:baseline.cosmeticFiltering,customBlockedDomains:baseline.customBlockedDomains,rulesets:baseline.rulesets,
+    notificationPromptBlocking:baseline.notificationPromptBlocking,deceptivePromptBlocking:baseline.deceptivePromptBlocking,deceptiveButtonBlocking:baseline.deceptiveButtonBlocking});
 
   await input(filters+'\n||invalid.example^$redirect=script');
   check(await evaluate("document.getElementById('saveNetworkFilters').disabled && /Line 15:/.test(document.getElementById('networkStatus').textContent)"),'unsupported syntax reports its source line and prevents submission');
@@ -145,7 +151,7 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
   const allowedPath='/blocked-probe.network?allowed='+Date.now();
   await save(local+'\n@@|http://localhost:'+port+allowedPath+'|$script');
   check(await loadScript(allowedPath)==='loaded' && requests.includes(allowedPath) && await browser.evaluate('window.__blockadsNetworkProbe === 1',page),'a precise request exception restores a harmless loopback script');
-  await browser.navigate(editor,await browser.evaluate("api.runtime.getURL('lists.html')"));
+  await browser.navigate(editor,await browser.evaluate("api.runtime.getURL('src/ui/lists/lists.html')"));
   await wait("settings && !busy && threatEvidence && document.getElementById('networkCount').textContent === '(2)'");
   check(await evaluate("document.getElementById('networkFilters').value === settings.customNetworkFilters"),'saved request filters survive a full editor reload');
   await click('#networkFilterPanel > summary');

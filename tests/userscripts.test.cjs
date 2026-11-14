@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-require('../userscripts-core.js'); require('../userscripts-network.js'); require('../userscripts-offscreen.js'); require('../userscripts-xhr.js'); require('../clipboard.js'); require('../userscripts-actions.js'); require('../userscripts-runtime.js'); require('../modules.js');
+require('../vendor/publicsuffix/suffixes.js'); require('../src/userscripts/userscripts-matching.js'); require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/userscripts-core.js'); require('../src/userscripts/userscripts-network.js'); require('../src/userscripts/userscripts-offscreen.js'); require('../src/userscripts/userscripts-xhr.js'); require('../src/userscripts/clipboard.js'); require('../src/userscripts/userscripts-actions.js'); require('../src/userscripts/userscripts-runtime.js'); require('../src/background/modules.js');
 const core = globalThis.BlockAdsUserScriptCore;
 const clone = value => structuredClone(value);
 const source = (name = 'Example', metadata = '', body = 'document.body.dataset.script = "ran";') =>
@@ -9,12 +9,29 @@ const source = (name = 'Example', metadata = '', body = 'document.body.dataset.s
 function harness(initial, options = {}) {
   const state = { data: initial ? clone(initial) : {}, scripts: [], worlds: [], faults: {}, granted: options.granted ?? true, apiOn: true, hooks: {}, writes: 0 };
   state.tabs = new Map([[7, { id: 7, windowId: 2, index: 3 }], [8, { id: 8, windowId: 2, index: 4 }]]);
+  state.frames = new Map();
   state.createdTabs = []; state.removedTabs = []; state.nextTab = 100;
   state.helperPermissions = new Set(options.helperPermissions ?? ['clipboardWrite', 'offscreen', 'notifications', 'downloads']);
   state.copies = []; state.notifications = new Map(); state.downloads = new Map(); state.nextDownload = 1; state.downloadCancels = [];
+  state.cookieCalls = []; state.cookieJar = []; state.cookieStores = [{ id: 'owned', tabIds: [7, 8] }, { id: 'other', tabIds: [99] }];
   const fault = name => { if (state.faults[name]) { state.faults[name]--; throw new Error('Injected ' + name + ' failure'); } };
   const event = key => ({ addListener: callback => { const previous = state.hooks[key]; state.hooks[key] = (...args) => { previous?.(...args); callback(...args); }; } });
   const api = {
+    cookies: Object.fromEntries(['getAllCookieStores', 'getAll', 'set', 'remove'].map(method => [method, async details => {
+      state.cookieCalls.push({ method, details: clone(details) }); fault('cookie');
+      if (options.cookieCall) await options.cookieCall(method, details);
+      if (method === 'getAllCookieStores') return clone(state.cookieStores);
+      if (method === 'getAll') return clone(state.cookieJar);
+      if (method === 'set') { const cookie = { ...details, domain: new URL(details.url).hostname }; state.cookieJar.push(cookie); return clone(cookie); }
+      state.cookieJar = state.cookieJar.filter(cookie => cookie.name !== details.name); return clone(details);
+    }])),
+    scripting: { async executeScript({ target, world, func, injectImmediately }) {
+      fault('frameProbe'); assert.equal(world, 'ISOLATED');
+      assert.equal(injectImmediately, true);
+      if (options.frameProbe) return options.frameProbe(target);
+      return target.frameIds.map(frameId => ({ frameId, ...state.frames.get(target.tabId + ':' + frameId),
+        result: vm.runInNewContext('(' + func.toString() + ')()', { location: { href: state.frames.get(target.tabId + ':' + frameId)?.url || 'https://example.test/page' } }) }));
+    } },
     runtime: { id: 'test', onUserScriptMessage: event('message'), onUserScriptConnect: event('connect'),
       ...(options.firefox ? { getBrowserInfo: async () => ({ name: 'Firefox' }) } : {}),
       getURL: value => 'chrome-extension://test/' + value, async getContexts() { return state.offscreen ? [{}] : []; },
@@ -76,6 +93,7 @@ function harness(initial, options = {}) {
   });
   function realm(id, tabId = 7, extra = {}) {
     const from = { ...sender(), tab: { id: tabId }, documentId: crypto.randomUUID(), ...extra.sender };
+    state.frames.set(from.tab.id + ':' + from.frameId, { url: from.url });
     const events = new Map(), errors = [], ports = [], messages = [];
     const listeners = () => {
       const callbacks = new Set();
@@ -103,7 +121,7 @@ function harness(initial, options = {}) {
     const record = state.data.userscriptManager.scripts.find(item => item.id === id);
     vm.runInContext(core.registration(record).js[0].code, context);
     return { context, run: code => vm.runInContext(code, context), errors, ports, messages, from,
-      event: (name, event = {}) => { for (const callback of events.get(name) || []) callback(event); } };
+      event: (name, event = {}) => { for (const callback of events.get(name) || []) callback({ isTrusted: true, ...event }); } };
   }
   return { state, api, host, ready, command, save, enable, sender, value, realm };
 }
@@ -112,6 +130,238 @@ const eventually = async predicate => {
   assert.fail('Condition did not become true.');
 };
 const json = value => JSON.parse(JSON.stringify(value));
+test('debug inspection detects drift without repairing registrations or writing storage', async () => {
+  const h = harness(), s = await h.enable(await h.save('Inspect', '// @grant GM.getValue\n'));
+  h.state.scripts = []; const writes = h.state.writes, stored = clone(h.state.data);
+  const result = await h.host.inspect(); assert.equal(result.active, false); assert.match(result.error, /differ/);
+  assert.equal(result.scripts[0].id, s.id); assert.deepEqual(h.state.scripts, []); assert.equal(h.state.writes, writes); assert.deepEqual(h.state.data, stored);
+});
+test('diagnostics require active capture, current capability, matching native world and messaging grants', async () => {
+  const h = harness(), s = await h.enable(await h.save('Debug', '// @grant GM.getValue\n'));
+  const payload = { message: 'owned error', stack: 'owned stack' }, entries = [];
+  assert.equal((await h.value(s.id, 'diagnostic', payload)).ok, false);
+  h.host.setDiagnosticSink(entry => entries.push(entry));
+  assert.equal((await h.value(s.id, 'diagnostic', { ...payload, token: '0'.repeat(64) })).ok, false);
+  assert.equal((await h.value(s.id, 'diagnostic', payload, { ...h.sender(), userScriptWorldId: 'other' })).ok, false);
+  assert.equal((await h.value(s.id, 'diagnostic', payload)).ok, true); assert.equal(entries[0].scriptId, s.id);
+  assert.equal((await h.value(s.id, 'diagnostic', { ...payload, message: 'x'.repeat(2049) })).ok, false);
+  h.host.setDiagnosticSink(null); assert.equal((await h.value(s.id, 'diagnostic', payload)).ok, false); assert.equal(entries.length, 1);
+  const noGrant = await h.enable(await h.save('No messaging', '// @grant none\n')); h.host.setDiagnosticSink(entry => entries.push(entry));
+  assert.equal((await h.value(noGrant.id, 'diagnostic', payload)).ok, false);
+});
+test('diagnostic flood stays bounded and does not prevent disabling scripts', async () => {
+  const h = harness(), s = await h.enable(await h.save('Debug flood', '// @grant GM.getValue\n')), entries = [];
+  h.host.setDiagnosticSink(entry => entries.push(entry));
+  const pending = Array.from({ length: 32 }, () => h.value(s.id, 'diagnostic', { message: 'error', stack: '' }));
+  const disabled = await h.host.setEnabled(false); assert.equal(disabled.enabled, false);
+  const results = await Promise.all(pending); assert.ok(results.some(r => /limit/.test(r.error))); assert.ok(entries.length <= 8);
+});
+test('synchronous script errors preserve their native throw and publish diagnostics only to active capture', async () => {
+  const h = harness(), s = await h.enable(await h.save('Throwing', '// @grant GM.getValue\n', 'throw new Error("owned runtime error");')), entries = [];
+  h.host.setDiagnosticSink(entry => entries.push(entry));
+  assert.throws(() => h.realm(s.id), /owned runtime error/);
+  await eventually(() => entries.length === 1); assert.equal(entries[0].message, 'owned runtime error'); assert.match(entries[0].stack, /owned runtime error/);
+});
+test('a diagnostic awaiting native frame verification cannot leak into a later approval', async () => {
+  let release; const gate = new Promise(resolve => { release = resolve; }); let probing = false;
+  const h = harness(undefined, { frameProbe: async () => { probing = true; await gate; return [{ frameId: 0, result: 'https://example.test/page' }]; } });
+  const s = await h.enable(await h.save('Queued diagnostic', '// @grant GM.getValue\n')), old = [], next = [];
+  h.host.setDiagnosticSink(entry => old.push(entry));
+  const pending = h.value(s.id, 'diagnostic', { message: 'previous approval', stack: '' }); await eventually(() => probing);
+  h.host.setDiagnosticSink(null); h.host.setDiagnosticSink(entry => next.push(entry)); release();
+  assert.equal((await pending).ok, false); assert.equal(old.length, 0); assert.equal(next.length, 0);
+  assert.equal((await h.value(s.id, 'diagnostic', { message: 'current approval', stack: '' })).ok, true); assert.equal(next.length, 1);
+});
+const cookieGrants = '// @grant GM_cookie\n// @grant GM.cookie\n';
+async function cookieRealm(options = {}, metadata = '') {
+  const h = harness(undefined, options), script = await h.enable(await h.save('Cookies', cookieGrants + metadata, 'globalThis.cookie={legacy:GM_cookie,modern:GM.cookie};'));
+  const r = h.realm(script.id); await eventually(() => r.context.cookie);
+  return { h, script, r };
+}
+test('GM cookies require optional permission, preserve callback shapes and bind the native store', async () => {
+  const { h, r } = await cookieRealm();
+  await assert.rejects(r.run('cookie.modern.list({})'), /Allow cookie access/); assert.equal(h.state.cookieCalls.length, 0);
+  h.state.helperPermissions.add('cookies');
+  assert.equal(await r.run('cookie.modern.set({name:"owned",value:"value",httpOnly:true})'), undefined);
+  const result = await r.run('new Promise(resolve=>{globalThis.callbackReturn=cookie.legacy.list({},(...args)=>resolve(args));})');
+  assert.equal(r.context.callbackReturn, undefined); assert.equal(result[0][0].httpOnly, true); assert.equal(result[1], undefined);
+  assert.equal(h.state.cookieCalls.find(call => call.method === 'set').details.storeId, 'owned');
+  const deleted = await r.run('new Promise(resolve=>cookie.legacy.delete({name:"owned"},(...args)=>resolve(args)))');
+  assert.deepEqual(json(deleted), [null]); assert.equal(h.state.cookieJar.length, 0);
+  h.state.faults.cookie = 1;
+  const failure = await r.run('new Promise(resolve=>cookie.modern.list({},(...args)=>resolve(args)))');
+  assert.equal(failure[0], undefined); assert.match(failure[1], /Injected cookie/);
+});
+test('cookie authorization rejects foreign stores, undeclared destinations, parent scope and partition options', async () => {
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'] });
+  for (const code of [
+    'cookie.modern.list({url:"https://unrelated.test/"})', 'cookie.modern.list({storeId:"other"})',
+    'cookie.modern.list({partitionKey:{topLevelSite:"https://example.test"}})',
+    'cookie.modern.set({url:"javascript:alert(1)",name:"bad"})', 'cookie.modern.delete({})',
+    'cookie.modern.set({domain:"test",name:"bad"})', 'cookie.modern.set({name:"bad",httpOnly:1})',
+    'cookie.modern.set({url:"https://user:pass@example.test/",name:"bad"})'
+  ]) await assert.rejects(r.run(code));
+  assert.ok(h.state.cookieCalls.every(call => call.method === 'getAllCookieStores'));
+  const other = await cookieRealm({ helperPermissions: ['cookies'] }, '// @connect other.test\n');
+  await other.r.run('cookie.modern.set({url:"https://child.other.test/",domain:"other.test",name:"explicit",value:"local fixture"})');
+  assert.equal(other.h.state.cookieCalls.at(-1).details.url, 'https://child.other.test/');
+  assert.equal(other.h.state.cookieCalls.at(-1).details.storeId, 'owned');
+});
+test('cookie grants cannot be borrowed from another script or an unwrapped registration', async () => {
+  const h = harness(undefined, { helperPermissions: ['cookies'] });
+  for (const [name, metadata] of [['Ungrant', '// @grant GM.getValue\n'], ['Unwrapped', '// @unwrap\n// @grant GM_cookie\n']]) {
+    const script = await h.enable(await h.save(name, metadata, 'globalThis.noCookies=typeof GM_cookie;'));
+    const result = await h.value(script.id, 'cookie', { method: 'list', details: {} });
+    assert.equal(result.ok, false); assert.match(result.error, /not allowed/);
+  }
+  assert.equal(h.state.cookieCalls.length, 0);
+});
+test('cookie list filters partitions, bounds output, and loses access after revocation or history scope changes', async () => {
+  const { h, r, script } = await cookieRealm({ helperPermissions: ['cookies'] });
+  h.state.cookieJar = [{ name: 'owned' }, { name: 'partition', partitionKey: { topLevelSite: 'https://other.test' } }, { name: 'firstParty', firstPartyDomain: 'other.test' }];
+  assert.deepEqual(json(await r.run('cookie.modern.list({})')), [{ name: 'owned' }]);
+  h.state.cookieJar = Array.from({ length: 257 }, () => ({ name: 'over-limit' }));
+  await assert.rejects(r.run('cookie.modern.list({})'), /256/);
+  h.state.helperPermissions.delete('cookies'); await assert.rejects(r.run('cookie.modern.list({})'), /Allow cookie/);
+  h.state.helperPermissions.add('cookies'); h.state.cookieJar = [];
+  h.state.frames.set('7:0', { url: 'https://outside.test/' });
+  await assert.rejects(r.run('cookie.modern.list({})'), /scope/);
+  h.state.frames.set('7:0', { url: 'https://example.test/page' });
+  await h.command({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled: false });
+  await assert.rejects(r.run('cookie.modern.set({name:"revoked"})'), /inactive|expired/);
+  assert.ok(!h.state.cookieJar.some(cookie => cookie.name === 'revoked'));
+});
+test('a timed-out native cookie lookup cannot perform a late write or stall shutdown indefinitely', async () => {
+  let release, entered = false;
+  const gate = new Promise(resolve => { release = resolve; });
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async method => { if (method === 'getAllCookieStores') { entered = true; await gate; } } });
+  const result = r.run('cookie.modern.set({name:"too-late"})');
+  const rejection = assert.rejects(result, /timed out/);
+  await eventually(() => entered);
+  const disabled = h.host.setEnabled(false);
+  await rejection; await disabled; release(); await new Promise(setImmediate);
+  assert.equal(h.state.cookieJar.length, 0); assert.ok(h.state.cookieCalls.every(call => call.method === 'getAllCookieStores'));
+});
+test('in-flight cookie reads discard results after permission loss, scope exit or document suspension', async () => {
+  for (const reason of ['permission', 'scope', 'pagehide']) {
+    let release, entered = false;
+    const gate = new Promise(resolve => { release = resolve; });
+    const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async method => {
+      if (method === 'getAll') { entered = true; await gate; }
+    } });
+    h.state.cookieJar = [{ name: 'synthetic', value: 'must-not-return' }];
+    const rejected = assert.rejects(r.run('cookie.modern.list({})'), /Allow cookie|scope|expired|inactive/);
+    await eventually(() => entered);
+    if (reason === 'permission') h.state.helperPermissions.delete('cookies');
+    else if (reason === 'scope') h.state.frames.set('7:0', { url: 'https://outside.test/' });
+    else r.event('pagehide');
+    release(); await rejected; await h.host.setEnabled(false);
+  }
+});
+test('submitted cookie writes preserve native success after access is revoked', async t => {
+  for (const method of ['set', 'delete']) for (const reason of ['permission', 'scope', 'pagehide', 'navigation']) {
+    await t.test(method + ' after ' + reason, async () => {
+      let release, entered = false;
+      const nativeMethod = method === 'delete' ? 'remove' : 'set', gate = new Promise(resolve => { release = resolve; });
+      const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async operation => {
+        if (operation === nativeMethod) { entered = true; await gate; }
+      } });
+      if (method === 'delete') h.state.cookieJar = [{ name: 'submitted', value: 'owned' }];
+      const result = r.run(method === 'set'
+        ? 'cookie.modern.set({name:"submitted",value:"owned"}).then(()=>({ok:true}),error=>({ok:false,error:error.message}))'
+        : 'new Promise(resolve=>{globalThis.cookieCallbacks=0;cookie.legacy.delete({name:"submitted"},error=>{cookieCallbacks++;resolve({ok:!error,error});});})');
+      try {
+        await eventually(() => entered);
+        if (reason === 'permission') h.state.helperPermissions.delete('cookies');
+        else if (reason === 'pagehide') r.event('pagehide');
+        else {
+          h.state.frames.set('7:0', { url: 'https://outside.test/' });
+          if (reason === 'navigation') h.state.hooks.tabUpdated(7, { url: 'https://outside.test/' });
+        }
+        release();
+        assert.deepEqual(json(await result), { ok: true });
+        assert.equal(h.state.cookieJar.some(cookie => cookie.name === 'submitted'), method === 'set');
+        assert.equal(h.state.cookieCalls.filter(call => call.method === nativeMethod).length, 1);
+        if (method === 'delete') assert.equal(r.context.cookieCallbacks, 1);
+        await assert.rejects(r.run('cookie.modern.set({name:"after-revocation"})'), /Allow cookie|scope|expired|inactive/);
+      } finally { release(); r.event('pagehide'); await h.host.setEnabled(false); }
+    });
+  }
+});
+
+test('submitted cookie writes preserve native failures after document suspension', async () => {
+  for (const method of ['set', 'delete']) {
+    let release, entered = false;
+    const nativeMethod = method === 'delete' ? 'remove' : 'set', gate = new Promise(resolve => { release = resolve; });
+    const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async operation => {
+      if (operation === nativeMethod) { entered = true; await gate; throw new Error('Native cookie write refused'); }
+    } });
+    const rejected = assert.rejects(r.run('cookie.modern.' + method + '({name:"refused"})'), /Native cookie write refused/);
+    await eventually(() => entered); r.event('pagehide'); release();
+    await rejected; assert.equal(h.state.cookieJar.length, 0); await h.host.setEnabled(false);
+  }
+});
+
+test('cookie revocation before write submission prevents the mutation', async () => {
+  for (const reason of ['permission', 'scope', 'pagehide']) {
+    let release, entered = false;
+    const gate = new Promise(resolve => { release = resolve; });
+    const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async operation => {
+      if (operation === 'getAllCookieStores') { entered = true; await gate; }
+    } });
+    const rejected = assert.rejects(r.run('cookie.modern.set({name:"never-submitted"})'), /Allow cookie|scope|expired|inactive/);
+    await eventually(() => entered);
+    if (reason === 'permission') h.state.helperPermissions.delete('cookies');
+    else if (reason === 'scope') h.state.frames.set('7:0', { url: 'https://outside.test/' });
+    else r.event('pagehide');
+    release(); await rejected; await h.host.setEnabled(false);
+    assert.equal(h.state.cookieJar.length, 0); assert.ok(h.state.cookieCalls.every(call => call.method === 'getAllCookieStores'));
+  }
+});
+
+test('timed-out submitted cookie writes keep capacity until settlement and are never replayed', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async method => { if (method === 'set') await gate; } });
+  try {
+    await assert.rejects(r.run('cookie.modern.set({name:"first",value:"1"})'), /outcome is unknown/);
+    const callbackError = await r.run('new Promise(resolve=>{globalThis.cookieCallbacks=0;cookie.legacy.set({name:"second",value:"2"},error=>{cookieCallbacks++;resolve(error);});})');
+    assert.match(callbackError, /outcome is unknown/);
+    await assert.rejects(r.run('cookie.modern.set({name:"over-limit"})'), /still pending/);
+    assert.equal(h.state.cookieJar.length, 0);
+    release(); await eventually(() => h.state.cookieJar.length === 2);
+    assert.equal((await r.run('cookie.modern.list({})')).length, 2);
+    assert.equal(h.state.cookieCalls.filter(call => call.method === 'set').length, 2);
+    assert.equal(r.context.cookieCallbacks, 1);
+  } finally { release(); await h.host.setEnabled(false); }
+});
+
+test('a revoked submitted cookie write still has a deadline and cannot stall shutdown', async () => {
+  let release, entered = false;
+  const gate = new Promise(resolve => { release = resolve; });
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async method => {
+    if (method === 'remove') { entered = true; await gate; }
+  } });
+  h.state.cookieJar = [{ name: 'submitted-delete', value: 'owned' }];
+  const rejected = assert.rejects(r.run('cookie.modern.delete({name:"submitted-delete"})'), /outcome is unknown/);
+  try {
+    await eventually(() => entered); r.event('pagehide');
+    const disabled = h.host.setEnabled(false);
+    await rejected; await disabled;
+    assert.equal(h.state.cookieJar.length, 1);
+    release(); await eventually(() => h.state.cookieJar.length === 0);
+    assert.equal(h.state.cookieCalls.filter(call => call.method === 'remove').length, 1);
+  } finally { release(); await h.host.setEnabled(false); }
+});
+
+test('an asynchronous userscript cannot use GM cookies after disabling while it awaits', async () => {
+  const h = harness(undefined, { helperPermissions: ['cookies'] });
+  const script = await h.enable(await h.save('Await revoke', cookieGrants + '// @top-level-await\n',
+    'await new Promise(resolve=>{globalThis.resume=resolve;});try{await GM.cookie.set({name:"late"});globalThis.result="wrong";}catch{globalThis.result="revoked";}'));
+  const r = h.realm(script.id); await eventually(() => r.context.resume);
+  await h.host.setEnabled(false); r.run('resume()'); await eventually(() => r.context.result);
+  assert.equal(r.context.result, 'revoked'); assert.equal(h.state.cookieCalls.length, 0);
+});
 const compatibilityGrants = core.GRANTS.filter(grant => !['none', 'GM.info', 'GM_info', 'GM.addStyle', 'GM_addStyle'].includes(grant)).map(grant => '// @grant ' + grant + '\n').join('');
 test('tags normalize old libraries and keep local organization separate from author metadata', async () => {
   const h = harness(); let script = await h.enable(await h.save('Tagged', '// @tag reading\n// @tag reading\n// @grant GM.setValue\n'));
@@ -672,7 +922,7 @@ test('default timing, GM_info grant metadata and case-insensitive globs match co
   assert.equal(core.allows(parsed, 'https://other.test/pATH'), true);
   assert.equal(core.allows(parsed, 'https://other.test/Path/secret'), false);
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('Info', '// @grant GM.info\n// @author Offline\n', 'globalThis.info = GM.info;') };
-  const context = vm.createContext({}); vm.runInContext(core.registration(record).js[0].code, context);
+  const context = vm.createContext({ URL, location: { href: 'https://example.test/page' } }); vm.runInContext(core.registration(record).js[0].code, context);
   assert.deepEqual(json(context.info.script.grant), ['GM.info']);
   assert.equal(context.info.script.author, 'Offline'); assert.equal(context.info.script.runAt, 'document-end');
   assert.equal(context.info.scriptWillUpdate, false); assert.equal(context.info.uuid, record.id);
@@ -934,9 +1184,69 @@ test('include scopes form a union with matches; both exclusion forms win in the 
   const includeOnly = core.parse(script.source.replace('// @match https://example.test/*\n', ''));
   assert.equal(core.allows(includeOnly, 'https://example.test/a'), false);
   assert.equal(core.allows(includeOnly, 'https://other.test/read'), true);
-  assert.throws(() => core.parse(source('Regex', '// @include /https?:.*/\n')), /Regular-expression/);
+  assert.equal(core.allows(core.parse(source('Regex', '// @include /https?:.*/\n')), 'https://other.test/page'), true);
   const heavy = core.parse(source('Bounded', '// @include https://other.test/' + 'a*'.repeat(40) + 'b\n'));
   assert.equal(vm.runInNewContext('core.allows(heavy,url)', { core, heavy, url: 'https://other.test/' + 'a'.repeat(4096) + 'c' }, { timeout: 1000 }), false);
+});
+
+test('extended wrapper and broker checks agree, including oversized regex exclusions and stale navigation', async () => {
+  const h = harness(); await h.ready;
+  const rules = '// @match http*://api*.example.tld:8080/read*#good\n// @include /^https:\\/\\/example\\.test\\/regex/\n// @exclude /private/\n// @grant GM.getValue\n// @grant GM.registerMenuCommand\n';
+  const saved = await h.command({ type: 'US_SAVE', source: source('Extended broker', rules, 'globalThis.ran=true;').replace('// @match https://example.test/*\n', '') });
+  const script = await h.enable(saved.scripts.find(item => item.id === saved.selectedId));
+  for (const [url, expected] of [['https://api-one.example.co.uk:8080/read#good', true], ['https://example.test/regex', true],
+    ['https://api-one.example.co.uk:8081/read#good', false], ['https://api-one.example.co.uk:8080/read#bad', false],
+    ['https://api-one.example.com.evil.invalid:8080/read#good', false], ['https://example.test/regex/private', false]]) {
+    const from = { ...h.sender(), url };
+    assert.equal(h.realm(script.id, 7, { sender: from }).context.ran === true, expected, url);
+    assert.equal((await h.value(script.id, 'get', { key: 'probe' }, from)).ok, expected, url);
+  }
+  const realm = h.realm(script.id, 7, { sender: { url: 'https://example.test/regex' } });
+  await eventually(() => realm.messages.some(item => item.type === 'ready'));
+  h.state.hooks.tabUpdated(7, { url: 'https://example.test/regex/private' });
+  await eventually(() => realm.messages.some(item => item.type === 'revoked'));
+  const before = h.state.data.userscriptManager.scripts.length;
+  await assert.rejects(h.command({ type: 'US_SAVE', source: source('Unsupported regex', '// @exclude /(a)\\1/\n') }), /backreferences/);
+  assert.equal(h.state.data.userscriptManager.scripts.length, before);
+  const heavySave = await h.command({ type: 'US_SAVE', source: source('Heavy exclusion', '// @exclude /(?:a?){128}b/\n// @grant GM.getValue\n', 'globalThis.ran=true;') });
+  const heavy = await h.enable(heavySave.scripts.find(item => item.id === heavySave.selectedId));
+  const url = 'https://example.test/' + 'a'.repeat(16000) + 'c';
+  assert.equal(h.realm(heavy.id, 7, { sender: { url } }).context.ran, undefined);
+  assert.equal((await h.value(heavy.id, 'get', { key: 'probe' }, { ...h.sender(), url })).ok, false);
+});
+
+test('broker denies stale top/subframe URLs, replaced documents and failed live scope probes', async () => {
+  const h = harness(), script = await h.enable(await h.save('Current frame', '// @grant GM.getValue\n'));
+  for (const frameId of [0, 3]) {
+    const from = { ...h.sender(), frameId, documentId: 'original' }, key = '7:' + frameId;
+    h.state.frames.set(key, { url: 'https://example.test/page', documentId: 'original' });
+    assert.equal((await h.value(script.id, 'get', { key: 'x' }, from)).ok, true);
+    h.state.frames.set(key, { url: 'https://other.test/page', documentId: 'original' });
+    assert.equal((await h.value(script.id, 'get', { key: 'x' }, from)).ok, false, 'old native sender URL cannot authorize a new scope');
+    h.state.frames.set(key, { url: 'https://example.test/page', documentId: 'replacement' });
+    assert.equal((await h.value(script.id, 'get', { key: 'x' }, from)).ok, false, 'old document cannot borrow replacement frame scope');
+    h.state.frames.set(key, { url: 'https://example.test/page', error: 'removed' });
+    assert.equal((await h.value(script.id, 'get', { key: 'x' }, from)).ok, false);
+  }
+  h.state.faults.frameProbe = 1;
+  assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, false);
+});
+
+test('a stalled frame probe releases manager controls, never authorizes later and does not accumulate probes', { timeout: 6000 }, async () => {
+  let release, calls = 0;
+  const h = harness(undefined, { frameProbe: () => { calls++; return new Promise(resolve => { release = resolve; }); } });
+  const script = await h.enable(await h.save('Unresponsive frame', '// @grant GM.setValue\n'));
+  const pending = h.value(script.id, 'set', { key: 'late', value: true });
+  await eventually(() => calls === 1);
+  const list = h.command({ type: 'US_LIST' });
+  const result = await pending; assert.equal(result.ok, false); assert.match(result.error, /timed out/);
+  assert.equal((await list).scripts.length, 1, 'manager controls proceed after the deadline');
+  assert.equal((await h.value(script.id, 'set', { key: 'late', value: true })).ok, false);
+  assert.equal(calls, 1, 'no second native injection while the timed-out call remains unresolved');
+  release([{ frameId: 0, result: 'https://example.test/page' }]);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.state.data.userscriptManager.scripts[0].values.late, undefined, 'late result cannot perform the expired write');
+  await h.host.setEnabled(false);
 });
 
 test('native glob prefilter preserves match scopes and is a superset for literal query and fragment globs', () => {
@@ -965,7 +1275,7 @@ test('include-only native registration satisfies Chromium without granting scope
 
 test('missing native messaging fails closed before a privileged source body runs', () => {
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('No native world', '// @grant GM_getValue\n', 'globalThis.ran=true;') };
-  const errors = [], context = vm.createContext({ chrome: { runtime: {} }, console: { error: (...args) => errors.push(args.map(String).join(' ')) } });
+  const errors = [], context = vm.createContext({ URL, location: { href: 'https://example.test/page' }, chrome: { runtime: {} }, console: { error: (...args) => errors.push(args.map(String).join(' ')) } });
   vm.runInContext(core.registration(record).js[0].code, context);
   assert.equal(context.ran, undefined);
   assert.ok(errors.some(error => error.includes('10 isolated script worlds')));
@@ -1070,7 +1380,7 @@ test('native channel reconnection hydrates values and republishes menus without 
   const api = realm.context.testAPI;
   api.GM_registerMenuCommand('Resume', () => {}, { autoClose: false });
   await eventually(async () => (await h.command({ type: 'US_MENU_LIST', tabId: 7 })).commands.length);
-  realm.event('pagehide');
+  realm.event('pagehide', { persisted: true });
   assert.deepEqual((await h.command({ type: 'US_MENU_LIST', tabId: 7 })).commands, []);
   await h.value(script.id, 'set', { key: 'away', value: 9 });
   realm.event('pageshow', { persisted: true });
@@ -1240,10 +1550,74 @@ test('document-body observer cancels on pagehide and resumes once on back-forwar
   let callback, observed = 0, disconnected = 0;
   const document = { body: null }, realm = h.realm(script.id, 7, { globals: { document,
     MutationObserver: class { constructor(cb) { callback = cb; } observe() { observed++; } disconnect() { disconnected++; } } } });
-  realm.event('pagehide'); callback(); assert.equal(realm.context.runs, undefined); assert.equal(disconnected, 1);
+  realm.event('pagehide', { persisted: true }); callback(); assert.equal(realm.context.runs, undefined); assert.equal(disconnected, 1);
   realm.event('pageshow', { persisted: true }); assert.equal(observed, 2);
   document.body = {}; callback(); assert.equal(realm.context.runs, 1);
-  realm.event('pagehide'); realm.event('pageshow', { persisted: true }); assert.equal(realm.context.runs, 1);
+  realm.event('pagehide', { persisted: true }); realm.event('pageshow', { persisted: true }); assert.equal(realm.context.runs, 1);
+});
+
+test('synthetic or duplicate pageshow does not replace a live channel or rerun source', async () => {
+  const h = harness(), script = await h.enable(await h.save('Single channel', compatibilityGrants, expose + 'globalThis.runs=(globalThis.runs||0)+1;'));
+  const r = h.realm(script.id); await eventually(() => r.context.testAPI);
+  try {
+    r.event('pageshow', { persisted: true, isTrusted: false });
+    r.event('pageshow', { persisted: true });
+    assert.equal(r.ports.length, 1);
+    r.event('pagehide', { isTrusted: false });
+    await r.context.testAPI.GM.setValue('alive', 1);
+    assert.equal(r.context.runs, 1);
+  } finally { r.event('pagehide'); }
+});
+
+test('navigation invalidates queued writes and late replies without replay after restoration', async () => {
+  const h = harness(), script = await h.enable(await h.save('Queued lifecycle', '// @grant GM_getValue\n// @grant GM.setValue\n', 'globalThis.life={read:GM_getValue,write:GM.setValue};globalThis.runs=(globalThis.runs||0)+1;'));
+  let finish;
+  const r = h.realm(script.id, 7, { reply: (response, message) => message.operation === 'set' && message.key === 'first'
+    ? new Promise(resolve => { finish = () => resolve(response); }) : response });
+  await eventually(() => r.context.life);
+  const result = Promise.allSettled([r.context.life.write('first', 1), r.context.life.write('queued', 2)]);
+  try {
+    await eventually(() => finish);
+    r.event('pagehide', { persisted: true }); r.event('pageshow', { persisted: true });
+    finish();
+    assert.deepEqual((await result).map(item => item.status), ['fulfilled', 'rejected'], 'preserve submitted success; cancel the unsent queued mutation');
+    assert.equal((await h.value(script.id, 'get', { key: 'queued' })).exists, false);
+    await eventually(() => r.context.life.read('first') === 1);
+    assert.equal(r.context.life.read('queued'), undefined, 'canceled optimistic patches do not overlay the resumed snapshot');
+    assert.equal(r.context.runs, 1);
+  } finally { finish?.(); r.event('pagehide'); }
+});
+
+test('pagehide clears a pending channel timeout and a queued old timeout cannot stop the resumed channel', async () => {
+  const h = harness(), script = await h.enable(await h.save('Pending channel', '// @grant GM_getValue\n// @grant GM.setValue\n', 'globalThis.life={read:GM_getValue,write:GM.setValue};'));
+  const timers = new Set();
+  const r = h.realm(script.id, 7, { globals: { setTimeout: callback => { timers.add(callback); return callback; }, clearTimeout: callback => timers.delete(callback) } });
+  const oldTimeout = [...timers][0]; assert.ok(oldTimeout);
+  try {
+    r.event('pagehide', { persisted: true }); assert.equal(timers.size, 0);
+    r.event('pageshow', { persisted: true }); await eventually(() => r.context.life);
+    oldTimeout(); await r.context.life.write('after', 1);
+    assert.equal((await h.value(script.id, 'get', { key: 'after' })).value, 1);
+  } finally { r.event('pagehide'); }
+});
+
+test('exhausting native reconnect attempts releases a waiting document-body observer', async () => {
+  const h = harness(), script = await h.enable(await h.save('Reconnect cleanup', '// @run-at document-body\n// @grant GM.registerMenuCommand\n', 'globalThis.runs=(globalThis.runs||0)+1;'));
+  h.state.hooks.connect = () => {}; // Transport exists but never delivers ready.
+  const timers = new Map(); let mutation, disconnected = 0;
+  const document = { body: null };
+  const r = h.realm(script.id, 7, { globals: { document,
+    setTimeout: (callback, delay) => { timers.set(callback, delay); return callback; }, clearTimeout: callback => timers.delete(callback),
+    MutationObserver: class { constructor(callback) { mutation = callback; } observe() {} disconnect() { disconnected++; } } } });
+  try {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      r.ports.at(-1).loseConnection(); await new Promise(setImmediate);
+      if (attempt < 3) { const [callback, delay] = [...timers][0]; assert.equal(delay, 250 * 2 ** attempt); timers.delete(callback); callback(); }
+    }
+    assert.equal(r.ports.length, 4); assert.equal(timers.size, 0); assert.equal(disconnected, 1);
+    document.body = {}; mutation(); assert.equal(r.context.runs, undefined);
+    assert.ok(r.errors.some(error => error.includes('connection lost')));
+  } finally { r.event('pagehide'); }
 });
 for (const action of ['module', 'script', 'delete']) test('GM flood cannot block ' + action + ' shutdown', async () => {
   const h = harness(), script = await h.enable(await h.save('Flood', '// @grant GM.getValue\n'));
@@ -1361,6 +1735,40 @@ test('control FIFO order and capability revocation survive immediate disable and
   assert.equal((await h.value(script.id, 'get', { key: 'x', token: oldToken })).ok, false);
   assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, true);
 });
+test('old auto scripts stay isolated until individually re-enabled, including across module toggles', async () => {
+  const id = crypto.randomUUID(), sourceCode = source('Old auto', '// @inject-into auto\n// @grant GM.getValue\n');
+  const h = harness({ userscriptManager: { schemaVersion: 1, revision: 1, enabled: true, scripts: [
+    { id, revision: 1, enabled: true, source: sourceCode, token: 'a'.repeat(64), values: { kept: 7 } }
+  ] } });
+  let view = await h.command({ type: 'US_LIST' });
+  assert.equal(view.scripts[0].autoPageApproved, false);
+  assert.equal(h.state.scripts.length, 1); assert.equal(h.state.scripts[0].world, 'USER_SCRIPT');
+  await h.host.setEnabled(false); await h.host.setEnabled(true);
+  assert.equal(h.state.scripts.length, 1); assert.equal(h.state.scripts[0].world, 'USER_SCRIPT');
+  view = await h.command({ type: 'US_ENABLE', id, revision: 1, enabled: true });
+  assert.equal(view.scripts[0].autoPageApproved, true);
+  assert.deepEqual(h.state.scripts.map(s => s.world), ['MAIN', 'USER_SCRIPT']);
+  assert.equal(h.state.worlds.length, 1);
+  assert.deepEqual(h.state.data.userscriptManager.scripts[0].values, { kept: 7 });
+  view = await h.command({ type: 'US_SAVE', id, revision: view.scripts[0].revision, source: sourceCode });
+  assert.equal(view.scripts[0].enabled, false); assert.equal(view.scripts[0].autoPageApproved, false);
+});
+test('page relay registrations preserve native authorization, live scope and capability revocation', async () => {
+  const h = harness(), script = await h.enable(await h.save('Page grants', '// @inject-into page\n// @grant GM.getValue\n'));
+  assert.deepEqual(h.state.scripts.map(s => s.world), ['MAIN', 'USER_SCRIPT']);
+  assert.deepEqual(h.state.worlds.map(w => w.messaging), [true]);
+  assert.equal((await h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), userScriptWorldId: core.nativeId(script.id) })).ok, true);
+  assert.equal((await h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), userScriptWorldId: 'MAIN' })).ok, false);
+  assert.equal((await h.value(script.id, 'set', { key: 'x', value: 1 })).ok, false);
+  const token = h.state.data.userscriptManager.scripts[0].token;
+  assert.ok(!h.state.scripts[0].js[0].code.includes(token));
+  h.state.frames.set('7:0', { url: 'https://outside.invalid/' });
+  assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, false);
+  h.state.frames.clear();
+  await h.command({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled: false });
+  assert.equal((await h.value(script.id, 'get', { key: 'x', token })).ok, false);
+  assert.equal(h.state.scripts.length, 0);
+});
 test('metadata produces explicit site, timing, world, frame and grant scope', () => {
   const parsed = core.parse(source('Scoped', '// @exclude-match https://example.test/private/*\n// @noframes\n// @run-at document-start\n// @grant GM.getValue\n'));
   assert.equal(parsed.runAt, 'document_start'); assert.equal(parsed.world, 'USER_SCRIPT'); assert.equal(parsed.allFrames, false);
@@ -1373,10 +1781,9 @@ test('metadata produces explicit site, timing, world, frame and grant scope', ()
 for (const [label, change] of [
   ['missing scope', text => text.replace('// @match https://example.test/*\n', '')],
   ['insecure dependency', text => text.replace('// ==/UserScript==', '// @require http://example.test/code.js\n// ==/UserScript==')],
-  ['unsupported grant', text => text.replace('// ==/UserScript==', '// @grant GM_cookie\n// ==/UserScript==')],
+  ['unsupported grant', text => text.replace('// ==/UserScript==', '// @grant GM_unsupported\n// ==/UserScript==')],
   ['duplicate singleton', text => text.replace('// ==/UserScript==', '// @name Other\n// ==/UserScript==')],
   ['mixed none grant', text => text.replace('// ==/UserScript==', '// @grant none\n// @grant GM.getValue\n// ==/UserScript==')],
-  ['page-world privilege', text => text.replace('// ==/UserScript==', '// @inject-into page\n// @grant GM.setValue\n// ==/UserScript==')],
   ['bad host', text => text.replace('https://example.test/*', 'https://example.test@other.test/*')],
   ['code before metadata', text => 'alert(1);\n' + text],
   ['source quota', text => text + ' '.repeat(core.LIMITS.source)]
@@ -1389,7 +1796,7 @@ test('generated GM helpers reject lossy values in the script world before native
   let messages = 0;
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('Value contract',
     '// @grant GM.setValue\n', "globalThis.results=Promise.all([undefined,NaN,Infinity,BigInt(1),new Date(),{bad:undefined},()=>{}].map(value=>GM.setValue('bad',value).then(()=>false,()=>true)));") };
-  const context=vm.createContext({chrome:{runtime:{async sendMessage(){messages++;return {ok:true};}}}});
+  const context=vm.createContext({URL,addEventListener(){},location:{href:'https://example.test/page'},chrome:{runtime:{async sendMessage(){messages++;return {ok:true};}}}});
   vm.runInContext(core.registration(record).js[0].code,context);
   assert.ok((await context.results).every(Boolean));
   assert.equal(messages,0);

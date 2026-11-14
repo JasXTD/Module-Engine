@@ -1,0 +1,867 @@
+{
+  "taskDate": "2026-11-14",
+  "retainedAtUtc": "2026-11-13T21:10:11.460Z",
+  "unitTests": {
+    "passed": 487,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ruleChecks": {
+    "cosmetic": 21,
+    "rules": 237,
+    "threats": 338,
+    "requestedHosts": 41,
+    "total": 637
+  },
+  "constraints": {
+    "offlineFixtures": true,
+    "dependenciesInstalled": false,
+    "newExtensionPermissions": false,
+    "personalProfilesChanged": false,
+    "committed": false,
+    "pushed": false
+  },
+  "reviews": [
+    "Compare all 50 moved files with the task snapshot: JavaScript ASTs differ only in paths, HTML differs only in references, CSS is identical; manifest changes only paths.",
+    "Centralize eight package lists, check static resource resolution, update dynamic worker and browser fixtures, and preserve Node helper entry points and authorization paths.",
+    "Check native blocker/userscript/UI/MCP results, inspect representative renders, compare packaged hashes, preserve failed attempts, and remove only owned temporary profiles after evidence retention."
+  ],
+  "limits": [
+    "Owned synthetic fixtures only; no public threat websites or downloaded userscripts were used.",
+    "The userscript layout suite covers matching, editor/development, installation/updates, GM storage/menus, DOM/tab helpers, cached dependencies/HTTP, page access, synthetic cookies/FormData, helper document loading and both MCP transports.",
+    "Operating-system clipboard writes, desktop notifications and larger downloads were not repeated in this layout pass. Existing unit checks cover their relocated modules.",
+    "Existing installed profiles were not migrated or edited. Reloading an unpacked extension in the same root folder preserves its identity; storage keys and schema are unchanged.",
+    "One combined Chrome run timed out on a native cookie write. An isolated page suite and the repeated complete suite passed without a cookie implementation change; the transient cause was not established.",
+    "Firefox closed-page promise diagnostics are retained separately using the exact content-script source and messages. Other unexpected extension errors still fail.",
+    "One Firefox automation startup timed out before extension loading. The original launch output is retained; no product change was made for that browser startup failure.",
+    "MCP HTTP screenshots overwrite the equivalent stdio images in each combined run; checks and process exits for both transports are recorded separately."
+  ],
+  "runs": [
+    {
+      "name": "blocker-chrome-first",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 640,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "error": "AssertionError [ERR_ASSERTION]: popup links to the activity log\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:991:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "phases": [],
+      "cleanup": {
+        "browserPid": 48808,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "blocker-chrome",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 739,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "error": null,
+      "phases": [],
+      "cleanup": {
+        "browserPid": 35780,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "blocker-edge",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 739,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "error": null,
+      "phases": [],
+      "cleanup": {
+        "browserPid": 42040,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "blocker-firefox-first",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 692,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 14368,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-XXhzUa\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "error": "AssertionError [ERR_ASSERTION]: the real toolbar popup opens at 16 by 8\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at verifyPages (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\pages-browser.cjs:149:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:1079:5",
+      "phases": [],
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "blocker-firefox",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 733,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 21336,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-cDiSpW\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "error": null,
+      "phases": [],
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "page-chrome",
+      "final": false,
+      "browser": "chrome",
+      "success": true,
+      "checks": 78,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "error": null,
+      "phases": [],
+      "cleanup": {
+        "browserPid": 42472,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-chrome-first",
+      "final": false,
+      "browser": "chrome",
+      "success": false,
+      "checks": 397,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "error": "Error: {\"exceptionId\":1,\"text\":\"Uncaught (in promise) Error: Native cookie write timed out after submission; its outcome is unknown and it may still complete. It will not be retried.\",\"lineNumber\":104,\"columnNumber\":32,\"scriptId\":\"16\",\"stackTrace\":{\"callFrames\":[{\"functionName\":\"send\",\"scriptId\":\"16\",\"url\":\"blockads-userscript-46834f2b-841f-454a-877b-7e0ddf57d40b.user.js\",\"lineNumber\":103,\"columnNumber\":31}]},\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"Error\",\"description\":\"Error: Native cookie write timed out after submission; its outcome is unknown and it may still complete. It will not be retried.\\n    at send (blockads-userscript-46834f2b-841f-454a-877b-7e0ddf57d40b.user.js:104:32)\",\"objectId\":\"-2568800524134755281.2.1\"}}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:208:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:102:5)\n    at async Object.runLayout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-layout-browser.cjs:16:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:191:7",
+      "phases": [
+        {
+          "name": "matching",
+          "checks": 90
+        },
+        {
+          "name": "editor and external file",
+          "checks": 74
+        },
+        {
+          "name": "installation and updates",
+          "checks": 33
+        },
+        {
+          "name": "GM compatibility",
+          "checks": 104
+        },
+        {
+          "name": "DOM and tab helpers",
+          "checks": 26
+        },
+        {
+          "name": "dependencies and HTTP",
+          "checks": 47
+        }
+      ],
+      "cleanup": {
+        "browserPid": 18380,
+        "forced": true,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-chrome",
+      "final": true,
+      "browser": "chrome",
+      "success": true,
+      "checks": 523,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "error": null,
+      "phases": [
+        {
+          "name": "matching",
+          "checks": 90
+        },
+        {
+          "name": "editor and external file",
+          "checks": 74
+        },
+        {
+          "name": "installation and updates",
+          "checks": 33
+        },
+        {
+          "name": "GM compatibility",
+          "checks": 104
+        },
+        {
+          "name": "DOM and tab helpers",
+          "checks": 26
+        },
+        {
+          "name": "dependencies and HTTP",
+          "checks": 47
+        },
+        {
+          "name": "page-world bridge",
+          "checks": 71
+        },
+        {
+          "name": "MCP stdio",
+          "checks": 32
+        },
+        {
+          "name": "MCP http",
+          "checks": 36
+        }
+      ],
+      "cleanup": {
+        "browserPid": 29996,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-edge",
+      "final": true,
+      "browser": "edge",
+      "success": true,
+      "checks": 523,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.46",
+        "revision": "@a0c6bd61d7884b3c402a34c67d05100107a9e5e4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.4"
+      },
+      "error": null,
+      "phases": [
+        {
+          "name": "matching",
+          "checks": 90
+        },
+        {
+          "name": "editor and external file",
+          "checks": 74
+        },
+        {
+          "name": "installation and updates",
+          "checks": 33
+        },
+        {
+          "name": "GM compatibility",
+          "checks": 104
+        },
+        {
+          "name": "DOM and tab helpers",
+          "checks": 26
+        },
+        {
+          "name": "dependencies and HTTP",
+          "checks": 47
+        },
+        {
+          "name": "page-world bridge",
+          "checks": 71
+        },
+        {
+          "name": "MCP stdio",
+          "checks": 32
+        },
+        {
+          "name": "MCP http",
+          "checks": 36
+        }
+      ],
+      "cleanup": {
+        "browserPid": 45820,
+        "forced": false,
+        "leftoverPids": [],
+        "closed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-firefox-first",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 489,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 36412,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZRFP4g\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "error": "AssertionError [ERR_ASSERTION]: No unexpected runtime errors during relocated userscript and MCP tests\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:47:44)\n    at Object.runLayout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-layout-browser.cjs:35:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-firefox.cjs:81:7",
+      "phases": [
+        {
+          "name": "matching",
+          "checks": 90
+        },
+        {
+          "name": "editor and external file",
+          "checks": 66
+        },
+        {
+          "name": "installation and updates",
+          "checks": 29
+        },
+        {
+          "name": "GM compatibility",
+          "checks": 93
+        },
+        {
+          "name": "DOM and tab helpers",
+          "checks": 25
+        },
+        {
+          "name": "dependencies and HTTP",
+          "checks": 44
+        },
+        {
+          "name": "page-world bridge",
+          "checks": 70
+        },
+        {
+          "name": "MCP stdio",
+          "checks": 31
+        },
+        {
+          "name": "MCP http",
+          "checks": 35
+        }
+      ],
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-firefox-second",
+      "final": false,
+      "browser": "firefox",
+      "success": false,
+      "checks": 0,
+      "error": "Error: Timeout: session.subscribe\nFirefox launcher PID 49120, exit 0. Startup output: *** You are running in headless mode.\r\nDynamically enable window occlusion 0\r\nWebDriver BiDi listening on ws://127.0.0.1:60656\r\n1794603824437\tRemoteAgent\tINFO\tPerform WebSocket upgrade for incoming connection from 127.0.0.1:60657\r\n[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt\r\n[WARN  rkv::backend::impl_safe::environment] `load_ratio()` is irrelevant for this storage backend.\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[ERROR shell_windows::taskbar::shortcut] Error matching shortcut: Error { code: HRESULT(0x80004005), message: \"Unspecified error\" }\n[WARN  glean_core::error_recording] gfx.adapter.primary.driver_files: Value length 771 exceeds maximum of 255)\nconsole.error: RSLoader: \r\n  Failed to retrieve recipes from Remote Settings\r\n  Message: Error: Shutdown started\r\n  Stack:\r\n    ShutdownStartedError@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1577:5\r\nlistener@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:747:35\r\n@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:306:31\r\ntrigger@resource://gre/modules/AsyncShutdown.sys.mjs:773:23\r\ntrigger@resource://gre/modules/AsyncShutdown.sys.mjs:811:11\r\n_wait@resource://gre/modules/AsyncShutdown.sys.mjs:941:15\r\nwait@resource://gre/modules/AsyncShutdown.sys.mjs:922:34\r\nobserve@resource://gre/modules/AsyncShutdown.sys.mjs:573:10\r\nquit@chrome://remote/content/shared/Browser.sys.mjs:102:22\r\nonPacket@chrome://remote/content/webdriver-bidi/WebDriverBiDiConnection.sys.mjs:256:20\r\n\r\nconsole.error: ExperimentAPI: \r\n  Failed to enable RemoteSettingsExperimentLoader:\r\n  Message: Error: Shutdown started\r\n  Stack:\r\n    ShutdownStartedError@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:1577:5\r\nlistener@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:747:35\r\n@resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs:306:31\r\ntrigger@resource://gre/modules/AsyncShutdown.sys.mjs:773:23\r\ntrigger@resource://gre/modules/AsyncShutdown.sys.mjs:811:11\r\n_wait@resource://gre/modules/AsyncShutdown.sys.mjs:941:15\r\nwait@resource://gre/modules/AsyncShutdown.sys.mjs:922:34\r\nobserve@resource://gre/modules/AsyncShutdown.sys.mjs:573:10\r\nquit@chrome://remote/content/shared/Browser.sys.mjs:102:22\r\nonPacket@chrome://remote/content/webdriver-bidi/WebDriverBiDiConnection.sys.mjs:256:20\r\n\r\nJavaScript error: resource://gre/modules/AsyncShutdown.sys.mjs, line 588: NotFoundError: No such JSProcessActor 'WebDriverWorkerListener'\r\n\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:45:69)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)",
+      "phases": [],
+      "sourceHashesMatch": true
+    },
+    {
+      "name": "userscripts-firefox",
+      "final": true,
+      "browser": "firefox",
+      "success": true,
+      "checks": 491,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 34404,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-KJJtNC\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "error": null,
+      "phases": [
+        {
+          "name": "matching",
+          "checks": 90
+        },
+        {
+          "name": "editor and external file",
+          "checks": 66
+        },
+        {
+          "name": "installation and updates",
+          "checks": 29
+        },
+        {
+          "name": "GM compatibility",
+          "checks": 93
+        },
+        {
+          "name": "DOM and tab helpers",
+          "checks": 25
+        },
+        {
+          "name": "dependencies and HTTP",
+          "checks": 44
+        },
+        {
+          "name": "page-world bridge",
+          "checks": 70
+        },
+        {
+          "name": "MCP stdio",
+          "checks": 31
+        },
+        {
+          "name": "MCP http",
+          "checks": 35
+        }
+      ],
+      "cleanup": {
+        "browserClosed": true
+      },
+      "sourceHashesMatch": true
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "blocker-chrome-first.json",
+      "sha256": "504d020b94979be757fd20f7eb68b8283e2959347d2be35d2d5d6bc451136d00"
+    },
+    {
+      "file": "blocker-chrome-first.out",
+      "sha256": "32b7ffa11810abd3892fa7bee8a7c5297d4468a95f48704c6141791101db3d6c"
+    },
+    {
+      "file": "blocker-chrome.json",
+      "sha256": "19a3c06503254a998b0132605faf3cb2488bc124de6dd75bad0736de3b65e088"
+    },
+    {
+      "file": "blocker-chrome.out",
+      "sha256": "1cbf4fc8f9d71a89afc57aed38ea6e4e314f9f118fc639b78caa39eb49517835"
+    },
+    {
+      "file": "blocker-chrome-network-editor-380.png",
+      "sha256": "4bdbfafd03f91269e9e713873b725a8bb4399c3a5c07f84cb04d255dff1767ff"
+    },
+    {
+      "file": "blocker-chrome-popup-error.png",
+      "sha256": "8690c1195c71ce924c80a27cbe8ae1d7b7489de620d788821d06232b73ff4620"
+    },
+    {
+      "file": "blocker-chrome-popup-final.png",
+      "sha256": "27d744292a88cd403b262ae5126a92bacf53ef38f76bc1ea6941973d539f027f"
+    },
+    {
+      "file": "blocker-chrome-popup-paused.png",
+      "sha256": "9a345b64f3b8a8614ec25227a48cf412cc1ccc5ddee3c6f2e15afa18c9a09e58"
+    },
+    {
+      "file": "blocker-edge.json",
+      "sha256": "378754bfd9eec477bfc43492fcbdc76302d5d4a2d8d0762c4dd43ac254780c3f"
+    },
+    {
+      "file": "blocker-edge.out",
+      "sha256": "03bc5a13b8445c76fb80da8c981f559691fdc5b67d06359d0c15f5819772ed40"
+    },
+    {
+      "file": "blocker-edge-network-editor-380.png",
+      "sha256": "c1e179720ccdb82ac3c0f8390ab3e591b19d7afb2642c631295d174c2d19ea16"
+    },
+    {
+      "file": "blocker-edge-popup-error.png",
+      "sha256": "b12c0436220120612ccffc5d7c9a6eaf0d1d6f6939a253f804bdaf5a326f875f"
+    },
+    {
+      "file": "blocker-edge-popup-final.png",
+      "sha256": "8a05aabf2135dd76fc11abe83e145874898f51f5e5ae0b35ea92b9dc100ee505"
+    },
+    {
+      "file": "blocker-edge-popup-paused.png",
+      "sha256": "6324c355a496525aae36a52486a833d2f2b6abe9447102074d1d2f196665864c"
+    },
+    {
+      "file": "blocker-firefox-first.json",
+      "sha256": "021b5f7a292c19c1a18ff8516f4ebf4c3cc6f7c69fbe8883205cf4cf2b2b8cbd"
+    },
+    {
+      "file": "blocker-firefox-first.out",
+      "sha256": "dd6c4a80a0766abaf690013d8a4c396d434515f99ac4f2019800eba3b7290954"
+    },
+    {
+      "file": "blocker-firefox.json",
+      "sha256": "ef085ee2fb6016cfde0fd889ced0cc0ea81687d1fec6d8a488229f90e23ef686"
+    },
+    {
+      "file": "blocker-firefox.out",
+      "sha256": "7e7bc31bcc27e77f6a1cbc807e830a7bfee10a71dfeae3ba77c97f44a0ace61b"
+    },
+    {
+      "file": "blocker-firefox-manager-380.png",
+      "sha256": "c03d516e2a5a2c6aadb5ee02840d11b9acfcc6ad9a13d0942e4de68aad4489b4"
+    },
+    {
+      "file": "blocker-firefox-manager-dark.png",
+      "sha256": "70a71b549f3273d0f81719f52b0ff5b9b65af1a84d40aac3c6029784d11a1c60"
+    },
+    {
+      "file": "blocker-firefox-popup-error.png",
+      "sha256": "8c0f488422d75c0960dedeb8d984e547a3bb839d45191e28c03b4bb8af419ec9"
+    },
+    {
+      "file": "blocker-firefox-popup-final.png",
+      "sha256": "017a9e5126b5bb1aff8c1eea1a8eaa33703dcbdd644370c89b4b0f1c034425cc"
+    },
+    {
+      "file": "blocker-firefox-popup-paused.png",
+      "sha256": "66b5117ebe3d3d6b16636041c3e92f763913cecca1acb7344a99ef17620b42fe"
+    },
+    {
+      "file": "blocker-firefox-toolbar-popup.png",
+      "sha256": "5ca114639f78b4429ee9843bad2c2520d12d34e56d970713270fb3a34f94984f"
+    },
+    {
+      "file": "page-chrome.json",
+      "sha256": "580ff8420e15857b75da6909e2d58ae2c032bfff0bb2fe4b39f5b07e5678b22b"
+    },
+    {
+      "file": "page-chrome.out",
+      "sha256": "ba1e674d9ed468bbb1004232115ac7464740fac6c19101e29ae89f72ca15b52d"
+    },
+    {
+      "file": "userscripts-chrome-first.json",
+      "sha256": "08379ce4f01e2d26821f921c96cc3b82060c2f2c2be490edc112e83bfc7f4418"
+    },
+    {
+      "file": "userscripts-chrome-first.out",
+      "sha256": "378e8c0db3d656cd2b260e0d738f300193a13bb60bf8bd5a40d556598c25e149"
+    },
+    {
+      "file": "userscripts-chrome.json",
+      "sha256": "381f7e28b06c5fd985923ef5266052a35969b6a6544a171125e10322212083d0"
+    },
+    {
+      "file": "userscripts-chrome.out",
+      "sha256": "ac52a6357d5ad467947caaedadcb16af39d6343ed8d0a0b6593c18a516ce2cea"
+    },
+    {
+      "file": "userscripts-chrome-completion-1280.png",
+      "sha256": "322fafddf29b7afcf9535490511eca680190beaa8347064685137f9e5a17dd15"
+    },
+    {
+      "file": "userscripts-chrome-completion-390.png",
+      "sha256": "4945dc16d6a6268a5d0631bd866bcc90b60778ef61d91bf33a4ffe4489e50b37"
+    },
+    {
+      "file": "userscripts-chrome-debug-1280.png",
+      "sha256": "24938053b01ee50878cd305b249379942f24d2cf4324e0eee23baa764443da05"
+    },
+    {
+      "file": "userscripts-chrome-debug-390.png",
+      "sha256": "8af314dd125453923feff835be3348103e01a67ce56ccf01c66358d002503b26"
+    },
+    {
+      "file": "userscripts-chrome-editor-error-dark.png",
+      "sha256": "6e670ba1ef120db9e90518721ba98b94cd0bf5a707b081d11214fdd9895debbf"
+    },
+    {
+      "file": "userscripts-chrome-external-review-1280.png",
+      "sha256": "cbe85d17a5268091e4ed190aa50e9c8aa9b42cad91b82b2f8d43b8292a9cc330"
+    },
+    {
+      "file": "userscripts-chrome-external-review-390.png",
+      "sha256": "2dc904bbe60cb3b4566ddd516256aa4751f451ab7bf950194eae08d3efeca93b"
+    },
+    {
+      "file": "userscripts-chrome-install-code-1280.png",
+      "sha256": "de629d88c5031fb7b57b9839b6aa3eb8a33145d5415ade8dba64ff3dd9c14491"
+    },
+    {
+      "file": "userscripts-chrome-install-code-390.png",
+      "sha256": "c94dc1e45f339fefb4d386a0f211d004eb627a78494705ab8ef411aa23deb60d"
+    },
+    {
+      "file": "userscripts-chrome-page-review-1280.png",
+      "sha256": "dd9b25ca8e0808ccc4c521eeae97b406bdfdf5f17dd3ef3e4fb2b32aeb953e55"
+    },
+    {
+      "file": "userscripts-chrome-page-review-390.png",
+      "sha256": "f2383a441e5529e863211e49cf99bea47815946fc73fee64b6d14d91b5e739d4"
+    },
+    {
+      "file": "userscripts-edge.json",
+      "sha256": "06f551d7c58350ecabb7e1ddcebb5f437e12730763a22f26a3d372e522f51db8"
+    },
+    {
+      "file": "userscripts-edge.out",
+      "sha256": "c862d1b748a6b8f8d24906cbf28661e9f465a8aa5a08a86f5496c3cd37c5d145"
+    },
+    {
+      "file": "userscripts-edge-completion-1280.png",
+      "sha256": "0693986e853e46d8919307d27ece9161099031039fa4c1416785813647313d42"
+    },
+    {
+      "file": "userscripts-edge-completion-390.png",
+      "sha256": "7cf4a540fb3fdb03dcfc7a4c013bd9aa3369eb839fdfd309b305823afc1f7b35"
+    },
+    {
+      "file": "userscripts-edge-debug-1280.png",
+      "sha256": "d68f1a00e7750a497400c529c4dd700f6e4b55044b5be2b0cf2b4c82e0098a92"
+    },
+    {
+      "file": "userscripts-edge-debug-390.png",
+      "sha256": "753d1e661dee73c7f6e93eb47b5d8e4e908d4ab765f40b650fafdc60ffd495ec"
+    },
+    {
+      "file": "userscripts-edge-editor-error-dark.png",
+      "sha256": "e3a16131b6a700c0a6d88498c6d4d0ca71794988ff08700803066bdd9731e632"
+    },
+    {
+      "file": "userscripts-edge-external-review-1280.png",
+      "sha256": "87100ed23c27a2456df89bae9bfaa5e64a50937ea4912b88b92862cd4db4ec3b"
+    },
+    {
+      "file": "userscripts-edge-external-review-390.png",
+      "sha256": "a8dea9247e67b83e2a29af25c60ef5dcb918d6e73394f060235e654f88e4fc92"
+    },
+    {
+      "file": "userscripts-edge-install-code-1280.png",
+      "sha256": "bf996d68b13e379f954d2f2d0199dccd60693887a578c3055a3b9a9e6dca78c7"
+    },
+    {
+      "file": "userscripts-edge-install-code-390.png",
+      "sha256": "8facdfa70ecddd77ff7731ef4007c53ddf23eb9d2ec78c5e84811398e2f39ae6"
+    },
+    {
+      "file": "userscripts-edge-page-review-1280.png",
+      "sha256": "77d57767e97f383f64096880577e6fce8c580ecb78c29b9e3f4cf13a7251862f"
+    },
+    {
+      "file": "userscripts-edge-page-review-390.png",
+      "sha256": "73e1a6e087ece3076c843a701e7cf6bee8046141de6d7c8ee2506c1e308d8b78"
+    },
+    {
+      "file": "userscripts-firefox-first.json",
+      "sha256": "7f09dd0e87d13e2d00800b8da2fe15284595181cb2088f96a91c1cfdfc990a12"
+    },
+    {
+      "file": "userscripts-firefox-first.out",
+      "sha256": "692d5e55770b0262f92a3e69e1113fa3c80d293149a93d11b2962bef9e5cc899"
+    },
+    {
+      "file": "userscripts-firefox-second.json",
+      "sha256": "7914d39470b39b87bba6754f986d9b1e35d1c5d0079f9a14b7a5f2aae4af9532"
+    },
+    {
+      "file": "userscripts-firefox-second.out",
+      "sha256": "e4b21c31a8ea39dbf1728f76e13148aa2562689f5f5d18f7e7329a52a123ad61"
+    },
+    {
+      "file": "userscripts-firefox.json",
+      "sha256": "c8d71e14119989c2187827265270107510b350c99cf49db1181fbf3dd6a54827"
+    },
+    {
+      "file": "userscripts-firefox.out",
+      "sha256": "c71e1f22fa3ea8b98b850d12a66f0440f4746d0ed97a7633b1dba0be5e8d65cc"
+    },
+    {
+      "file": "userscripts-firefox-completion-firefox.png",
+      "sha256": "33de51eb8674955348ba53128aa7b8a1173c64ce710cf9121a52843006130ff9"
+    },
+    {
+      "file": "userscripts-firefox-debug-1366.png",
+      "sha256": "2e881a77f461f50c77c96ccf369a01d8b08ff260b28845e1a22c973fc73de18c"
+    },
+    {
+      "file": "userscripts-firefox-external-review-firefox.png",
+      "sha256": "915946f73753762cb61c2c3a25b077c199b069e4c08eaffb631741e3acd0ad52"
+    },
+    {
+      "file": "userscripts-firefox-page-review-1366.png",
+      "sha256": "f6db9aeb5ca7658d07d1bfb5d451048fb68a23a39b24e25f728216a6515ee673"
+    },
+    {
+      "file": "node-tests.out",
+      "sha256": "8005354f0cdd303dd31d89092b027b975439f7c83cded91b36b44aa9b6c4bfa5"
+    },
+    {
+      "file": "rule-tests.out",
+      "sha256": "0d0aeda9126e6ad7c1b56c45a0483baec892ea13eab6e81f02c99714f077b510"
+    },
+    {
+      "file": "layout-checks.out",
+      "sha256": "7dd8894a85f12ba88d29e45a0ee9e324ac5d2629584b0fb879bdaabf037c1a58"
+    },
+    {
+      "file": "moved-files.json",
+      "sha256": "e4b6657e6778ceed745d0268a9d624a021bbbdbd4c9fd673da818f42971f7983"
+    },
+    {
+      "file": "source-review.json",
+      "sha256": "b274a91310ac5637b16b0da8ed60f500b7a875c63a16207db36d4e14944a68df"
+    }
+  ],
+  "temporaryDirectories": [
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-MnjNyR",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-2xndQr",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-m8G2ib",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-XXhzUa",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-cDiSpW",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-XeM2WE",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-mPV0zb",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-NLsMGw",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-3EpOpR",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZRFP4g",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-lV6yuw",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-KJJtNC"
+  ],
+  "sourceHashes": {
+    "manifest.json": "c606b0e650b6af66dfd9cf9739e64eb22274b59b9b2335ff533ad683e297ea34",
+    "src/background/background.js": "a9e25075812468f818d85115137f77e9ceed240aa0fb7c859a814e04b2cac3d2",
+    "src/background/debug-runtime.js": "2a1f9cdfb6a836e8ddc49f53289a42ec840e687ca5c8b67c4e7da52f236aebd7",
+    "src/background/modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "src/blocking/buttons.js": "4fec1e29a8e6438b31bd00787b9c867a746037c2e20bcd07a83f3724375727af",
+    "src/blocking/content.js": "e3f772c87ee45a0489030f4a0988c58ec2c45674b8ad9fb9379549ecc39de2ec",
+    "src/blocking/cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "src/blocking/evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "src/blocking/flags.js": "2656545e8ba8cc27e8fedf7a0d67c1fafa82071089892b7e2d6c5ab3857b5603",
+    "src/blocking/network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "src/blocking/notification-guard.js": "c8257c83c9fd1a13633e037bf4be1ad4fdf7403e39c885267bd11b8328a1aacc",
+    "src/blocking/overlays.js": "339c309b5c4dd90c412d8dc16a85708d694c7051aba53c9e8a69fe5a775205cf",
+    "src/blocking/picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "src/blocking/picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "src/blocking/popups.js": "fc65cb70bce15a045ebc61955e45e28da0c8fb29c289ba9551a2c0d545330bd8",
+    "src/blocking/procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "src/blocking/prompts.js": "e0510454f1260759b14dbd1b849e2467ac0ef17eafb32000111376c95fb99378",
+    "src/blocking/reddit.js": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+    "src/blocking/youtube.js": "a47530bace29ce1113b9537ac5aaa60c1ad7f777424247bd135f91c693ee4a4e",
+    "src/shared/debug-protocol.js": "f1513979bbf5b411ad3977e53da49232d3354f2fb686162d0f8ce3f0817d8f1a",
+    "src/shared/shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "src/ui/lists/lists.html": "cd0a6a9d2a0ab81e3fca6f7690912d96441b390555a182898377f62c6bf4722e",
+    "src/ui/lists/lists.js": "14d961c4c21c2de0b473ca633a9917e7578d5654f84cdca9255be1da7924ab1d",
+    "src/ui/log/log.css": "89676dd265630f2875c38b2d2847ccb986ef84cefdec706f7af23f81a457d54e",
+    "src/ui/log/log.html": "09ca4254582bda53f21a9a64eb07a37294831b1e135c73e3d21dcf4b6864d387",
+    "src/ui/log/log.js": "ea01b72c686aec25374b1ba3e993cd0aefbc1cd4aa73f1a711262eefa92c6390",
+    "src/ui/manager/manager.css": "ad331dfd099ddfad6f4e09f7d0ef1c4643f8508642ad96d65c3da6288835531c",
+    "src/ui/manager/manager.html": "4fe86b0dbe4f9e9a12c41dd2249a813ae936f4c159c61d8f4ae666a821e92370",
+    "src/ui/manager/manager.js": "461e15804b7e987a43e41114dfc8b79e70d87f7eef4503df23b10330c318157b",
+    "src/ui/manager/userscripts-completion.js": "c0f46ccb157314942361859a578f09dac183bc232769ada3e5ac1919051fa748",
+    "src/ui/manager/userscripts-editor-worker.js": "149883c0455f2628f7b51d750bbc34d339e92e992b76d052b83f5727a27c7908",
+    "src/ui/manager/userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "src/ui/manager/userscripts-external.js": "6a576b34dcbe659554047623679829dced105ae8493138f05025c6fe07534a90",
+    "src/ui/mcp/debug.css": "16bb0fa54480af29eadca06064eb42392dc6cd2bd7d195c7d0c4ba0577c7a145",
+    "src/ui/mcp/debug.html": "84374d17cdcf66fad4055641a33ef7b0fe69db60248bab914d035f92a83ab12d",
+    "src/ui/mcp/debug.js": "7bbce8cb84429fd7a325f5d820d3b014d04be02c4383b37647038e945c2ab548",
+    "src/ui/popup/popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "src/ui/popup/popup.html": "96ea08c92c0ef202663e5e3f209b840cf39d166b39582c496a36fae7ad096420",
+    "src/ui/popup/popup.js": "3a8c1f556bfac67c2ea0e3c90c6b3dc1604c8533d70c33c0dc3cf4676e0a7812",
+    "src/ui/shared/ui.css": "f37433547f44e83938d09536798078b967a60bbfa4864ca8fe5bb1adac93e2d4",
+    "src/userscripts/clipboard.html": "b8db6e3853bcd4188349bb054d489dee7356ef1a91799827424e4f9ee87377fb",
+    "src/userscripts/clipboard.js": "20077559139d326a64b944918462fd77dc63a7d3df858997021f73a016b86294",
+    "src/userscripts/userscripts-actions.js": "7f716258123e896e9c3d21adc1a9bde53f6ae100ef83d6da6fbc27d176c1e057",
+    "src/userscripts/userscripts-core.js": "c3ca3844bd55408e7a11cae8c4c4d85217fc04224ed96e3ab50822889cefe56d",
+    "src/userscripts/userscripts-lint.js": "2d04a82b9e75736af3708537631ae21e18ce6e09fb5037baeba83b1192cf7501",
+    "src/userscripts/userscripts-matching.js": "3c1f971a1d8d2c7d69b489e852439d3ffc6bc62774de121a4a05dd4a1b538f55",
+    "src/userscripts/userscripts-network.js": "a8ee44d29d856db80272c2c7e45263696278a5bc2838e8ce8de111249e3ab7fd",
+    "src/userscripts/userscripts-offscreen.js": "f4f1ce4282e6c64bbe4998225d426a14e5377b4fdd7c2ccb8e494c9d51630b1a",
+    "src/userscripts/userscripts-page.js": "5f420f000021145dafba8ff383a3ec3e124159c79046c28fbde27a1f2a21dd24",
+    "src/userscripts/userscripts-runtime.js": "97150fe6012be3f47a390a43eb45b6ffdd76ac1d7f447ef357d2dae1754146ce",
+    "src/userscripts/userscripts-xhr.js": "1474f3ec37d188c88dbbfd1938481e6d939f822ba713712512a6e793a5103edf",
+    "icons/icon128.png": "fe313d3ad0715a33e2079b6dc078bad930fe142490d4ba40748e84e99fd104de",
+    "icons/icon16.png": "5a2228b9b7f74a1231b59093907c54d244f2b26bbc67887552b27b46c04ad87a",
+    "icons/icon48.png": "8dad16da824d63b433238e9be229828e387d550ccf526509f73a26afa10d53fe",
+    "rules/ads.json": "9e824086797f284ed53f1149609cb8ca3cbf1ed4dc54f6cd62841adc20ef979f",
+    "rules/community-cosmetic.json": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "rules/community-info.json": "a7dc6c69bac82852665b783259b9ddf722c6396574d9af8eda92b73749c4a4ee",
+    "rules/community.json": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "rules/malware.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "rules/reviewed-domains.json": "c71fd950c7a39a00d6d27bf88cb67bc1d710a37f9214d781d999161a6b4fa5ec",
+    "rules/site-ad-hosts-info.json": "4f1e047fd8efe0abec9437fe438c1f02bf9289d4475b719184853fe163f7b903",
+    "rules/threat-evidence.json": "a4ca45a6c065ac4192674528e6029d1f845e13077f3ba63850d574200c7fac74",
+    "rules/threat-policy.json": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "vendor/publicsuffix/LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "vendor/publicsuffix/provenance.json": "26c1b30fa717beaf478f604dc55bb92bfb311084cdece5608f97ec8dcf9945c7",
+    "vendor/publicsuffix/suffixes.js": "13a92053d42e95d9bfeb080abcd3bfb33b98f80ad9ad9e5d1984c1016d08d0b9",
+    "docs/MCP.md": "588f7f733f51dade315ddb5e48363b3ed8cb786f617e29e826640a8432a14ac3"
+  },
+  "toolHashes": {
+    "scripts/extension-files.cjs": "2391d64c77aab2c923a22d75be643f5e6b0caad11a7de5e3346c640a3a2e38cf",
+    "tests/extension-layout.test.cjs": "62609120cc3bc6c068e0c168fbbc7e13d98b2f8fd1bab6991e6033e80a8c2a97",
+    "tests/userscripts-layout-browser.cjs": "049961726771fbbda298a45fdce9d9ead24a91133d61b8c15a9a9ff113f3d397",
+    "tests/userscripts-browser.cjs": "5da593281371202a0ecfcb8617d17a88f9597f6b4c1a69b3213498e59bf9dd71",
+    "tests/userscripts-firefox.cjs": "53965ef953d18ac52a3f36d7a6fec9713191585412db5a475fbb8e2e1909aca0",
+    "tests/browser-smoke.cjs": "aabbec69d817e49e8b3136d9ec457d611bc9d6e422bf6d8f14025a16c4e24d33",
+    "tests/pages-browser.cjs": "471437261f2f2f00817be253e6a5460d284f6b238ed4c01132dd5659b92cabdb",
+    "tests/mcp-browser.cjs": "08c9b4527a91c7ecbefa70b2f66cd2bbf1e2097592fa94b3b4845e267a96fb47"
+  },
+  "cleanup": {
+    "record": "cleanup.json",
+    "removedDirectories": 14,
+    "totalBytes": 567314045
+  }
+}

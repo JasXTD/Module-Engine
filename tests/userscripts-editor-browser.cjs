@@ -6,8 +6,18 @@ async function runEditor({ b, manager, send, check, until, browse, scriptSource,
   const input = (id, value) => b.evaluate('(()=>{const el=document.getElementById(' + JSON.stringify(id) + ');el.value=' + JSON.stringify(value) + ';el.dispatchEvent(new Event("input",{bubbles:true}));})()', manager);
   const select = async id => {
     const selector = JSON.stringify('button[data-id="' + id + '"]');
-    const point = await until('(()=>{const el=document.querySelector('+selector+');if(!el||el.disabled)return null;el.scrollIntoView({block:"center",behavior:"instant"});const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()');
-    await b.clickAt(point.x, point.y, manager);
+    await b.front(manager);
+    // A refresh can replace the list between pointer-down and pointer-up.
+    // Confirm selection before typing; retain lost clicks instead of hiding them.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await until('(()=>{const el=document.querySelector('+selector+');if(!el||el.disabled)return false;el.scrollIntoView({block:"center",behavior:"instant"});return true;})()');
+      await b.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))', manager);
+      const point = await until('(()=>{const el=document.querySelector('+selector+');if(!el||el.disabled)return null;const r=el.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;return r.width&&r.height&&el.contains(document.elementFromPoint(x,y))?{x,y}:null;})()');
+      await b.clickAt(point.x, point.y, manager);
+      if (await b.evaluate('new Promise(resolve=>requestAnimationFrame(()=>resolve(document.querySelector('+selector+')?.getAttribute("aria-pressed")==="true")))', manager)) return;
+      (evidence.lostSelections ||= []).push({ id, attempt });
+    }
+    throw new Error('Pointer clicks did not select editor fixture ' + id);
   };
   try {
     for (const name of ['A','B','C']) {
@@ -75,6 +85,7 @@ async function runEditor({ b, manager, send, check, until, browse, scriptSource,
       check('Ad blocking remains active during ordered scripts', await b.evaluate('window.fixtureAd===undefined',page));
     }
     check('Tags survive source updates and re-registration', (await read(ids[0])).tags.includes('reading'));
+    await require('./userscripts-development-browser.cjs').runDevelopment({ b, manager, send, check, until, browse, scriptSource, click, temp, evidence, select, input });
     evidence.editorOrganizationCompleted=true;
   } finally {
     for(const id of ids){const script=await read(id);if(script)await send({type:'US_DELETE',id,revision:script.revision});}

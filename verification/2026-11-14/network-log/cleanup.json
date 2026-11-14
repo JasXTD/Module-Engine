@@ -1,0 +1,84 @@
+{
+  "checkedAtUtc": "2026-11-13T21:48:56.5389880Z",
+  "retainedArtifactsVerified": 54,
+  "removed": [
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-xaEmer",
+      "files": 448,
+      "bytes": 20604993,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-uPIJLu",
+      "files": 442,
+      "bytes": 21339753,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-cSf22o",
+      "files": 190,
+      "bytes": 55080901,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-5d9dFI",
+      "files": 194,
+      "bytes": 55346386,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-na5NMK",
+      "files": 200,
+      "bytes": 55759395,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-qT4XSX",
+      "files": 448,
+      "bytes": 20613386,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-9EBhi1",
+      "files": 443,
+      "bytes": 21350269,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-ab7eGL",
+      "files": 479,
+      "bytes": 22849945,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-MxB2kr",
+      "files": 476,
+      "bytes": 23668555,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-zDQ8K6",
+      "files": 301,
+      "bytes": 86306352,
+      "processReferences": 0,
+      "reparsePoints": 0
+    },
+    {
+      "path": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-network-preview-EXvn44",
+      "files": 223,
+      "bytes": 16373803,
+      "processReferences": 0,
+      "reparsePoints": 0
+    }
+  ],
+  "totalBytes": 399293738.0
+}

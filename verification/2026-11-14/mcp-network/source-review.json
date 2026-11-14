@@ -1,0 +1,41 @@
+{
+  "reviewedAtUtc": "2026-11-13T22:28:07.008Z",
+  "changed": [
+    "docs/MCP.md",
+    "src/background/background.js",
+    "src/background/debug-runtime.js",
+    "src/background/network-log.js",
+    "src/shared/debug-protocol.js",
+    "src/ui/lists/lists.html",
+    "src/ui/log/log.html",
+    "src/ui/manager/manager.html",
+    "src/ui/mcp/debug.html",
+    "src/ui/mcp/debug.js",
+    "src/ui/network/network.html",
+    "src/ui/shared/ui.css",
+    "tests/debug.test.cjs",
+    "tests/mcp-browser.cjs",
+    "tests/mcp-http.test.cjs",
+    "tests/mcp.test.cjs",
+    "tests/network-log.test.cjs",
+    "README.md",
+    "docs/DEVELOPMENT.md",
+    "docs/USER_GUIDE.md",
+    "docs/VERIFICATION.md",
+    "tests/pages-browser.cjs",
+    "tests/userscripts-browser.cjs",
+    "tests/userscripts-firefox.cjs"
+  ],
+  "added": [
+    "tests/mcp-network-browser.cjs"
+  ],
+  "removed": [],
+  "manifestIdentical": true,
+  "transportImplementationsIdentical": true,
+  "blockingAndUserscriptImplementationsIdentical": true,
+  "rounds": [
+    "Trace the complete contract and browser boundary: dedicated unchecked network scope, closed filters, bounded copied metadata, no capture command capability; test legacy-scope denial and stale-result suppression.",
+    "Check read-only and resource behavior: storage and timer invariance, stopped/live capture, restore failure and UTF-8 result bounds. Reuse cached entry sizes and one native transport runner.",
+    "Review UI and consumers: persistent MCP sidebar, separate tabs preserving capture/approval, responsive layout, exact package/server hashes, current documentation and native blocker/GM regressions."
+  ]
+}

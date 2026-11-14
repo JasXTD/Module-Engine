@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My lists · Module Engine</title>
+  <link rel="stylesheet" href="../shared/ui.css" />
+  <link rel="stylesheet" href="../log/log.css" />
+</head>
+<body class="lists-page">
+  <div class="shell">
+    <nav class="rail" aria-label="Module Engine">
+      <a class="rail-brand" href="../manager/manager.html"><img src="../../../icons/icon48.png" width="28" height="28" alt="" /><span>Module Engine</span></a>
+      <ul class="rail-links rail-pages">
+        <li><a href="../manager/manager.html"><span class="tile" aria-hidden="true"><span class="ic ic-grid"></span></span>Modules &amp; scripts</a></li>
+        <li><a href="lists.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-list"></span></span>My lists</a></li>
+        <li><a href="../log/log.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Activity log</a></li>
+        <li><a href="../network/network.html"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Network</a></li>
+        <li><a href="../mcp/debug.html" target="_blank" rel="noopener"><span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>MCP</a></li>
+      </ul>
+      <!-- Section links: grouped in the side menu, one scrolling row on narrow screens. -->
+      <div class="rail-sections">
+      <div class="rail-group">
+        <p class="eyebrow">Filters</p>
+        <ul class="rail-links">
+          <li><a href="#requestFiltering">Request filters</a></li>
+          <li><a href="#pageHiding">Page hiding</a></li>
+        </ul>
+      </div>
+      <div class="rail-group">
+        <p class="eyebrow">Domains</p>
+        <ul class="rail-links">
+          <li><a href="#listAllowed">Always allowed</a></li>
+          <li><a href="#listBlocked">Custom blocked</a></li>
+          <li><a href="#listPaused">Paused sites</a></li>
+          <li><a href="#listPopups">Pop-ups and redirects</a></li>
+          <li><a href="#cosmeticExceptions">Hiding disabled</a></li>
+        </ul>
+      </div>
+      <div class="rail-group">
+        <p class="eyebrow">Review</p>
+        <ul class="rail-links">
+          <li><a href="#flags">Flagged for review</a></li>
+          <li><a href="#threatEvidence">Threat evidence</a></li>
+          <li><a href="#siteHosts">Site checks</a></li>
+        </ul>
+      </div>
+      </div>
+      <p class="rail-foot">Runs on this computer. No Module Engine telemetry.</p>
+    </nav>
+
+    <main class="page">
+      <header class="page-head">
+        <div>
+          <h1>My lists</h1>
+          <p class="muted">Your request filters, page hiding and domain lists. Domain entries include subdomains. Reload affected pages after a change.</p>
+        </div>
+        <div class="page-search"><span class="ic ic-search" aria-hidden="true"></span><input type="search" id="filter" placeholder="Filter all lists" aria-label="Filter all lists" autocomplete="off" /></div>
+      </header>
+
+      <p id="notice" class="notice" role="status" hidden></p>
+
+      <h2 class="eyebrow group-title">Filters</h2>
+      <section class="card" id="requestFiltering">
+            <h2>Custom request filters <span id="networkCount" class="muted"></span></h2>
+            <p class="muted">Block a specific URL path or request type without blocking an entire hosting domain. Exceptions allow only matching requests; reported threats and explicit domain blocks still win.</p>
+            <p id="networkActivity" class="muted">Reading saved filters…</p>
+            <details id="networkFilterPanel">
+              <summary>Edit network filters</summary>
+              <p id="networkHelp" class="muted">One filter per line, up to 500 rules. <code>||cdn.example.test/sponsor/*$script,domain=news.example.test</code> blocks matching scripts requested by that site or its subdomains. Prefix a filter with <code>@@</code> to add an exception.</p>
+              <details><summary>Supported syntax</summary>
+                <p class="muted">Use <code>||host^</code>, <code>||host/path*</code> or <code>|https://host/path</code>. A final <code>|</code> requires the URL to end there. <code>*</code> matches any text; <code>^</code> matches a URL separator or its end. Hostnames include subdomains; absolute URLs keep their exact host and scheme.</p>
+                <p class="muted">Options after <code>$</code>: <code>script,image,stylesheet,font,media,object,subdocument,document,xmlhttprequest,xhr,ping,websocket,other</code>; prefix a type with <code>~</code> to exclude it. Add <code>third-party</code>, <code>first-party</code> or <code>match-case</code>. Without type options, page loads are included.</p>
+                <p class="muted"><code>domain=site.test|~shop.site.test</code> restricts the initiating frame's site, which can differ from the top page. Blank lines and <code>!</code> comments are allowed. Regexes, redirects, scripts, remote includes and unknown options are rejected. Always Allowed Domains and full site pauses take precedence over these filters.</p>
+              </details>
+              <label for="networkFilters">Your network filters</label>
+              <textarea id="networkFilters" rows="7" maxlength="100000" spellcheck="false" autocapitalize="off" aria-describedby="networkHelp networkStatus" disabled></textarea>
+              <div class="toolbar"><button id="saveNetworkFilters" type="button" disabled>Save network filters</button><button id="discardNetworkFilters" type="button" disabled>Discard draft</button></div>
+              <p id="networkStatus" role="status" aria-live="polite" class="muted"></p>
+            </details>
+          </section>
+
+      <section class="card" id="pageHiding">
+            <h2>Page hiding</h2>
+            <label class="check"><input type="checkbox" id="genericCosmetics" disabled /> Generic cosmetic filters</label>
+            <p class="muted">Hide common ad containers across sites, using the bundled lists. Site exceptions are respected. Network blocking is independent.</p>
+            <label class="check"><input type="checkbox" id="proceduralFiltering" disabled /> Advanced page hiding</label>
+            <p class="muted">Match text labels, child elements and their containers. Stops and restores its changes if a page exceeds the scan limits; the activity log explains why.</p>
+            <p id="cosmeticSummary" class="muted">Reading bundled coverage…</p>
+            <details id="customFilterPanel">
+              <summary>Custom hiding rules</summary>
+              <p class="muted" id="filterHelp">One rule per line: <code>example.com##.sponsored-card</code> hides a selector; <code>example.com#@#.sponsored-card</code> exempts that exact selector. Sites include subdomains. Up to 500 rules. No network requests are added or allowed.</p>
+              <p class="muted">Advanced example: <code>example.com##.label:has-text(Sponsored):upward(1)</code> hides the label's parent. Literal text only; no regexes or scripts. Child matching supports <code>:has()</code> with a text filter inside it. Ancestor selection accepts 1–10 levels or a CSS selector within ten levels.</p>
+              <label for="customFilters">Your cosmetic filters</label>
+              <textarea id="customFilters" rows="7" maxlength="100000" spellcheck="false" autocapitalize="off" aria-describedby="filterHelp filterStatus" disabled></textarea>
+              <div class="toolbar"><button id="saveFilters" type="button" disabled>Save filters</button><button id="discardFilters" type="button" disabled>Discard draft</button></div>
+              <p id="filterStatus" role="status" aria-live="polite" class="muted"></p>
+            </details>
+          </section>
+
+      <h2 class="eyebrow group-title">Domains</h2>
+      <div class="domain-grid">
+        <section class="card" data-list="allowedDomains" id="listAllowed">
+              <h2>Always allowed domains <span class="muted count"></span></h2>
+              <p class="muted">Never blocked by the ad, tracker, site-check or community lists, on any site. Reported threats and custom blocks still apply.</p>
+              <form class="add-form">
+                <input type="text" maxlength="2048" placeholder="Hostname or URL, e.g. translate.googleapis.com" aria-label="Domain to always allow" autocomplete="off" spellcheck="false" />
+                <button type="submit">Allow</button>
+              </form>
+              <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No always-allowed domains.</p>
+            </section>
+
+        <section class="card" data-list="customBlockedDomains" id="listBlocked">
+              <h2>Custom blocked domains <span class="muted count"></span></h2>
+              <p class="muted">Always blocked, on every site and for every request type, including page loads. Overrides the allow list.</p>
+              <form class="add-form">
+                <input type="text" maxlength="2048" placeholder="Hostname or URL, e.g. shady-ads.example.com" aria-label="Domain to block" autocomplete="off" spellcheck="false" />
+                <button type="submit">Block</button>
+              </form>
+              <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No custom blocked domains.</p>
+            </section>
+
+        <section class="card" data-list="whitelistedDomains" id="listPaused">
+              <h2>Paused sites <span class="muted count"></span></h2>
+              <p class="muted">All filtering is off on these sites' pages, including network rules, hiding and page scripts.</p>
+              <form class="add-form">
+                <input type="text" maxlength="2048" placeholder="Site to pause, e.g. example.com" aria-label="Site to pause" autocomplete="off" spellcheck="false" />
+                <button type="submit">Pause</button>
+              </form>
+              <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No paused sites.</p>
+            </section>
+
+        <section class="card" data-list="popupBlockedDomains" id="listPopups">
+              <h2>Pop-up and redirect blocking sites <span class="muted count"></span></h2>
+              <p class="muted">Stops pop-ups, embedded-frame takeovers and scripted page changes, including requests that could redirect at the server. Ordinary links, forms and video controls remain usable. Reload after changing.</p>
+              <form class="add-form">
+                <input type="text" maxlength="2048" placeholder="Site, e.g. example.com" aria-label="Site to block pop-ups and redirects on" autocomplete="off" spellcheck="false" />
+                <button type="submit">Add site</button>
+              </form>
+              <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No pop-up and redirect blocking sites.</p>
+            </section>
+
+        <section class="card" data-list="promptAllowedDomains" id="promptExceptions">
+              <h2>Prompt and button exceptions <span class="muted count"></span></h2>
+              <p class="muted">Allow notification requests, install prompts and play/download actions on trusted sites and their subdomains. Ad blocking stays active. Reload for notification changes; existing browser permissions are unchanged.</p>
+              <form class="add-form"><input type="text" maxlength="2048" placeholder="Trusted site, e.g. example.com" aria-label="Site to allow prompts and buttons on" autocomplete="off" spellcheck="false" /><button type="submit">Allow site</button></form>
+              <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No prompt or button exceptions.</p>
+            </section>
+
+        <section class="card" data-list="cosmeticPausedDomains" id="cosmeticExceptions">
+              <h2>Sites with hiding disabled <span class="muted count"></span></h2>
+              <p class="muted">Restore hidden page elements on these sites and their embedded frames. Ad, tracker and reported-threat network blocking stays active.</p>
+              <form class="add-form"><input type="text" maxlength="2048" placeholder="Site, e.g. example.com" aria-label="Site to disable hiding on" autocomplete="off" spellcheck="false" /><button type="submit">Disable hiding</button></form>
+              <div class="table-wrap"><table><thead><tr><th>Site</th><th>Covers</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No cosmetic site exceptions.</p>
+            </section>
+      </div>
+
+      <h2 class="eyebrow group-title">Review</h2>
+      <section class="card" id="flags">
+            <div class="toolbar">
+              <h2>Flagged for review <span class="muted count"></span></h2>
+              <button type="button" id="clearFlags" class="danger">Clear all flags</button>
+            </div>
+            <p class="muted">Servers that loaded and look like ads, but are on no block list. Nothing here is blocked until you choose Block. Kept on this computer until you decide or clear them.</p>
+            <div class="table-wrap"><table id="flagTable" class="stack"><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Times</th><th>Last seen</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
+            <p class="muted empty" hidden>Nothing flagged yet. Flags appear as you browse while "Flag suspected ads" is on.</p>
+            <details id="ignoredFlags">
+              <summary class="muted">Ignored servers <span class="ignored-count"></span></summary>
+              <div class="table-wrap"><table class="stack"><thead><tr><th>Server</th><th>Why flagged</th><th>Seen on</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
+            </details>
+          </section>
+
+      <section class="card" id="threatEvidence">
+            <h2>Reported-threat evidence <span class="muted count"></span></h2>
+            <p id="threatEvidenceStatus" role="status" class="muted">Reading bundled evidence…</p>
+            <p class="muted">Security reports describe observed malicious use at their stated dates, not a live reputation check. Each rule covers exactly one host. Site pauses still take precedence. Dots in threat addresses are replaced with [.] and the addresses are not links.</p>
+            <details><summary>Inspect sources and dates</summary>
+              <p id="threatEvidenceDates" class="muted"></p>
+              <p class="muted evidence-scroll-help">Scroll the table horizontally to see all columns on a small screen. Keyboard users can focus the table and use the arrow keys.</p>
+              <div class="table-wrap" tabindex="0" role="region" aria-label="Reported-threat evidence, horizontally scrollable"><table><thead><tr><th>Reported host</th><th>Observed</th><th>Reported use</th><th>Source / published</th><th>Report section</th></tr></thead><tbody></tbody></table></div>
+              <p class="muted empty" hidden>No matching evidence entries.</p>
+            </details>
+          </section>
+
+      <section class="card" id="siteHosts">
+            <h2>Blocked from site checks <span class="muted count"></span></h2>
+            <p class="muted">Ad servers added after testing a named site. Built into the Ads layer; change them in lists/site-ad-hosts.json and rebuild.</p>
+            <div class="table-wrap"><table class="stack"><thead><tr><th>Domain</th><th>Found on</th><th>What it did</th><th>Date (UTC)</th></tr></thead><tbody></tbody></table></div>
+            <p class="muted empty" hidden>No hosts from site checks.</p>
+          </section>
+    </main>
+  </div>
+  <script src="../../blocking/cosmetic.js"></script>
+  <script src="../../blocking/network.js"></script>
+  <script src="../../blocking/evidence.js"></script>
+  <script src="lists.js"></script>
+</body>
+</html>

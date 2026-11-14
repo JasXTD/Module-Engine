@@ -1,0 +1,24 @@
+✔ live, unknown and partially seekable ads are never sought or logged as skipped (5.6243ms)
+✔ rejected media setters are independent, retry seeking on progress and do not strand cleanup (1.0449ms)
+✔ disable restores owned state without claiming a skip and keeps later media edits (0.8124ms)
+✔ finite video budget still restores owned media displaced from the discovery window (1.2543ms)
+✔ initial player response assignment loses only its ad schedule (3.5323ms)
+✔ nested and longer batches retain video content while removing only player schedules (1.4843ms)
+✔ late initial response is preserved and filtered (configurable=true) (0.9466ms)
+✔ late initial response is preserved and filtered (configurable=false) (1.3382ms)
+✔ frozen branches and accessors do not prevent filtering a writable sibling or run page getters (1.0261ms)
+✔ JSON.parse removes ad schedules from bare, wrapped and batched player data (1.7741ms)
+✔ fetch Response.json removes ad schedules and keeps video data (1.7724ms)
+✔ player Response.text filters before a captured parser or reviver sees the schedule (1.2033ms)
+✔ text filter preserves non-player endpoints, other origins, invalid and oversized bodies byte-for-byte (1.1646ms)
+✔ read-only initial accessors are preserved without invoking them and independent parse hooks still work (1.2371ms)
+✔ parse hooks preserve reviver this, exceptions and source context (0.975ms)
+✔ traversal is bounded in depth and breadth and leaves over-budget records intact (5.1447ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 265.1309

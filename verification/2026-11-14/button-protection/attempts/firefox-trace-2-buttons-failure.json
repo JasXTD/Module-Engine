@@ -1,0 +1,1559 @@
+{
+  "lastActivation": {
+    "id": "cover",
+    "gesture": "left",
+    "before": [
+      {
+        "id": 1,
+        "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+      },
+      {
+        "id": 2,
+        "url": "http://127.0.0.1:52347/fixture"
+      },
+      {
+        "id": 3,
+        "url": "http://127.0.0.1:52347/button-fixture"
+      }
+    ],
+    "after": [
+      {
+        "id": 1,
+        "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+      },
+      {
+        "id": 2,
+        "url": "http://127.0.0.1:52347/fixture"
+      },
+      {
+        "id": 3,
+        "url": "http://127.0.0.1:52347/button-fixture"
+      },
+      {
+        "id": 5
+      }
+    ]
+  },
+  "page": {
+    "actions": [],
+    "earlyActions": [],
+    "buttonTrace": [
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 0,
+        "y": 0,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 0,
+        "y": 0,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 224,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "keydown",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": false,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "after",
+        "type": "keydown",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": true,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "before",
+        "type": "keyup",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": false,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "after",
+        "type": "keyup",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": true,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "before",
+        "type": "keydown",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": false,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "after",
+        "type": "keydown",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": true,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "before",
+        "type": "keyup",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": false,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "after",
+        "type": "keyup",
+        "detail": 0,
+        "cancelable": true,
+        "prevented": true,
+        "reason": "ad-button",
+        "path": [
+          "adPlay",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": []
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 1,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 1,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 1,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 1,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "auxclick",
+        "detail": 1,
+        "button": 1,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "auxclick",
+        "detail": 1,
+        "button": 1,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 102,
+        "y": 197,
+        "reason": "ad-button",
+        "path": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "adDownload",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 120,
+        "y": 331,
+        "reason": "ad-button",
+        "path": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "sponsored",
+          "section",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerdown",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "pointerup",
+        "detail": 0,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "before",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": false,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      },
+      {
+        "stage": "after",
+        "type": "click",
+        "detail": 1,
+        "button": 0,
+        "cancelable": true,
+        "prevented": true,
+        "x": 205,
+        "y": 342,
+        "reason": "player-overlay",
+        "path": [
+          "cover",
+          "player",
+          "main",
+          "body",
+          "html",
+          "#document",
+          null
+        ],
+        "stack": [
+          "cover",
+          "media",
+          "player",
+          "main",
+          "body",
+          "html"
+        ]
+      }
+    ],
+    "href": "http://127.0.0.1:52347/button-fixture"
+  },
+  "tabs": [
+    {
+      "id": 1,
+      "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+    },
+    {
+      "id": 2,
+      "url": "http://127.0.0.1:52347/fixture"
+    },
+    {
+      "id": 3,
+      "url": "http://127.0.0.1:52347/button-fixture"
+    },
+    {
+      "id": 5,
+      "url": "http://localhost:52347/button-fixture/advert"
+    }
+  ],
+  "created": [
+    {
+      "id": 5
+    }
+  ]
+}

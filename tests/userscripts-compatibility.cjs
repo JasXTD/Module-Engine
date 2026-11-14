@@ -1,9 +1,7 @@
 /* Shared native fixtures: only owned loopback URLs and locally authored scripts. */
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const files = ['manifest.json','shared.js','cosmetic.js','network.js','evidence.js','procedural.js', 'reddit.js','picker-core.js','picker.js',
-  'background.js','content.js','youtube.js','popups.js','flags.js','popup.js','popup.html','popup.css','ui.css','log.html','log.js','log.css',
-  'lists.html','lists.js','modules.js','userscripts-core.js', 'userscripts-network.js', 'userscripts-offscreen.js', 'userscripts-xhr.js','clipboard.html', 'clipboard.js', 'userscripts-actions.js', 'userscripts-runtime.js','manager.html','manager.js', 'userscripts-editor.js', 'userscripts-editor-worker.js', 'userscripts-lint.js', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE','manager.css','rules','icons'];
+const files = require('../scripts/extension-files.cjs').files;
 function scriptSource(name, grants = '// @grant none\n', body = '', metadata = '') {
   return '// ==UserScript==\n// @name ' + name + '\n// @namespace offline.blockads\n// @version 1.0\n// @match http://127.0.0.1/*\n' +
     grants + metadata + '// ==/UserScript==\n' + body;
@@ -100,17 +98,7 @@ async function runCompatibility({ b, manager, send, check, until, browse, script
     await b.send('Emulation.setDeviceMetricsOverride', { width: 350, height: 900, deviceScaleFactor: 1, mobile: false }, popup);
     check('Menu popup fits a narrow viewport', await b.evaluate('document.documentElement.scrollWidth<=document.documentElement.clientWidth', popup));
     await b.screenshot(path.join(temp, 'compatibility-popup.png'));
-    await b.send('ServiceWorker.enable', {}, manager);
-    const version = await (async () => {
-      for (let i = 0; i < 100; i++) {
-        const found = b.events.filter(e => e.method === 'ServiceWorker.workerVersionUpdated').flatMap(e => e.params.versions)
-          .find(v => v.scriptURL === 'chrome-extension://' + b.id + '/background.js' && v.runningStatus === 'running');
-        if (found) return found;
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-      throw new Error('Owned worker not found');
-    })();
-    await b.send('ServiceWorker.stopWorker', { versionId: version.versionId }, manager);
+    await stopNativeWorker(b, manager);
     await until('(globalThis.browser||chrome).runtime.sendMessage({type:"US_MENU_LIST",tabId:' + firstTab + '}).then(r=>r.commands?.length===2)', manager);
     check('Native worker restart restores menus without rerunning source', await b.evaluate("document.body.dataset.compatRuns==='1'", first));
     // This listener was deliberately removed above; the second page still has it.
@@ -158,7 +146,7 @@ async function runCompatibility({ b, manager, send, check, until, browse, script
   await install('Offline top frame', ['none'], "document.body.dataset.topOnly='true';", '// @noframes\n');
   const frames = await page('/compat/frames'); await until("document.querySelector('iframe')?.contentDocument?.readyState==='complete'", frames);
   check('noframes prevents child execution', await b.evaluate("document.body.dataset.topOnly==='true'&&!document.querySelector('iframe').contentDocument.body.dataset.topOnly", frames));
-  const denied = await send({ type: 'US_SAVE', source: scriptSource('Unsupported directive', '// @grant none\n', '', '// @top-level-await\n') });
+  const denied = await send({ type: 'US_SAVE', source: scriptSource('Unsupported directive', '// @grant none\n', '', '// @unsupported-fixture\n') });
   check('Unsupported directives are rejected without execution', !denied.ok && /Unsupported metadata/.test(denied.error));
   for (let i = 0; i < 10; i++) await install('Offline simultaneous cache ' + i, ['GM_getValue', 'GM_registerMenuCommand'],
     'document.body.dataset.cache' + i + '=String(GM_getValue("saved",42)); GM_registerMenuCommand("Ready ' + i + '",()=>{});', '// @noframes\n', '/compat-many');
@@ -203,4 +191,14 @@ async function runCompatibility({ b, manager, send, check, until, browse, script
   for (const target of pages) await b.closePage(target);
   evidence.compatibilityCompleted = true;
 }
-module.exports = { runCompatibility, files, scriptSource };
+async function stopNativeWorker(b, manager) {
+  await b.send('ServiceWorker.enable', {}, manager);
+  for (let i = 0; i < 100; i++) {
+    const found = b.events.filter(e => e.method === 'ServiceWorker.workerVersionUpdated').flatMap(e => e.params.versions)
+      .find(v => v.scriptURL === 'chrome-extension://' + b.id + '/src/background/background.js' && v.runningStatus === 'running');
+    if (found) { await b.send('ServiceWorker.stopWorker', { versionId: found.versionId }, manager); return; }
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  throw new Error('Owned worker not found');
+}
+module.exports = { runCompatibility, files, scriptSource, stopNativeWorker };

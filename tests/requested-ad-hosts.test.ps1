@@ -12,10 +12,19 @@ function Check($condition,[string]$message) { if (!$condition) { throw $message 
 function Write-Fixture($value) { [IO.File]::WriteAllText($fixture,($value | ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false)) }
 $result=Read-RequestedAdHosts (Join-Path $root 'lists/requested-ad-hosts.json')
 $rule=$result.Rules[0]
-Check ($result.Rules.Count -eq 1 -and $rule.id -eq 200001 -and $rule.priority -eq 4 -and $rule.action.type -ceq 'block') 'explicit user preference has a bounded, separate ad rule ID and priority'
+Check ($result.Rules.Count -eq 2 -and $rule.id -eq 200001 -and $rule.priority -eq 4 -and $rule.action.type -ceq 'block') 'explicit user preference has a bounded, separate ad rule ID and priority'
 Check ($rule.condition.resourceTypes.Count -eq 12 -and $rule.condition.resourceTypes -contains 'main_frame') 'navigation and all supported resource types are covered'
 foreach ($url in @('https://pxl.wheelroot.com/fixture','http://pxl.wheelroot.com:8080/fixture','https://user:pass@pxl.wheelroot.com./fixture','wss://pxl.wheelroot.com/fixture')) {
     Check ($url -match $rule.condition.regexFilter) 'exact requested host matches without contacting it'
+}
+$domainRule=$result.Rules[1]
+Check ($domainRule.id -eq 200002 -and $domainRule.priority -eq 4 -and $domainRule.action.type -ceq 'block') 'the domain-wide report preserves the earlier exact-host request'
+foreach ($url in @('https://wheelroot.com/fixture','http://wheelroot.com:8080/fixture','https://user:pass@wheelroot.com./fixture','wss://wheelroot.com/fixture','https://pxl.wheelroot.com/fixture','https://www.wheelroot.com/fixture','https://a.b.wheelroot.com/fixture')) {
+    Check ($url -match $domainRule.condition.regexFilter) 'the requested domain and descendants match offline'
+}
+foreach ($url in @('https://notwheelroot.com/fixture','https://wheelroot.com.other.net/fixture','https://ordinary.net/?next=wheelroot.com/fixture','https://wheelroot.com@ordinary.net/fixture',
+    'https://ordinary.net?next=.wheelroot.com/fixture','https://ordinary.net#next=.wheelroot.com/fixture','https://ordinary.net?next=@wheelroot.com/fixture')) {
+    Check ($url -notmatch $domainRule.condition.regexFilter) 'lookalikes, queries and credentials cannot impersonate a blocked hostname'
 }
 foreach ($url in @('https://wheelroot.com/fixture','https://other.wheelroot.com/fixture','https://child.pxl.wheelroot.com/fixture','https://pxl.wheelroot.com.other.net/fixture','https://ordinary.net/?next=pxl.wheelroot.com/fixture')) {
     Check ($url -notmatch $rule.condition.regexFilter) 'a parent, sibling, child, lookalike or query reference is outside the request'
@@ -27,7 +36,7 @@ $mutations=@(
     { param($v) $v.hosts[0].domain='*.wheelroot.com' },
     { param($v) $v.hosts[0].domain='https://pxl.wheelroot.com' },
     { param($v) $v.hosts[0].domain='PXL.WHEELROOT.COM' },
-    { param($v) $v.hosts[0].match='subdomains' },
+    { param($v) $v.hosts[0].match='substring' },
     { param($v) $v.hosts[0].requestedOn='2026-02-31' },
     { param($v) $v.hosts[0].reason='' },
     { param($v) $v.hosts[0].reason="bad`nmetadata" },

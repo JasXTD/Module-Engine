@@ -1,0 +1,45 @@
+{
+  "checkedAtUtc": "2026-11-14T12:34:32.2796923Z",
+  "profiles": [
+    {
+      "run": "edge-first",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-YMOUTZ",
+      "processReferences": 0
+    },
+    {
+      "run": "edge-second",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-fG63s0",
+      "processReferences": 0
+    },
+    {
+      "run": "chrome",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-wIo5YG",
+      "processReferences": 0
+    },
+    {
+      "run": "layout-edge",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-YgHkoq",
+      "processReferences": 0
+    },
+    {
+      "run": "layout-final-edge",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-QRwtI8",
+      "processReferences": 0
+    },
+    {
+      "run": "layout-final-chrome",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-LJkdhK",
+      "processReferences": 0
+    },
+    {
+      "run": "layout-final-firefox",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-nGCiIx",
+      "processReferences": 0
+    },
+    {
+      "run": "blocker-edge",
+      "directory": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-YpZrdT",
+      "processReferences": 0
+    }
+  ]
+}

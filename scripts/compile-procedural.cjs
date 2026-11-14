@@ -1,7 +1,7 @@
 /* Offline compiler bridge: one parser for local list builds and the extension. */
 'use strict';
 const fs = require('node:fs');
-require('../cosmetic.js');
+require('../src/blocking/cosmetic.js');
 try {
   const chunks = [], buffer = Buffer.alloc(65536);
   let size = 0, read;

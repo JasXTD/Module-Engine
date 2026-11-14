@@ -2035,7 +2035,31 @@
       "type": "block"
     },
     "condition": {
-      "regexFilter": "^(http|https|ws|wss)://([^/@]*@)?pxl\\.wheelroot\\.com\\.?(:[0-9]+)?/",
+      "regexFilter": "^(http|https|ws|wss)://([^/?#@]*@)?pxl\\.wheelroot\\.com\\.?(:[0-9]+)?/",
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "object",
+        "xmlhttprequest",
+        "ping",
+        "media",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 200002,
+    "priority": 4,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": "^(http|https|ws|wss)://([^/?#@]*@)?([a-z0-9_-]+\\.)*wheelroot\\.com\\.?(:[0-9]+)?/",
       "resourceTypes": [
         "main_frame",
         "sub_frame",

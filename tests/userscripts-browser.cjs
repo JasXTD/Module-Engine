@@ -9,6 +9,8 @@ const { chromium } = require('./browser-smoke.cjs');
 const { runCompatibility, files, scriptSource } = require('./userscripts-compatibility.cjs');
 const { fixtureHandler } = require('./userscripts-network-fixtures.cjs');
 const { runAssetsAndNetwork } = require('./userscripts-assets-network.cjs');
+const { executionFixture, runExecution } = require('./userscripts-execution-browser.cjs');
+const { pageFixture, runPage } = require('./userscripts-page-browser.cjs');
 const root = path.resolve(__dirname, '..'), browserName = process.argv[2] || 'chrome';
 if (!['chrome', 'edge'].includes(browserName)) throw new Error('Choose chrome or edge; this harness tests the Chromium userscript permission UI.');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -47,9 +49,11 @@ function gmFloodFixture() {
   await fs.mkdir(extension);
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
-  for (const file of files.filter(file => !['rules', 'icons'].includes(file))) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
-  if (!process.argv.includes('--install-only')) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
-  const proxy = http.createServer((request, response) => { evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
+  for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
+  if (!['--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
+  const aliasState = {};
+  const { forwardMatching, runMatching } = require('./userscripts-matching-browser.cjs');
+  const proxy = http.createServer((request, response) => { if (forwardMatching(request, response, aliasState, evidence)) return; evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
   proxy.on('connect', (_request, socket) => {
     socket.on('error', error => { if (!['ECONNRESET', 'EPIPE'].includes(error.code)) evidence.proxyErrors.push(error.message); });
     evidence.deniedRequests++; socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
@@ -60,6 +64,9 @@ function gmFloodFixture() {
   await new Promise(resolve => secondOrigin.listen(0, '127.0.0.1', resolve));
   let port;
   const fixtures = http.createServer((request, response) => {
+    if (require('./network-log-browser.cjs').networkLogFixture(request, response, fixtureState)) return;
+    if (pageFixture(request, response)) return;
+    if (executionFixture(request, response)) return;
     if (route(request, response)) return;
     if (request.url === '/ad.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }); response.end('window.fixtureAd=true;'); return; }
     response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -127,7 +134,7 @@ function gmFloodFixture() {
     await fs.mkdir(path.join(temp, 'exports'));
     b = await chromium(extension, path.join(temp, 'profile'), proxy.address().port, { headless: !process.argv.includes('--native-helper-prompt'), downloadDirectory: path.join(temp, 'exports') });
     evidence.version = b.version;
-    manager = await b.open('chrome-extension://' + b.id + '/manager.html');
+    manager = await b.open('chrome-extension://' + b.id + '/src/ui/manager/manager.html');
     await b.evaluate("globalThis.__moduleTestClicks=[];for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,event=>{globalThis.__moduleTestClicks.push({type,id:event.target.closest('button,input,a')?.id,trusted:event.isTrusted,discardDisabled:document.getElementById('discardDraft').disabled,dialog:document.getElementById('confirmDialog').open,scroll:scrollY});},true)", manager);
     await ready();
     check('Fresh manager keeps blocking on and userscripts off', await b.evaluate("document.getElementById('blockingEnabled').checked&&!document.getElementById('userscriptsEnabled').checked", manager));
@@ -170,7 +177,7 @@ function gmFloodFixture() {
         toggle.backgroundAfterWait = await send({ type: 'US_LIST' });
         const probePage = await browse('/permission-probe');
         toggle.executedAfterToggle = await b.evaluate('({visits:document.body.dataset.visits,page:window.pageWorldRan,start:window.startObserved})', probePage);
-        const fresh = await b.open('chrome-extension://' + b.id + '/manager.html');
+        const fresh = await b.open('chrome-extension://' + b.id + '/src/ui/manager/manager.html');
         toggle.freshContextAccess = await b.evaluate(accessExpression, fresh);
         toggle.oldContextAfterFresh = await b.evaluate(accessExpression, manager);
         throw error;
@@ -181,8 +188,41 @@ function gmFloodFixture() {
     await click('userscriptsEnabled'); await ready();
     check('Userscript module is independently enabled', (await send({ type: 'US_LIST' })).enabled);
     check('Local ad canary saved to blocker', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
+    if (process.argv.includes('--network-log-only')) {
+      await require('./network-log-browser.cjs').runNetworkLog({ b, manager, send, check, until, browse, scriptSource, evidence, temp, port, fixtureState });
+      evidence.success=true; evidence.focus='network-log-only'; return;
+    }
+    if (process.argv.includes('--layout-only')) {
+      await require('./userscripts-layout-browser.cjs').runLayout({ b, manager, send, check, until, browse, scriptSource, evidence, temp, click, port, aliasState, fixtureState,
+        base:'http://127.0.0.1:'+port, other:'http://127.0.0.1:'+secondOrigin.address().port });
+      evidence.success=true; evidence.focus='layout-only'; return;
+    }
+    if (process.argv.includes('--page-only')) {
+      await runPage({ b, manager, send, check, until, browse, scriptSource, evidence, temp, click });
+      evidence.success = true; evidence.focus = 'page-only'; return;
+    }
+    if (process.argv.includes('--mcp-only')) {
+      await require('./mcp-browser.cjs').runMCPTransports({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState });
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      evidence.success = true; evidence.focus = 'mcp-only'; return;
+    }
+    if (!['--editor-only', '--install-only', '--desktop-only', '--matching-only'].some(flag => process.argv.includes(flag))) {
+      await runExecution({ b, manager, send, check, until, browse, scriptSource, evidence, click, temp });
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      if (process.argv.includes('--execution-only')) { evidence.success = true; evidence.focus = 'execution-only'; return; }
+    }
+    if (!['--editor-only', '--install-only', '--desktop-only'].some(flag => process.argv.includes(flag))) {
+      await runMatching({ b, manager, send, check, until, port, aliasState, evidence });
+      check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
+      if (process.argv.includes('--matching-only')) { evidence.success = true; evidence.focus = 'matching-only'; return; }
+    }
     if(!process.argv.includes('--desktop-only')&&!process.argv.includes('--install-only')) await require('./userscripts-editor-browser.cjs').runEditor({b,manager,send,check,until,browse,scriptSource,click,temp,evidence});
-    if(process.argv.includes('--editor-only')) { evidence.success=true;evidence.focus='editor-only';return; }
+    if(process.argv.includes('--editor-only')) {
+      evidence.extensionErrors=b.events.filter(event=>event.method==='Runtime.exceptionThrown');
+      check('No uncaught editor errors',evidence.extensionErrors.length===0);
+      check('Deny proxy has no unexpected socket errors',evidence.proxyErrors.length===0);
+      evidence.success=true;evidence.focus='editor-only';return;
+    }
     if (!process.argv.includes('--desktop-only')) await require('./userscripts-install-browser.cjs').runInstallation({ b, manager, send, check, until, browse, temp, evidence, fixtureState, base: 'http://127.0.0.1:' + port });
     if (process.argv.includes('--install-only')) { check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0); evidence.success = true; evidence.focus = 'install-only'; return; }
     if(!process.argv.includes('--desktop-only')) {
@@ -193,7 +233,7 @@ function gmFloodFixture() {
     if(process.argv.includes('--desktop-only')) { evidence.success=true; evidence.focus='desktop-only'; return; }
     // Restore the older editor-export fixture's CDP output routing only after
     // native GM download naming/collision checks have completed with normal prefs.
-    await b.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: path.join(temp, 'exports') });
+    await b.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: path.join(temp, 'exports'), eventsEnabled: true });
     await runAssetsAndNetwork({ b, manager, send, check, until, browse, scriptSource, temp, evidence, fixtureState,
       base: 'http://127.0.0.1:' + port, other: 'http://127.0.0.1:' + secondOrigin.address().port });
     for (const action of ['module', 'script', 'delete']) {
@@ -240,9 +280,20 @@ function gmFloodFixture() {
     check('Userscript messages cannot change modules', await b.evaluate("document.body.dataset.attackRejected==='true'", fixture));
     check('Invalid values are rejected before JSON transport coercion', await b.evaluate("document.body.dataset.invalidRejected==='yes'", fixture));
     check('Real loopback ad remains blocked while userscripts run', await b.evaluate("window.fixtureAd===undefined", fixture));
+    const downloadEventsStart = b.events.length, exportName = 'Storage-and-styles.user.js';
     await click('exportScript');
-    for (let i = 0; i < 80 && !(await fs.readdir(path.join(temp, 'exports'))).some(file => file.endsWith('.user.js')); i++) await pause(50);
-    check('Export preserves the exact source', await fs.readFile(path.join(temp, 'exports', 'Storage-and-styles.user.js'), 'utf8') === firstSource);
+    // An unrelated file or a .crdownload is not a completed export. Match its
+    // native download ID, then verify the exact saved bytes below.
+    for (let i = 0; i < 200; i++) {
+      const events = b.events.slice(downloadEventsStart);
+      const download = events.find(event => event.method === 'Browser.downloadWillBegin' && event.params.suggestedFilename === exportName)?.params;
+      const progress = download && events.findLast(event => event.method === 'Browser.downloadProgress' && event.params.guid === download.guid)?.params;
+      evidence.exportDownload = { filename: exportName, guid: download?.guid, state: progress?.state, receivedBytes: progress?.receivedBytes };
+      if (progress?.state === 'completed' || progress?.state === 'canceled') break;
+      await pause(50);
+    }
+    assert.equal(evidence.exportDownload.state, 'completed', 'Native export did not complete: ' + JSON.stringify(evidence.exportDownload));
+    check('Export preserves the exact source', await fs.readFile(path.join(temp, 'exports', exportName), 'utf8') === firstSource);
     const secondSource = scriptSource('Separate storage', '// @grant GM.getValue\n',
       "GM.getValue('visits','private').then(value=>document.body.dataset.secondValue=String(value));", '// @noframes\n');
     const importPath = path.join(temp, 'import.user.js'); await fs.writeFile(importPath, secondSource);
@@ -295,7 +346,7 @@ function gmFloodFixture() {
     let version;
     for (let i = 0; i < 100 && !version; i++) {
       version = b.events.filter(event => event.method === 'ServiceWorker.workerVersionUpdated')
-        .flatMap(event => event.params.versions).find(item => item.scriptURL === 'chrome-extension://' + b.id + '/background.js' && item.runningStatus === 'running');
+        .flatMap(event => event.params.versions).find(item => item.scriptURL === 'chrome-extension://' + b.id + '/src/background/background.js' && item.runningStatus === 'running');
       if (!version) await pause(50);
     }
     assert.ok(version, 'Identify the owned extension worker');

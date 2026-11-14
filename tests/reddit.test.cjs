@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-require('../reddit.js');
+require('../src/blocking/reddit.js');
 const { isReddit, create } = globalThis.BlockAdsReddit;
 
 test('Reddit repair accepts only Reddit itself and its subdomains', () => {
@@ -18,7 +18,7 @@ test('other sites allocate no DOM observer and their repair controls are harmles
 
 test('packaged content scripts include the Reddit repair before the content entry point', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../manifest.json'), 'utf8'));
-  const scripts = manifest.content_scripts.find(item => item.js.includes('content.js'));
+  const scripts = manifest.content_scripts.find(item => item.js.includes('src/blocking/content.js'));
   assert.equal(scripts.run_at, 'document_start');
-  assert.ok(scripts.js.indexOf('reddit.js') >= 0 && scripts.js.indexOf('reddit.js') < scripts.js.indexOf('content.js'));
+  assert.ok(scripts.js.indexOf('src/blocking/reddit.js') >= 0 && scripts.js.indexOf('src/blocking/reddit.js') < scripts.js.indexOf('src/blocking/content.js'));
 });

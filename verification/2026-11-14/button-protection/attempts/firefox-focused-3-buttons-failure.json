@@ -1,0 +1,65 @@
+{
+  "lastActivation": {
+    "id": "cover",
+    "gesture": "left",
+    "before": [
+      {
+        "id": 1,
+        "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+      },
+      {
+        "id": 2,
+        "url": "http://127.0.0.1:52118/fixture"
+      },
+      {
+        "id": 3,
+        "url": "http://127.0.0.1:52118/button-fixture"
+      }
+    ],
+    "after": [
+      {
+        "id": 1,
+        "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+      },
+      {
+        "id": 2,
+        "url": "http://127.0.0.1:52118/fixture"
+      },
+      {
+        "id": 3,
+        "url": "http://127.0.0.1:52118/button-fixture"
+      },
+      {
+        "id": 5
+      }
+    ]
+  },
+  "page": {
+    "actions": [],
+    "earlyActions": [],
+    "href": "http://127.0.0.1:52118/button-fixture"
+  },
+  "tabs": [
+    {
+      "id": 1,
+      "url": "moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html"
+    },
+    {
+      "id": 2,
+      "url": "http://127.0.0.1:52118/fixture"
+    },
+    {
+      "id": 3,
+      "url": "http://127.0.0.1:52118/button-fixture"
+    },
+    {
+      "id": 5,
+      "url": "http://localhost:52118/button-fixture/advert"
+    }
+  ],
+  "created": [
+    {
+      "id": 5
+    }
+  ]
+}

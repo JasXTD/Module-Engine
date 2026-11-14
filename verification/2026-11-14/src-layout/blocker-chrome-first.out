@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 640,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-MnjNyR\\evidence.json",
+  "error": "AssertionError [ERR_ASSERTION]: popup links to the activity log\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:991:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}

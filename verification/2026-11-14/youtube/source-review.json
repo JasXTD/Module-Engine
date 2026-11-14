@@ -1,0 +1,28 @@
+{
+  "reviewedAtUtc": "2026-11-13T22:59:56.414Z",
+  "changed": [
+    "src/background/background.js",
+    "src/blocking/content.js",
+    "src/blocking/youtube.js",
+    "docs/DEVELOPMENT.md",
+    "docs/USER_GUIDE.md",
+    "docs/VERIFICATION.md",
+    "manifest.json",
+    "tests/background.test.cjs",
+    "tests/browser-smoke.cjs",
+    "tests/youtube.test.cjs"
+  ],
+  "added": [
+    "src/blocking/youtube-fallback.js",
+    "tests/youtube-fallback.test.cjs",
+    "tests/youtube-browser.cjs"
+  ],
+  "removed": [],
+  "permissionsUnchanged": true,
+  "rulesAndUserscriptImplementationsUnchanged": true,
+  "rounds": [
+    "Trace native registration transactions, normalization, empty exclusions and rollback. Keep unchanged IDs registered; update changed IDs in place. Correct tests to compare registration sets, not incidental array order.",
+    "Review filter safety and fallback lifecycle. Bound own-data traversal; preserve getters, native parse errors and response consumption. Bound retained media, revisit displaced/detached media, independently handle setter failures, avoid timers, and log only observed ad-state exit after an action.",
+    "Review consumers and native fixture assumptions. Keep manifest permissions and all rules/userscripts unchanged. Validate real media range support, native load reset, pause/resume, synthetic vs trusted lifecycle, cross-browser updates, runtime hashes and honest offline limitations."
+  ]
+}
