@@ -18,6 +18,22 @@
   const fail = message => { throw new Error(message); };
   const unique = values => [...new Set(values)];
   const matching = globalThis.BlockAdsMatching;
+  // Unicode Bidi_Control: keep legitimate RTL text, but make invisible direction
+  // changes explicit at the source-review boundary. Never rewrite saved code.
+  const BIDI = /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/;
+  const controlEscape = character => '\\u' + character.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+  const hasBidi = source => BIDI.test(source);
+  const escapeBidi = source => String(source).replace(new RegExp(BIDI.source, 'g'), controlEscape);
+  function bidiControls(source) {
+    const locations = []; let count = 0, line = 1, lineStart = 0;
+    for (const match of source.matchAll(/\r\n|[\r\n\u2028\u2029\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g)) {
+      if (!hasBidi(match[0])) { line++; lineStart = match.index + match[0].length; continue; }
+      count++;
+      // Dense source cannot create an unbounded list of DOM nodes or diagnostics.
+      if (locations.length < 20) locations.push({ offset: match.index, line, column: match.index - lineStart + 1, escape: controlEscape(match[0]) });
+    }
+    return { count, locations };
+  }
   function patterns(value) {
     if (value === '<all_urls>') return ['http://*/*', 'https://*/*'];
     return [matching.matchPattern(value).normalized];
@@ -94,6 +110,7 @@
       return host;
     });
     if (connects.length > 64) fail('Use at most 64 @connect entries.');
+    if (hasBidi(source)) warnings.push('This source contains hidden Unicode direction controls. Review their escaped forms and acknowledge them before enabling.');
     return { name, namespace, version: one('version', '1.0'), explicitVersion: one('version'), description: one('description'),
       matches, excludeMatches, includes, excludes, grants, runAt, allFrames: !entries.noframes,
       world: injection === 'page' || injection === 'auto' && !unwrap ? 'MAIN' : 'USER_SCRIPT', injection, pageBridge, requires, resources, connects, informational,
@@ -880,5 +897,5 @@
   }
   globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, parse, allows, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,
-    sourceURL, compareVersions, sourceReview, tags, bindings });
+    sourceURL, compareVersions, sourceReview, tags, bindings, hasBidi, escapeBidi, bidiControls });
 })();

@@ -451,6 +451,10 @@
         next.scripts.splice(index, 1); next.scripts.splice(destination, 0, script);
       } else if (message.type === 'US_ENABLE') {
         if (!script || typeof message.enabled !== 'boolean') throw new Error('Choose a saved script and a valid enable state.');
+        // The revision check above ties this one-time decision to these exact
+        // saved bytes. Saving/updating always pauses the script; no consent sticks.
+        if (message.enabled && core.hasBidi(script.source) && message.acknowledgeBidi !== true)
+          throw new Error('This source contains hidden direction controls. Review the escaped source and acknowledge them before enabling.');
         if (message.enabled) await network.verify(script);
         Object.assign(script, { enabled: message.enabled, autoPageApproved: message.enabled && core.parse(script.source).injection === 'auto',
           revision: script.revision + 1, token: token() });

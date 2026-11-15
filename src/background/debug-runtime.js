@@ -105,9 +105,13 @@
       remember(session, item);
       return { ok: true, proposal: agentView(item), next: 'Ask the user to review this proposal on the Module Engine MCP page, then call module_engine_get_proposal.' };
     }
-    async function apply(session, item, action) {
+    async function apply(session, item, action, acknowledgeBidi) {
       const name = text(item.name, 128), { source, previousSource } = item;
       if (action === 'apply_enable' && item.kind !== 'script') return;
+      if ((action === 'apply_enable' || item.kind === 'enabled' && item.requestedEnabled) &&
+          BlockAdsUserScriptCore.hasBidi(source) && acknowledgeBidi !== true) {
+        item.error = 'Review the escaped source and acknowledge its hidden direction controls before enabling.'; return;
+      }
       // For an enable proposal, needsDependencies is only set when it would turn the script on.
       if (item.needsDependencies && (action === 'apply_enable' || item.kind === 'enabled')) {
         item.error = 'Prepare this script’s dependencies in Modules & scripts before turning it on' + (item.kind === 'script' ? ', or apply it without turning it on.' : '.'); return;
@@ -122,7 +126,7 @@
       }
       try {
         if (item.kind === 'enabled') {
-          const result = await userscripts.request({ type: 'US_ENABLE', id: item.scriptId, revision: item.baseRevision, enabled: item.requestedEnabled });
+          const result = await userscripts.request({ type: 'US_ENABLE', id: item.scriptId, revision: item.baseRevision, enabled: item.requestedEnabled, acknowledgeBidi });
           const record = result.scripts.find(entry => entry.id === item.scriptId);
           Object.assign(item, { revision: record.revision, resultEnabled: record.enabled, undo: { revision: record.revision } });
           settle(session, item, 'applied');
@@ -135,7 +139,7 @@
           undo: { revision: record.revision, source: previousSource, created: !item.baseRevision } });
         if (action === 'apply_enable') {
           try {
-            const enabled = await userscripts.request({ type: 'US_ENABLE', id: record.id, revision: record.revision, enabled: true });
+            const enabled = await userscripts.request({ type: 'US_ENABLE', id: record.id, revision: record.revision, enabled: true, acknowledgeBidi });
             record = enabled.scripts.find(entry => entry.id === record.id);
             Object.assign(item, { revision: record.revision, resultEnabled: record.enabled }); item.undo.revision = record.revision;
           } catch (problem) { error = 'Saved, but not turned on: ' + failure(problem); }
@@ -153,6 +157,8 @@
       }
       try {
         // An edit returns to its previous source, saved off like any edit.
+        if (item.kind === 'enabled' && item.wasEnabled && BlockAdsUserScriptCore.hasBidi(script.source))
+          throw new Error('Turning this source back on needs a fresh review of its hidden direction controls. Propose enabling it again or use Modules & scripts.');
         if (item.kind === 'enabled') await userscripts.request({ type: 'US_ENABLE', id: item.scriptId, revision: item.undo.revision, enabled: item.wasEnabled });
         else if (item.undo.created) await userscripts.request({ type: 'US_DELETE', id: item.scriptId, revision: item.undo.revision });
         else await userscripts.request({ type: 'US_SAVE', id: item.scriptId, revision: item.undo.revision, source: item.undo.source });
@@ -172,7 +178,7 @@
           else if (message.action === 'reject') {
             settle(session, item, 'rejected');
             await log({ kind: 'event', message: 'MCP: rejected the agent’s proposed change to "' + text(item.name, 128) + '"' });
-          } else await apply(session, item, message.action);
+          } else await apply(session, item, message.action, message.acknowledgeBidi);
         } catch (problem) { item.error = failure(problem); }
         finally { session.deciding = false; }
         notify(session, item);

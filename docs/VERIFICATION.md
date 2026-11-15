@@ -1,8 +1,28 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest records are from 14 November 2026, covering advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 16 November 2026 direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Direction-control source review — 16 November 2026
+
+Confirmed the Low-severity audit finding against `d249340`: raw Unicode directional controls were accepted without a parser/lint warning, and enabling required no acknowledgment. The regression tests reproduced both behaviors before the fix. Shared source reviews now show visible escapes, code points and original UTF-16 line/column positions. MCP also escapes metadata, headings and unverified notes. The editor warns without classifying otherwise valid source as a syntax error. All original source bytes remain unchanged; ordinary RTL text and textual JavaScript escapes remain supported.
+
+The native enable command requires an explicit acknowledgment after checking the current revision. MCP refuses an unacknowledged Apply & enable before saving anything. The UI accepts acknowledgment only from trusted interaction; a different proposal or later enable cannot inherit it. Applying without enabling still saves a paused script. Undoing a disable cannot silently reenable affected code. Existing enabled scripts are not forcibly paused on reload; this does not scan dependencies or detect every form of misleading code.
+
+**590 Node tests passed**, with no failures, cancellations or skips. All 12 changed/new JavaScript files passed syntax checks. Final native, offline checks:
+
+| Browser | URL install/update review | MCP reads and change proposals |
+| --- | ---: | ---: |
+| Chrome | 75 | 169 (stdio proposals; both read transports) |
+| Edge | 75 | 108 (HTTP proposals and reads) |
+| Firefox | 65 | 164 (stdio proposals; both read transports) |
+
+These **656 browser checks** include actual escaped previews, trusted and synthetic acknowledgment, cancellation, exact stored bytes, native script execution, update/proposal reset, MCP scope/revocation and blocked localhost ad canaries. No unexpected proxy or MCP runtime errors remained. Desktop and 390-pixel Chrome enable-dialog screenshots were visually inspected, along with the narrow MCP card. Firefox's install fixture covers its current viewport; this pass did not add a Firefox viewport override. Three focused review rounds covered authorization and stale revisions, bounded diagnostics and unchanged bytes, then UI and final diff consistency.
+
+Testing used installed browsers, disposable profiles, authored localhost scripts and deny proxies. No public sites, personal profiles, OS desktop helpers or new dependencies were used. Manifest permissions, ad-blocker code/rules and MCP server transport code are unchanged. Full blocker suites and the broader combined userscript sequence were not rerun for this narrowly scoped fix; the audit's separate Edge/Firefox update-row sequencing failure is not claimed fixed by these passing targeted suites. All executable package hashes match the tested files. The two Chrome runs precede a documentation-only change to `docs/MCP.md`; their exact document snapshot is retained separately.
+
+The 13 pre-existing verification-record edits were preserved byte-for-byte and contain only line-ending changes compared with the starting commit. [Evidence, checks and source hashes](../verification/2026-11-16/bidi-review/summary.json).
 
 ## Advanced GM options and regex/unwrap matching — 14 November 2026
 

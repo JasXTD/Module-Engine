@@ -252,13 +252,52 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     check('Changing the entered URL invalidates its earlier review', await b.evaluate('document.getElementById("installReview").hidden&&document.getElementById("applySource").disabled', manager));
     await cancel();
     await linkedUpdates();
+    const bidiURL = base + '/usnet/bidi.user.js';
+    const bidiSource = source('1.0', '// @description Hidden \u202e direction\n', '// \u2066 comment\ndocument.body.dataset.urlBidi="yes";')
+      .replace('@name Offline URL install', '@name Offline bidi install');
+    fixtureState.sources['/usnet/bidi.user.js'] = { body: bidiSource };
+    await ready(); await click('installURL'); await setURL(bidiURL); await click('fetchSource'); await dialogReady();
+    check('URL source review warns with exact positions and escaped metadata/source', await b.evaluate('(()=>{const warning=document.getElementById("reviewBidi"),area=document.getElementById("reviewAfter");return warning.textContent.includes("U+202E")&&warning.textContent.includes("column")&&!/[\\u202e\\u2066]/.test(area.value+document.getElementById("reviewChanges").textContent)&&area.value.includes("\\\\u202E")})()', manager));
+    await click('applySource'); await ready();
+    let bidiScript = (await send({ type: 'US_LIST' })).scripts.find(item => item.metadata.name === 'Offline bidi install'); ids.push(bidiScript.id);
+    check('URL install preserves original direction controls and stays off', bidiScript.source === bidiSource && !bidiScript.enabled);
+    const noAck = await send({ type: 'US_ENABLE', id: bidiScript.id, revision: bidiScript.revision, enabled: true });
+    check('The native manager command refuses unacknowledged enabling', !noAck.ok && /acknowledge/.test(noAck.error));
+    await click('scriptEnabled'); await until('Boolean(document.querySelector(".bidi-dialog[open]"))');
+    await b.evaluate('(()=>{const e=document.getElementById("bidiAcknowledge");e.checked=true;e.dispatchEvent(new Event("change",{bubbles:true}));document.getElementById("bidiEnable").click();})()', manager);
+    check('Synthetic review interaction leaves the enable action locked', await b.evaluate('document.getElementById("bidiEnable").disabled&&Boolean(document.querySelector(".bidi-dialog[open]"))', manager));
+    await b.pressKey('Escape', manager); await ready();
+    check('Cancelling direction-control review leaves the script disabled', !(await send({ type: 'US_LIST' })).scripts.find(item => item.id === bidiScript.id).enabled);
+    await click('scriptEnabled'); await until('Boolean(document.querySelector(".bidi-dialog[open]"))');
+    const bidiWidths = b.send ? [1280, 390] : [await b.evaluate('innerWidth', manager)];
+    for (const width of bidiWidths) {
+      if (b.send) await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false }, manager);
+      check('Direction-control enable review fits the viewport at ' + width, await b.evaluate('(()=>{const d=document.querySelector(".bidi-dialog");return d.scrollWidth<=d.clientWidth+1&&d.getBoundingClientRect().width<=innerWidth})()', manager));
+      const output = path.join(temp, 'bidi-enable-' + width + '.png');
+      if (b.send) { const shot = await b.send('Page.captureScreenshot', { format: 'png' }, manager); await fs.writeFile(output, Buffer.from(shot.data, 'base64')); }
+      else await b.screenshot(output, manager);
+    }
+    if (b.send) await b.send('Emulation.clearDeviceMetricsOverride', {}, manager);
+    await click('bidiAcknowledge'); await click('bidiEnable'); await ready();
+    bidiScript = (await send({ type: 'US_LIST' })).scripts.find(item => item.id === bidiScript.id);
+    check('Trusted review enables original bytes without substituting escaped text', bidiScript.enabled && bidiScript.source === bidiSource);
+    const bidiPage = await browse('/install-page-bidi'); pages.push(bidiPage); await until('document.body.dataset.urlBidi==="yes"', bidiPage);
+    check('Acknowledged URL script executes while the local ad stays blocked', await b.evaluate('window.fixtureAd===undefined', bidiPage));
+    const bidiUpdate = bidiSource.replace('@version 1.0', '@version 2.0') + '\n// \u2069 update';
+    fixtureState.sources['/usnet/bidi.user.js'] = { body: bidiUpdate };
+    await update();
+    check('URL update review detects new direction controls', await b.evaluate('document.getElementById("reviewBidi").textContent.includes("U+2069")&&document.getElementById("reviewAfter").value.includes("\\\\u2069")', manager));
+    await click('applySource'); await ready(); await click('scriptEnabled');
+    await until('Boolean(document.querySelector(".bidi-dialog[open]"))');
+    check('Updating the source requires a fresh acknowledgment', await b.evaluate('!document.getElementById("bidiAcknowledge").checked&&document.getElementById("bidiEnable").disabled', manager));
+    await b.pressKey('Escape', manager); await ready();
     check('Ad blocking remains enabled after all install/update failure paths', (await send({ type: 'GET_STATE' })).settings.enabled);
     evidence.installationCompleted = true;
   } finally {
     for (const id of ids) { const script = (await send({ type: 'US_LIST' })).scripts.find(item => item.id === id); if (script) await send({ type: 'US_DELETE', id, revision: script.revision }); }
     for (const page of pages) await b.closePage(page);
     await send({ type: 'US_UPDATE_SETTINGS', settings: { interceptLinks: true, autoCheck: true } }).catch(() => {});
-    for (const name of ['install', 'link', 'link-next', 'view']) delete fixtureState.sources['/usnet/' + name + '.user.js'];
+    for (const name of ['install', 'link', 'link-next', 'view', 'bidi']) delete fixtureState.sources['/usnet/' + name + '.user.js'];
     delete fixtureState.sources['/usnet/link.meta.js'];
   }
 }

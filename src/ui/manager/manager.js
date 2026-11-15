@@ -85,7 +85,7 @@
       details.className = 'meta';
       const row = (term, value, literal = false) => {
         const dt = document.createElement('dt'), dd = document.createElement('dd'), text = literal ? document.createElement('code') : dd;
-        dt.textContent = term; text.textContent = value;
+        dt.textContent = term; text.textContent = core.escapeBidi(value);
         if (literal) dd.append(text);
         details.append(dt, dd);
       };
@@ -320,7 +320,8 @@
     el('reviewCaption').textContent = old ? 'Script access and settings · changed rows are marked' : 'Script access and settings';
     el('reviewURL').textContent = 'Fetched from: ' + review.sourceURL;
     el('previousCode').hidden = !old;
-    el('reviewBefore').value = review.previousSource || ''; el('reviewAfter').value = review.source;
+    el('reviewBefore').value = core.escapeBidi(review.previousSource || ''); el('reviewAfter').value = core.escapeBidi(review.source);
+    el('reviewBidi').replaceChildren(BlockAdsScriptReview.bidiWarning(review.source).node);
     for (const id of ['reviewBefore', 'reviewAfter']) { el(id).setSelectionRange(0, 0); el(id).scrollTop = 0; el(id).scrollLeft = 0; }
     el('reviewEffect').textContent = (old ? 'Applying replaces the current source, including local edits, and keeps saved script values. ' : 'Installing adds a paused script to your library. ')
       + 'Review the code and any dependencies, then turn on Run this script. Later checks use the update source shown above; every update needs your review. '
@@ -571,10 +572,18 @@
       await load();
     }, 'Script saved and turned off. Review its sites, then turn on Run this script.');
   });
-  el('scriptEnabled').addEventListener('change', () => {
+  el('scriptEnabled').addEventListener('change', async event => {
     const enabled = el('scriptEnabled').checked, script = selected();
+    if (!event.isTrusted || busy || confirming || !script) { render(); return; }
+    let acknowledgeBidi = false;
+    if (enabled && core.hasBidi(script.source)) {
+      confirming = true; render();
+      try { acknowledgeBidi = await BlockAdsScriptReview.confirmBidi(script.source); }
+      finally { confirming = false; render(); }
+      if (!acknowledgeBidi) { drainRefresh(); return; }
+    }
     void run(async () => {
-      library = await send({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled });
+      library = await send({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled, acknowledgeBidi });
       openEditor(library.scripts.find(item => item.id === script.id), undefined, { keepTracking: true }); await load();
     }, enabled ? 'Script enabled. It runs on matching page loads while the userscript module is on.' : 'Script disabled for future loads. Reload pages where it already ran.');
   });

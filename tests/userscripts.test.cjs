@@ -136,6 +136,22 @@ test('debug inspection detects drift without repairing registrations or writing 
   const result = await h.host.inspect(); assert.equal(result.active, false); assert.match(result.error, /differ/);
   assert.equal(result.scripts[0].id, s.id); assert.deepEqual(h.state.scripts, []); assert.equal(h.state.writes, writes); assert.deepEqual(h.state.data, stored);
 });
+test('enabling direction controls requires explicit acknowledgment of the current saved revision', async () => {
+  const h = harness(), script = await h.save('Bidi', '', '// \u202e inert comment');
+  const before = JSON.stringify(h.state.data), writes = h.state.writes;
+  const enable = { type: 'US_ENABLE', id: script.id, revision: script.revision, enabled: true };
+  await assert.rejects(h.command(enable), /direction controls.*acknowledge/i);
+  await assert.rejects(h.command({ ...enable, acknowledgeBidi: 'true' }), /direction controls.*acknowledge/i);
+  assert.equal(JSON.stringify(h.state.data), before); assert.equal(h.state.writes, writes);
+  const on = (await h.command({ ...enable, acknowledgeBidi: true })).scripts.find(item => item.id === script.id);
+  assert.equal(on.enabled, true); assert.equal(on.source, script.source);
+  const off = (await h.command({ ...enable, revision: on.revision, enabled: false })).scripts.find(item => item.id === script.id);
+  const edit = await h.command({ type: 'US_SAVE', id: script.id, revision: off.revision, source: script.source + '\n// changed' });
+  const updated = edit.scripts.find(item => item.id === script.id);
+  await assert.rejects(h.command({ ...enable, acknowledgeBidi: true }), /changed/);
+  await assert.rejects(h.command({ ...enable, revision: updated.revision }), /direction controls.*acknowledge/i);
+});
+
 test('diagnostics require active capture, current capability, matching native world and messaging grants', async () => {
   const h = harness(), s = await h.enable(await h.save('Debug', '// @grant GM.getValue\n'));
   const payload = { message: 'owned error', stack: 'owned stack' }, entries = [];

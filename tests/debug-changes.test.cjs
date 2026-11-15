@@ -56,7 +56,7 @@ function fixture(t) {
     const id = crypto.randomUUID(); p.onMessage.fire({ type: 'read', id, name: 'module_engine_' + name, arguments: args }); await settle();
     return p.sent.find(item => item.type === 'result' && item.id === id)?.result;
   }
-  async function decide(p, id, action) { p.onMessage.fire({ type: 'decide', id, action }); await settle(); return latest(p, id); }
+  async function decide(p, id, action, acknowledgeBidi) { p.onMessage.fire({ type: 'decide', id, action, acknowledgeBidi }); await settle(); return latest(p, id); }
   const latest = (p, id) => p.sent.filter(item => item.type === 'proposal' && item.proposal.id === id).at(-1)?.proposal;
   async function install(name, options = {}) {
     const saved = await host.request({ type: 'US_SAVE', source: source(name, options.body, options.metadata) });
@@ -79,6 +79,35 @@ test('change tools need their own approval, and agent requests cannot make decis
   assert.equal((await f.call(p, 'get_proposal', { proposalId: proposal.id })).proposal.status, 'pending');
   assert.equal(f.state.requests.length, 0); assert.equal(f.state.scripts.length, 0);
   for (const action of ['delete', 'APPLY', '']) { const next = f.approve(); next.onMessage.fire({ type: 'decide', id: proposal.id, action }); assert.equal(next.closed, true); }
+});
+
+test('MCP cannot apply and enable hidden direction controls without a separate page acknowledgment', async t => {
+  const f = fixture(t), p = f.approve();
+  const input = source('Bidi', '// \u202e inert comment');
+  const item = (await f.call(p, 'propose_script', { source: input })).proposal;
+  for (const acknowledgment of [undefined, false, 'true']) {
+    const refused = await f.decide(p, item.id, 'apply_enable', acknowledgment);
+    assert.equal(refused.status, 'pending'); assert.match(refused.error, /acknowledge/); assert.equal(f.state.requests.length, 0);
+  }
+  const applied = await f.decide(p, item.id, 'apply_enable', true);
+  assert.equal(applied.status, 'applied'); assert.equal(applied.enabled, true);
+  assert.equal(f.state.scripts[0].source, input); assert.equal(f.state.requests.at(-1).acknowledgeBidi, true);
+  const script = f.state.scripts[0];
+  const edit = (await f.call(p, 'propose_script', { id: script.id, revision: script.revision, source: input + '\n// new revision' })).proposal;
+  const count = f.state.requests.length;
+  assert.equal((await f.decide(p, edit.id, 'apply_enable')).status, 'pending'); assert.equal(f.state.requests.length, count);
+  assert.equal((await f.decide(p, edit.id, 'apply')).enabled, false);
+});
+
+test('MCP disable and revert cannot silently reenable source with direction controls', async t => {
+  const f = fixture(t), p = f.approve(), script = await f.install('Bidi', { enabled: true, body: '// \u2066 inert' });
+  const item = (await f.call(p, 'propose_enabled', { id: script.id, revision: script.revision, enabled: false })).proposal;
+  assert.equal((await f.decide(p, item.id, 'apply')).enabled, false);
+  const count = f.state.requests.length, reverted = await f.decide(p, item.id, 'revert');
+  assert.match(reverted.error, /fresh review/); assert.equal(f.state.requests.length, count); assert.equal(script.enabled, false);
+  const next = (await f.call(p, 'propose_enabled', { id: script.id, revision: script.revision, enabled: true })).proposal;
+  assert.equal((await f.decide(p, next.id, 'apply')).status, 'pending');
+  assert.equal((await f.decide(p, next.id, 'apply', true)).enabled, true);
 });
 
 test('a new script is checked, shown for review, saved off on Apply and removable for the session', async t => {

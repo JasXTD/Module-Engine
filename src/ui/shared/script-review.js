@@ -39,11 +39,60 @@
     for (const { label, before, after, changed } of list) {
       const tr = document.createElement('tr'); tr.classList.toggle('changed', changed);
       for (const [index, value] of [label + (changed ? ' · changed' : ''), before, after].entries()) {
-        const cell = document.createElement(index ? 'td' : 'th'); cell.textContent = value;
+        const cell = document.createElement(index ? 'td' : 'th'); cell.textContent = core.escapeBidi(value);
         if (!index) cell.scope = 'row'; tr.append(cell);
       }
       body.append(tr);
     }
   }
-  globalThis.BlockAdsScriptReview = Object.freeze({ rows, render, updateRoute, cookieScope, worldDescription });
+  function bidiWarning(source, { id, acknowledge = false, onChange = () => {} } = {}) {
+    const result = core.bidiControls(source), node = document.createElement('section');
+    node.className = 'review-bidi'; node.dataset.role = 'bidi-warning'; node.hidden = !result.count;
+    let accepted = false;
+    if (result.count) {
+      const title = document.createElement('strong'), explanation = document.createElement('p'), list = document.createElement('ul');
+      title.textContent = result.count + ' hidden Unicode direction control' + (result.count === 1 ? '' : 's');
+      explanation.textContent = 'These characters can change the visual order of code and comments. Read-only previews show them as \\uXXXX; the saved code is unchanged. Positions below refer to the original source (UTF-16 columns).';
+      for (const entry of result.locations) {
+        const item = document.createElement('li'); item.textContent = 'Line ' + entry.line + ', column ' + entry.column + ': U+' + entry.escape.slice(2) + ' (' + entry.escape + ')'; list.append(item);
+      }
+      node.append(title, explanation, list);
+      if (result.count > result.locations.length) {
+        const more = document.createElement('p'); more.textContent = 'First 20 of ' + result.count + ' positions shown. Every control is escaped in the preview.'; node.append(more);
+      }
+      if (acknowledge) {
+        const label = document.createElement('label'), input = document.createElement('input');
+        input.type = 'checkbox'; if (id) input.id = id;
+        input.addEventListener('change', event => {
+          if (event.isTrusted) accepted = input.checked;
+          else input.checked = accepted;
+          onChange();
+        });
+        label.append(input, ' I reviewed the escaped source and understand these controls can change how code looks.'); node.append(label);
+      }
+    }
+    return { node, accepted: () => !result.count || accepted };
+  }
+  function confirmBidi(source) {
+    if (!core.hasBidi(source)) return Promise.resolve(true);
+    const dialog = document.createElement('dialog'), title = document.createElement('h2'), panes = document.createElement('div');
+    const label = document.createElement('label'), preview = document.createElement('textarea'), actions = document.createElement('div');
+    const cancel = document.createElement('button'), enable = document.createElement('button');
+    const id = 'bidi-' + crypto.randomUUID();
+    dialog.className = 'bidi-dialog'; title.id = id; title.textContent = 'Review hidden direction controls'; dialog.setAttribute('aria-labelledby', id);
+    panes.className = 'review-code'; label.htmlFor = preview.id = id + '-source'; label.textContent = 'Saved source · escaped, read only';
+    preview.value = core.escapeBidi(source); preview.readOnly = true; preview.spellcheck = false; preview.dir = 'ltr';
+    const column = document.createElement('div'); column.append(label, preview); panes.append(column);
+    const warning = bidiWarning(source, { id: 'bidiAcknowledge', acknowledge: true, onChange: () => { enable.disabled = !warning.accepted(); } });
+    cancel.type = enable.type = 'button'; cancel.textContent = 'Cancel'; enable.id = 'bidiEnable'; enable.textContent = 'Acknowledge & enable'; enable.className = 'primary'; enable.disabled = true;
+    actions.className = 'actions'; actions.append(cancel, enable); dialog.append(title, warning.node, panes, actions);
+    return new Promise(resolve => {
+      let approved = false;
+      cancel.addEventListener('click', () => dialog.close());
+      enable.addEventListener('click', event => { if (event.isTrusted && warning.accepted()) { approved = true; dialog.close(); } });
+      dialog.addEventListener('close', () => { dialog.remove(); resolve(approved); }, { once: true });
+      document.body.append(dialog); dialog.showModal(); cancel.focus();
+    });
+  }
+  globalThis.BlockAdsScriptReview = Object.freeze({ rows, render, updateRoute, cookieScope, worldDescription, bidiWarning, confirmBidi });
 })();

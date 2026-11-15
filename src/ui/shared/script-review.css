@@ -12,6 +12,13 @@
 .review-code { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
 .review-code:has(> [hidden]) { grid-template-columns: minmax(0, 1fr); }
 .review-code textarea { display: block; width: 100%; height: 260px; resize: vertical; white-space: pre; font: 12px/1.5 var(--mono); }
+.review-bidi { margin-block: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--warn-soft); overflow-wrap: anywhere; }
+.review-bidi li { font: 12px/1.5 var(--mono); }
+.review-bidi ul { max-height: 140px; overflow-y: auto; padding-left: 24px; }
+.review-bidi label { display: flex; align-items: flex-start; gap: 8px; }
+.review-bidi input { flex: none; margin-top: 4px; }
+.bidi-dialog { width: min(820px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; }
+.bidi-dialog .review-code { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 600px) {
   .review-code { grid-template-columns: minmax(0, 1fr); }
   .review-table th:first-child { width: 31%; }

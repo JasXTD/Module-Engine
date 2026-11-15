@@ -82,8 +82,33 @@ async function runChanges({ b, manager, send, check, until, browse, scriptSource
     check('The activity log records each decision', ['applied the agent’s new script', 'and turned it on', 'reverted the agent’s change', 'rejected the agent’s proposed change']
       .every(text => activity.entries?.some(entry => entry.message.startsWith('MCP: ') && entry.message.includes(text))));
 
+    const bidiSource = scriptSource('MCP bidi \u202e review', '// @grant none\n', '// \u2066 hidden direction\ndocument.body.dataset.bidiReviewed="yes";');
+    const bidi = (await client.tool('propose_script', { source: bidiSource, note: 'Unverified \u202e note' })).proposal;
+    check('Bidi warnings do not become syntax errors or hide the proposal', Boolean(bidi));
+    await until('Boolean(document.getElementById(' + JSON.stringify('bidi-' + bidi.id) + '))', page);
+    check('MCP escapes hidden controls in source, metadata, heading and note', await b.evaluate('(()=>{const card=document.querySelector(".proposal");return !/[\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069]/.test(card.textContent+card.querySelector("textarea[id^=after]").value)&&card.textContent.includes("U+202E")&&card.textContent.includes("column")})()', page));
+    check('Apply and enable starts disabled until controls are acknowledged', await b.evaluate('document.getElementById(' + JSON.stringify('applyEnable-' + bidi.id) + ').disabled', page));
+    await b.evaluate('(()=>{const e=document.getElementById(' + JSON.stringify('bidi-' + bidi.id) + ');e.checked=true;e.dispatchEvent(new Event("change",{bubbles:true}));})()', page);
+    check('Synthetic acknowledgment cannot unlock enabling', await b.evaluate('document.getElementById(' + JSON.stringify('applyEnable-' + bidi.id) + ').disabled&&!document.getElementById(' + JSON.stringify('bidi-' + bidi.id) + ').checked', page));
+    await click('bidi-' + bidi.id, page); await click('applyEnable-' + bidi.id, page);
+    await until('!document.getElementById(' + JSON.stringify('applyEnable-' + bidi.id) + ')', page);
+    const bidiSaved = (await client.tool('get_proposal', { proposalId: bidi.id })).proposal; owned.add(bidiSaved.scriptId);
+    check('Trusted acknowledgment enables the exact original source bytes', (await record(bidiSaved.scriptId)).source === bidiSource && (await record(bidiSaved.scriptId)).enabled);
+    const bidiPage = await browse('/mcp-change/bidi'); pages.push(bidiPage);
+    await until('document.body.dataset.bidiReviewed==="yes"', bidiPage);
+    check('Acknowledged script runs while the local ad remains blocked', await b.evaluate('window.fixtureAd===undefined', bidiPage));
+    const bidiEdit = (await client.tool('propose_script', { id: bidiSaved.scriptId, revision: (await record(bidiSaved.scriptId)).revision, source: bidiSource + '\n// changed' })).proposal;
+    await until('Boolean(document.getElementById(' + JSON.stringify('bidi-' + bidiEdit.id) + '))', page);
+    check('A different proposal cannot inherit acknowledgment', await b.evaluate('!document.getElementById(' + JSON.stringify('bidi-' + bidiEdit.id) + ').checked&&document.getElementById(' + JSON.stringify('applyEnable-' + bidiEdit.id) + ').disabled', page));
+    await click('apply-' + bidiEdit.id, page); await until('!document.getElementById(' + JSON.stringify('apply-' + bidiEdit.id) + ')', page);
+    const bidiOff = await record(bidiSaved.scriptId);
+    const bidiEnable = (await client.tool('propose_enabled', { id: bidiOff.id, revision: bidiOff.revision, enabled: true })).proposal;
+    await until('Boolean(document.getElementById(' + JSON.stringify('bidi-' + bidiEnable.id) + '))', page);
+    check('An enable-only proposal also requires acknowledgment', await b.evaluate('document.getElementById(' + JSON.stringify('apply-' + bidiEnable.id) + ').disabled', page));
+    await click('reject-' + bidiEnable.id, page); await until('!document.getElementById(' + JSON.stringify('reject-' + bidiEnable.id) + ')', page);
+
     // A pending card at desktop and phone widths, then revocation on disconnect.
-    const layout = await client.tool('propose_script', { source: scriptSource('MCP layout proposal with a long descriptive name for wrapping checks', '// @grant GM_xmlhttpRequest\n// @connect example.test\n', 'void 0;'),
+    const layout = await client.tool('propose_script', { source: scriptSource('MCP layout proposal with a long descriptive name for wrapping checks', '// @grant GM_xmlhttpRequest\n// @connect example.test\n', '// \u202e hidden direction\nvoid 0;'),
       note: 'A long unverified explanation from the agent that has to wrap on a phone screen without widening the page. '.repeat(3).trim() });
     await until('document.querySelectorAll(".proposal").length===1', page);
     const widths = evidence.browser === 'firefox' ? [await b.evaluate('innerWidth', page)] : [1280, 390], shots = [];

@@ -93,6 +93,8 @@ Status reads do not repair native registrations. If registration state differs f
 
 ## Script change proposals
 
+Hidden Unicode direction controls can visually reorder source. Affected proposals show their positions and escaped code, metadata and notes. **Apply & enable** and proposals to turn a script on stay disabled until you acknowledge the warning with a real click or keyboard interaction. **Apply** can still save the source turned off; enabling it later in Modules & scripts requires review there. A new proposal never inherits acknowledgment. Reverting a disable cannot silently turn affected code back on: propose enabling it again or use Modules & scripts. The actual saved source is never replaced with the escaped preview.
+
 Proposals let an agent suggest a new script, an edit or turning a script on or off. **You** decide each one on the MCP page; the agent cannot apply, enable or delete anything itself.
 
 1. Add `--allow-changes` to the server command, for example `"args": ["C:\\Users\\Tommy\\Desktop\\BlockAds\\mcp\\server.cjs", "--allow-changes"]` or `node .\mcp\server.cjs --http --port 8765 --allow-changes`. Without it, the server lists only the read tools, and the browser drops change approval when pairing.

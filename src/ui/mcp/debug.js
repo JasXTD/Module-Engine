@@ -6,7 +6,7 @@
   const api = globalThis.browser || chrome, protocol = ModuleEngineDebugProtocol, review = BlockAdsScriptReview, el = id => document.getElementById(id);
   const TITLE = document.title, ACTIONS = { apply: 'apply', applyEnable: 'apply_enable', reject: 'reject', revert: 'revert' };
   let session = null, connecting = false, reads = 0, deciding = null;
-  const proposals = new Map(), nodes = new Map();
+  const proposals = new Map(), nodes = new Map(), bidiReviews = new Map();
   function notice(message, error = false) { el('status').textContent = message; el('status').className = 'notice' + (error ? ' error' : ''); }
   const changesApproved = () => Boolean(session?.ready && session.scopes.includes(protocol.CHANGES));
   function render() {
@@ -73,7 +73,7 @@
     if (request.name === 'module_engine_propose_script') {
       protocol.call(request.name, request.arguments ?? {});
       if (!current.scopes.includes(protocol.CHANGES)) throw new Error('This debugging scope was not approved.');
-      const problems = await syntaxCheck(request.arguments.source);
+      const problems = (await syntaxCheck(request.arguments.source)).filter(item => item.kind !== 'bidi');
       if (problems.length) return { ok: false, error: 'The proposed source has errors, so it was not shown to the user. Fix them and propose again.',
         diagnostics: problems.slice(0, 20).map(({ kind, message, line, column }) => ({ kind, message: String(message).slice(0, 512), line, column })) };
       if (session !== current) throw new Error('Debug connection ended.');
@@ -116,15 +116,15 @@
   }
   function sourcePane(id, label, value) {
     const wrap = document.createElement('div'), title = document.createElement('label'), area = document.createElement('textarea');
-    title.htmlFor = id; title.textContent = label; Object.assign(area, { id, readOnly: true, spellcheck: false, value: value || '' });
+    title.htmlFor = id; title.textContent = label; Object.assign(area, { id, readOnly: true, spellcheck: false, dir: 'ltr', value: BlockAdsUserScriptCore.escapeBidi(value || '') });
     wrap.append(title, area); return wrap;
   }
   function build(proposal) {
     const article = document.createElement('article'); article.className = 'proposal'; article.dataset.id = proposal.id;
-    const head = document.createElement('h3'); head.textContent = heading(proposal); article.append(head);
+    const head = document.createElement('h3'); head.textContent = BlockAdsUserScriptCore.escapeBidi(heading(proposal)); article.append(head);
     if (proposal.note) {
       const note = document.createElement('p'), label = document.createElement('strong');
-      label.textContent = 'Agent’s note (unverified): '; note.className = 'agent-note'; note.append(label, proposal.note); article.append(note);
+      label.textContent = 'Agent’s note (unverified): '; note.className = 'agent-note'; note.append(label, BlockAdsUserScriptCore.escapeBidi(proposal.note)); article.append(note);
     }
     if (proposal.source) {
       const fresh = proposal.kind === 'enabled' || !proposal.previousSource, wrap = document.createElement('div');
@@ -137,7 +137,9 @@
       const before = sourcePane('before-' + proposal.id, 'Current source · read only', proposal.previousSource);
       before.hidden = fresh;
       panes.append(before, sourcePane('after-' + proposal.id, (proposal.kind === 'enabled' ? 'Installed' : 'Proposed') + ' source · read only', proposal.source));
-      article.append(wrap, panes);
+      const bidi = review.bidiWarning(proposal.source, { id: 'bidi-' + proposal.id, acknowledge: true, onChange: renderProposals });
+      bidiReviews.set(proposal.id, bidi);
+      article.append(wrap, bidi.node, panes);
     }
     const detail = document.createElement('p'); detail.className = 'muted'; detail.textContent = effect(proposal);
     const error = document.createElement('p'); error.className = 'notice error'; error.dataset.role = 'error'; error.hidden = true;
@@ -152,20 +154,22 @@
     const item = document.createElement('li'), line = document.createElement('span');
     let state = STATUS[proposal.status] || proposal.status;
     if (proposal.status === 'applied' && proposal.enabled !== null) state += proposal.enabled ? ' · on' : ' · off';
-    line.textContent = heading(proposal) + ' — ' + state + (proposal.error ? '. ' + proposal.error : '');
+    line.textContent = BlockAdsUserScriptCore.escapeBidi(heading(proposal) + ' — ' + state + (proposal.error ? '. ' + proposal.error : ''));
     item.append(line);
     if (proposal.canRevert) item.append(button('revert-' + proposal.id, proposal.kind === 'script' && proposal.created ? 'Remove script' : 'Revert', 'revert'));
     return item;
   }
   function renderProposals() {
     const list = [...proposals.values()], pending = list.filter(item => item.status === 'pending'), decided = list.filter(item => item.status !== 'pending').reverse();
-    for (const [id, node] of nodes) if (!pending.some(item => item.id === id)) { node.remove(); nodes.delete(id); }
+    for (const [id, node] of nodes) if (!pending.some(item => item.id === id)) { node.remove(); nodes.delete(id); bidiReviews.delete(id); }
     for (const proposal of pending) {
       let node = nodes.get(proposal.id);
       // Pending cards are built once, so a new proposal never resets one being read.
       if (!node) { node = build(proposal); nodes.set(proposal.id, node); el('proposals').append(node); }
-      const error = node.querySelector('[data-role="error"]'); error.textContent = proposal.error; error.hidden = !proposal.error;
-      for (const control of node.querySelectorAll('button')) control.disabled = Boolean(deciding) || !changesApproved() || control.dataset.action === 'applyEnable' && proposal.needsDependencies;
+      const error = node.querySelector('[data-role="error"]'); error.textContent = BlockAdsUserScriptCore.escapeBidi(proposal.error); error.hidden = !proposal.error;
+      for (const control of node.querySelectorAll('button')) control.disabled = Boolean(deciding) || !changesApproved() ||
+        control.dataset.action === 'applyEnable' && proposal.needsDependencies ||
+        enables(proposal, control.dataset.action) && bidiReviews.has(proposal.id) && !bidiReviews.get(proposal.id).accepted();
     }
     el('decisions').replaceChildren(...decided.map(decisionItem));
     for (const control of el('decisions').querySelectorAll('button')) control.disabled = Boolean(deciding) || !changesApproved();
@@ -174,13 +178,16 @@
     document.title = (pending.length ? '(' + pending.length + ') ' : '') + TITLE;
     render();
   }
+  const enables = (proposal, action) => action === 'applyEnable' || action === 'apply' && proposal.kind === 'enabled' && proposal.requestedEnabled;
   function decide(event) {
     const control = event.target.closest('button[data-action]');
     if (!control || !event.isTrusted || deciding || !changesApproved()) return;
     const id = control.id.slice(control.id.indexOf('-') + 1);
     if (!proposals.has(id)) return;
+    const bidi = bidiReviews.get(id);
+    if (enables(proposals.get(id), control.dataset.action) && bidi && !bidi.accepted()) return;
     deciding = id; renderProposals();
-    try { session.port.postMessage({ type: 'decide', id, action: ACTIONS[control.dataset.action] }); }
+    try { session.port.postMessage({ type: 'decide', id, action: ACTIONS[control.dataset.action], acknowledgeBidi: Boolean(bidi?.accepted()) }); }
     catch { disconnect('Browser debugging channel closed.', true); }
   }
   el('proposals').addEventListener('click', decide); el('decisions').addEventListener('click', decide);

@@ -30,6 +30,10 @@
       }
     } catch { /* The parser above supplies the error; retain tokens before it. */ }
     tokens.sort((a, b) => a.start - b.start);
+    const bidi = core.bidiControls(source);
+    for (const { offset, line, column, escape } of bidi.locations) diagnostics.push({ kind: 'bidi', severity: 'warning', offset, line, column,
+      message: 'Hidden direction control U+' + escape.slice(2) + ' (' + escape + '). Review the escaped source before enabling.' +
+        (bidi.count > bidi.locations.length ? ' Showing the first 20 of ' + bidi.count + ' controls.' : '') });
     return { tokens, diagnostics };
   }
   globalThis.BlockAdsLint = Object.freeze({ inspect });
