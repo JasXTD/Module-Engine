@@ -28,7 +28,7 @@ async function runMCP({ b, manager, send, check, until, browse, scriptSource, ev
       waits++; await new Promise(resolve => setTimeout(resolve, 50));
     } while (true);
     (evidence.mcpPairingWaits ||= []).push({ transport, waits });
-    await b.evaluate('(()=>{document.getElementById("pairingCode").value=' + JSON.stringify(connection.pairingCode) + ';document.getElementById("shareScripts").checked=' + scopes.includes('scripts') + ';document.getElementById("shareLogs").checked=' + scopes.includes('logs') + ';document.getElementById("shareNetwork").checked=' + scopes.includes('network') + ';})()', page);
+    await b.evaluate('(()=>{document.getElementById("pairingCode").value=' + JSON.stringify(connection.pairingCode) + ';document.getElementById("shareScripts").checked=' + scopes.includes('scripts') + ';document.getElementById("shareLogs").checked=' + scopes.includes('logs') + ';document.getElementById("shareNetwork").checked=' + scopes.includes('network') + ';document.getElementById("shareChanges").checked=' + scopes.includes('changes') + ';})()', page);
     await click('connect', page);
     await until('document.getElementById("connectionBadge").textContent.includes("Connected")', page);
     check('MCP pairing clears its secret from the field', await b.evaluate('document.getElementById("pairingCode").value===""', page));
@@ -79,7 +79,10 @@ async function runMCP({ b, manager, send, check, until, browse, scriptSource, ev
       else { const shot = await b.send('Page.captureScreenshot', { format: 'png' }, page); await fs.writeFile(output, Buffer.from(shot.data, 'base64')); }
     }
     await click('disconnect', page); check('Disconnect immediately revokes subsequent reads', (await client.tool('status')).ok === false);
-    await pair(page, ['status']); check('Status-only approval refuses script source', (await client.tool('get_script', { id: scriptId })).ok === false);
+    // This server was started without --allow-changes, so it drops the change request.
+    await pair(page, ['status', 'changes']);
+    check('A read-only server connects read-only and says why', await b.evaluate('document.getElementById("status").textContent.includes("without --allow-changes")&&document.getElementById("connectionBadge").textContent==="Connected · read-only"&&document.getElementById("proposalsCard").hidden', page));
+    check('Status-only approval refuses script source', (await client.tool('get_script', { id: scriptId })).ok === false);
     check('Status-only approval refuses logs', (await client.tool('get_logs')).ok === false);
     check('Status-only approval refuses network metadata', (await client.tool('get_network_log')).ok === false);
     await click('disconnect', page); await pair(page);
@@ -114,6 +117,8 @@ async function runMCPTransports(context) {
     const before=evidence.checks.length;await runMCP({...context,transport});
     evidence.mcpRuns.push({...evidence.mcp,checks:evidence.checks.length-before,exit:evidence.mcpProcessExit});
   }
+  const before=evidence.checks.length;await require('./mcp-changes-browser.cjs').runChanges({...context,transport:transports[0]});
+  evidence.mcpRuns.push({...evidence.mcpChanges,checks:evidence.checks.length-before,exit:evidence.mcpChangesExit});
   const errors=b.consoleErrors?await b.consoleErrors():b.events.filter(e=>e.method==='Runtime.exceptionThrown').map(e=>e.params.exceptionDetails);
   const expected=e=>JSON.stringify(e).includes('Owned offline debug error');
   const unloaded=e=>e.source==='moz-extension://'+b.id+'/src/blocking/content.js' && /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(e.text);

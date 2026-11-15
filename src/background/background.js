@@ -36,7 +36,9 @@ BlockAdsDebug.create(api, {
       dynamicRuleCount: (await api.declarativeNetRequest.getDynamicRules()).length };
   },
   activity: () => loadLog().then(entries => entries.slice()),
-  network: args => networkLog.read(args)
+  network: args => networkLog.read(args),
+  // Records the user's decisions on agent proposals, never the proposals themselves.
+  log: entry => addLog(entry)
 });
 const { normalizeDomain, normalizeDomains, domainMatches, sameSite } = BlockAds;
 const RULESET_IDS = ["ads_ruleset", "trackers_ruleset", "threats_ruleset", "community_ruleset"];

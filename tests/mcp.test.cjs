@@ -6,8 +6,8 @@ const protocol = require('../src/shared/debug-protocol.js');
 const { createServer } = require('../mcp/server.cjs');
 const { client } = require('./mcp-client.cjs');
 const origin = 'chrome-extension://' + 'a'.repeat(32);
-async function fixture(t) {
-  const input = new PassThrough(), output = new PassThrough(); const server = createServer({ input, output });
+async function fixture(t, options = {}) {
+  const input = new PassThrough(), output = new PassThrough(); const server = createServer({ input, output, ...options });
   const { port } = await server.start(), c = client(input, output);
   t.after(async () => { await server.close(); c.dispose(); });
   const post = (route, token, body = {}, headers = {}) => new Promise((resolve, reject) => {
@@ -115,4 +115,35 @@ test('pending reads are bounded and disconnect resolves every outstanding tool c
   assert.match((await f.tool('status')).error, /pending/);
   await f.post('/disconnect', p.token);
   assert.ok((await Promise.all(waiting)).every(result => result.ok === false));
+});
+
+test('a default server stays read-only: change tools are hidden and change approval is dropped at pairing', async t => {
+  const f = await fixture(t); const init = await f.initialize();
+  assert.match(init.result.instructions, /^Read-only/);
+  const { tools } = (await f.request('tools/list')).result;
+  assert.equal(tools.some(tool => tool.name.includes('propose') || tool.name.includes('proposal')), false);
+  assert.equal((await f.tool('connection')).changesOffered, false);
+  for (const [name, args] of [['propose_script', { source: '// x' }], ['get_proposal', { proposalId: '12345678-1234-1234-1234-123456789abc' }]])
+    assert.equal((await f.tool(name, args)).error.code, -32602);
+  const paired = await f.pair(['status', 'scripts', 'changes']);
+  assert.deepEqual(paired.scopes, ['status', 'scripts']);
+});
+test('--allow-changes advertises review-gated proposals and forwards them only after change approval', async t => {
+  const f = await fixture(t, { allowChanges: true }); const init = await f.initialize();
+  assert.match(init.result.instructions, /review-gated/);
+  const { tools } = (await f.request('tools/list')).result; assert.equal(tools.length, 10);
+  const propose = tools.find(tool => tool.name === 'module_engine_propose_script');
+  assert.equal(propose.annotations.readOnlyHint, false); assert.equal(propose.annotations.destructiveHint, false); assert.equal(propose.inputSchema.additionalProperties, false);
+  assert.equal(tools.find(tool => tool.name === 'module_engine_get_proposal').annotations.readOnlyHint, true);
+  assert.equal((await f.tool('propose_script', { source: '// x', id: '12345678-1234-1234-1234-123456789abc' })).error.code, -32602);
+  assert.match((await f.tool('connection')).instructions, /Propose script changes for my review/);
+  const readOnly = await f.pair(['status', 'scripts']); assert.deepEqual(readOnly.scopes, ['status', 'scripts']);
+  assert.match((await f.tool('propose_script', { source: '// x' })).error, /change scope/);
+  await f.post('/disconnect', readOnly.token);
+  const p = await f.pair(['status', 'changes']); assert.deepEqual(p.scopes, ['status', 'changes']);
+  const args = { source: '// proposed', note: 'Fixes the banner.' }, pending = f.tool('propose_script', args);
+  const job = (await f.post('/poll', p.token)).body.request;
+  assert.equal(job.name, 'module_engine_propose_script'); assert.deepEqual(job.arguments, args);
+  await f.post('/result', p.token, { id: job.id, result: { ok: true, proposal: { status: 'pending' } } });
+  assert.equal((await pending).proposal.status, 'pending');
 });

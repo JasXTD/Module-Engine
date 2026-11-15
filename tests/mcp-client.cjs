@@ -73,10 +73,10 @@ function client(input, output) {
     dispose() { for (const job of pending.values()) { clearTimeout(job.timer); job.reject(new Error('Test client closed.')); } pending.clear(); }
   };
 }
-async function processClient({ transport = 'stdio' } = {}) {
+async function processClient({ transport = 'stdio', allowChanges = false } = {}) {
   if (!['stdio', 'http'].includes(transport)) throw new Error('Unknown MCP test transport.');
   const token = randomBytes(32).toString('base64url');
-  const child = spawn(process.execPath, [path.join(__dirname, '..', 'mcp', 'server.cjs'), ...(transport === 'http' ? ['--http', '--port', '0'] : [])],
+  const child = spawn(process.execPath, [path.join(__dirname, '..', 'mcp', 'server.cjs'), ...(transport === 'http' ? ['--http', '--port', '0'] : []), ...(allowChanges ? ['--allow-changes'] : [])],
     { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, MODULE_ENGINE_MCP_TOKEN: token } });
   let stderr = '', stdout = '';
   child.stderr.on('data', chunk => { stderr += chunk; });

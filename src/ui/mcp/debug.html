@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MCP · Module Engine</title>
-  <link rel="stylesheet" href="../shared/ui.css"><link rel="stylesheet" href="debug.css">
+  <link rel="stylesheet" href="../shared/ui.css"><link rel="stylesheet" href="../shared/script-review.css"><link rel="stylesheet" href="debug.css">
 </head>
 <body>
 <div class="shell">
@@ -16,37 +16,48 @@
       <li><a href="../network/network.html" target="_blank" rel="noopener"><span class="tile" aria-hidden="true"><span class="ic ic-activity"></span></span>Network</a></li>
       <li><a href="debug.html" aria-current="page"><span class="tile" aria-hidden="true"><span class="ic ic-code"></span></span>MCP</a></li>
     </ul>
-    <p class="rail-foot">Local connection. Read-only access.</p>
+    <p class="rail-foot">Local connection. Every change needs your review.</p>
   </nav>
   <main class="page">
     <header class="page-head"><div><h1>MCP</h1><p class="muted">Connect your agent to Module Engine while you keep control.</p></div><span id="connectionBadge" class="badge">Disconnected</span></header>
     <p id="status" class="notice" role="status" aria-live="polite">Start the Module Engine MCP server in your client, then ask it for a pairing code.</p>
     <section class="card" aria-labelledby="connectHeading">
-      <h2 id="connectHeading">Read-only debugging</h2>
+      <h2 id="connectHeading">Connection</h2>
       <p>The connection is to <code>127.0.0.1</code> on this computer. It ends when you close this page, disconnect, or reach 30 minutes.</p>
       <form id="connectForm">
         <label for="pairingCode">Pairing code</label>
         <input id="pairingCode" type="text" autocomplete="off" spellcheck="false" maxlength="54" placeholder="ME1.port.code" required aria-describedby="pairingHelp">
         <p id="pairingHelp" class="muted">Ask your agent to call <code>module_engine_connection</code>. Codes expire after two minutes.</p>
-        <fieldset id="scopes"><legend>What this connection can read</legend>
+        <fieldset id="scopes"><legend>What this connection can do</legend>
           <label><input type="checkbox" checked disabled> Module and registration status</label>
           <label><input type="checkbox" id="shareScripts" checked> Installed script source, metadata and matching checks</label>
           <label><input type="checkbox" id="shareLogs" checked> Recent activity and captured userscript errors</label>
           <label><input type="checkbox" id="shareNetwork" aria-describedby="networkHelp"> Captured network request metadata</label>
+          <label><input type="checkbox" id="shareChanges" aria-describedby="changesHelp"> Propose script changes for my review</label>
         </fieldset>
         <p id="networkHelp" class="muted">Network sharing is optional. <a href="../network/network.html" target="_blank" rel="noopener">Open Network in another tab</a> and start capture there. Keep both pages open to capture while debugging. The agent can only read existing metadata; it cannot start, stop or clear capture. Headers and bodies are omitted, but URL paths may contain private information.</p>
-        <p class="muted">Source and error messages can contain private text. Cookie jars, saved GM values and page content are outside this connection’s access. Agents cannot run code or change scripts and settings.</p>
-        <div class="actions"><button id="connect" class="primary" type="submit">Connect read-only</button><button id="disconnect" type="button" disabled>Disconnect</button></div>
+        <p id="changesHelp" class="muted">Change proposals are optional and need a server started with <code>--allow-changes</code>. Each one appears below for your review. Nothing is saved until you apply it, and an applied script stays off unless you choose Apply &amp; enable. The agent cannot delete scripts or decide for you.</p>
+        <p class="muted">Source and error messages can contain private text. Cookie jars, saved GM values and page content are outside this connection’s access. Agents cannot run code or change settings.</p>
+        <div class="actions"><button id="connect" class="primary" type="submit">Connect</button><button id="disconnect" type="button" disabled>Disconnect</button></div>
       </form>
       <p id="sessionDetail" class="muted"></p>
+    </section>
+    <section id="proposalsCard" class="card" aria-labelledby="proposalsHeading" hidden>
+      <div class="toolbar"><h2 id="proposalsHeading">Pending changes</h2><span id="proposalCount" class="muted">None waiting</span></div>
+      <p id="emptyProposals" class="muted">Script changes the agent proposes appear here. Nothing changes until you decide.</p>
+      <div id="proposals"></div>
+      <h3 id="decisionsHeading" hidden>Decided this session</h3>
+      <ol id="decisions" aria-live="polite"></ol>
     </section>
     <section class="card" aria-labelledby="readsHeading"><div class="toolbar"><h2 id="readsHeading">Recent agent reads</h2><span id="readCount" class="muted">0 reads</span></div><p id="emptyReads" class="muted">Approved reads will appear here. Request contents are not saved.</p><ol id="reads" aria-live="polite"></ol></section>
     <details class="card"><summary>Setup and capture limits</summary>
       <p>Use the default local stdio connection, or the optional authenticated localhost HTTP connection. Both require the same browser approval above. No package installation is needed. See <a href="../../../docs/MCP.md">the setup guide</a> for commands and client configuration.</p>
       <p>Captured userscript errors include wrapper exceptions, top-level-await rejections and errors reported by managed GM callbacks in native messaging worlds, including page scripts using the GM bridge. Connect before reproducing the error. Ordinary page-console messages, raw scripts and unrelated asynchronous errors still require browser developer tools.</p>
+      <p>Proposals last only for this connection. Revert is available for changes you applied during it; afterwards, edit the script in Modules &amp; scripts.</p>
     </details>
   </main>
 </div>
+<script src="../../../vendor/publicsuffix/suffixes.js"></script><script src="../../userscripts/userscripts-matching.js"></script><script src="../../userscripts/userscripts-page.js"></script><script src="../../userscripts/userscripts-core.js"></script><script src="../../userscripts/userscripts-updates.js"></script><script src="../shared/script-review.js"></script>
 <script src="../../shared/debug-protocol.js"></script><script src="debug.js"></script>
 </body>
 </html>

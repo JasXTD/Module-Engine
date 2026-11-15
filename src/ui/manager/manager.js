@@ -73,15 +73,9 @@
   const updateReady = script => { const info = updateInfo(script); return ['staged', 'available'].includes(info?.outcome) ? info.available || '' : null; };
   const when = time => new Date(time).toLocaleString();
   const code = text => { const node = document.createElement('code'); node.textContent = text; return node; };
-  // The destinations a check would use for this source, as shown in a review.
-  function updateRoute(source, sourceURL) {
-    let plan; try { plan = updates.targets({ source, sourceURL }); } catch { return 'Not linked'; }
-    return plan.download ? 'Downloads: ' + plan.download + (plan.version ? '\nVersion check: ' + plan.version : '') : 'Not linked';
-  }
   const size = bytes => bytes < 1024 ? bytes + ' bytes' : (bytes / 1024).toFixed(1) + ' KiB';
-  const cookieScope = meta => 'Current host' + (meta.connects.some(host => host !== 'self') ? ' and @connect: ' + meta.connects.filter(host => host !== 'self').join(', ') : '') + '; includes HttpOnly cookies in the calling tab’s store';
-  const worldDescription = meta => meta.injection === 'auto' && !meta.unwrap ? 'Page first; isolated fallback if page startup is blocked'
-    : meta.world === 'MAIN' ? 'Page world (shared with the site)' : 'Isolated script world';
+  // The MCP page shows agent proposals with this same review.
+  const { cookieScope, worldDescription } = BlockAdsScriptReview;
   function preview() {
     const container = el('scriptPreview'); container.replaceChildren();
     const note = (text, className = 'muted') => { const p = document.createElement('p'); p.textContent = text; p.className = className; container.append(p); };
@@ -319,33 +313,8 @@
   }
   function showSourceReview(review) {
     const old = review.previousSource ? core.parse(review.previousSource) : null, next = review.metadata;
-    const rows = [
-      ['Name', meta => meta.name], ['Namespace', meta => meta.namespace], ['Version', meta => meta.explicitVersion || 'Not specified'],
-      ['Description', meta => meta.description || 'None'],
-      ['Sites', meta => [...meta.matches, ...meta.includes].join('\n')],
-      ['Excluded sites', meta => [...meta.excludeMatches, ...meta.excludes].join('\n') || 'None'],
-      ['APIs', meta => meta.grants.join('\n')],
-      ['Execution', meta => meta.unwrap ? 'Unwrapped global code; grants ignored' : meta.topLevelAwait ? 'Async wrapper; top-level await enabled' : 'Function wrapper'],
-      ['Cookie access', meta => meta.grants.some(grant => /^GM[._]cookie$/.test(grant)) ? cookieScope(meta) : 'No cookie helper requested'],
-      ['Network access', meta => meta.grants.some(grant => /xmlhttprequest|[._]download$/i.test(grant))
-        ? meta.connects.join('\n') || 'Any HTTP(S) destination (no @connect restriction)' : 'No network helper requested'],
-      ['Timing', meta => meta.runAt.replace('_', '-')], ['Frames', meta => meta.allFrames ? 'Matching frames' : 'Top frame only'],
-      ['World', worldDescription],
-      ['Dependencies', meta => core.assetSpecs(meta).map(spec => (spec.name || '@require') + ': ' + spec.url).join('\n') || 'None']
-    ];
-    const table = el('reviewChanges'); table.replaceChildren();
-    const row = (label, before, after) => {
-      const tr = document.createElement('tr'), changed = Boolean(old && before !== after);
-      tr.classList.toggle('changed', changed);
-      for (const [index, value] of [label + (changed ? ' · changed' : ''), before, after].entries()) {
-        const cell = document.createElement(index ? 'td' : 'th'); cell.textContent = value;
-        if (!index) cell.scope = 'row'; tr.append(cell);
-      }
-      table.append(tr);
-    };
-    for (const [label, value] of rows) row(label, old ? value(old) : '—', value(next));
-    row('Update source', review.previousSourceURL ? updateRoute(review.previousSource, review.previousSourceURL) : 'Not linked',
-      updateRoute(review.source, review.sourceURL));
+    BlockAdsScriptReview.render(el('reviewChanges'), BlockAdsScriptReview.rows(review.previousSource, review.source,
+      { previousSourceURL: review.previousSourceURL, sourceURL: review.sourceURL }));
     // A first install has no current version to compare, so its empty column is hidden.
     el('installReview').classList.toggle('fresh', !old);
     el('reviewCaption').textContent = old ? 'Script access and settings · changed rows are marked' : 'Script access and settings';

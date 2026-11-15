@@ -10,7 +10,7 @@ function validateOptions({ port, token }) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('HTTP port must be an integer from 0 to 65535.');
   if (!tokenShape(token)) throw new Error('Set MODULE_ENGINE_MCP_TOKEN to a locally generated 32-byte base64url token.');
 }
-function createHTTP({ port: requestedPort, token, readTool, revokeBrowser }) {
+function createHTTP({ port: requestedPort, token, readTool, revokeBrowser, allowChanges = false }) {
   validateOptions({ port: requestedPort, token });
   let port, session, active = 0, closed = false, closing;
   const auth = value => tokenShape(value) && timingSafeEqual(Buffer.from(value), Buffer.from(token));
@@ -117,7 +117,7 @@ function createHTTP({ port: requestedPort, token, readTool, revokeBrowser }) {
         if (session) { deny(res, 409, 'This server already has an MCP client. Disconnect it before connecting another.'); return; }
         // Reserve before awaiting, so concurrent initialization cannot take over approval.
         const candidate = { id: randomBytes(32).toString('base64url'), expiresAt: Date.now() + protocol.SESSION_MS,
-          rpc: createRPC(readTool, { replyOnCancel: true }) };
+          rpc: createRPC(readTool, { replyOnCancel: true, allowChanges }) };
         session = candidate;
         const result = await candidate.rpc.receive(message);
         if (!result?.result) { candidate.rpc.close(); if (session === candidate) session = undefined; reply(res, 400, result); return; }

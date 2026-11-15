@@ -28,6 +28,8 @@ async function runLayout(context) {
     evidence.layoutMCP.push({ ...evidence.mcp, processExit: evidence.mcpProcessExit });
     evidence.layoutPhases.push({ name: 'MCP '+transport, checks: evidence.checks.length-before });
   }
+  const changesBefore = evidence.checks.length; await require('./mcp-changes-browser.cjs').runChanges({ ...context, transport: 'stdio' });
+  evidence.layoutPhases.push({ name: 'MCP change proposals', checks: evidence.checks.length-changesBefore });
   const errors = b.consoleErrors ? await b.consoleErrors() : b.events.filter(event=>event.method==='Runtime.exceptionThrown').map(event=>event.params.exceptionDetails);
   const expected = error => /Owned page failure|Owned offline debug error/.test(JSON.stringify(error));
   // As in the blocker suite, Firefox logs replies discarded after the test

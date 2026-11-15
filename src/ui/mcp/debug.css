@@ -13,4 +13,13 @@ details.card { display: block; }
 details.card p { margin-top: 14px; }
 .badge { padding: 5px 10px; border: 1px solid var(--line); border-radius: 20px; }
 .badge.active { color: var(--accent-text); background: var(--accent-soft); }
+#proposals { display: grid; gap: 18px; }
+.proposal { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); min-width: 0; }
+.proposal h3, #decisionsHeading { font-size: 15px; overflow-wrap: anywhere; }
+.proposal .review-code { margin-top: 0; }
+.agent-note { padding: 10px 12px; border-left: 3px solid var(--line-strong); background: var(--bg); overflow-wrap: anywhere; white-space: pre-wrap; }
+.proposal .actions { justify-content: flex-end; }
+#decisions { padding-left: 22px; overflow-wrap: anywhere; }
+#decisions li { padding: 6px 0; }
+#decisions li button { margin-left: 10px; }
 @media (max-width: 860px) { .rail-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

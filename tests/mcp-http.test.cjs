@@ -240,3 +240,16 @@ test('real HTTP process continues after stdin EOF, serves seven tools, then the 
     assert.ok(exit.code === 0 || exit.signal === 'SIGTERM');
   }
 });
+test('real stdio and HTTP processes advertise proposals only with --allow-changes', async () => {
+  for (const transport of ['stdio', 'http']) {
+    const c = await processClient({ transport, allowChanges: true });
+    try {
+      await c.initialize(); const { tools } = (await c.request('tools/list')).result;
+      assert.equal(tools.length, 10, transport); assert.ok(tools.some(tool => tool.name === 'module_engine_propose_script'));
+      assert.equal((await c.tool('connection')).changesOffered, true);
+      assert.match((await c.tool('propose_script', { source: '// x' })).error, /Connect a browser first/);
+    } finally { await c.close(); }
+  }
+  const help = spawnSync(process.execPath, [path.join(__dirname, '..', 'mcp', 'server.cjs'), '--help'], { encoding: 'utf8' });
+  assert.match(help.stdout, /--allow-changes lets the agent propose script changes/);
+});

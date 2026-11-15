@@ -1,4 +1,5 @@
-/* Stdio by default, opt-in localhost HTTP. Only a paired extension can answer reads. */
+/* Stdio by default, opt-in localhost HTTP. Only a paired extension can answer reads.
+   --allow-changes additionally offers review-gated proposals; it never applies one. */
 'use strict';
 const http = require('node:http');
 const { randomBytes, randomUUID, timingSafeEqual } = require('node:crypto');
@@ -9,7 +10,7 @@ const { createHTTP, validateOptions } = require('./http.cjs');
 const secret = () => randomBytes(32).toString('base64url');
 const equal = (a, b) => typeof a === 'string' && /^[A-Za-z0-9_-]{43}$/.test(a) && typeof b === 'string' && a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const extensionOrigin = value => typeof value === 'string' && /^(chrome-extension:\/\/[a-p]{32}|moz-extension:\/\/[a-f0-9-]{36})$/.test(value);
-function createServer({ input = process.stdin, output = process.stdout, http: httpOptions } = {}) {
+function createServer({ input = process.stdin, output = process.stdout, http: httpOptions, allowChanges = false } = {}) {
   if (httpOptions) validateOptions(httpOptions);
   const jobs = new Map();
   let session, pairing, poll, port, closed = false, closing, inputBytes = Buffer.alloc(0), outputBytes = 0;
@@ -34,10 +35,11 @@ function createServer({ input = process.stdin, output = process.stdout, http: ht
   }
   function connection() {
     expire();
-    if (session) return { connected: true, browser: session.browser, scopes: session.scopes, expiresAt: session.expiresAt };
+    if (session) return { connected: true, browser: session.browser, scopes: session.scopes, expiresAt: session.expiresAt, changesOffered: allowChanges };
     if (!pairing || pairing.expiresAt <= Date.now()) pairing = { token: secret(), expiresAt: Date.now() + 120000 };
-    return { connected: false, pairingCode: 'ME1.' + port + '.' + pairing.token, pairingExpiresAt: pairing.expiresAt,
-      instructions: 'Open Module Engine → Modules & scripts → MCP. Paste this code, choose what to share and click Connect read-only. Keep that page open.' };
+    return { connected: false, pairingCode: 'ME1.' + port + '.' + pairing.token, pairingExpiresAt: pairing.expiresAt, changesOffered: allowChanges,
+      instructions: 'Open Module Engine → Modules & scripts → MCP. Paste this code, choose what to share and click Connect. Keep that page open.' +
+        (allowChanges ? ' To let you propose script changes, the user must also tick “Propose script changes for my review”.' : '') };
   }
   function sendHTTP(res, status, body) {
     if (res.destroyed || res.writableEnded) return;
@@ -74,12 +76,14 @@ function createServer({ input = process.stdin, output = process.stdout, http: ht
     const supplied = req.headers.authorization?.replace(/^Bearer /, '');
     if (req.url === '/pair') {
       if (session || !pairing || pairing.expiresAt <= Date.now() || !equal(supplied, pairing.token)) { sendHTTP(res, 401, { error: 'Pairing code expired or unavailable.' }); req.resume(); return; }
-      const expected = pairing, body = await readBody(req), approved = protocol.scopes(body.scopes);
+      const expected = pairing, body = await readBody(req);
+      // A read-only server never accepts change approval, whatever the page requests.
+      const approved = protocol.scopes(body.scopes).filter(scope => allowChanges || scope !== protocol.CHANGES);
       if (pairing !== expected || session || expected.expiresAt <= Date.now()) { sendHTTP(res, 409, { error: 'Pairing already consumed.' }); return; }
       session = { token: secret(), origin: req.headers.origin, scopes: approved, browser: typeof body.browser === 'string' ? body.browser.slice(0, 64) : 'Browser',
         expiresAt: Date.now() + protocol.SESSION_MS, seen: Date.now() };
       pairing = undefined;
-      sendHTTP(res, 200, { token: session.token, expiresAt: session.expiresAt }); return;
+      sendHTTP(res, 200, { token: session.token, expiresAt: session.expiresAt, scopes: approved }); return;
     }
     const current = session;
     if (!current || current.expiresAt <= Date.now() || current.origin !== req.headers.origin || !equal(supplied, current.token)) {
@@ -109,8 +113,9 @@ function createServer({ input = process.stdin, output = process.stdout, http: ht
     if (signal?.aborted) throw new Error('Debug request cancelled.');
     const tool = protocol.call(name, args);
     if (!tool.scope) return Promise.resolve(connection());
+    if (tool.scope === protocol.CHANGES && !allowChanges) throw new Error('This MCP server was started without --allow-changes.');
     if (!session) throw new Error('Connect a browser first with module_engine_connection.');
-    if (!session.scopes.includes(tool.scope)) throw new Error('The browser has not approved this read scope.');
+    if (!session.scopes.includes(tool.scope)) throw new Error('The browser has not approved this ' + (tool.scope === protocol.CHANGES ? 'change' : 'read') + ' scope.');
     if (jobs.size >= 8) throw new Error('Too many pending debugging reads.');
     return new Promise((resolve, reject) => {
       const job = { id: randomUUID(), name, args, signal, resolve, reject, sent: false };
@@ -119,8 +124,8 @@ function createServer({ input = process.stdin, output = process.stdout, http: ht
       jobs.set(job.id, job); signal?.addEventListener('abort', job.abort, { once: true }); dispatch();
     });
   }
-  const rpc = createRPC(readTool);
-  const httpServer = httpOptions ? createHTTP({ ...httpOptions, readTool,
+  const rpc = createRPC(readTool, { allowChanges });
+  const httpServer = httpOptions ? createHTTP({ ...httpOptions, readTool, allowChanges,
     revokeBrowser(reason) { pairing = undefined; disconnect(reason); }
   }) : null;
   function expire() { if (session && (session.expiresAt <= Date.now() || session.seen + 30000 <= Date.now())) disconnect('Debug connection expired.'); }
@@ -169,14 +174,15 @@ module.exports = { createServer };
 if (require.main === module) {
   try {
     const { values } = parseArgs({ options: { http: { type: 'boolean' }, stdio: { type: 'boolean' },
-      port: { type: 'string' }, help: { type: 'boolean' }, 'generate-token': { type: 'boolean' } } });
+      port: { type: 'string' }, help: { type: 'boolean' }, 'generate-token': { type: 'boolean' }, 'allow-changes': { type: 'boolean' } } });
     if (values.help || values['generate-token']) {
       if (Object.keys(values).length !== 1) throw new Error('Use --help or --generate-token on its own.');
-      process.stdout.write(values.help ? 'Module Engine MCP (Node 22+)\n  node mcp/server.cjs [--stdio]\n  node mcp/server.cjs --http [--port 8765]\n  node mcp/server.cjs --generate-token\nHTTP requires MODULE_ENGINE_MCP_TOKEN. Binds only 127.0.0.1; approve browser reads separately.\n' : secret() + '\n');
+      process.stdout.write(values.help ? 'Module Engine MCP (Node 22+)\n  node mcp/server.cjs [--stdio] [--allow-changes]\n  node mcp/server.cjs --http [--port 8765] [--allow-changes]\n  node mcp/server.cjs --generate-token\nHTTP requires MODULE_ENGINE_MCP_TOKEN. Binds only 127.0.0.1; approve browser access separately.\n--allow-changes lets the agent propose script changes; each one still needs your review in the browser.\n' : secret() + '\n');
     } else {
       if (values.http && values.stdio || values.port !== undefined && !values.http) throw new Error('Choose stdio (default) or --http [--port 8765].');
       if (values.port !== undefined && !/^(0|[1-9][0-9]{0,4})$/.test(values.port)) throw new Error('Invalid HTTP port.');
-      const server = createServer(values.http ? { http: { port: Number(values.port ?? 8765), token: process.env.MODULE_ENGINE_MCP_TOKEN } } : {});
+      const allowChanges = Boolean(values['allow-changes']);
+      const server = createServer(values.http ? { http: { port: Number(values.port ?? 8765), token: process.env.MODULE_ENGINE_MCP_TOKEN }, allowChanges } : { allowChanges });
       server.start().then(address => { if (address.url) process.stderr.write('Module Engine MCP listening at ' + address.url + '\n'); })
         .catch(() => { process.stderr.write('Module Engine MCP could not start. Check that the local port is available.\n'); process.exitCode = 1; void server.close(); });
       for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { void server.close(); process.stdin.destroy(); });

@@ -2,7 +2,7 @@
 
 A modular browser extension for **Chrome, Edge and Firefox**, combining local ad blocking with an optional userscript manager.
 
-Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved, read-only debugging; it needs an installed Node runtime but no packages. Formerly **BlockAds Shield**.
+Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved debugging that is read-only by default; it needs an installed Node runtime but no packages. Formerly **BlockAds Shield**.
 
 ## Features
 
@@ -17,7 +17,8 @@ Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad bl
 - **Script installation and updates:** install from a direct URL and manually check for updates, with source/access review and approval before replacement. Saved values are retained.
 - **Editor tools:** syntax highlighting and errors, metadata suggestions, tags and execution order. An optional authenticated localhost helper tracks one external `.user.js` file; changes enter a draft only when you choose. See [editing and external-file setup](docs/USER_GUIDE.md#editing-and-organizing-scripts).
 - **Local activity and review:** inspect extension events, supported blocked-request logs and suspected-ad flags before choosing what to block.
-- **Read-only MCP debugging:** let an agent inspect module status, scripts, URL matching and bounded activity/errors through an explicitly approved local session. Stdio is the default; authenticated localhost HTTP is optional. See [setup and capture limits](docs/MCP.md).
+- **MCP debugging:** let an agent inspect module status, scripts, URL matching and bounded activity/errors through an explicitly approved local session. Stdio is the default; authenticated localhost HTTP is optional. See [setup and capture limits](docs/MCP.md).
+- **Agent script proposals (opt-in):** with `--allow-changes` and a separate approval, an agent can propose new scripts, edits and on/off changes. Each one waits on the MCP page with the same access and source review as a URL install; nothing is saved until you apply it, applied scripts stay off unless you choose Apply & enable, and agents cannot delete scripts. See [script change proposals](docs/MCP.md#script-change-proposals).
 
 ## Getting started
 

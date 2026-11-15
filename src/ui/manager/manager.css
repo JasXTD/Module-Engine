@@ -262,22 +262,8 @@ dialog .actions { justify-content: flex-end; }
 #sourceURL { min-height: 34px; padding: 6px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); font: inherit; }
 #sourceURL:focus { border-color: var(--accent-text); }
 #installStatus, #reviewURL { overflow-wrap: anywhere; white-space: pre-wrap; }
-.review-table-wrap { overflow-x: auto; }
-.review-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
-.review-table caption { text-align: left; margin-bottom: 8px; color: var(--text-2); }
-.review-table th, .review-table td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; white-space: pre-wrap; }
-/* Setting names wrap between words; URLs and patterns in the cells may break anywhere. */
-.review-table th { overflow-wrap: normal; }
-.review-table th:first-child { width: 22%; }
-.review-table tr.changed { background: var(--warn-soft); }
-#installReview.fresh .review-table :is(th, td):nth-child(2) { display: none; }
-.review-code { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
-.review-code:has(#previousCode[hidden]) { grid-template-columns: minmax(0, 1fr); }
-.review-code textarea { display: block; width: 100%; height: 260px; resize: vertical; white-space: pre; font: 12px/1.5 var(--mono); }
+/* The review table and source panes are styled by ../shared/script-review.css. */
 @media (max-width: 600px) {
   #installDialog { padding: 16px; }
-  .review-code { grid-template-columns: minmax(0, 1fr); }
   .url-entry button { width: 100%; }
-  .review-table th:first-child { width: 31%; }
-  .review-table th, .review-table td { padding: 6px; }
 }

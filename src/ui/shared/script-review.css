@@ -1,0 +1,19 @@
+/* Shared review layout for script-review.js on the manager and MCP pages. */
+.review-table-wrap { overflow-x: auto; }
+.review-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.review-table caption { text-align: left; margin-bottom: 8px; color: var(--text-2); }
+.review-table th, .review-table td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; white-space: pre-wrap; }
+/* Setting names wrap between words; URLs and patterns in the cells may break anywhere. */
+.review-table th { overflow-wrap: normal; }
+.review-table th:first-child { width: 22%; }
+.review-table tr.changed { background: var(--warn-soft); }
+/* A new script has no current version, so its empty comparison column is hidden. */
+.fresh .review-table :is(th, td):nth-child(2) { display: none; }
+.review-code { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.review-code:has(> [hidden]) { grid-template-columns: minmax(0, 1fr); }
+.review-code textarea { display: block; width: 100%; height: 260px; resize: vertical; white-space: pre; font: 12px/1.5 var(--mono); }
+@media (max-width: 600px) {
+  .review-code { grid-template-columns: minmax(0, 1fr); }
+  .review-table th:first-child { width: 31%; }
+  .review-table th, .review-table td { padding: 6px; }
+}
