@@ -54,10 +54,13 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
     check('Unpaired navigation cannot give MCP access', (await client.tool('status')).ok === false);
     await open('manager');
     const ownerURL = await getURL('manager'), initialTabs = JSON.stringify(await tabIds());
+    check('Modules & scripts links MCP only from its side menu', await get('const links=[...d.links].filter(a=>a.pathname.endsWith("/mcp/debug.html"));return links.length===1&&links[0].closest(".rail-pages")!==null'));
     const draft = scriptSource('Navigation retained draft', '// @grant none\n', 'document.body.dataset.navigationDraft="ran";');
     await click('#newScript');
     await get('const e=d.getElementById("scriptSource");e.value=' + JSON.stringify(draft) + ';e.dispatchEvent(new Event("input",{bubbles:true}));window.navigationRoot=d;window.navigationHides=0;addEventListener("pagehide",()=>navigationHides++);');
     await section('mcp');
+    // A first visit is where Chromium rings a script-focused heading after a click.
+    check('A clicked first visit focuses the section heading without a focus ring', await get('const h=d.querySelector("h1");return d.activeElement===h&&getComputedStyle(h).outlineStyle==="none"'));
     check('Clicking MCP creates no browser tab', JSON.stringify(await tabIds()) === initialTabs);
     check('Section navigation keeps the host URL and document', await get('return location.href===' + JSON.stringify(ownerURL) + '&&navigationRoot===document&&navigationHides===0'));
     await pair();

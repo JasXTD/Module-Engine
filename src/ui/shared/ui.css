@@ -233,6 +233,10 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
+/* A tabindex="-1" heading or section is a focus target, not a control: section
+   switches and dialogs focus it for screen readers, and Tab cannot reach it.
+   Without this, the browser rings it only on a section's first visit. */
+[tabindex="-1"]:not(a, button, input, select, textarea, summary):focus { outline: none; }
 
 /* Surfaces */
 .card {

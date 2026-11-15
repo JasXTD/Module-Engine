@@ -29,7 +29,7 @@ By default the server is **read-only**. Started with `--allow-changes`, it also 
    ```
 
 3. Ask the agent to call `module_engine_connection` for a pairing code.
-4. Open **Module Engine → Modules & scripts → MCP** from the sidebar (or the existing top-right button), paste the code, choose the scopes and click **Connect**. The code expires after two minutes and can be used once. Network metadata and change proposals each have their own unchecked scope; existing Scripts/Logs approval includes neither.
+4. Open **Module Engine → Modules & scripts → MCP** from the sidebar, paste the code, choose the scopes and click **Connect**. The code expires after two minutes and can be used once. Network metadata and change proposals each have their own unchecked scope; existing Scripts/Logs approval includes neither.
 5. Keep the Module Engine tab open. **MCP**, **Modules & scripts**, **My lists**, **Activity log** and **Network** switch within that tab; the connection and approved scopes stay alive, and the sidebar shows its connection status and pending review count. Click **Disconnect**, close or reload the tab to revoke browser access. Sessions still expire after 30 minutes; switching sections does not extend them. Reconnecting requires another explicit approval. One browser can connect to each server process.
 
 ## Optional localhost HTTP connection
