@@ -359,6 +359,8 @@ td button { min-height: 28px; padding: 3px 9px; font-size: 12px; }
 .rail-group .rail-links a { padding: 4px 10px; font-weight: 400; }
 .rail-foot { margin-top: auto; padding: 0 10px; color: var(--text-2); font-size: 11.5px; }
 
+/* Every section shares this centred column, so the heading and cards stay put
+   when switching pages from the side menu. Don't override the width per page. */
 .page {
   display: flex;
   flex-direction: column;
