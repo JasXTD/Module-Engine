@@ -171,6 +171,7 @@ byId("exportButton").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 });
 setInterval(() => {
-  if (byId("liveToggle").checked && document.visibilityState === "visible") void refresh();
+  if (byId("liveToggle").checked && document.visibilityState === "visible" && document.documentElement.dataset.meSectionActive !== 'false') void refresh();
 }, 2000);
+addEventListener('module-engine-section-change', () => { if (document.documentElement.dataset.meSectionActive === 'true') void refresh(); });
 void refresh();

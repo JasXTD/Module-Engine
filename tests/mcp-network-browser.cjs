@@ -6,8 +6,8 @@ async function runNetworkReads({ b, manager, page, client, pair, click, check, u
   const network=await b.open(await get("(globalThis.browser||chrome).runtime.getURL('src/ui/network/network.html')",manager));pages.push(network);
   await until("state?.available&&!busy&&!reading&&!document.getElementById('startCapture').disabled",network);
   check('MCP approval has not started native capture',await get('!state.active',network));
-  check('Network sidebar opens MCP separately to preserve capture',await get("(()=>{const a=document.querySelector('.rail-pages a[href=\"../mcp/debug.html\"]');return a?.textContent.trim()==='MCP'&&a.target==='_blank'&&a.rel.includes('noopener')})()",network));
-  check('MCP sidebar opens Network separately to preserve approval',await get("document.querySelector('.rail-pages a[href=\"../network/network.html\"]').target==='_blank'"));
+  check('Network sidebar routes MCP within its tab',await get("(()=>{const a=document.querySelector('.rail-pages a[href=\"../mcp/debug.html\"]');return a?.textContent.trim()==='MCP'&&!a.target})()",network));
+  check('MCP sidebar routes Network within its tab',await get("!document.querySelector('.rail-pages a[href=\"../network/network.html\"]').target"));
   await click('disconnect',page);await pair(page,['status','network']);
   const prior=await snapshot(),idle=await client.tool('get_network_log');
   check('A network read reports stopped capture without starting it',idle.ok&&!idle.capture.active);

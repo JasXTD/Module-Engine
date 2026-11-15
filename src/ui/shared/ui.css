@@ -67,6 +67,12 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
+/* A section keeps its document and native ports while another section is shown.
+   Only these five packaged views are framed; external navigation leaves the tab. */
+html.me-section-away, body.me-section-away { overflow: hidden; }
+body.me-section-away > :not(.me-section-frame) { display: none !important; }
+.me-section-frame { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg); z-index: 100; }
+.me-nav-status { margin-inline-start: auto; font-size: 10px; color: var(--accent-text); font-weight: 600; }
 html, .scroll, .rail, .table-wrap, .library ul { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 
 body {
@@ -371,6 +377,7 @@ td button { min-height: 28px; padding: 3px 9px; font-size: 12px; }
 .toolbar h2 { margin-right: auto; }
 
 @media (max-width: 860px) {
+  .me-nav-status { margin-inline-start: 0; }
   .shell { grid-template-columns: minmax(0, 1fr); }
   .rail {
     position: static;

@@ -1,8 +1,28 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 16 November 2026 direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 16 November 2026 same-tab MCP navigation change, following the direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Same-tab MCP navigation — 16 November 2026
+
+MCP and the other four sidebar sections now stay in one browser tab. The existing packaged documents are loaded once, kept hidden/inert when inactive, and reused. MCP approval, pending reviews, unsaved editor drafts, Network capture and scroll positions remain in their owning documents. The sidebar reports the MCP connection and pending proposal count. Back/Forward uses local history state without changing the native port sender URL. Explicit Disconnect, reload, closing the tab or leaving the app still revokes approval; switching sections does not extend the 30-minute limits.
+
+**590 Node tests**, **637 PowerShell rule assertions** and syntax checks for **10 JavaScript files** passed. Final native offline results:
+
+| Browser | Same-tab navigation | Existing MCP suite | Full blocker/UI suite |
+| --- | ---: | ---: | ---: |
+| Chrome | 76 (stdio) | 169 (both read transports; stdio proposals) | 739 |
+| Edge | 76 (HTTP) | — | 739 |
+| Firefox | 72 (stdio) | — | 733 |
+
+These **2,604 native checks** cover real extension ports, no extra tab on MCP activation, rapid and keyboard navigation, modal review protection, retained drafts, trusted and synthetic proposal decisions, native userscript execution, hidden Network capture, scope revocation/reapproval, Back/Forward, direct MCP entry, real reload and close, and leaving an embedded section for an owned localhost page. Local ad canaries stayed blocked. All final package hashes match the checkout; blocker, rules, permissions, native authorization and server code are unchanged. The blocker fixture retains its existing Reddit hostname alias only in disposable copies, with original and fixture hashes recorded separately.
+
+Desktop and narrow Chrome/Edge layouts and Firefox's desktop layout were inspected. Three focused review rounds covered document/port ownership and failure paths, bounded retained views and hidden polling, then affected consumers, layout and final source/evidence consistency. Navigation creates at most four child documents per tab; it adds no dependency, storage migration or background service.
+
+Intermediate fixture failures are retained: corrected saved-script metadata lookup, current-section selector and generated test expression; Firefox uses native reload because same-URL navigation creates a fresh history entry. The Firefox fixture also retains its browser-generated dropped content-script reply diagnostics separately, using the exact existing blocker/install convention. No unexpected navigation or MCP errors remained. Full combined userscript suites, forced tab discard and a real-time 30-minute expiry soak were not repeated; expiry and permission boundaries retain their existing unit coverage.
+
+Tests used installed browsers, disposable profiles, owned localhost content and deny proxies. No public sites, personal profiles, desktop helper permissions or new software were involved. [Evidence, exact checks and source hashes](../verification/2026-11-16/navigation/summary.json).
 
 ## Direction-control source review — 16 November 2026
 

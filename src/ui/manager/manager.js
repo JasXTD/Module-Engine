@@ -377,7 +377,7 @@
     catch (error) { if (installation === state) { state.error = true; state.status = error.message; renderInstallation(); } return false; }
     if (installation !== state) return false;
     if (state.requestId) void send({ type: 'US_CANCEL_SOURCE', requestId: state.requestId }).catch(() => {});
-    location.replace(state.url);
+    top.location.replace(state.url);
     return true;
   }
   function closeInstallation() {

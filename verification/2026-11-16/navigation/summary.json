@@ -1,0 +1,625 @@
+{
+  "taskDate": "2026-11-16",
+  "baselineCommit": "729bc211aba2c063865cba50bca718c31c68685e",
+  "retainedAtUtc": "2026-11-15T18:14:25.685Z",
+  "unitTests": {
+    "passed": 590,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ruleAssertions": 637,
+  "syntaxFiles": 10,
+  "runs": [
+    {
+      "name": "blocker-chrome",
+      "browser": "chrome",
+      "checks": 739,
+      "success": true,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "closedPageDiagnostics": 0
+    },
+    {
+      "name": "blocker-edge",
+      "browser": "edge",
+      "checks": 739,
+      "success": true,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.60",
+        "revision": "@fbcb2989a6c61b72a4919fe1028e58e70131cd46",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.7"
+      },
+      "closedPageDiagnostics": 0
+    },
+    {
+      "name": "blocker-firefox",
+      "browser": "firefox",
+      "checks": 733,
+      "success": true,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 30084,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-v4JGc8\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "closedPageDiagnostics": 15
+    },
+    {
+      "name": "mcp-chrome",
+      "browser": "chrome",
+      "checks": 169,
+      "success": true,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "closedPageDiagnostics": 0
+    },
+    {
+      "name": "nav-final-chrome",
+      "browser": "chrome",
+      "checks": 76,
+      "success": true,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/157.0.8103.79",
+        "revision": "@6dc9bc3bdaea5c35ed6d41fceab2f7a3a2227c4f",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+        "jsVersion": "15.7.112.43"
+      },
+      "closedPageDiagnostics": 0
+    },
+    {
+      "name": "nav-final-edge",
+      "browser": "edge",
+      "checks": 76,
+      "success": true,
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.60",
+        "revision": "@fbcb2989a6c61b72a4919fe1028e58e70131cd46",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.7"
+      },
+      "closedPageDiagnostics": 0
+    },
+    {
+      "name": "nav-final-firefox",
+      "browser": "firefox",
+      "checks": 72,
+      "success": true,
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261104181552",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 48028,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZYn1wv\\profile",
+        "moz:shutdownTimeout": 73000
+      },
+      "closedPageDiagnostics": 2
+    }
+  ],
+  "attempts": [
+    {
+      "name": "blocker-chrome",
+      "browser": "chrome",
+      "success": true,
+      "checks": 739,
+      "sourceDifferences": []
+    },
+    {
+      "name": "blocker-edge",
+      "browser": "edge",
+      "success": true,
+      "checks": 739,
+      "sourceDifferences": []
+    },
+    {
+      "name": "blocker-firefox",
+      "browser": "firefox",
+      "success": true,
+      "checks": 733,
+      "sourceDifferences": []
+    },
+    {
+      "name": "chrome-2",
+      "browser": "chrome",
+      "success": false,
+      "checks": 55,
+      "sourceDifferences": [
+        "src/ui/mcp/debug.js"
+      ]
+    },
+    {
+      "name": "chrome-3",
+      "browser": "chrome",
+      "success": true,
+      "checks": 70,
+      "sourceDifferences": [
+        "src/ui/mcp/debug.js"
+      ]
+    },
+    {
+      "name": "chrome",
+      "browser": "chrome",
+      "success": false,
+      "checks": 30,
+      "sourceDifferences": [
+        "src/ui/mcp/debug.js"
+      ]
+    },
+    {
+      "name": "edge",
+      "browser": "edge",
+      "success": true,
+      "checks": 70,
+      "sourceDifferences": [
+        "src/ui/mcp/debug.js"
+      ]
+    },
+    {
+      "name": "firefox-2",
+      "browser": "firefox",
+      "success": true,
+      "checks": 66,
+      "sourceDifferences": []
+    },
+    {
+      "name": "firefox",
+      "browser": "firefox",
+      "success": false,
+      "checks": 52,
+      "sourceDifferences": [
+        "src/ui/mcp/debug.js"
+      ]
+    },
+    {
+      "name": "mcp-chrome",
+      "browser": "chrome",
+      "success": true,
+      "checks": 169,
+      "sourceDifferences": []
+    },
+    {
+      "name": "nav-final-chrome",
+      "browser": "chrome",
+      "success": true,
+      "checks": 76,
+      "sourceDifferences": []
+    },
+    {
+      "name": "nav-final-edge",
+      "browser": "edge",
+      "success": true,
+      "checks": 76,
+      "sourceDifferences": []
+    },
+    {
+      "name": "nav-final-firefox",
+      "browser": "firefox",
+      "success": true,
+      "checks": 72,
+      "sourceDifferences": []
+    },
+    {
+      "name": "navigation-chrome-2",
+      "browser": "chrome",
+      "success": true,
+      "checks": 76,
+      "sourceDifferences": []
+    },
+    {
+      "name": "navigation-chrome",
+      "browser": "chrome",
+      "success": false,
+      "checks": 15,
+      "sourceDifferences": []
+    },
+    {
+      "name": "navigation-edge",
+      "browser": "edge",
+      "success": true,
+      "checks": 76,
+      "sourceDifferences": []
+    },
+    {
+      "name": "navigation-firefox",
+      "browser": "firefox",
+      "success": false,
+      "checks": 71,
+      "sourceDifferences": []
+    }
+  ],
+  "browserChecks": 2604,
+  "sourceHashes": {
+    "manifest.json": "1fe82a4f47191fefe2f436c7b72dd3b8ec8db27bc00fdaae951b235f5371c313",
+    "src/background/background.js": "50c174b4feddc31f8e64ad112de1d3d1372975239df880ac039f6183df7c232a",
+    "src/background/debug-runtime.js": "2f73060c78b249a0cbadf4478661e47f9aac70eae579be7cc24bab9fae124fa0",
+    "src/background/modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "src/background/network-log.js": "bd2ee515130dfd3b6f62b4b6f4ec16c1d019e84f603784a98a198eb0d57ee4f4",
+    "src/blocking/buttons.js": "4fec1e29a8e6438b31bd00787b9c867a746037c2e20bcd07a83f3724375727af",
+    "src/blocking/content.js": "5a21f2f16ee605ad2a77f2f71a91934a4d60a39e702c8638d47ba138c893a246",
+    "src/blocking/cosmetic.js": "5a1acf927fd79683c975a4a92f3485107fa20df8adec2cee043bf8f9aa3b04a2",
+    "src/blocking/evidence.js": "e7a600546a1803c23e8723e7407a18a74b25953bc2e8dc8084eaecb74ba764c3",
+    "src/blocking/flags.js": "2656545e8ba8cc27e8fedf7a0d67c1fafa82071089892b7e2d6c5ab3857b5603",
+    "src/blocking/network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "src/blocking/notification-guard.js": "c8257c83c9fd1a13633e037bf4be1ad4fdf7403e39c885267bd11b8328a1aacc",
+    "src/blocking/overlays.js": "339c309b5c4dd90c412d8dc16a85708d694c7051aba53c9e8a69fe5a775205cf",
+    "src/blocking/picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "src/blocking/picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "src/blocking/popups.js": "fc65cb70bce15a045ebc61955e45e28da0c8fb29c289ba9551a2c0d545330bd8",
+    "src/blocking/procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "src/blocking/prompts.js": "e0510454f1260759b14dbd1b849e2467ac0ef17eafb32000111376c95fb99378",
+    "src/blocking/reddit.js": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+    "src/blocking/youtube-fallback.js": "41718421cd999f8ba1774eba6a1c24eaf69c3abbc517636ab66c557b5488a43d",
+    "src/blocking/youtube.js": "08aaf232bea285d500ef0941f4d1fa81d9224c2f0b162a10fdbc1e4696504db1",
+    "src/shared/debug-protocol.js": "e832e9a528112dc103bdcce50a5f9981232fc94d7b85f46f8f4f0323b8f2ebd9",
+    "src/shared/shared.js": "88652e91eafec8650812768a620abe5d931eeb7389c802ffbd3a9d9d9a385e1c",
+    "src/ui/lists/lists.html": "6972b6a7b2c4908bf8532c3597fb45f86c62d3442bb37252168c8cebdcca6188",
+    "src/ui/lists/lists.js": "14d961c4c21c2de0b473ca633a9917e7578d5654f84cdca9255be1da7924ab1d",
+    "src/ui/log/log.css": "89676dd265630f2875c38b2d2847ccb986ef84cefdec706f7af23f81a457d54e",
+    "src/ui/log/log.html": "c31dbdd8cb0ade829e84b8c1eed5ee20c6c9d3d437b60af619b353a713ef62cd",
+    "src/ui/log/log.js": "298ef29e48f3b9dc939d40a29a4fb9ed287013be77188b66c8e6b4fff98b3694",
+    "src/ui/manager/manager.css": "73b04cb24719a9dc5ddaf53b52e3f61f1a0839eb067905087916ffb16235b366",
+    "src/ui/manager/manager.html": "9ca756554c67d0829163146b31ae9346a6ff3c2047747285a5d4eb6989eb940e",
+    "src/ui/manager/manager.js": "fd6136fa2563320f9e13005c4cd594664340ad0837cb681a72db6d269b81f0ee",
+    "src/ui/manager/userscripts-completion.js": "c0f46ccb157314942361859a578f09dac183bc232769ada3e5ac1919051fa748",
+    "src/ui/manager/userscripts-editor-worker.js": "149883c0455f2628f7b51d750bbc34d339e92e992b76d052b83f5727a27c7908",
+    "src/ui/manager/userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "src/ui/manager/userscripts-external.js": "6a576b34dcbe659554047623679829dced105ae8493138f05025c6fe07534a90",
+    "src/ui/mcp/debug.css": "717d50afb3c8766ae21b16e07c54bb4e2ad6bbe053f0885e48ccc7c69e626b79",
+    "src/ui/mcp/debug.html": "5a530ef2728985d09829e2147745568ad792c917ad3d4af8160f047e65df2531",
+    "src/ui/mcp/debug.js": "8fc08f9251613eecdf88839dbae8ac53fbd6cea96f07f29a9f855a46e459a01e",
+    "src/ui/network/network.css": "2ad431c81741c6a69c78f8474e2899e26a1ebe0604e672df7d1b734b492aa5ae",
+    "src/ui/network/network.html": "ccdbb8098648ada6d56fa01e11dac8f5e50e59a3741dfb68ba8999fcedf1f1bf",
+    "src/ui/network/network.js": "ebac0a1a962a29cf342c25b6adc38ca52e6c8e22770509f6adf97f24f6110b74",
+    "src/ui/popup/popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "src/ui/popup/popup.html": "96ea08c92c0ef202663e5e3f209b840cf39d166b39582c496a36fae7ad096420",
+    "src/ui/popup/popup.js": "3a8c1f556bfac67c2ea0e3c90c6b3dc1604c8533d70c33c0dc3cf4676e0a7812",
+    "src/ui/shared/navigation.js": "00cb990dd90c659d1bd089a0a457652550ed0067f1ee857d48b8d1a766a105e1",
+    "src/ui/shared/script-review.css": "b5ce9a6b6da1fed4178c83f2c4ebe2e900939dc47e784d0a831f90df03b23d77",
+    "src/ui/shared/script-review.js": "1b0b32c5fc3449c0a4ebb24d81a63462cad38b38e0d348ce4354e8fbb7a0d2b5",
+    "src/ui/shared/ui.css": "f2e14e528c4e0fef222746b73c276d9a6a626300f8dfabd81cf07e02c3681238",
+    "src/userscripts/clipboard.html": "b8db6e3853bcd4188349bb054d489dee7356ef1a91799827424e4f9ee87377fb",
+    "src/userscripts/clipboard.js": "20077559139d326a64b944918462fd77dc63a7d3df858997021f73a016b86294",
+    "src/userscripts/userscripts-actions.js": "5f37116fb8095058e4806d159b9c1fa19f4543f753dabd4dd7ee9a653d39e9e4",
+    "src/userscripts/userscripts-core.js": "6976bbbff30a7e923c86d164fb7ccd7356cfc7c544aff38b102dbb519039f98f",
+    "src/userscripts/userscripts-lint.js": "6f011f5006af583cf81614ae55bd0d0e3a37c7e0f2c2478139a9c674a7774735",
+    "src/userscripts/userscripts-matching.js": "a5b57ba7fa946e5069db2bd74f7b7d3571cb0a630c5db3375b5601779098929d",
+    "src/userscripts/userscripts-network.js": "a5083160e30c897af3dfa148b8583f7c047e906ef7763405a03e87aa6234ebf4",
+    "src/userscripts/userscripts-offscreen.js": "f4f1ce4282e6c64bbe4998225d426a14e5377b4fdd7c2ccb8e494c9d51630b1a",
+    "src/userscripts/userscripts-page.js": "e762bfa28b4d53a8f4a2e1b3869f73a8dd67b8052176d3df20dfad30d10dc028",
+    "src/userscripts/userscripts-runtime.js": "b2c90e453782e27508ec4cce073f17aa5e61272d11e89f6b676ba5ca12f0193c",
+    "src/userscripts/userscripts-updates.js": "ac3b4e63444e82a9492345f4c4258604a1c65cb538987048dd6e8957dfd3bc44",
+    "src/userscripts/userscripts-xhr.js": "1474f3ec37d188c88dbbfd1938481e6d939f822ba713712512a6e793a5103edf",
+    "icons/icon128.png": "fe313d3ad0715a33e2079b6dc078bad930fe142490d4ba40748e84e99fd104de",
+    "icons/icon16.png": "5a2228b9b7f74a1231b59093907c54d244f2b26bbc67887552b27b46c04ad87a",
+    "icons/icon48.png": "8dad16da824d63b433238e9be229828e387d550ccf526509f73a26afa10d53fe",
+    "rules/ads.json": "9e824086797f284ed53f1149609cb8ca3cbf1ed4dc54f6cd62841adc20ef979f",
+    "rules/community-cosmetic.json": "f95afc30cd178e8601caa9989b259314c821ebdd7d06dccadec2895458e81478",
+    "rules/community-info.json": "a7dc6c69bac82852665b783259b9ddf722c6396574d9af8eda92b73749c4a4ee",
+    "rules/community.json": "4807acdb519ba8775e6451be81e93b95aa26f3bc11e4cf7b3bb6872381667d94",
+    "rules/malware.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "rules/reviewed-domains.json": "c71fd950c7a39a00d6d27bf88cb67bc1d710a37f9214d781d999161a6b4fa5ec",
+    "rules/site-ad-hosts-info.json": "4f1e047fd8efe0abec9437fe438c1f02bf9289d4475b719184853fe163f7b903",
+    "rules/threat-evidence.json": "a4ca45a6c065ac4192674528e6029d1f845e13077f3ba63850d574200c7fac74",
+    "rules/threat-policy.json": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "vendor/publicsuffix/LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "vendor/publicsuffix/provenance.json": "26c1b30fa717beaf478f604dc55bb92bfb311084cdece5608f97ec8dcf9945c7",
+    "vendor/publicsuffix/suffixes.js": "13a92053d42e95d9bfeb080abcd3bfb33b98f80ad9ad9e5d1984c1016d08d0b9",
+    "docs/MCP.md": "a4b8d1f6838aa8948cd1dc62360d5da5c4ccfe338fa3852b2978e70f4a15fc74"
+  },
+  "runtimeChanges": [
+    "src/ui/lists/lists.html",
+    "src/ui/log/log.html",
+    "src/ui/log/log.js",
+    "src/ui/manager/manager.html",
+    "src/ui/manager/manager.js",
+    "src/ui/mcp/debug.html",
+    "src/ui/mcp/debug.js",
+    "src/ui/network/network.html",
+    "src/ui/network/network.js",
+    "src/ui/shared/navigation.js",
+    "src/ui/shared/ui.css",
+    "docs/MCP.md"
+  ],
+  "harnessHashes": {
+    "tests/navigation-browser.cjs": "7c63c87b426c59620cee69b5564db723b82dc63bc792b6b85000ab856177ccf6",
+    "tests/userscripts-browser.cjs": "049ca253791807a86730ebacb4dac5c2696135f2ff10e2ada4516dbff18bdb82",
+    "tests/userscripts-firefox.cjs": "5f719c780df236874fa9a253bba102ea28cb472941a0cf258a0dadcecc9e6c93",
+    "tests/browser-smoke.cjs": "3721db7a33fb82ccc1edae0ee7f491a74e286f403e8d2dd02923a11894e379dd",
+    "tests/mcp-network-browser.cjs": "7f7d048f6f30065856e8c6f73f019ffded8d882f3cd08d7a3c19bcb353ccdd70"
+  },
+  "artifacts": [
+    {
+      "file": "blocker-chrome/result.out",
+      "sha256": "08794139e5512c566d13041df98bc0a0b08718fc1d5c200cc0655c7a5650d46d"
+    },
+    {
+      "file": "blocker-chrome/evidence.json",
+      "sha256": "eab1ce710a92f3666909ddf60ecfb61c225cc45315f7d3cfb88028ff032f1116"
+    },
+    {
+      "file": "blocker-chrome/fixture/src/blocking/reddit.js",
+      "sha256": "956a8243654d1a7dd475e536002637bab787f40201761302834ad860ca85e03c"
+    },
+    {
+      "file": "blocker-edge/result.out",
+      "sha256": "eff8271df812d1a93cc43b41275c0515b512e48bcf1fbc0d51af9df9ca3b3efc"
+    },
+    {
+      "file": "blocker-edge/evidence.json",
+      "sha256": "ba1c6b61af93f8767223a32e984a9f9d5bfe4d93ee4bebf2abcdca00e80d074f"
+    },
+    {
+      "file": "blocker-edge/fixture/src/blocking/reddit.js",
+      "sha256": "956a8243654d1a7dd475e536002637bab787f40201761302834ad860ca85e03c"
+    },
+    {
+      "file": "blocker-firefox/result.out",
+      "sha256": "5be5e8501e0563a84409255f132a6bc811ba5cbb93c89580ba09523b0e2aae88"
+    },
+    {
+      "file": "blocker-firefox/evidence.json",
+      "sha256": "63122a194270e0642a35b69a9ab26e207c8c7a7c8746158e526b4f28064d9181"
+    },
+    {
+      "file": "blocker-firefox/fixture/src/blocking/reddit.js",
+      "sha256": "956a8243654d1a7dd475e536002637bab787f40201761302834ad860ca85e03c"
+    },
+    {
+      "file": "chrome-2/result.out",
+      "sha256": "484cd32dcd670d1a9d51e6ee4d232aab5db60cfd6652a3dd001f9ffc06133d3d"
+    },
+    {
+      "file": "chrome-2/evidence.json",
+      "sha256": "f779e497fa8ca6fc1b38abafb366601dfcc04be5c8cf0b1425717a1c4982344c"
+    },
+    {
+      "file": "chrome-2/snapshot/src/ui/mcp/debug.js",
+      "sha256": "c5cb29a8874ce0d701e4aece36f6eec1b71f53fa1c80577691ec94595259c28f"
+    },
+    {
+      "file": "chrome-3/result.out",
+      "sha256": "e4609b538e9670219c398b548fb41ff24e233139c3275e9aaedf11a0d96178c9"
+    },
+    {
+      "file": "chrome-3/evidence.json",
+      "sha256": "093c9f53d8c8a56ed793885dc3d41ae6f4c16049d15269fbae5edbbf8a177c7a"
+    },
+    {
+      "file": "chrome-3/snapshot/src/ui/mcp/debug.js",
+      "sha256": "c5cb29a8874ce0d701e4aece36f6eec1b71f53fa1c80577691ec94595259c28f"
+    },
+    {
+      "file": "chrome/result.out",
+      "sha256": "c947943bc85ba96bb88b361ce9c006df2b6f229f25c9383936c6a7faafa6edc7"
+    },
+    {
+      "file": "chrome/evidence.json",
+      "sha256": "f9c270b868c6056df289b62e2b75a101634a692e3d43efd234f0956fc2aa5d6d"
+    },
+    {
+      "file": "chrome/snapshot/src/ui/mcp/debug.js",
+      "sha256": "c5cb29a8874ce0d701e4aece36f6eec1b71f53fa1c80577691ec94595259c28f"
+    },
+    {
+      "file": "edge/result.out",
+      "sha256": "0580bc2b0ffc19ee7e1c7bbf83a4a78036b9579c559fcd6d9b8d5cab0bb7483f"
+    },
+    {
+      "file": "edge/evidence.json",
+      "sha256": "22d82687e1caae79509158932a512aba494fdcf412db44e3dbe297c278eaa6ee"
+    },
+    {
+      "file": "edge/snapshot/src/ui/mcp/debug.js",
+      "sha256": "c5cb29a8874ce0d701e4aece36f6eec1b71f53fa1c80577691ec94595259c28f"
+    },
+    {
+      "file": "firefox-2/result.out",
+      "sha256": "317ee5928114bf78d44f23d28c1620048158b40be4a62301d76d77d645b2b422"
+    },
+    {
+      "file": "firefox-2/evidence.json",
+      "sha256": "1350cdbdbd78e7eeb4caf9947ab5403f979779954c77bfa9770175a540ed798c"
+    },
+    {
+      "file": "firefox/result.out",
+      "sha256": "98314413652054b4f7a37adb228f8950abf9e19a4bf0007f7fcc6ecce5daa001"
+    },
+    {
+      "file": "firefox/evidence.json",
+      "sha256": "9f0ca0fddbc6652fae7ccfd190cfc055d28a3cc8693e2816ecfaf11d7a67284a"
+    },
+    {
+      "file": "firefox/snapshot/src/ui/mcp/debug.js",
+      "sha256": "c5cb29a8874ce0d701e4aece36f6eec1b71f53fa1c80577691ec94595259c28f"
+    },
+    {
+      "file": "mcp-chrome/result.out",
+      "sha256": "78d5a0a4f6a7e137182ecf17b88841c157c81efb1a67a9112d11e2a436ecece0"
+    },
+    {
+      "file": "mcp-chrome/evidence.json",
+      "sha256": "ff3336990c2902d823b7425ded0c17f4d887de615eb3c7b3542f8663a7735d36"
+    },
+    {
+      "file": "nav-final-chrome/result.out",
+      "sha256": "6e57bbbe177273fcd4883c965f2ec763343e2ff8d14f1adbe7e908c3021dbbc6"
+    },
+    {
+      "file": "nav-final-chrome/evidence.json",
+      "sha256": "3b46307140f51bdf3379cb1174dbdfbe77e2a485eb137fe2433e5df4b02ccf18"
+    },
+    {
+      "file": "nav-final-chrome/navigation-mcp-1280.png",
+      "sha256": "6e28e76e5c9a137791fcc3effaba30644610c0e3da7868cbf55c0693418217a0"
+    },
+    {
+      "file": "nav-final-chrome/navigation-manager-1280.png",
+      "sha256": "d37973bde7593c70787e72baf52ad4afdc8577b4f722aa7cdf605d7cf23a9523"
+    },
+    {
+      "file": "nav-final-chrome/navigation-mcp-390.png",
+      "sha256": "012455d2822b61ec24fcb14d3239f7850fc649b271f1ee5f46846cecc0f6062d"
+    },
+    {
+      "file": "nav-final-chrome/navigation-manager-390.png",
+      "sha256": "af595dd89482583e71f1dfb1e50ad3cdbb6a1e7ddb66e82a1145953a5f66e43a"
+    },
+    {
+      "file": "nav-final-edge/result.out",
+      "sha256": "02e9cfe6d3ab9667d94aa922228c4df69d4c516eb351ccb514c1221f4b00d7b8"
+    },
+    {
+      "file": "nav-final-edge/evidence.json",
+      "sha256": "e7f6032efdeac6bd49b0b886ad8c5bdc1a33f98a213a46ea4fa6053487a1c600"
+    },
+    {
+      "file": "nav-final-edge/navigation-mcp-1280.png",
+      "sha256": "83496f2734377ab289498c85c6abc7c6bc12442367b12febff3a7c2cfa5fd0db"
+    },
+    {
+      "file": "nav-final-edge/navigation-manager-1280.png",
+      "sha256": "15b7330dde4da8ccc847c761f3dd5157f6121bf72c74ffc62ddd0f850aa700d8"
+    },
+    {
+      "file": "nav-final-edge/navigation-mcp-390.png",
+      "sha256": "c214858a2afa91c73f6d11c993fb35c5306eed57152d9825ba2da0facb33ed17"
+    },
+    {
+      "file": "nav-final-edge/navigation-manager-390.png",
+      "sha256": "8fb29a5785ac4c2a6b6c64e265926efc8828727860a66282824e05f211e31192"
+    },
+    {
+      "file": "nav-final-firefox/result.out",
+      "sha256": "8419d0fc676d8c5f47eb4e3d30117abc62fea35582b9b7b40d9db7b634337c5c"
+    },
+    {
+      "file": "nav-final-firefox/evidence.json",
+      "sha256": "37decd0ee094a39862569362e6d909e93892bfb1000061907a008c0594421834"
+    },
+    {
+      "file": "nav-final-firefox/navigation-mcp-1366.png",
+      "sha256": "169ace529add3659fa2e6fad9eee9eeb6abc64b8d9112e0edd1a192e0c68328f"
+    },
+    {
+      "file": "nav-final-firefox/navigation-manager-1366.png",
+      "sha256": "37fb12b1cb81d57e36fed88822516aba859fd466d65b15dd68aa70a63814cf74"
+    },
+    {
+      "file": "navigation-chrome-2/result.out",
+      "sha256": "db36a147ae869e00d14db379ccebcfbc0e9a9c8e510ab9b7557ce85bee4044b0"
+    },
+    {
+      "file": "navigation-chrome-2/evidence.json",
+      "sha256": "9b2783e319cbc249b26261418cca4fb28837bdb0c162006834e159e9f3fe1b46"
+    },
+    {
+      "file": "navigation-chrome/result.out",
+      "sha256": "629e7138fe1fc7eb488cf9ca00e6f10615630366f117d7f7126288a61c8cbd4d"
+    },
+    {
+      "file": "navigation-chrome/evidence.json",
+      "sha256": "171d37f735bc11e26c36ce2c60beec21fd58b7624ebefcd5eeabc1b6edbd98dc"
+    },
+    {
+      "file": "navigation-edge/result.out",
+      "sha256": "6409c7de9bad952a1d519b179972fe4f2053b0d81b6ec3ff9f09f7de8386c78f"
+    },
+    {
+      "file": "navigation-edge/evidence.json",
+      "sha256": "de701bcea68da43edfa0816565961fde5e833d4b1794ae17b8a75231387575f0"
+    },
+    {
+      "file": "navigation-firefox/result.out",
+      "sha256": "9fbe14d2d082d3c3e06d7356ce1429bbce3ac4a0d8a8fa7e29f275a8800414f2"
+    },
+    {
+      "file": "navigation-firefox/evidence.json",
+      "sha256": "96fcd95d1ec3ab70208dc10efe224f80fb350492bf219f64090bb24bc5637d05"
+    },
+    {
+      "file": "unit.out",
+      "sha256": "004196312bef7cf2f81a0a193c7ff503f371db1ae499783048e4a23bf6028457"
+    },
+    {
+      "file": "rules.out",
+      "sha256": "078ec3082f181100fb8fcc555921dc5376fb1fc37ed9eb941c79421a325ec2a8"
+    },
+    {
+      "file": "cosmetic-rules.out",
+      "sha256": "9db526c219ed20672a9c8c0ed0e97f592bb00a9b57379136f6a7668d8e0f83dd"
+    },
+    {
+      "file": "threat-rules.out",
+      "sha256": "bafcda7a797b2b82fc023be13bf8357adc4633dd4073dab22a89b3c081e7402a"
+    },
+    {
+      "file": "requested-ad-hosts.out",
+      "sha256": "0cb63a5f2d180b1689735edc275ed9c3d5680985c71aa0c06f000281a02c2c33"
+    },
+    {
+      "file": "syntax.json",
+      "sha256": "01f1e4ce3776a7db69b4e24350f5f17cce6685dd54e2a1b03785aa3501126796"
+    },
+    {
+      "file": "baseline.json",
+      "sha256": "8b79e8d849249d9ee55a4c31a9b2de6d8d10e5aa53e93ef23286e725908603b4"
+    }
+  ],
+  "temporaryDirectories": [
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-g6emBg",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-3PpdYs",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-v4JGc8",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-TIcFMq",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-6kKnMk",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-5Mt2ju",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-sR9MIb",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ECJsk1",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-Gu3BvD",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-jUO6gh",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-s4qzPc",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-YImY5b",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ZYn1wv",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-vnkmHb",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-WX83Ud",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-w9ONbJ",
+    "C:\\Users\\Tommy\\AppData\\Local\\Temp\\module-engine-userscripts-firefox-ru0MUe"
+  ],
+  "limits": [
+    "Owned localhost fixtures, disposable profiles and deny proxies only. No live sites, personal browser profiles or OS desktop helpers.",
+    "Core behavior and both MCP transports are covered; no real-time 30-minute expiry soak or forced browser tab-discard experiment was run.",
+    "Full blocker suites passed in all three browsers; the broader combined userscript suite was not repeated.",
+    "Firefox native discarded-content-script-reply diagnostics are retained separately, following the existing blocker/install convention.",
+    "Prior attempts include corrected test metadata/selector/string errors, same-URL navigation versus reload behavior, and the Firefox dropped-reply diagnostic."
+  ]
+}

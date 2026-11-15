@@ -26,7 +26,7 @@ function controls() {
   byId('captureCount').textContent = `${state.count.toLocaleString()} entries · ${(state.bytes / 1024).toFixed(1)} KiB` + (state.dropped ? ` · ${state.dropped.toLocaleString()} older entries discarded` : '');
   byId('captureHint').textContent = state.active
     ? `${state.ownsCapture ? 'This page owns the capture.' : 'Another Network page owns the capture.'} Recording ${state.tabId === null ? 'all browser traffic' : 'tab ' + state.tabId} until ${new Date(state.expiresAt).toLocaleTimeString()}.` + (!byId('liveView').checked ? ' Live view is paused; capture continues.' : '')
-    : 'Starting a new capture clears the previous one. Capture stops when its Network page closes or after 30 minutes.';
+    : 'Starting a new capture clears the previous one. Switching sections keeps it running. Capture stops when this tab closes or after 30 minutes.';
 }
 function apply(result, force = false) {
   state = result.status;
@@ -178,9 +178,10 @@ try {
   });
   port.onDisconnect.addListener(() => disconnect());
   void tabs().catch(error => notice('Could not list tabs: ' + error.message, true));
-  void refresh(); pollTimer = setInterval(() => { void refresh(); }, 1000);
+  void refresh(); pollTimer = setInterval(() => { if (document.documentElement.dataset.meSectionActive !== 'false') void refresh(); }, 1000);
 } catch (error) { disconnected = true; controls(); notice('Could not connect: ' + error.message, true); }
 addEventListener('pagehide', () => {
   clearInterval(pollTimer); port?.disconnect();
   for (const url of objectURLs) URL.revokeObjectURL(url); objectURLs.clear();
 }, { once: true });
+addEventListener('module-engine-section-change', () => { if (document.documentElement.dataset.meSectionActive === 'true') void refresh(); });

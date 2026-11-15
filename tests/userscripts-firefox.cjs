@@ -18,7 +18,7 @@ const root = path.resolve(__dirname, '..');
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: 'firefox', temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
   for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
-  if (!['--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
+  if (!['--navigation-only', '--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
   await fs.mkdir(path.join(temp, 'exports'));
   const aliasState = {};
   const { forwardMatching, runMatching } = require('./userscripts-matching-browser.cjs');
@@ -87,6 +87,10 @@ const root = path.resolve(__dirname, '..');
         /^Promise (?:rejected|resolved) (?:after context unloaded|while context is inactive)/.test(error.text));
       return reported.filter(error => !evidence.closedPageErrors.includes(error));
     };
+    if (process.argv.includes('--navigation-only')) {
+      await require('./navigation-browser.cjs').runNavigation({ b, manager, send, check, until, browse, scriptSource, evidence, temp });
+      evidence.success = true; evidence.focus = 'navigation-only'; return;
+    }
     if (process.argv.includes('--network-log-only')) {
       await require('./network-log-browser.cjs').runNetworkLog({ b, manager, send, check, until, browse, scriptSource, evidence, temp, port, fixtureState });
       evidence.success=true; evidence.focus='network-log-only'; return;

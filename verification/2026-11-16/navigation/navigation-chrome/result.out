@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 15,
+  "error": "Error: {\"exceptionId\":1,\"text\":\"Uncaught\",\"lineNumber\":0,\"columnNumber\":194,\"scriptId\":\"74\",\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"SyntaxError\",\"description\":\"SyntaxError: missing ) after argument list\",\"objectId\":\"246553701718080842.3.2\"}}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:208:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Object.runNavigation (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\navigation-browser.cjs:67:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:192:7",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-WX83Ud\\evidence.json"
+}

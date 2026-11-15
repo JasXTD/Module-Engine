@@ -1,0 +1,7 @@
+{
+  "browser": "chrome",
+  "success": false,
+  "checks": 30,
+  "error": "AssertionError [ERR_ASSERTION]: Retained draft saves through the normal manager\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:79:44)\n    at Object.runNavigation (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\navigation-browser.cjs:74:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:192:7",
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-5Mt2ju\\evidence.json"
+}

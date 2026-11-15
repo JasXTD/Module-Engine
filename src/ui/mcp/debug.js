@@ -221,7 +221,7 @@
           el('sessionDetail').textContent = 'Approved: ' + scopes.join(', ') + ' · expires ' + new Date(expiresAt).toLocaleTimeString();
           notice(requested.includes(protocol.CHANGES) && !scopes.includes(protocol.CHANGES)
             ? 'Connected. This MCP server was started without --allow-changes, so the agent can only read.'
-            : 'Connected. Keep this page open while your agent inspects Module Engine.');
+            : 'Connected. Keep this tab open; you can switch sections while your agent inspects Module Engine.');
           render(); renderProposals(); void poll(current);
         } else if (message.type === 'result') {
           const job = current.pending.get(message.id); if (!job) return;

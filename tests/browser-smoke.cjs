@@ -244,6 +244,7 @@ async function chromium(extension, profile, denyPort, { headless = true, network
         await fs.writeFile(file, Buffer.from(result.data, 'base64'));
       },
       async navigate(target, url) { await rpc.send('Page.navigate', { url }, target.session); },
+      async reload(target) { await rpc.send('Page.reload', {}, target.session); },
       stderr: () => stderr
     };
   } catch (error) { await close(); error.message += `\nBrowser exit ${child.exitCode}: ${stderr}`; throw error; }
@@ -352,6 +353,7 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
     };
     return {
       version: session.capabilities, id: uuid, popup, evaluate, navigate, close, front, events: rpc.events,
+      reload: target => rpc.send('browsingContext.reload', { context: target.id, wait: 'complete' }),
       consoleErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineErrors)')),
       scriptErrors: async () => JSON.parse(await chromeEvaluate('JSON.stringify(window.moduleEngineScriptErrors)')),
       async userscriptPermissionPrompt(accept = false, kind = 'userscripts') {

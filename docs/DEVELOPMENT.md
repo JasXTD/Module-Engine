@@ -24,6 +24,12 @@ The offline Reddit browser fixtures use the production content scripts and setti
 
 ## Tests and local files
 
+### Same-tab section navigation
+
+`src/ui/shared/navigation.js` lets each existing packaged page host the other sections in lazy, retained, same-origin frames. Only the five fixed section paths can be routed. Each document keeps its own state and native ports; no connection secrets move to storage or another context. Native MCP and Network sender URL checks are unchanged. The host URL stays fixed and section history uses `history.state`; Back/Forward reuse documents. Modal reviews prevent switching, and external links leave the whole tab. Hidden Network and Activity log views pause UI polling while capture and MCP remain alive. Closing/reloading the tab unloads the documents and revokes their ports.
+
+Run `node tests/userscripts-browser.cjs chrome --navigation-only`, substitute `edge`, and `node tests/userscripts-firefox.cjs firefox --navigation-only`. Add `--mcp-http` for the optional HTTP transport. These native offline fixtures exercise retained documents, same-tab links, unsaved drafts, pending proposals and trusted decisions, native script execution, MCP scope preservation/reapproval, Network capture, Back/Forward, direct MCP entry, reload/close revocation and blocked localhost ad canaries. Desktop/narrow screenshots are retained with the disposable evidence; Firefox uses its current viewport. No desktop helper permissions or new dependencies are required.
+
 ### YouTube filtering and registration
 
 Protection registrations reconcile by ID: unchanged scripts stay registered, changed scripts use native `scripting.updateContentScripts`, and only removed/added IDs are unregistered/registered. Updates explicitly send `excludeMatches: []` to clear old pauses. The same reconciliation handles rollback after a partial browser write or settings-save failure, followed by native readback verification. API references: [Chromium scripting](https://developer.chrome.com/docs/extensions/reference/api/scripting#method-updateContentScripts) and [Mozilla updateContentScripts](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/scripting/updateContentScripts).
