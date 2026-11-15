@@ -8,6 +8,7 @@ if (!globalThis.BlockAdsNetwork && typeof importScripts === "function") importSc
 if (!globalThis.BlockAdsModules && typeof importScripts === "function") importScripts("modules.js");
 if (!globalThis.BlockAdsUserScriptCore && typeof importScripts === "function") importScripts("../../vendor/publicsuffix/suffixes.js", "../userscripts/userscripts-matching.js", "../userscripts/userscripts-page.js", "../userscripts/userscripts-core.js");
 if (!globalThis.BlockAdsUserScriptNetwork && typeof importScripts === "function") importScripts("../userscripts/userscripts-network.js");
+if (!globalThis.BlockAdsUserScriptUpdates && typeof importScripts === "function") importScripts("../userscripts/userscripts-updates.js");
 if (!globalThis.BlockAdsOffscreen && typeof importScripts === "function") importScripts("../userscripts/userscripts-offscreen.js");
 if (!globalThis.BlockAdsXHR && typeof importScripts === "function") importScripts("../userscripts/userscripts-xhr.js");
 if (!globalThis.BlockAdsClipboard && typeof importScripts === "function") importScripts("../userscripts/clipboard.js");
@@ -1171,15 +1172,19 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only the private offscreen document answers this worker-to-document call.
   if (message?.type === 'ME_CLIPBOARD_WRITE') return false;
   if (['MODULES_GET', 'MODULE_SET', 'US_LIST', 'US_SAVE', 'US_ENABLE', 'US_DELETE', 'US_MENU_LIST', 'US_MENU_RUN', 'US_PREPARE_ASSETS', 'US_CANCEL_ASSETS', 'US_ASSET_READ',
-    'US_FETCH_SOURCE', 'US_CHECK_UPDATE', 'US_CANCEL_SOURCE', 'US_APPLY_SOURCE', 'US_TAGS', 'US_MOVE'].includes(message?.type)) {
+    'US_FETCH_SOURCE', 'US_CHECK_UPDATE', 'US_CANCEL_SOURCE', 'US_APPLY_SOURCE', 'US_TAGS', 'US_MOVE',
+    'US_UPDATE_STATE', 'US_UPDATE_SETTINGS', 'US_STAGED_REVIEW', 'US_CHECK_ALL', 'US_LINK_BYPASS'].includes(message?.type)) {
     if (!fromExtensionPage(sender)) {
       sendResponse({ ok: false, error: 'Modules and scripts can only be managed from the extension interface.' });
       return false;
     }
     const work = message.type === 'MODULES_GET' ? moduleHost.state()
       : message.type === 'MODULE_SET' ? moduleHost.set(message.id, message.enabled)
+      // Passage applies only to the review page's own tab, never a tab it names.
+      : message.type === 'US_LINK_BYPASS' ? Promise.resolve().then(() => userscriptHost.allowNavigation(sender.tab?.id, message.url))
       : userscriptHost.request(message);
-    work.then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+    work.then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message || String(error),
+      ...(typeof error?.code === 'string' && /^[A-Z_]{1,32}$/.test(error.code) ? { code: error.code } : {}) }));
     return true;
   }
   if (message?.type === 'START_PICKER') {

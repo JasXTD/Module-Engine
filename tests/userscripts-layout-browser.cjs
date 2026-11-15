@@ -35,7 +35,7 @@ async function runLayout(context) {
   // only the exact messages from our content script are exempt from failure.
   const unloaded = error => evidence.browser === 'firefox' &&
     error.source === 'moz-extension://' + b.id + '/src/blocking/content.js' &&
-    /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(error.text);
+    /^(?:Promise resolved after context unloaded|Promise resolved while context is inactive|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(error.text);
   evidence.layoutExpectedErrors = errors.filter(expected);
   evidence.layoutClosedPageErrors = errors.filter(unloaded);
   evidence.layoutUnexpectedErrors = errors.filter(error=>!expected(error)&&!unloaded(error));

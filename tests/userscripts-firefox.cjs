@@ -78,6 +78,15 @@ const root = path.resolve(__dirname, '..');
     check('Offline ad canary configured', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
     const browse = pathname => b.open('http://127.0.0.1:' + port + pathname);
     const recordConsole = async stage => { (evidence.consoleStages ||= []).push({stage, errors: await b.consoleErrors()}); };
+    // Opening intercepted .user.js links replaces documents while the blocker's
+    // content script awaits its startup reply. As in the blocker suite, Firefox's
+    // reports of those dropped replies are kept as evidence, not failures.
+    const unexpectedErrors = async () => {
+      const reported = await b.consoleErrors();
+      evidence.closedPageErrors = reported.filter(error => error.source === 'moz-extension://' + b.id + '/src/blocking/content.js' &&
+        /^Promise (?:rejected|resolved) (?:after context unloaded|while context is inactive)/.test(error.text));
+      return reported.filter(error => !evidence.closedPageErrors.includes(error));
+    };
     if (process.argv.includes('--network-log-only')) {
       await require('./network-log-browser.cjs').runNetworkLog({ b, manager, send, check, until, browse, scriptSource, evidence, temp, port, fixtureState });
       evidence.success=true; evidence.focus='network-log-only'; return;
@@ -117,7 +126,7 @@ const root = path.resolve(__dirname, '..');
     if (!process.argv.includes('--desktop-only')) await require('./userscripts-install-browser.cjs').runInstallation({ b, manager, send, check, until, browse, temp, evidence, fixtureState, base: 'http://127.0.0.1:' + port });
     await recordConsole('installation');
     if (process.argv.includes('--install-only')) {
-      evidence.extensionErrors = await b.consoleErrors(); check('No uncaught Firefox installation errors', evidence.extensionErrors.length === 0);
+      evidence.extensionErrors = await unexpectedErrors(); check('No uncaught Firefox installation errors', evidence.extensionErrors.length === 0);
       check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0); evidence.success = true; evidence.focus = 'install-only'; return;
     }
     if(!process.argv.includes('--desktop-only')) {
@@ -131,7 +140,7 @@ const root = path.resolve(__dirname, '..');
     if(process.argv.includes('--desktop-only')) { evidence.success=true; evidence.focus='desktop-only'; return; }
     await runAssetsAndNetwork({ b, manager, send, check, until, browse, scriptSource, temp, evidence, fixtureState,
       base: 'http://127.0.0.1:' + port, other: 'http://127.0.0.1:' + secondOrigin.address().port });
-    evidence.extensionErrors = await b.consoleErrors();
+    evidence.extensionErrors = await unexpectedErrors();
     check('No uncaught extension errors during Firefox compatibility checks', evidence.extensionErrors.length === 0);
     check('Deny proxy has no unexpected socket errors', evidence.proxyErrors.length === 0);
     evidence.success = true;

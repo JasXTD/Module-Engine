@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-require('../vendor/publicsuffix/suffixes.js'); require('../src/userscripts/userscripts-matching.js'); require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/userscripts-core.js'); require('../src/userscripts/userscripts-network.js'); require('../src/userscripts/userscripts-offscreen.js'); require('../src/userscripts/userscripts-xhr.js'); require('../src/userscripts/clipboard.js'); require('../src/userscripts/userscripts-actions.js'); require('../src/userscripts/userscripts-runtime.js'); require('../src/background/modules.js');
+require('../vendor/publicsuffix/suffixes.js'); require('../src/userscripts/userscripts-matching.js'); require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/userscripts-core.js'); require('../src/userscripts/userscripts-network.js'); require('../src/userscripts/userscripts-updates.js'); require('../src/userscripts/userscripts-offscreen.js'); require('../src/userscripts/userscripts-xhr.js'); require('../src/userscripts/clipboard.js'); require('../src/userscripts/userscripts-actions.js'); require('../src/userscripts/userscripts-runtime.js'); require('../src/background/modules.js');
 const core = globalThis.BlockAdsUserScriptCore;
 const clone = value => structuredClone(value);
 const source = (name = 'Example', metadata = '', body = 'document.body.dataset.script = "ran";') =>
@@ -577,6 +577,70 @@ test('source download timeout discards bytes and preserves the installed record'
   assert.deepEqual(f.h.state.data, before);
   f.state.sources['/usnet/script.user.js'] = { body: updateSource('2.0') };
   assert.equal((await f.check()).review.versionChange, 1);
+});
+
+test('linked updates follow @downloadURL/@updateURL and staged bytes apply only through the normal approval', async t => {
+  const { base, state } = await loopback(t), h = harness(); await h.ready;
+  const links = '// @downloadURL ' + base + '/usnet/next.user.js\n// @updateURL ' + base + '/usnet/next.meta.js\n';
+  state.sources = { '/usnet/script.user.js': { body: updateSource('1.0', links) } };
+  const { review } = await h.command({ type: 'US_FETCH_SOURCE', url: base + '/usnet/script.user.js', requestId: crypto.randomUUID() });
+  assert.equal(review.sourceURL, base + '/usnet/script.user.js', 'a new install fetches only the URL that was entered');
+  const saved = await h.command({ type: 'US_APPLY_SOURCE', source: review.source, sourceURL: review.sourceURL });
+  const current = () => h.state.data.userscriptManager.scripts.find(script => script.id === saved.selectedId);
+  let script = await h.enable(current());
+  const next = updateSource('1.1', links, 'void "next";');
+  state.sources['/usnet/next.user.js'] = { body: next };
+  state.sources['/usnet/next.meta.js'] = { body: '// ==UserScript==\n// @version 1.1\n// ==/UserScript==\n' };
+  const manual = await h.command({ type: 'US_CHECK_UPDATE', id: script.id, revision: script.revision, requestId: crypto.randomUUID() });
+  assert.equal(manual.review.sourceURL, base + '/usnet/next.user.js'); assert.equal(manual.review.versionChange, 1);
+  const before = clone(h.state.data.userscriptManager), checked = await h.command({ type: 'US_CHECK_ALL' });
+  assert.equal(checked.result.staged, 1); assert.equal(checked.scripts[script.id].outcome, 'staged');
+  assert.equal(checked.scripts[script.id].available, '1.1');
+  assert.deepEqual(h.state.data.userscriptManager, before, 'staging never edits, pauses or replaces the running script');
+  assert.equal(h.state.scripts.length, 1);
+  const staged = await h.command({ type: 'US_STAGED_REVIEW', id: script.id, revision: script.revision });
+  assert.equal(staged.review.source, next); assert.equal(staged.review.versionChange, 1);
+  const hits = state.hits.length;
+  await h.command({ type: 'US_APPLY_SOURCE', source: staged.review.source, sourceURL: staged.review.sourceURL, id: staged.review.id, revision: staged.review.revision });
+  script = current();
+  assert.equal(state.hits.length, hits, 'approval uses the staged bytes without another download');
+  assert.equal(script.source, next); assert.equal(script.enabled, false); assert.equal(script.sourceURL, base + '/usnet/next.user.js');
+  assert.equal((await h.command({ type: 'US_UPDATE_STATE' })).scripts[script.id].outcome, undefined);
+  await assert.rejects(h.command({ type: 'US_STAGED_REVIEW', id: script.id, revision: script.revision }), /no longer current/);
+});
+
+test('pausing userscripts cancels an active update check; settings and link passage validate their input', async t => {
+  const f = await installFixture(t);
+  await f.h.host.setEnabled(true);
+  f.state.sources['/usnet/script.user.js'] = { body: updateSource('2.0'), delay: 10000 };
+  const hits = f.state.hits.length, pending = f.h.command({ type: 'US_CHECK_ALL' });
+  await waitFor(() => f.state.hits.length > hits);
+  await f.h.host.setEnabled(false);
+  const result = await pending;
+  assert.equal(result.result.cancelled, true); assert.equal(result.scripts[f.current().id].outcome, undefined);
+  await assert.rejects(f.h.command({ type: 'US_UPDATE_SETTINGS', settings: { autoCheck: 'yes' } }), /valid update setting/);
+  const settings = await f.h.command({ type: 'US_UPDATE_SETTINGS', settings: { interceptLinks: false } });
+  assert.equal(settings.interceptLinks, false); assert.equal(settings.autoCheck, true);
+  assert.deepEqual(f.h.host.allowNavigation(7, f.url), { ok: true });
+  assert.throws(() => f.h.host.allowNavigation(undefined, f.url), /browser tab/);
+  assert.throws(() => f.h.host.allowNavigation(7, 'javascript:alert(1)'), /HTTPS/);
+});
+
+test('responses that are not a direct userscript carry a code so an intercepted link can return to the browser', async t => {
+  const { base, state } = await loopback(t), h = harness(); await h.ready;
+  const fetch = path => h.command({ type: 'US_FETCH_SOURCE', url: base + path, requestId: crypto.randomUUID() });
+  state.sources = { '/usnet/redirect.user.js': { status: 302, headers: { Location: '/usnet/final.user.js' }, body: '' },
+    '/usnet/page.user.js': { body: '<h1>File view</h1>', mime: 'text/html; charset=utf-8' },
+    '/usnet/plain.user.js': { body: 'console.log("no metadata")' },
+    '/usnet/unsupported.user.js': { body: updateSource('1.0', '// @antifeature tracking\n') },
+    '/usnet/missing.user.js': { body: '', status: 404 } };
+  for (const [path, code, message] of [['/usnet/redirect.user.js', 'SOURCE_REDIRECT', /redirected/], ['/usnet/page.user.js', 'SOURCE_NOT_SCRIPT', /HTML/],
+    ['/usnet/plain.user.js', 'SOURCE_NOT_SCRIPT', /metadata block/], ['/usnet/unsupported.user.js', undefined, /Unsupported metadata @antifeature/],
+    ['/usnet/missing.user.js', undefined, /404/]]) {
+    const error = await fetch(path).then(() => assert.fail(path + ' was accepted'), error => error);
+    assert.match(error.message, message, path); assert.equal(error.code, code, path);
+  }
+  assert.ok(!state.hits.some(hit => hit.url === '/usnet/final.user.js'), 'the redirect target was never requested');
 });
 
 const desktopGrants = ['setClipboard', 'notification', 'download'].flatMap(name => ['// @grant GM_' + name, '// @grant GM.' + name]).join('\n') + '\n// @connect 127.0.0.1\n';
@@ -1915,9 +1979,10 @@ for (const [label, change] of [
   ['code before metadata', text => 'alert(1);\n' + text],
   ['source quota', text => text + ' '.repeat(core.LIMITS.source)]
 ]) test('rejects ' + label + ' before registration', () => assert.throws(() => core.parse(change(source()))));
-test('asset and update metadata is ignored visibly without fetching anything', () => {
+test('icon and update metadata is explained visibly; parsing fetches nothing', () => {
   const parsed = core.parse(source('No downloads', '// @updateURL https://example.test/update\n// @icon https://example.test/icon.png\n'));
   assert.equal(parsed.warnings.length, 2);
+  assert.ok(parsed.warnings.some(warning => /@updateURL .*Install from URL/.test(warning)));
 });
 test('generated GM helpers reject lossy values in the script world before native transport', async () => {
   let messages = 0;

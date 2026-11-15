@@ -96,6 +96,17 @@
 .script-main small { display: block; margin-top: 2px; overflow: hidden; color: var(--text-2); font-family: var(--mono); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .script-state { flex: none; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--text-2); font-family: var(--mono); font-size: 10.5px; font-weight: 600; }
 .script-state.on { background: var(--accent); color: var(--on-accent); }
+.script-state.update { background: var(--warn-soft); color: var(--warn); }
+/* Library-wide install and update switches: compact rows under the library actions. */
+.update-settings { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; }
+.update-settings h3 { font-size: 12.5px; font-weight: 650; }
+.update-settings .setting { display: flex; gap: 10px; align-items: center; justify-content: space-between; font-size: 12.5px; cursor: pointer; }
+.update-settings .setting:has(input:disabled) { cursor: not-allowed; }
+.update-settings .setting input { flex: none; }
+.update-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.update-row button { min-height: 30px; padding: 4px 11px; font-size: 12.5px; }
+#updateSummary { flex: 1 1 120px; min-width: 0; font-size: 11.5px; overflow-wrap: anywhere; }
+#updateResult.update-ready { color: var(--warn); font-weight: 600; }
 .empty { padding: 24px 0 8px; line-height: 1.8; }
 .tag-filter { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--text-2); font-size: 12px; }
 .tag-filter select { flex: 1; min-width: 0; padding: 6px; }

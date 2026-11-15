@@ -135,7 +135,12 @@ test('the unwrap guard hides only its own redeclaration error', () => {
     assert.equal(Object.getOwnPropertyDescriptor(scope, name)?.configurable, false);
     assert.equal(Object.keys(scope).includes(name), false, 'the sentinel is not enumerable');
   }
-  const names = ['A', 'B'].map(name => /__moduleEngineScope_[0-9a-f]{16}/.exec(core.registrations({ id: '12345678-1234-1234-1234-123456789abc', token: 'f'.repeat(64),
-    source: source('// @unwrap\n// @exclude *private*\n', '/* ' + name + ' */') })[0].js[0].code)[0]);
-  assert.notEqual(names[0], names[1], 'different sources use different sentinels');
+  // Page code can list the sentinel, so like sourceName it hashes @name and
+  // @namespace: not the install ID, and not a source that local edits make unique.
+  const sentinel = (metadata, body, id = '12345678-1234-1234-1234-123456789abc') => /__moduleEngineScope_[0-9a-f]{16}/.exec(core.registrations({ id, token: 'f'.repeat(64),
+    source: source('// @unwrap\n// @exclude *private*\n' + metadata, body) })[0].js[0].code)[0];
+  const base = sentinel('', '/* A */');
+  assert.equal(sentinel('', '/* B */'), base, 'edited sources keep the sentinel');
+  assert.equal(sentinel('', '/* A */', 'abcdef01-2345-4678-9abc-def012345678'), base, 'the sentinel does not depend on the installation');
+  assert.notEqual(sentinel('// @namespace other.test\n', '/* A */'), base, 'different identities use different sentinels');
 });

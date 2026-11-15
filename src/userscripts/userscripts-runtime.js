@@ -30,6 +30,9 @@
     const diagnosticRates = new Map();
     let diagnosticSink = null, diagnosticPending = 0;
     const actions = BlockAdsUserScriptActions.create(api, connection => connections.get(connection.id) === connection);
+    // Scheduled checks and link interception only produce review data; every
+    // library change still goes through US_APPLY_SOURCE below.
+    const updates = BlockAdsUserScriptUpdates.create(api, { network });
     let running = false, controlPending = 0, valuePending = 0, connectionPending = 0, lastError = '', boundEvent, boundConnect;
     // GM traffic cannot consume control capacity. A single runner still owns
     // all writes: controls take precedence after the active transaction finishes.
@@ -474,7 +477,7 @@
           script = library.scripts.find(item => item.id === message.id);
           if (!script || script.revision !== message.revision) throw new Error('This script changed. Refresh and reopen it.');
           if (!script.sourceURL) throw new Error('No installed URL. Use Install from URL to review and link this script first.');
-          url = script.sourceURL;
+          url = BlockAdsUserScriptUpdates.targets(script).download;
         }
         const job = { requestId: message.requestId, url: core.sourceURL(url), scriptId: script?.id,
           revision: script?.revision, controller: new AbortController() };
@@ -712,6 +715,8 @@
         try { const current = await access(); if (current.available) await apply({ scripts: [], worlds: [] }, current); }
         catch (cleanup) { lastError += ' Could not remove stale registrations: ' + errorText(cleanup); }
       }
+      try { await updates.start(); }
+      catch (error) { console.warn('[Module Engine] Could not schedule userscript update checks:', errorText(error)); }
     });
     bindMessages();
     api.permissions?.onAdded?.addListener(() => { void start(); });
@@ -732,7 +737,14 @@
       inspect: () => enqueue(inspect),
       setDiagnosticSink: sink => { diagnosticSink = typeof sink === 'function' ? sink : null; diagnosticRates.clear(); },
       request: message => message.type === 'US_PREPARE_ASSETS' ? prepareAssets(message)
-        : ['US_FETCH_SOURCE', 'US_CHECK_UPDATE'].includes(message.type) ? fetchSource(message) : enqueue(() => command(message)),
+        : ['US_FETCH_SOURCE', 'US_CHECK_UPDATE'].includes(message.type) ? fetchSource(message)
+        // Update state has its own writer and never holds the manager queue during downloads.
+        : message.type === 'US_UPDATE_STATE' ? updates.view()
+        : message.type === 'US_UPDATE_SETTINGS' ? updates.setSettings(message.settings)
+        : message.type === 'US_STAGED_REVIEW' ? updates.stagedReview(message)
+        : message.type === 'US_CHECK_ALL' ? updates.runChecks({ force: true }).then(async result => ({ ...await updates.view(), result }))
+        : enqueue(() => command(message)),
+      allowNavigation: (tabId, url) => updates.allowNavigation(tabId, url),
       state: () => enqueue(async () => {
         const result = await snapshot();
         return { enabled: result.enabled, active: result.active, available: result.available,
@@ -742,6 +754,7 @@
         if (typeof enabled !== 'boolean') throw new Error('Invalid userscript module switch.');
         if (!enabled) { for (const job of assetJobs.values()) job.controller.abort(); assetJobs.clear(); }
         if (!enabled) { for (const job of sourceJobs.values()) job.controller.abort(new Error('Userscripts were paused. Script download cancelled.')); sourceJobs.clear(); }
+        if (!enabled) updates.cancel('Userscripts were paused. Update checks were cancelled.');
         const before = await read(), next = clone(before); next.enabled = enabled;
         if (enabled !== before.enabled) for (const script of next.scripts) script.token = token();
         return commit(before, next, enabled);

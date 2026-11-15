@@ -37,7 +37,8 @@
       if (INFORMATIONAL.has(key) || /^(name|description):[\w-]+$/.test(key)) {
         informational[key] = value;
         if (['icon', 'icon64'].includes(key)) warnings.push('@' + key + ' does not trigger icon downloads.');
-        if (['downloadURL', 'updateURL'].includes(key)) warnings.push('@' + key + ' is informational. Manual updates use only the installed URL you approved.');
+        if (key === 'downloadURL') warnings.push('@downloadURL supplies updates after you install this script through Install from URL. Every update needs your review.');
+        if (key === 'updateURL') warnings.push('@updateURL is used to check the version after you install this script through Install from URL.');
         continue;
       }
       if (!SINGLE.has(key) && !REPEATED.includes(key)) fail('Unsupported metadata @' + key + '. See Supported userscript features.');
@@ -373,6 +374,9 @@
   // Legacy reads hydrate from the isolated broker before source execution.
   function runUserScript(config, run, jsonValue, scriptRequests, safeMenuIcon, tabOptions, scriptActions, normalizeAction, runtimeOverride) {
     const grants = new Set(config.grants), has = name => grants.has('GM.' + name) || grants.has('GM_' + name);
+    // Page-world configs carry neither the install ID nor the capability:
+    // site code can read packets there, so the isolated page host adds both.
+    const credentials = config.token ? { id: config.id, token: config.token } : {};
     let diagnostics = 0;
     const diagnostic = error => {
       // Only existing native messaging worlds participate. Capture is opt-in in
@@ -381,7 +385,7 @@
         if ((!config.token && !runtimeOverride) || !config.grants.some(grant => /^GM[._]/.test(grant) && !/^GM[._](info|addStyle|addElement|getResourceText|getResourceURL|getResourceUrl)$/.test(grant)) || diagnostics++ >= 10) return;
         const native = runtimeOverride || (globalThis.browser || globalThis.chrome)?.runtime;
         if (typeof native?.sendMessage !== 'function') return;
-        void Promise.resolve(native.sendMessage({ type: 'US_VALUE', operation: 'diagnostic', id: config.id, token: config.token,
+        void Promise.resolve(native.sendMessage({ type: 'US_VALUE', operation: 'diagnostic', ...credentials,
           message: String(error?.message ?? error).slice(0, 2048), stack: typeof error?.stack === 'string' ? error.stack.slice(0, 8192) : '' })).catch(() => {});
       } catch { /* Diagnostics must never change script error behavior. */ }
     };
@@ -412,7 +416,7 @@
     const pending = [], listeners = new Map(), menus = new Map();
     const send = async (operation, args = {}, epoch = generation) => {
       if (stopped || suspended || epoch !== generation) throw new Error('This userscript is inactive. Reload the page.');
-      const response = await runtime.sendMessage({ type: 'US_VALUE', id: config.id, token: config.token,
+      const response = await runtime.sendMessage({ type: 'US_VALUE', ...credentials,
         operation, ...args, ...(connectionId ? { connectionId } : {}) });
       if (!response?.ok) throw new Error(response?.error || 'Module Engine script API unavailable.');
       const completionOnly = /^(set|delete)(Many)?$/.test(operation) || operation === 'cookie' && ['set', 'delete'].includes(args.method);
@@ -688,7 +692,8 @@
     function connect() {
       if (stopped || suspended || port) return;
       let current;
-      try { current = runtime.connect({ name: 'US_CHANNEL:' + config.id + ':' + config.token }); }
+      // The page adapter ignores a name; its host names the native port.
+      try { current = config.token ? runtime.connect({ name: 'US_CHANNEL:' + config.id + ':' + config.token }) : runtime.connect(); }
       catch (error) { stop(error); return; }
       port = current;
       let ready = false;
@@ -766,6 +771,9 @@
       uuid: script.id, injectInto: metadata.world === 'MAIN' ? 'page' : 'content', scriptMetaStr: metadata.metaStr,
       scriptWillUpdate: false, scriptHandler: 'Module Engine', version: '1.9.0',
       scriptSource: script.source };
+    // Site code can read page-world runtime data, so page-world GM_info gets
+    // the identity-derived pageUUID. Content worlds keep the install ID.
+    const pageInfo = { ...info, uuid: pageUUID(metadata) };
     const dependencies = (assets || []).filter(asset => asset.kind === 'require').map(asset => new TextDecoder().decode(decodeAsset(asset.body)) + '\n;');
     const lines = metadata.unwrap ? [...dependencies, script.source] : ['(function () {', "'use strict';"];
     // Native userScripts combine match patterns OR include globs (unlike content
@@ -773,27 +781,31 @@
     // this bounded guard and the broker enforce exact URL/fragment semantics.
     if (!metadata.unwrap) {
       lines.push(matching.guard(metadata));
-      const config = { id: script.id, ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { token: script.token } : {}),
-        grants: metadata.grants, info, runAt: metadata.runAt, topLevelAwait: metadata.topLevelAwait,
+      // Only isolated worlds hold the install ID and capability. Native MAIN
+      // scripts never message the broker, and the page bridge strips both below.
+      const config = { ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { id: script.id, token: script.token } : {}),
+        grants: metadata.grants, info: metadata.world === 'MAIN' ? pageInfo : info, runAt: metadata.runAt, topLevelAwait: metadata.topLevelAwait,
         resources: (assets || []).filter(asset => asset.kind === 'resource') };
       const invoke = (options, runtime = '') => ['(' + runUserScript.toString() + ')(' + JSON.stringify(options) + ',' + (metadata.topLevelAwait ? 'async ' : '') + 'function(__api){',
         bindings(metadata), ...dependencies, script.source, '\n},' + jsonValue.toString() + ',' + scriptRequests.toString() + ',' + safeMenuIcon.toString() + ',' + tabOptions.toString() +
         ',' + BlockAdsUserScriptActions.client.toString() + ',' + BlockAdsUserScriptActions.normalize.toString() + (runtime ? ',' + runtime : '') + ');'].join('\n');
       if (metadata.pageBridge) {
-        const { token: _private, ...pageConfig } = config, page = BlockAdsUserScriptPage;
+        // pageRun becomes the text of an inline page script, which site code can
+        // read (document.currentScript) while it runs. It holds no install ID.
+        const { id: _identity, token: _private, ...pageConfig } = config, page = BlockAdsUserScriptPage;
         // Explicit page mode never falls back; avoid bundling a second copy of
         // its source, dependencies and GM runtime into the native registration.
         const fallback = metadata.injection === 'auto' ? invoke({ ...config, info: { ...info, injectInto: 'content' } }) : '';
-        lines.push('(' + page.host.toString() + ')(' + JSON.stringify({ id: script.id, token: script.token, mode: metadata.injection, event: 'me-page-start-' + script.id }) +
+        lines.push('(' + page.host.toString() + ')(' + JSON.stringify({ id: script.id, token: script.token, mode: metadata.injection, event: startEvent(metadata), sourceName: sourceName(metadata) }) +
           ',function(runtime){"use strict";\n' + invoke(pageConfig, 'runtime') + '\n},' + JSON.stringify(page.client.toString()) + ',function(){\n' +
           fallback + '\n});');
       } else lines.push(invoke(config));
       lines.push('})();');
     }
     // Raw code that needs an exact scope check declares the guard's sentinel.
-    const sentinel = rawSentinel(script, metadata);
+    const sentinel = rawSentinel(metadata);
     if (sentinel) lines.push(';let ' + sentinel + ';');
-    lines.push('//# sourceURL=blockads-userscript-' + script.id + '.user.js');
+    lines.push('//# sourceURL=' + sourceName(metadata));
     // Chrome still requires a nonempty matches array even for include-only
     // scripts. A reserved .invalid URL satisfies its schema without broadening
     // registration to every page; the exact guard never grants it extra scope.
@@ -802,27 +814,57 @@
       ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { worldId: nativeId(script.id) } : {}),
       js: [...(sentinel && !earlyGuard(metadata) ? [{ code: matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
   }
-  function rawSentinel(script, metadata) {
+  function rawSentinel(metadata) {
     if (!metadata.unwrap || matching.exact(metadata)) return '';
-    // Page code can see this name on excluded pages. Derive it from the source,
-    // never the install ID, so it cannot identify the user across sites.
+    // Page code can list this global on excluded pages. Like sourceName, it
+    // hashes the identity: the install ID is unique to every user, and a source
+    // hash is unique to a user who customized the script.
+    return '__moduleEngineScope_' + identityHash(metadata);
+  }
+  // A 64-bit hash of @name and @namespace, which are unique in the library and
+  // the same for every user of a script. Page-visible names use it.
+  const identityHash = metadata => digest(metadata.name + '\n' + metadata.namespace);
+  // A deterministic 64-bit text fingerprint for names, not a security hash.
+  function digest(text) {
     let first = 0x811c9dc5, second = 0x9747b28c;
-    for (let i = 0; i < script.source.length; i++) {
-      const code = script.source.charCodeAt(i);
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i);
       first = Math.imul(first ^ code, 0x01000193); second = Math.imul(second ^ code, 0x5bd1e995) ^ second >>> 15;
     }
-    return '__moduleEngineScope_' + [first, second].map(value => (value >>> 0).toString(16).padStart(8, '0')).join('');
+    return [first, second].map(value => (value >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  // The //# sourceURL name. Page code reads it in stack traces whenever a
+  // page-world frame is on the stack, so it must not carry the install ID.
+  // It derives from @name and @namespace only: every user of a script shares
+  // it, it is stable across edits (DevTools breakpoints keep working), and
+  // the hash separates scripts whose truncated names match. The slug keeps
+  // letters, marks, digits, _ and - only, so it cannot end the comment.
+  function sourceName(metadata) {
+    const slug = Array.from(metadata.name.replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '')).slice(0, 64).join('');
+    return 'blockads-userscript-' + (slug || 'script') + '.' + identityHash(metadata) + '.user.js';
+  }
+  // The event that tells this script's MAIN bootstrap to run its page script.
+  // Page code running during that script sees it as window.event, so it uses
+  // the identity hash rather than the install ID.
+  const startEvent = metadata => 'me-page-start-' + identityHash(metadata);
+  // GM_info.uuid in the page world: a UUID-shaped (RFC 9562 version 8) hash of
+  // @name and @namespace. Like the names above, every user of a script shares
+  // it and it is stable across sites, edits and reinstalls. Unlike the install
+  // ID, it is not unique per installation.
+  function pageUUID(metadata) {
+    const text = metadata.name + '\n' + metadata.namespace, hex = digest('GM_info.uuid\n' + text) + digest(text + '\nGM_info.uuid');
+    return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-8' + hex.slice(13, 16) + '-' + (8 | parseInt(hex[16], 16) & 3).toString(16) + hex.slice(17, 20) + '-' + hex.slice(20);
   }
   // Page listeners registered before a later run-at would see the skipped
   // script's error event. A separate document-start guard listens first.
   const earlyGuard = metadata => metadata.world === 'MAIN' && metadata.runAt !== 'document_start';
   function registrations(script, order) {
-    const metadata = executionMetadata(script), runner = registration(script, order), sentinel = rawSentinel(script, metadata);
+    const metadata = executionMetadata(script), runner = registration(script, order), sentinel = rawSentinel(metadata);
     if (sentinel && earlyGuard(metadata)) return [{ id: nativeId(script.id, order) + '-0', ...matching.prefilter(metadata), runAt: 'document_start',
       allFrames: metadata.allFrames, world: 'MAIN', js: [{ code: matching.rawGuard(metadata, sentinel, true) }] }, runner];
     if (!metadata.pageBridge) return [runner];
     return [{ id: nativeId(script.id, order) + '-0', ...matching.prefilter(metadata), runAt: 'document_start', allFrames: metadata.allFrames, world: 'MAIN',
-      js: [{ code: '(' + BlockAdsUserScriptPage.bootstrap.toString() + ')(' + JSON.stringify('me-page-start-' + script.id) + ');' }] }, runner];
+      js: [{ code: '(' + BlockAdsUserScriptPage.bootstrap.toString() + ')(' + JSON.stringify(startEvent(metadata)) + ');' }] }, runner];
   }
   function tabOptions(value, options = {}, base) {
     if (typeof value !== 'string' || !value || value.length > 4096) throw new TypeError('Use an HTTP(S) tab URL of at most 4096 characters.');

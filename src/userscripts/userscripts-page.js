@@ -25,7 +25,8 @@
     apply(add, document, [name, listen]);
   }
   // Serialized into MAIN. This adapter exposes only the existing GM message
-  // shapes, not extension APIs. It never receives a native capability token.
+  // shapes, not extension APIs. It never receives a native capability token
+  // or the install ID.
   function client(nodeId, outgoing, incoming, run) {
     'use strict';
     const node = document.getElementById(nodeId), apply = Reflect.apply;
@@ -159,7 +160,9 @@
       if (packet.kind !== 'call') return;
       const reply = value => emit({ kind: 'reply', n, value });
       const message = packet.message;
-      if (suspended || calls.size >= 8 || calls.has(n) || !message || message.type !== 'US_VALUE' || message.id !== options.id ||
+      // Page packets never name the script: site code can read them, and the
+      // install ID would identify the user across sites. This host adds it.
+      if (suspended || calls.size >= 8 || calls.has(n) || !message || message.type !== 'US_VALUE' || message.id !== undefined ||
           message.token !== undefined || message.operation === 'connect' || typeof native?.sendMessage !== 'function') {
         reply({ ok: false, error: 'Invalid, suspended or busy page GM request.' }); return;
       }
@@ -188,7 +191,7 @@
       if (!parent) { if (!observer) { observer = new MutationObserver(start); observer.observe(document, { childList: true, subtree: true }); } return; }
       observer?.disconnect(); observer = undefined; started = true;
       try {
-        node.textContent = '(' + clientSource + ')(' + JSON.stringify(node.id) + ',' + JSON.stringify(outgoing) + ',' + JSON.stringify(incoming) + ',' + pageRun.toString() + ');\n//# sourceURL=blockads-userscript-' + options.id + '.user.js';
+        node.textContent = '(' + clientSource + ')(' + JSON.stringify(node.id) + ',' + JSON.stringify(outgoing) + ',' + JSON.stringify(incoming) + ',' + pageRun.toString() + ');\n//# sourceURL=' + options.sourceName;
         parent.appendChild(node);
         document.dispatchEvent(new CustomEvent(options.event, { detail: node.id }));
       } catch (error) {

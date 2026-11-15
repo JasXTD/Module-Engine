@@ -60,6 +60,12 @@
         <button id="installURL" type="button" disabled><span class="ic ic-link" aria-hidden="true"></span>Install from URL</button>
         <input type="file" id="scriptFile" accept=".user.js,.js,text/javascript,text/plain" hidden>
       </div>
+      <section class="update-settings" aria-labelledby="updateSettingsHeading">
+        <h3 id="updateSettingsHeading">Installs &amp; updates</h3>
+        <label class="setting"><span>Open .user.js links for review</span><input id="interceptLinks" type="checkbox" disabled></label>
+        <label class="setting"><span>Check installed scripts daily</span><input id="autoCheck" type="checkbox" disabled></label>
+        <div class="update-row"><button id="checkAll" type="button" disabled>Check all now</button><span id="updateSummary" class="muted" role="status" aria-live="polite"></span></div>
+      </section>
       <label class="sr-only" for="searchScripts">Find a script</label>
       <div class="search"><span class="ic ic-search" aria-hidden="true"></span><input id="searchScripts" type="search" placeholder="Search names, sites or tags" autocomplete="off"></div>
       <label class="tag-filter">Tag <select id="tagFilter" aria-label="Filter scripts by tag"><option value="">All tags</option></select></label>
@@ -130,9 +136,11 @@
         <p id="dependencyStatus" class="dependency-status" role="status"></p>
       </section>
       <section id="scriptUpdates" class="pane" aria-labelledby="updatesHeading" hidden>
-        <div class="pane-head"><h3 id="updatesHeading">Source &amp; updates</h3><button id="checkUpdate" type="button">Check for updates</button></div>
+        <div class="pane-head"><h3 id="updatesHeading">Source &amp; updates</h3><div class="actions"><button id="reviewUpdate" type="button" class="primary" hidden>Review update</button><button id="linkDownload" type="button" hidden>Review @downloadURL</button><button id="checkUpdate" type="button">Check for updates</button></div></div>
         <p id="installedSource" class="muted"></p>
-        <p id="updateHelp" class="muted">Checks are manual and use the installed URL only. Updates need your review and approval.</p>
+        <p id="updateRoute" class="muted" hidden></p>
+        <p id="updateResult" hidden></p>
+        <p id="updateHelp" class="muted">Every update needs your review. Applying one replaces the source, keeps saved values and pauses the script.</p>
       </section>
     </section>
   </section>
@@ -149,7 +157,7 @@
       <section><h3>Editor and organization</h3><p>Syntax highlighting and inline errors check source without running it. Use Go to error to jump to its location. Search and filter author @tag metadata and your local tags. Earlier and Later set the start order within each timing phase; saved-value loading and asynchronous work may finish later.</p></section>
       <section><h3>Network requests</h3><p>GM_xmlhttpRequest provides callbacks and abort(); GM.xmlHttpRequest returns an abortable promise. Requests support FormData, ReadableStream bodies, user/password Basic authentication, upload callbacks, text, JSON, arraybuffer, Blob and document responses, with a 30-second timeout, 8 MiB upload and 8 MiB response limit. Up to five redirects follow by default; redirect: 'error' rejects them. Every destination must satisfy @connect when supplied; without it, the grant permits any HTTP(S) destination. anonymous: true omits cookies. Upload progress needs helper access; Firefox also needs it to follow redirects. See the user guide for all options and bounds.</p></section>
       <section><h3>Clipboard, notifications and downloads</h3><p>These helpers require their exact @grant and Allow helper access in the script editor. GM_setClipboard / GM.setClipboard writes text or HTML (1 MiB); the modern form confirms completion with a promise. GM_notification / GM.notification returns a remove() control with onclick and ondone callbacks. GM_download / GM.download saves an HTTP(S) response through the browser, with a filename, callbacks and abort(); the modern form returns a promise. Downloads use @connect, a 16 MiB response limit, a 120-second HTTP timeout and unique filenames unless conflictAction is overwrite or prompt (prompt is unavailable in Firefox). They never open files automatically. See the user guide for supported options and lifecycle limits.</p></section>
-      <section><h3>Limits</h3><p>Full Violentmonkey compatibility is not claimed. Chrome and Edge support 10 isolated script worlds per document, including page bridges; broad regex or host rules can consume worlds on nearby URLs. Regex flags are unsupported; lookarounds and backreferences are evaluated with bounded work, and over-budget checks never run a script. .tld uses the bundled list of known public and private suffixes. Automatic updates remain unsupported. Disabling prevents future runs and revokes live APIs, requests and menus; it cannot undo JavaScript or cookie writes already accepted by the browser.</p></section>
+      <section><h3>Limits</h3><p>Full Violentmonkey compatibility is not claimed. Chrome and Edge support 10 isolated script worlds per document, including page bridges; broad regex or host rules can consume worlds on nearby URLs. Regex flags are unsupported; lookarounds and backreferences are evaluated with bounded work, and over-budget checks never run a script. .tld uses the bundled list of known public and private suffixes. Updates are never applied automatically: daily checks download newer versions for your review. Disabling prevents future runs and revokes live APIs, requests and menus; it cannot undo JavaScript or cookie writes already accepted by the browser.</p></section>
       <section class="trust"><h3>Trust</h3><p>Only enable scripts and dependencies whose code and site access you trust. Scripts can read and change matching pages, and a network grant lets them send data to their permitted destinations.</p></section>
     </div>
   </details>
@@ -174,8 +182,8 @@
     </div>
     <p id="reviewEffect" class="muted"></p>
   </section>
-  <div class="actions"><button id="cancelSource" type="button">Cancel</button><button id="applySource" type="button" class="primary" hidden disabled>Install script</button></div>
+  <div class="actions"><button id="cancelSource" type="button">Cancel</button><button id="openRaw" type="button" hidden>Open file in browser</button><button id="applySource" type="button" class="primary" hidden disabled>Install script</button></div>
 </dialog>
-<script src="../../../vendor/publicsuffix/suffixes.js"></script><script src="../../userscripts/userscripts-matching.js"></script><script src="../../userscripts/userscripts-page.js"></script><script src="../../userscripts/userscripts-core.js"></script><script src="../../userscripts/userscripts-actions.js"></script><script src="userscripts-completion.js"></script><script src="userscripts-editor.js"></script><script src="userscripts-external.js"></script><script src="manager.js"></script>
+<script src="../../../vendor/publicsuffix/suffixes.js"></script><script src="../../userscripts/userscripts-matching.js"></script><script src="../../userscripts/userscripts-page.js"></script><script src="../../userscripts/userscripts-core.js"></script><script src="../../userscripts/userscripts-updates.js"></script><script src="../../userscripts/userscripts-actions.js"></script><script src="userscripts-completion.js"></script><script src="userscripts-editor.js"></script><script src="userscripts-external.js"></script><script src="manager.js"></script>
 </body>
 </html>

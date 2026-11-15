@@ -20,7 +20,18 @@ function pageFixture(request, response) {
     ...(strict ? { 'Content-Security-Policy': "script-src 'none'; object-src 'none'" }
       : trusted ? { 'Content-Security-Policy': "require-trusted-types-for 'script'; trusted-types 'none'" } : {}) });
   const port = /:(\d+)$/.exec(request.headers.host || '')?.[1];
-  response.end('<!doctype html><html><head><script>window.pageObject={count:7,add(n){return this.count+=n;}};const pageLexical=11;' +
+  // A hostile site's view of a later page script: it replaces JSON and
+  // CustomEvent first, then records the running script's text, window.event
+  // and inserted script nodes, and the page script calls capture() mid-run.
+  const spy = !request.url.startsWith('/page-compat/spy') ? '' : '<script>(()=>{const s=window.ownedSpy={texts:[],events:[],packets:[],mutationEvents:0};' +
+    'const stringify=JSON.stringify,parse=JSON.parse,Custom=CustomEvent;' +
+    'JSON.stringify=function(...args){const out=Reflect.apply(stringify,this,args);if(typeof out==="string")s.packets.push(out);return out;};' +
+    'JSON.parse=function(...args){s.packets.push(String(args[0]));return Reflect.apply(parse,this,args);};' +
+    'window.CustomEvent=class extends Custom{constructor(type,init){super(type,init);s.packets.push(String(type)+" "+String(init?.detail));}};' +
+    's.capture=()=>{s.texts.push(String(document.currentScript?.textContent||""));s.events.push(String(window.event?.type)+" "+String(window.event?.detail));};' +
+    'new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.localName==="script")s.texts.push(node.textContent);}).observe(document,{childList:true,subtree:true});' +
+    'document.addEventListener("DOMNodeInserted",event=>{s.mutationEvents++;if(event.target.localName==="script")s.texts.push(event.target.textContent);});})();</script>';
+  response.end('<!doctype html><html><head>' + spy + '<script>window.pageObject={count:7,add(n){return this.count+=n;}};const pageLexical=11;' +
     'window.startObserved=document.documentElement.dataset.pageStart;</script></head><body><h1>Owned page fixture</h1>' +
     (port ? '<script src="http://localhost:' + port + '/ad.js"></script>' : '') +
     (request.url.endsWith('/frames') ? '<iframe src="child"></iframe>' : '') + '</body></html>');
@@ -160,6 +171,63 @@ async function runPage({ b, manager, send, check, until, browse, scriptSource, e
     const reordered = await page('/page-compat/order');
     await until('Array.isArray(globalThis.ownedPageOrder) && ownedPageOrder.length >= 2', reordered);
     check('Changed page script order reaches native registrations', await b.evaluate('ownedPageOrder.join(",")==="b,a"', reordered));
+
+    // Site code reads stacks whenever a userscript frame is on them. Their
+    // //# sourceURL names must not carry the per-install script ID.
+    const stackBody = kind => `window.ownedStack${kind}={call:callback=>callback(),fail:()=>{throw new Error('Owned ${kind} failure');},
+      later:()=>setTimeout(()=>{throw new Error('Owned ${kind} uncaught');})};`;
+    await install('Stack names bridge', '/page-compat/stack', '// @inject-into page\n// @grant GM_info\n', stackBody('Bridge'));
+    await install('Stack names native', '/page-compat/stack', '// @inject-into page\n// @grant none\n', stackBody('Native'));
+    await install('Stack names isolated', '/page-compat/stack', '// @grant none\n',
+      "document.addEventListener('owned-isolated-probe',()=>document.dispatchEvent(new Event('owned-isolated-stack')));document.documentElement.dataset.isolatedStackReady='true';");
+    const stacked = await page('/page-compat/stack');
+    await until('window.ownedStackBridge&&window.ownedStackNative&&document.documentElement.dataset.isolatedStackReady', stacked);
+    const stacks = await b.evaluate(`(async()=>{const result={};
+      for(const kind of ['Bridge','Native']){const api=window['ownedStack'+kind];let inner='',thrown='';
+        api.call(()=>{inner=new Error('page callback').stack;});try{api.fail();}catch(error){thrown=error.stack;}
+        const uncaught=await new Promise(resolve=>{const timer=setTimeout(()=>{removeEventListener('error',listener);resolve('no error event');},3000);
+          const listener=event=>{clearTimeout(timer);removeEventListener('error',listener);event.preventDefault();resolve(String(event.filename)+'\\n'+String(event.error?.stack));};
+          addEventListener('error',listener);api.later();});
+        result[kind]={inner,thrown,uncaught};}
+      let isolated='';document.addEventListener('owned-isolated-stack',()=>{isolated=new Error('page listener').stack;},{once:true});
+      document.dispatchEvent(new Event('owned-isolated-probe'));result.isolated=isolated;return result;})()`, stacked);
+    evidence.pageStackNames = { browser: evidence.browser, ...stacks };
+    const stackText = JSON.stringify(stacks);
+    check('Page-visible stacks, error events and listener stacks never contain a script install ID', !ids.some(id => stackText.includes(id)) && !/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(stackText));
+    check('Page-world stack frames keep a readable script name', ['Bridge', 'Native'].every(kind =>
+      new RegExp('blockads-userscript-Stack-names-' + kind.toLowerCase() + '\\.[0-9a-f]{16}\\.user\\.js').test(stacks[kind].thrown + stacks[kind].inner)));
+
+    // Bridged runtime data must not carry the install ID either: the inline
+    // page script text, its start event and every GM packet are site-visible.
+    // The content script only reports its GM_info.uuid for comparison.
+    const spyIds = {};
+    for (const kind of ['Page', 'Auto']) spyIds[kind] = await install('Identity spy ' + kind.toLowerCase(), '/page-compat/spy',
+      '// @inject-into ' + kind.toLowerCase() + '\n// @grant GM_info\n// @grant GM.getValue\n// @grant GM.setValue\n// @grant GM_registerMenuCommand\n',
+      `window.ownedSpy.capture();const d=document.documentElement.dataset;d.spy${kind}World=GM_info.injectInto;d.spy${kind}Uuid=String(GM_info.uuid);
+      GM_registerMenuCommand('Identity spy ${kind}',()=>{},{id:'spy'});
+      GM.setValue('spy',5).then(()=>GM.getValue('spy',0)).then(value=>{d.spy${kind}Value=String(value);});`);
+    spyIds.Content = await install('Identity spy content', '/page-compat/spy', '// @inject-into content\n// @grant GM_info\n',
+      'const d=document.documentElement.dataset;d.spyContentWorld=GM_info.injectInto;d.spyContentUuid=String(GM_info.uuid);');
+    const spied = await page('/page-compat/spy');
+    await until('document.documentElement.dataset.spyPageValue==="5"&&document.documentElement.dataset.spyAutoValue==="5"&&document.documentElement.dataset.spyContentUuid&&' +
+      'ownedSpy.packets.filter(packet=>packet.includes(\'"operation":"menus"\')).length>=2', spied);
+    const spy = await b.evaluate('({texts:ownedSpy.texts,events:ownedSpy.events,packets:ownedSpy.packets,mutationEvents:ownedSpy.mutationEvents,' +
+      'worlds:["Page","Auto","Content"].map(kind=>document.documentElement.dataset["spy"+kind+"World"]),' +
+      'uuids:["Page","Auto","Content"].map(kind=>document.documentElement.dataset["spy"+kind+"Uuid"])})', spied);
+    // The uuids are the scripts' own deliberate GM_info writes, checked below.
+    const spyText = JSON.stringify([spy.texts, spy.events, spy.packets]);
+    evidence.pageIdentitySpy = { browser: evidence.browser, worlds: spy.worlds, uuids: spy.uuids, mutationEvents: spy.mutationEvents, events: spy.events,
+      currentScriptTexts: spy.texts.filter(text => text.includes('ownedSpy.capture')).length, packets: spy.packets.length,
+      foundIds: ids.filter(id => spyText.includes(id)), capabilityLike: /[0-9a-f]{64}/.test(spyText) };
+    check('Identity spy scripts ran in their selected worlds: page, approved auto, content', spy.worlds.join() === 'page,page,content');
+    check('The site spy captured the running script text and bridge packets in both directions',
+      spy.texts.filter(text => text.includes('ownedSpy.capture')).length >= 2 &&
+      ['"kind":"call"', '"kind":"connect"', '"kind":"reply"', '"kind":"event"', '"operation":"set"', '"operation":"menus"'].every(part => spy.packets.some(packet => packet.includes(part))));
+    check('Site-visible page script text, start events and GM packets carry no install ID or capability',
+      !ids.some(id => spyText.includes(id)) && !/[0-9a-f]{64}/.test(spyText));
+    check('Page-world GM_info.uuid is a per-script identity UUID, not an install ID', spy.uuids.slice(0, 2).every(uuid =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid) && !ids.includes(uuid)) && spy.uuids[0] !== spy.uuids[1]);
+    check('Content-world GM_info.uuid keeps the install ID', spy.uuids[2] === spyIds.Content);
 
     await install('Page matching frames', '/page-compat/frames/*', '// @inject-into page\n// @grant GM.getValue\n// @exclude-match http://127.0.0.1/page-compat/frames/excluded*\n// @top-level-await\n', 'document.documentElement.dataset.frameGM=await GM.getValue("frame","owned");');
     await install('Page noframes', '/page-compat/frames/*', '// @inject-into page\n// @grant GM_info\n// @noframes\n', 'document.documentElement.dataset.topGM="owned";');

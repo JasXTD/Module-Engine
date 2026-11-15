@@ -155,17 +155,23 @@
     }
     return core.validateAssets(assets, metadata);
   }
+  // Codes mark responses that are not a direct userscript, so an intercepted
+  // link can return to the browser's ordinary handling of that page.
+  const notScript = (message, code) => { throw Object.assign(new Error(message), { code }); };
   async function fetchSource(value, signal) {
     const url = core.sourceURL(value);
     signal.throwIfAborted();
-    const response = await fetch(url, { signal, redirect: 'error', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store' });
+    // Redirects are reported, never followed: approval binds the shown URL to its bytes.
+    const response = await fetch(url, { signal, redirect: 'manual', credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store' });
     try {
+      if (response.type === 'opaqueredirect' || response.status >= 300 && response.status < 400) notScript('The URL redirected. Use the final direct userscript URL.', 'SOURCE_REDIRECT');
       if (!response.ok) fail('Script download returned HTTP ' + response.status + '.');
-      if (/(?:text\/html|application\/xhtml)/i.test(response.headers.get('content-type') || '')) fail('The URL returned HTML. Use a direct userscript source URL.');
+      if (/(?:text\/html|application\/xhtml)/i.test(response.headers.get('content-type') || '')) notScript('The URL returned HTML. Use a direct userscript source URL.', 'SOURCE_NOT_SCRIPT');
       const bytes = await readBody(response, core.LIMITS.source, signal);
       signal.throwIfAborted();
       let source; try { source = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
       catch { fail('Userscript source must contain valid UTF-8 text.'); }
+      if (!/^\uFEFF?\s*\/\/\s*==UserScript==/.test(source)) notScript('Start the file with a // ==UserScript== metadata block and close it with // ==/UserScript==.', 'SOURCE_NOT_SCRIPT');
       core.parse(source); return source;
     } finally {
       // Also cancel rejected HTTP/MIME/Content-Length responses before reading.

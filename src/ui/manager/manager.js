@@ -1,7 +1,7 @@
 /* Extension-page controller. Script source is text throughout this interface. */
 (() => {
   'use strict';
-  const api = typeof browser !== 'undefined' ? browser : chrome, core = BlockAdsUserScriptCore;
+  const api = typeof browser !== 'undefined' ? browser : chrome, core = BlockAdsUserScriptCore, updates = BlockAdsUserScriptUpdates;
   const el = id => document.getElementById(id);
   const sourceEditor = BlockAdsEditor.create();
   const completion = BlockAdsCompletion.attach(el('scriptSource')), normalizeSource = ModuleEngineExternalEditor.normalize;
@@ -11,6 +11,8 @@
   let library = null, modules = [], editor = null, busy = false, confirming = false, pendingRefresh = false, refreshTimer;
   let assetJob = null;
   let installation = null;
+  // Background update results are review data only; the library stays the source of truth.
+  let updateState = null, checkingAll = false;
   let helperPermissions = [], allowedPermissions = new Set();
   let editorKey = 0;
   const externalEditor = ModuleEngineExternalEditor.create({
@@ -34,7 +36,8 @@
   }
   async function send(message) {
     const response = await api.runtime.sendMessage(message);
-    if (!response?.ok) throw new Error(response?.error || 'The extension did not respond. Refresh status to retry.');
+    if (!response?.ok) throw Object.assign(new Error(response?.error || 'The extension did not respond. Refresh status to retry.'),
+      typeof response?.code === 'string' ? { code: response.code } : {});
     return response;
   }
   function confirm(title, text, action) {
@@ -65,6 +68,15 @@
     // scrolls the editor to the end of the last line. Open every script at its start.
     input.setSelectionRange(0, 0); input.scrollTop = 0; input.scrollLeft = 0;
     sourceEditor.update(input.value); sourceEditor.sync();
+  }
+  const updateInfo = script => script && updateState?.scripts?.[script.id] || null;
+  const updateReady = script => { const info = updateInfo(script); return ['staged', 'available'].includes(info?.outcome) ? info.available || '' : null; };
+  const when = time => new Date(time).toLocaleString();
+  const code = text => { const node = document.createElement('code'); node.textContent = text; return node; };
+  // The destinations a check would use for this source, as shown in a review.
+  function updateRoute(source, sourceURL) {
+    let plan; try { plan = updates.targets({ source, sourceURL }); } catch { return 'Not linked'; }
+    return plan.download ? 'Downloads: ' + plan.download + (plan.version ? '\nVersion check: ' + plan.version : '') : 'Not linked';
   }
   const size = bytes => bytes < 1024 ? bytes + ' bytes' : (bytes / 1024).toFixed(1) + ' KiB';
   const cookieScope = meta => 'Current host' + (meta.connects.some(host => host !== 'self') ? ' and @connect: ' + meta.connects.filter(host => host !== 'self').join(', ') : '') + '; includes HttpOnly cookies in the calling tab’s store';
@@ -162,6 +174,14 @@
     el('refresh').disabled = locked;
     el('newScript').disabled = el('importScript').disabled = locked || !library;
     el('installURL').disabled = locked || !library || Boolean(assetJob);
+    el('interceptLinks').checked = Boolean(updateState?.interceptLinks); el('autoCheck').checked = Boolean(updateState?.autoCheck);
+    el('interceptLinks').disabled = el('autoCheck').disabled = locked || !updateState;
+    const checking = checkingAll || Boolean(updateState?.checking), waiting = (library?.scripts || []).filter(item => updateReady(item) !== null).length;
+    el('checkAll').disabled = locked || checking || !library?.scripts.some(item => item.sourceURL);
+    el('checkAll').textContent = checking ? 'Checking…' : 'Check all now';
+    el('updateSummary').textContent = !updateState ? '' : updateState.error || (checking ? 'Checking linked scripts…'
+      : waiting ? waiting + (waiting === 1 ? ' update' : ' updates') + ' ready to review' : library?.enabled ? '' : 'Both run only while Userscripts is on.');
+    el('updateSummary').classList.toggle('error-text', Boolean(updateState?.error));
     const total = library?.scripts.length || 0;
     el('libraryCount').textContent = total + (total === 1 ? ' script' : ' scripts');
     const list = el('scriptList'), search = el('searchScripts').value.trim().toLowerCase(); list.replaceChildren();
@@ -181,7 +201,13 @@
       const detail = document.createElement('small'); detail.textContent = detail.title = [...script.metadata.matches, ...script.metadata.includes].join(', ');
       const state = document.createElement('span'); state.className = 'script-state' + (script.enabled ? ' on' : '');
       state.textContent = script.enabled ? 'On' : 'Off'; state.title = script.enabled ? 'Enabled' : 'Disabled';
-      main.append(title, detail); button.append(main, state); item.append(button); list.append(item);
+      main.append(title, detail); button.append(main);
+      const ready = updateReady(script);
+      if (ready !== null) {
+        const chip = document.createElement('span'); chip.className = 'script-state update'; chip.textContent = 'Update';
+        chip.title = 'Update' + (ready ? ' ' + ready : '') + ' ready to review'; button.append(chip);
+      }
+      button.append(state); item.append(button); list.append(item);
       const labels = allTags(script);
       if (labels.length) { const tags = document.createElement('small'); tags.className = 'script-tags'; tags.textContent = tags.title = labels.join(' · '); main.append(tags); }
       button.addEventListener('click', async () => {
@@ -223,12 +249,7 @@
     el('scriptEnabled').disabled = locked || !script || changed || stale() || !script.enabled && core.assetSpecs(script.metadata).length > 0 && !script.assets;
     el('scriptEnabled').checked = Boolean(script?.enabled);
     el('scriptUpdates').hidden = !script;
-    // Only a script installed from a URL can be checked; a local one gets the way to link one.
-    const installed = el('installedSource'), linked = Boolean(script?.sourceURL);
-    if (linked) { const url = document.createElement('code'); url.textContent = script.sourceURL; installed.replaceChildren('Installed from ', url); }
-    else installed.textContent = 'Local script. To link an update URL, use Install from URL with the same @name and @namespace.';
-    el('checkUpdate').hidden = el('updateHelp').hidden = !linked;
-    el('checkUpdate').disabled = locked || !linked || changed || stale() || Boolean(assetJob);
+    renderUpdates(script, locked || changed || Boolean(stale()) || Boolean(assetJob));
     preview();
     let grants = [];
     try { grants = editor ? core.parse(el('scriptSource').value).grants : []; helperPermissions = BlockAdsUserScriptActions.permissions(grants, /Firefox\//.test(navigator.userAgent)); }
@@ -248,6 +269,37 @@
     renderAssets(locked);
     renderInstallation();
   }
+  function renderUpdates(script, blocked) {
+    const installed = el('installedSource'), route = el('updateRoute'), result = el('updateResult');
+    const linked = Boolean(script?.sourceURL), info = updateInfo(script), ready = updateReady(script);
+    // Only a script installed from a URL is checked; a local one gets the way to link one.
+    if (linked) installed.replaceChildren('Installed from ', code(script.sourceURL));
+    else if (info?.suggested) installed.replaceChildren('Local script. Its @downloadURL is ', code(info.suggested), '. Review it to link updates; nothing is contacted until you do.');
+    else installed.textContent = 'Local script. To link an update URL, use Install from URL with the same @name and @namespace.';
+    const parts = [];
+    if (linked && info?.download && info.download !== script.sourceURL) parts.push('Updates download from ', code(info.download), '. ');
+    if (linked && info?.version) parts.push('Versions are checked at ', code(info.version), '. ');
+    if (linked) parts.push(...(info?.notes || []).map(note => note + ' '));
+    route.replaceChildren(...parts); route.hidden = !parts.length;
+    const version = script?.metadata.explicitVersion || 'unversioned';
+    result.textContent = !linked || !info ? ''
+      : info.outcome === 'staged' ? 'Update ready: ' + version + ' → ' + info.available + '. Downloaded ' + when(info.checkedAt) + '; nothing changes until you apply it.'
+      : info.outcome === 'available' ? 'Version ' + info.available + ' is available (found ' + when(info.checkedAt) + '). Reviewing it downloads the source again.'
+      : info.outcome === 'current' ? 'Up to date' + (info.available ? ' (offered version ' + info.available + ')' : '') + ' · checked ' + when(info.checkedAt) + '.'
+      : info.outcome === 'error' ? 'Last check failed ' + when(info.checkedAt) + ': ' + info.message
+      : info.outcome === 'skipped' ? info.message
+      : !info.automatic ? 'Automatic checks need an @version. Use Check for updates to review changes.'
+      : !updateState.autoCheck ? 'Daily checks are off. Check for updates at any time.'
+      : !library?.enabled ? 'Daily checks run while Userscripts is on.' : 'Not checked yet. Daily checks run in the background.';
+    result.hidden = !result.textContent;
+    result.className = info?.outcome === 'error' ? 'error-text' : ready !== null ? 'update-ready' : 'muted';
+    el('reviewUpdate').hidden = !linked || ready === null;
+    el('reviewUpdate').disabled = blocked;
+    el('linkDownload').hidden = linked || !info?.suggested;
+    el('linkDownload').disabled = blocked || !library;
+    el('checkUpdate').hidden = el('updateHelp').hidden = !linked;
+    el('checkUpdate').disabled = blocked || !linked;
+  }
   function renderInstallation() {
     if (!installation) return;
     const { review, requestId, committing } = installation;
@@ -256,6 +308,8 @@
     el('fetchSource').disabled = Boolean(requestId || committing || busy);
     el('cancelSource').disabled = Boolean(committing);
     el('cancelSource').textContent = requestId ? 'Cancel download' : 'Cancel';
+    el('openRaw').hidden = !installation.intercepted;
+    el('openRaw').disabled = Boolean(committing || busy);
     el('installReview').hidden = !review;
     el('applySource').hidden = !review;
     el('applySource').disabled = Boolean(!review || requestId || committing || busy || changed || review.unchanged || review.versionChange === -1);
@@ -290,7 +344,8 @@
       table.append(tr);
     };
     for (const [label, value] of rows) row(label, old ? value(old) : '—', value(next));
-    row('Update source', review.previousSourceURL || 'Not linked', review.sourceURL);
+    row('Update source', review.previousSourceURL ? updateRoute(review.previousSource, review.previousSourceURL) : 'Not linked',
+      updateRoute(review.source, review.sourceURL));
     // A first install has no current version to compare, so its empty column is hidden.
     el('installReview').classList.toggle('fresh', !old);
     el('reviewCaption').textContent = old ? 'Script access and settings · changed rows are marked' : 'Script access and settings';
@@ -299,34 +354,61 @@
     el('reviewBefore').value = review.previousSource || ''; el('reviewAfter').value = review.source;
     for (const id of ['reviewBefore', 'reviewAfter']) { el(id).setSelectionRange(0, 0); el(id).scrollTop = 0; el(id).scrollLeft = 0; }
     el('reviewEffect').textContent = (old ? 'Applying replaces the current source, including local edits, and keeps saved script values. ' : 'Installing adds a paused script to your library. ')
-      + 'Review the code and any dependencies, then turn on Run this script. Only the installed URL is used for manual checks. '
+      + 'Review the code and any dependencies, then turn on Run this script. Later checks use the update source shown above; every update needs your review. '
       + next.warnings.join(' ');
   }
+  const destination = script => { try { return updates.targets(script).download || script.sourceURL; } catch { return script.sourceURL; } };
   async function fetchInstallation() {
     const state = installation; if (!state || state.requestId || state.committing || busy) return;
-    state.review = null; state.error = false; state.status = 'Fetching source for review…';
+    // A downloaded update is offered once; Check again always downloads afresh.
+    const staged = state.staged; state.staged = false;
+    state.review = null; state.error = false; state.status = staged ? 'Opening the downloaded update…' : 'Fetching source for review…';
     state.requestId = crypto.randomUUID(); renderInstallation();
     try {
       if (state.script) {
         const current = library?.scripts.find(script => script.id === state.script.id);
         if (!current?.sourceURL) throw new Error('This script or its installed URL is no longer available. Close this review and refresh status.');
-        state.script = current; el('sourceURL').value = current.sourceURL;
+        state.script = current; el('sourceURL').value = destination(current);
       }
-      const message = state.script ? { type: 'US_CHECK_UPDATE', id: state.script.id, revision: state.script.revision }
+      const message = staged ? { type: 'US_STAGED_REVIEW', id: state.script.id, revision: state.script.revision }
+        : state.script ? { type: 'US_CHECK_UPDATE', id: state.script.id, revision: state.script.revision }
         : { type: 'US_FETCH_SOURCE', url: el('sourceURL').value.trim() };
-      const { review } = await send({ ...message, requestId: state.requestId });
+      const { review, checkedAt } = await send({ ...message, requestId: state.requestId });
       if (installation !== state) return;
       state.review = review;
-      state.status = review.unchanged ? 'Already up to date. The source is identical.'
+      state.status = (staged ? 'Downloaded ' + when(checkedAt) + '. ' : '') + (review.unchanged ? 'Already up to date. The source is identical.'
         : !review.id ? 'Ready to review. This script has not been installed.'
         : review.versionChange === -1 ? 'The downloaded version is older. Downgrades are not applied.'
         : review.versionChange === 1 ? 'Newer version available: ' + core.parse(review.previousSource).version + ' → ' + review.metadata.version
         : review.previousSource === review.source ? 'Source is identical. Applying will link this URL and pause the script.'
         : review.versionChange === 0 ? 'Source changed without a newer version. Review all changes before applying.'
-        : 'Source changed. Version numbers are missing or cannot be compared; review all changes before applying.';
+        : 'Source changed. Version numbers are missing or cannot be compared; review all changes before applying.');
       showSourceReview(review);
-    } catch (error) { if (installation === state) { state.error = true; state.status = error.message; } }
-    finally { if (installation === state) { state.requestId = null; renderInstallation(); } }
+    } catch (error) {
+      if (installation !== state) return;
+      // A link to an HTML file view or a redirecting URL is not a direct
+      // userscript: hand it back to the browser's ordinary handling.
+      if (state.intercepted && !state.script && ['SOURCE_REDIRECT', 'SOURCE_NOT_SCRIPT'].includes(error.code) && await openInBrowser(state, true)) return;
+      state.error = true; state.status = error.message + (state.intercepted ? ' Choose Open file in browser to view it normally.' : '');
+    } finally { if (installation === state) { state.requestId = null; renderInstallation(); } }
+  }
+  async function openInBrowser(state, automatic = false) {
+    if (!state.url || installation !== state || state.committing) return false;
+    // The extension holds passage in memory. If it was lost, for example after a
+    // worker restart, never hand the same link back automatically twice in a row.
+    if (automatic) {
+      try {
+        const key = 'moduleEngineReturned:' + state.url, last = Number(sessionStorage.getItem(key)) || 0;
+        if (Date.now() - last < 30000) return false;
+        sessionStorage.setItem(key, String(Date.now()));
+      } catch { return false; }
+    }
+    try { await send({ type: 'US_LINK_BYPASS', url: state.url }); }
+    catch (error) { if (installation === state) { state.error = true; state.status = error.message; renderInstallation(); } return false; }
+    if (installation !== state) return false;
+    if (state.requestId) void send({ type: 'US_CANCEL_SOURCE', requestId: state.requestId }).catch(() => {});
+    location.replace(state.url);
+    return true;
   }
   function closeInstallation() {
     const state = installation; if (!state || state.committing) return;
@@ -336,18 +418,19 @@
     if (state.requestId) void send({ type: 'US_CANCEL_SOURCE', requestId: state.requestId }).catch(error => notice(error.message, true));
     drainRefresh();
   }
-  async function openInstallation(script) {
+  async function openInstallation(script, { staged = false, url = '', intercepted = false } = {}) {
     if (busy || confirming || installation || !await discardPermission()) return;
-    installation = { script, review: null, status: script ? 'Checking the installed URL…' : 'Paste a direct .user.js URL to review its source.' };
-    el('installTitle').textContent = script ? 'Review update' : 'Install from URL';
-    el('sourceURL').value = script?.sourceURL || ''; el('sourceURL').readOnly = Boolean(script);
+    installation = { script, staged, intercepted, url, review: null,
+      status: script ? 'Checking the update source…' : url ? 'Fetching source for review…' : 'Paste a direct .user.js URL to review its source.' };
+    el('installTitle').textContent = script ? 'Review update' : intercepted ? 'Install from link' : 'Install from URL';
+    el('sourceURL').value = script ? destination(script) : url; el('sourceURL').readOnly = Boolean(script);
     el('fetchSource').textContent = script ? 'Check again' : 'Fetch for review';
     render(); el('installDialog').showModal(); el('installDialog').scrollTop = 0;
-    el(script ? 'installTitle' : 'sourceURL').focus({ preventScroll: true });
-    if (script) void fetchInstallation();
+    el(script || url ? 'installTitle' : 'sourceURL').focus({ preventScroll: true });
+    if (script || url) void fetchInstallation();
   }
   async function load() {
-    const results = await Promise.allSettled([send({ type: 'MODULES_GET' }), send({ type: 'US_LIST' }), api.permissions.getAll()]);
+    const results = await Promise.allSettled([send({ type: 'MODULES_GET' }), send({ type: 'US_LIST' }), api.permissions.getAll(), send({ type: 'US_UPDATE_STATE' })]);
     const errors = [];
     if (results[0].status === 'fulfilled') modules = results[0].value.modules; else errors.push(results[0].reason.message);
     if (results[1].status === 'fulfilled') {
@@ -359,6 +442,8 @@
     } else errors.push(results[1].reason.message);
     if (results[2].status === 'fulfilled') allowedPermissions = new Set(results[2].value.permissions);
     else errors.push(results[2].reason.message);
+    if (results[3].status === 'fulfilled') updateState = results[3].value;
+    else { updateState = null; errors.push('Updates: ' + results[3].reason.message); }
     const blockerError = modules.find(module => module.id === 'blocking')?.error;
     if (blockerError) errors.push('Ad blocking: ' + blockerError);
     if (errors.length) throw new Error(errors.join(' '));
@@ -412,6 +497,33 @@
   el('importScript').addEventListener('click', () => el('scriptFile').click());
   el('installURL').addEventListener('click', () => { void openInstallation(); });
   el('checkUpdate').addEventListener('click', () => { void openInstallation(selected()); });
+  el('reviewUpdate').addEventListener('click', () => {
+    const script = selected(); if (script && !el('reviewUpdate').disabled) void openInstallation(script, { staged: updateInfo(script)?.outcome === 'staged' });
+  });
+  el('linkDownload').addEventListener('click', () => {
+    const url = updateInfo(selected())?.suggested; if (url && !el('linkDownload').disabled) void openInstallation(null, { url });
+  });
+  el('openRaw').addEventListener('click', () => { if (installation && !el('openRaw').disabled) void openInBrowser(installation); });
+  for (const id of ['interceptLinks', 'autoCheck']) el(id).addEventListener('change', () => {
+    const value = el(id).checked;
+    void run(async () => { updateState = await send({ type: 'US_UPDATE_SETTINGS', settings: { [id]: value } }); },
+      id === 'interceptLinks' ? (value ? 'Opening a .user.js link now shows its review here first.' : '.user.js links now open normally in the browser.')
+        : value ? 'Installed scripts are checked daily while Userscripts is on.' : 'Daily update checks are off. Check for updates at any time.');
+  });
+  el('checkAll').addEventListener('click', async () => {
+    if (el('checkAll').disabled) return;
+    checkingAll = true; render();
+    try {
+      updateState = await send({ type: 'US_CHECK_ALL' });
+      const { checked, cancelled } = updateState.result, scripts = library?.scripts || [];
+      const ready = scripts.filter(item => updateReady(item) !== null).length;
+      const failed = scripts.filter(item => updateInfo(item)?.outcome === 'error').length;
+      notice(cancelled ? 'Update checks were cancelled.' : 'Checked ' + checked + (checked === 1 ? ' script. ' : ' scripts. ')
+        + (ready ? ready + (ready === 1 ? ' update is' : ' updates are') + ' ready to review.' : 'No updates are waiting.')
+        + (failed ? ' ' + failed + (failed === 1 ? ' check' : ' checks') + ' failed; select a script for details.' : ''), cancelled || failed > 0 && !ready);
+    } catch (error) { notice(error.message, true); }
+    finally { checkingAll = false; render(); pendingRefresh = true; drainRefresh(); }
+  });
   el('fetchSourceForm').addEventListener('submit', event => { event.preventDefault(); void fetchInstallation(); });
   el('sourceURL').addEventListener('input', () => {
     if (!installation || installation.requestId || installation.committing) return;
@@ -519,8 +631,8 @@
   });
   addEventListener('beforeunload', event => { if (dirty()) { event.preventDefault(); event.returnValue = ''; } });
   api.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'local' || !['userscriptManager', 'enabled', 'protectionError'].some(key => key in changes)) return;
-    if (changes.userscriptManager && !changes.enabled && !changes.protectionError) {
+    if (area !== 'local' || !['userscriptManager', 'userscriptUpdates', 'enabled', 'protectionError'].some(key => key in changes)) return;
+    if (changes.userscriptManager && !changes.userscriptUpdates && !changes.enabled && !changes.protectionError) {
       const visible = value => JSON.stringify({ enabled: value?.enabled,
         scripts: value?.scripts?.map(script => [script.id, script.revision, script.enabled]) });
       if (visible(changes.userscriptManager.oldValue) === visible(changes.userscriptManager.newValue)) return;
@@ -529,5 +641,10 @@
   });
   api.permissions.onAdded.addListener(requestRefresh);
   api.permissions.onRemoved.addListener(requestRefresh);
-  void run(load, 'Module settings loaded. Create or import a script to get started.');
+  // An intercepted .user.js link opens this page with its URL in the fragment.
+  // Clear it so a reload does not fetch again; the review itself installs nothing.
+  const linkedInstall = updates.installFromHash(location.hash);
+  if (location.hash.startsWith('#install=')) history.replaceState(null, '', location.pathname + location.search);
+  void run(load, linkedInstall ? 'Review the linked script before installing it.' : 'Module settings loaded. Create or import a script to get started.')
+    .then(() => { if (linkedInstall) void openInstallation(null, { url: linkedInstall, intercepted: true }); });
 })();
