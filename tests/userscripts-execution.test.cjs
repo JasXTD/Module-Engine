@@ -93,12 +93,12 @@ test('unwrap guards extended scopes before any raw statement or declaration runs
     const registrations = core.registrations(record), sources = registrations.flatMap(item => item.js);
     if (world) {
       // A page listener registered before document-end must not see the skipped error.
-      assert.deepEqual(registrations.map(item => [item.runAt, item.world, item.js.length]), [['document_start', 'MAIN', 1], ['document_end', 'MAIN', 1]]);
+      assert.deepEqual(registrations.map(item => [item.runAt, item.world, item.js.length]), [['document_start', 'MAIN', 1], ['document_end', 'MAIN', 2]]);
     } else assert.deepEqual(registrations.map(item => [item.world, item.js.length]), [['USER_SCRIPT', 2]], 'guard, then raw source in one isolated injection');
     assert.ok(!sources.some(item => item.code.includes('f'.repeat(64))), 'raw registrations never contain the capability token');
     assert.ok(!sources[0].code.includes('12345678') && !/__moduleEngineScope_12345678/.test(sources.at(-1).code), 'the guard and its sentinel do not carry the install ID');
     const run = href => {
-      const scope = context({ location: { href } }), errors = [];
+      const scope = context({ location: { href }, removeEventListener() {} }), errors = [];
       for (const item of sources) { try { vm.runInContext(item.code, scope); } catch (error) { errors.push(error); } }
       return { scope, errors };
     };
@@ -123,7 +123,7 @@ test('wrapped source that closes its wrapper cannot run outside the declared sco
     ['', 'https://example.test:8443/*', 'https://example.test:8443/page', 'https://example.test/page'],
     ['// @include /^https:\\/\\/example\\.test\\/only/\n', 'include-only', 'https://example.test/only', 'https://bank.test/']
   ];
-  const worlds = [['', [['USER_SCRIPT', 2]]], ['// @inject-into page\n// @grant none\n', [['MAIN', 1], ['MAIN', 1]]],
+  const worlds = [['', [['USER_SCRIPT', 2]]], ['// @inject-into page\n// @grant none\n', [['MAIN', 1], ['MAIN', 2]]],
     // document-body registers natively at document start, so its guard leads the same injection.
     ['// @inject-into page\n// @grant none\n// @run-at document-body\n', [['MAIN', 2]]],
     ['// @inject-into page\n// @grant GM.getValue\n', [['MAIN', 1], ['USER_SCRIPT', 2]]]];
@@ -146,6 +146,21 @@ test('wrapped source that closes its wrapper cannot run outside the declared sco
   const exact = core.registrations({ id: '12345678-1234-1234-1234-123456789abc', token: 'f'.repeat(64), source: source('', breakout) });
   assert.deepEqual(exact.map(item => item.js.length), [1]);
   assert.ok(!exact[0].js[0].code.includes('__moduleEngineScope_'));
+});
+
+test('delayed raw page scripts check the document-start URL at execution and fail closed if startup was missed', () => {
+  for (const when of ['document-end', 'document-idle']) {
+    const record = { id: '12345678-1234-1234-1234-123456789abc', source: source('// @unwrap\n// @inject-into page\n// @exclude *#private\n// @run-at ' + when + '\n', 'var auditMarker = 1;') };
+    const [early, runner] = core.registrations(record);
+    for (const missed of [false, true]) {
+      const ctx = context({ location: { href: 'https://example.test/page' }, addEventListener() {}, removeEventListener() {} });
+      if (!missed) vm.runInContext(early.js[0].code, ctx);
+      ctx.location.href += '#private';
+      vm.runInContext(runner.js[0].code, ctx);
+      assert.throws(() => vm.runInContext(runner.js[1].code, ctx), { name: 'SyntaxError' });
+      assert.equal(Object.hasOwn(ctx, 'auditMarker'), false);
+    }
+  }
 });
 
 test('the unwrap guard hides only its own redeclaration error', () => {

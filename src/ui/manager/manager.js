@@ -123,12 +123,13 @@
       url.textContent = spec.url; info.append(kind, url); item.append(info);
       const asset = !dirty() && !stale() ? script?.assets?.[index] : null;
       if (asset) {
-        const detail = document.createElement('small'); detail.textContent = size(asset.size) + ' · SHA-256 ' + asset.sha256; info.append(detail);
+        const detail = document.createElement('small'); detail.textContent = size(asset.size) + ' · SHA-256 ' + asset.sha256 +
+          (asset.bidi ? ' · Hidden direction controls (escaped in preview)' : ''); info.append(detail);
         const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Review contents'; button.disabled = locked;
         button.addEventListener('click', () => run(async () => {
           const response = await send({ type: 'US_ASSET_READ', id: script.id, revision: script.revision, index });
           el('assetTitle').textContent = asset.name || '@require'; el('assetDigest').textContent = asset.url + '\nSHA-256 ' + asset.sha256;
-          el('assetSource').value = response.asset.text; el('assetDialog').showModal();
+          el('assetSource').value = asset.bidi ? core.escapeBidi(response.asset.text) : response.asset.text; el('assetDialog').showModal();
           el('assetSource').setSelectionRange(0, 0); el('assetSource').scrollTop = 0;
           el('assetDialog').scrollTop = 0; el('assetTitle').focus({ preventScroll: true });
         }));
@@ -578,17 +579,25 @@
   el('scriptEnabled').addEventListener('change', async event => {
     const enabled = el('scriptEnabled').checked, script = selected();
     if (!event.isTrusted || busy || confirming || !script) { render(); return; }
-    let acknowledgeBidi = false;
-    if (enabled && core.hasBidi(script.source)) {
-      confirming = true; render();
-      try { acknowledgeBidi = await BlockAdsScriptReview.confirmBidi(script.source); }
-      finally { confirming = false; render(); }
-      if (!acknowledgeBidi) { drainRefresh(); return; }
-    }
     void run(async () => {
-      library = await send({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled, acknowledgeBidi });
+      const reviewedRequires = [];
+      let acknowledgeBidi = false;
+      if (enabled) {
+        for (const [index, asset] of (script.assets || []).entries()) {
+          if (!asset.bidi) continue;
+          const response = await send({ type: 'US_ASSET_READ', id: script.id, revision: script.revision, index });
+          if (!await BlockAdsScriptReview.confirmBidi(response.asset.text, '@require ' + asset.url + ' · SHA-256 ' + asset.sha256, 'Acknowledge dependency')) return;
+          reviewedRequires.push(asset.sha256);
+        }
+        if (core.hasBidi(script.source)) {
+          acknowledgeBidi = await BlockAdsScriptReview.confirmBidi(script.source);
+          if (!acknowledgeBidi) return;
+        }
+      }
+      library = await send({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled, acknowledgeBidi, reviewedRequires });
       openEditor(library.scripts.find(item => item.id === script.id), undefined, { keepTracking: true }); await load();
-    }, enabled ? 'Script enabled. It runs on matching page loads while the userscript module is on.' : 'Script disabled for future loads. Reload pages where it already ran.');
+      notice(enabled ? 'Script enabled. It runs on matching page loads while the userscript module is on.' : 'Script disabled for future loads. Reload pages where it already ran.');
+    });
   });
   el('discardDraft').addEventListener('click', async () => {
     if (await discardPermission()) void run(async () => {

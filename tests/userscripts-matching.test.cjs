@@ -20,7 +20,7 @@ const accepts = (rules, value) => core.allows(core.parse(source(rules)), value);
 function wrapper(rules, url) {
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source(rules) };
   const context = vm.createContext({ URL, location: { href: url } });
-  inject(core.registration(record), context, { timeout: 1000 });
+  for (const registration of core.registrations(record)) inject(registration, context, { timeout: 1000 });
   return context.ran === true;
 }
 

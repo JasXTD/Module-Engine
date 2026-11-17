@@ -1151,6 +1151,27 @@ test('dependencies require explicit preparation, retain order, expose granted re
   await assert.rejects(fetch(blobURL));
 });
 
+test('enabling a bidi dependency requires its reviewed digest and current revision, including on upgrade', async t => {
+  const { base, state } = await loopback(t), h = harness();
+  const path = '/usnet/direction.js';
+  state.sources = { [path]: { body: '// fixture ' + String.fromCodePoint(0x200e) } };
+  let script = await h.save('Dependency review', '// @require ' + base + path + '\n');
+  const prepare = async () => (await h.command({ type: 'US_PREPARE_ASSETS', id: script.id, revision: script.revision })).scripts[0];
+  script = await prepare();
+  assert.equal(script.assets[0].bidi, true);
+  const enable = (digests, revision = script.revision) => h.command({ type: 'US_ENABLE', id: script.id, revision, enabled: true, acknowledgeBidi: true, reviewedRequires: digests });
+  const first = script.assets[0].sha256, revision = script.revision;
+  await assert.rejects(enable(undefined), /dependencies/);
+  state.sources[path].body += ' changed'; script = await prepare();
+  await assert.rejects(enable([first], revision), /changed/);
+  await assert.rejects(enable([first]), /dependencies/);
+  const current = script.assets[0].sha256;
+  assert.equal((await enable([current])).scripts[0].enabled, true);
+  const stored = structuredClone(h.state.data.userscriptManager);
+  delete stored.scripts[0].reviewedRequires;
+  assert.equal(BlockAdsUserScriptCore.library(stored).scripts[0].enabled, false);
+});
+
 test('dependency hash pins, corrupt caches, changed declarations and invalid file responses fail closed', async t => {
   const { base } = await loopback(t), h = harness();
   const { createHash } = require('node:crypto'), { assets } = require('./userscripts-network-fixtures.cjs');
@@ -1376,6 +1397,17 @@ test('transfer budget grows with received bytes instead of reserving every respo
   } finally { for (const release of held) release(); }
   assert.match(refused?.message || '', /64 MiB buffer budget/, 'growth past the shared budget is refused');
   const whole = reserve({}, LIMITS.budget); whole.grow(LIMITS.budget); whole();
+});
+
+test('native upload-progress XHR reserves the whole response before the transfer begins', () => {
+  const { reserve, LIMITS } = BlockAdsUserScriptNetwork;
+  const held = reserve({}, LIMITS.budget);
+  try {
+    held.grow(LIMITS.budget - LIMITS.response + 1);
+    assert.throws(() => reserve({ upload: true }, LIMITS.response), /buffer budget/);
+    reserve({ upload: false }, LIMITS.response)();
+  } finally { held(); }
+  reserve({ upload: true }, LIMITS.response)();
 });
 
 test('abort, timeout, port loss and module disable settle network promises once and release capacity', async t => {

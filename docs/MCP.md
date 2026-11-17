@@ -102,7 +102,7 @@ Proposals let an agent suggest a new script, an edit or turning a script on or o
 3. Ask the agent to fix or write a script. Each proposal appears under **Pending changes** with the same review as installing from a URL: the access table (sites, APIs, cookie and network access, world, dependencies, update source) with changed rows marked, the current and proposed source side by side, and the agent's note, labelled as unverified. The tab title shows how many are waiting.
 4. Choose one:
    - **Apply** saves the source and leaves the script **off**. Saved script values are kept.
-   - **Apply & enable** saves it and turns it on, so the reviewed code runs on its sites. This is unavailable until any changed `@require`/`@resource` dependencies are prepared in Modules & scripts.
+   - **Apply & enable** saves it and turns it on, so the reviewed code runs on its sites. This is unavailable until any changed `@require`/`@resource` dependencies are prepared in Modules & scripts. Cached executable dependencies containing hidden direction controls must be reviewed and enabled from Modules & scripts, which shows the exact bytes and digests.
    - **Reject** changes nothing.
    For an on/off proposal, the buttons are **Turn on** / **Turn off** and **Reject**.
 5. Applied changes are listed under **Decided this session** with **Revert**. Revert puts the previous source back (saved off), undoes an on/off change, or, for a script the agent created, offers **Remove script**. Revert is refused if the script changed afterwards; edit it in Modules & scripts instead.

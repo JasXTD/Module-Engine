@@ -228,6 +228,13 @@ async function flagRequest(details) {
     const pageHost = urlParts(pageUrl).host;
     const reasons = BlockAdsFlags.requestSignals({ url: details.url, type: details.type, pageHost });
     if (!reasons.length) return;
+    // Private-tab observations must never enter the persistent flag store.
+    // Chromium omits incognito from webRequest events; use the browser's tab.
+    if (details.incognito === true) return;
+    if (details.incognito !== false) {
+      const tab = await api.tabs.get(details.tabId).catch(() => null);
+      if (tab?.incognito !== false) return;
+    }
     const { host, path } = urlParts(details.url);
     await recordFlag({ host, pageHost, reasons, path, tabId: details.tabId });
   } catch (error) {
@@ -1243,7 +1250,7 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "FLAG_CANDIDATES") {
     // Signals a content script saw on its page. The page can influence them, so
     // only fixed reason codes, http(s) addresses and third-party hosts count.
-    if (sender.id === api.runtime.id && Number.isInteger(sender.tab?.id) && /^https?:\/\//i.test(sender.tab.url || "") &&
+    if (sender.id === api.runtime.id && Number.isInteger(sender.tab?.id) && sender.tab.incognito === false && /^https?:\/\//i.test(sender.tab.url || "") &&
         Array.isArray(message.items)) {
       const pageHost = urlParts(sender.tab.url).host;
       for (const item of message.items.slice(0, 20)) {

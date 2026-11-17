@@ -11,6 +11,11 @@ const assets = {
 function fixtureHandler(state = { hits: [], aborted: 0 }) {
   return (request, response) => {
     const pathname = request.url.split('?')[0];
+    if (pathname === '/matching/raw/change') {
+      response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
+      response.end('<!doctype html><head><script>history.replaceState(null,"","/matching/raw/skip")</script></head><body>Owned history fixture</body>');
+      return true;
+    }
     if (!pathname.startsWith('/usnet/')) return false;
     state.hits.push({ url: request.url, method: request.method, cookie: request.headers.cookie || '', referer: request.headers.referer || '',
       authorization: request.headers.authorization || '', custom: request.headers['x-test'] || '' });

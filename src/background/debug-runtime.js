@@ -79,7 +79,7 @@
       for (const item of replaced) settle(session, item, 'superseded');
       // Saving keeps prepared dependencies only when their declarations are unchanged.
       const specs = core.assetSpecs(metadata);
-      const needsDependencies = specs.length > 0 && (!script?.assets || JSON.stringify(specs) !== JSON.stringify(core.assetSpecs(script.metadata)));
+      const needsDependencies = specs.length > 0 && (!script?.assets || core.bidiDigests(script.assets).length > 0 || JSON.stringify(specs) !== JSON.stringify(core.assetSpecs(script.metadata)));
       const item = { id: crypto.randomUUID(), kind: 'script', status: 'pending', scriptId: script?.id ?? null, baseRevision: script?.revision ?? null,
         name: metadata.name, namespace: metadata.namespace, source: args.source, previousSource: script?.source ?? null,
         sourceURL: script?.sourceURL ?? null, wasEnabled: Boolean(script?.enabled), note: args.note ?? '', needsDependencies, createdAt: Date.now() };
@@ -101,7 +101,7 @@
         name: script.metadata.name, namespace: script.metadata.namespace, requestedEnabled: args.enabled, wasEnabled: script.enabled,
         // Turning code on shows what it can access; turning it off needs no source review.
         source: args.enabled ? script.source : null, previousSource: null, sourceURL: script.sourceURL ?? null, note: args.note ?? '',
-        needsDependencies: args.enabled && core.assetSpecs(script.metadata).length > 0 && !script.assets, createdAt: Date.now() };
+        needsDependencies: args.enabled && core.assetSpecs(script.metadata).length > 0 && (!script.assets || core.bidiDigests(script.assets).length > 0), createdAt: Date.now() };
       remember(session, item);
       return { ok: true, proposal: agentView(item), next: 'Ask the user to review this proposal on the Module Engine MCP page, then call module_engine_get_proposal.' };
     }
@@ -114,7 +114,7 @@
       }
       // For an enable proposal, needsDependencies is only set when it would turn the script on.
       if (item.needsDependencies && (action === 'apply_enable' || item.kind === 'enabled')) {
-        item.error = 'Prepare this script’s dependencies in Modules & scripts before turning it on' + (item.kind === 'script' ? ', or apply it without turning it on.' : '.'); return;
+        item.error = 'Prepare this script’s dependencies and review any hidden direction controls in Modules & scripts before turning it on' + (item.kind === 'script' ? ', or apply it without turning it on.' : '.'); return;
       }
       const library = await userscripts.inspect();
       const script = item.scriptId ? library.scripts.find(entry => entry.id === item.scriptId) : null;

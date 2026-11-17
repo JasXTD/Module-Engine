@@ -461,7 +461,13 @@
         // saved bytes. Saving/updating always pauses the script; no consent sticks.
         if (message.enabled && core.hasBidi(script.source) && message.acknowledgeBidi !== true)
           throw new Error('This source contains hidden direction controls. Review the escaped source and acknowledge them before enabling.');
-        if (message.enabled) await network.verify(script);
+        if (message.enabled) {
+          const digests = core.bidiDigests(script.assets);
+          if (digests.length && !same(digests, message.reviewedRequires))
+            throw new Error('Review the hidden direction controls in the executable dependencies in Modules & scripts before enabling.');
+          if (digests.length) script.reviewedRequires = digests;
+          await network.verify(script);
+        }
         Object.assign(script, { enabled: message.enabled, autoPageApproved: message.enabled && core.parse(script.source).injection === 'auto',
           revision: script.revision + 1, token: token() });
       } else if (message.type === 'US_ASSET_READ') {

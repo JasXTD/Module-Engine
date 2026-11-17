@@ -215,6 +215,10 @@ test('enable proposals defer to pending edits and respect unprepared dependencie
   const blocked = (await f.call(p, 'propose_enabled', { id: deps.id, revision: deps.revision, enabled: true })).proposal;
   const refused = await f.decide(p, blocked.id, 'apply');
   assert.equal(refused.status, 'pending'); assert.equal(refused.needsDependencies, true); assert.match(refused.error, /Prepare this script’s dependencies/);
+  const bidi = await f.install('Review dependency', { metadata: pin, assets: [{ kind: 'require', bidi: true, sha256: 'a'.repeat(64) }] });
+  const pending = (await f.call(p, 'propose_enabled', { id: bidi.id, revision: bidi.revision, enabled: true })).proposal;
+  assert.equal((await f.decide(p, pending.id, 'apply')).status, 'pending');
+  assert.equal(f.latest(p, pending.id).needsDependencies, true);
   const off = (await f.call(p, 'propose_enabled', { id: plain.id, revision: f.state.scripts[0].revision, enabled: true })).proposal;
   f.state.failEnable = 'Userscripts are unavailable.';
   const failed = await f.decide(p, off.id, 'apply');

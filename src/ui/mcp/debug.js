@@ -106,7 +106,7 @@
     if (proposal.kind === 'enabled') parts.push(proposal.requestedEnabled ? 'Turning this script on runs the code above on the sites listed.' : 'Turning this script off stops it on every site. Its source and saved values are kept.');
     else if (proposal.created) parts.push('Apply adds this script turned off. Apply & enable also turns it on, so it runs on the sites listed above.');
     else parts.push('Apply replaces the current source and turns the script off' + (proposal.wasEnabled ? ' (it is on now)' : '') + '. Saved script values are kept. Apply & enable turns it on with the new code.');
-    if (proposal.needsDependencies) parts.push('Its dependencies must be prepared in Modules & scripts before it can be turned on.');
+    if (proposal.needsDependencies) parts.push('Prepare or review its dependencies and enable it in Modules & scripts.');
     return parts.join(' ');
   }
   function button(id, label, action, primary = false) {
@@ -168,7 +168,7 @@
       if (!node) { node = build(proposal); nodes.set(proposal.id, node); el('proposals').append(node); }
       const error = node.querySelector('[data-role="error"]'); error.textContent = BlockAdsUserScriptCore.escapeBidi(proposal.error); error.hidden = !proposal.error;
       for (const control of node.querySelectorAll('button')) control.disabled = Boolean(deciding) || !changesApproved() ||
-        control.dataset.action === 'applyEnable' && proposal.needsDependencies ||
+        enables(proposal, control.dataset.action) && proposal.needsDependencies ||
         enables(proposal, control.dataset.action) && bidiReviews.has(proposal.id) && !bidiReviews.get(proposal.id).accepted();
     }
     el('decisions').replaceChildren(...decided.map(decisionItem));

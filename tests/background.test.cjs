@@ -1495,8 +1495,10 @@ test('the activity log stays readable when settings cannot be loaded', async () 
 });
 
 const AD_SCRIPT = 'https://political-effort.com/bjXWV.s/dRGOlb0/YtWndQi/YlWI5xubZoXDIJ/PeWm/9LuSZ/U_lykUPzT/Ul3CMQDhYHyMMoT/AZtpNHTvcrwkNPjVIXxKMnQN';
-const loaded = (h, url, { type = 'script', page = 'https://www.uukanshu.cc/book/1.html', tabId = 4, firefox = false } = {}) =>
-  h.listeners.response(firefox ? { url, type, tabId, documentUrl: page } : { url, type, tabId, initiator: new URL(page).origin });
+const loaded = (h, url, { type = 'script', page = 'https://www.uukanshu.cc/book/1.html', tabId = 4, firefox = false } = {}) => {
+  h.state.tabs[tabId] ??= { id: tabId, url: page, incognito: false };
+  h.listeners.response(firefox ? { url, type, tabId, documentUrl: page, incognito: h.state.tabs[tabId].incognito } : { url, type, tabId, initiator: new URL(page).origin });
+};
 const flagsOf = async h => Object.fromEntries((await h.send({ type: 'GET_FLAGS' })).flags.map(flag => [flag.site, flag]));
 
 test('suspected ads that loaded are flagged per site with reasons, pages and samples, and logged once', async () => {
@@ -1577,7 +1579,7 @@ test('flag decisions: ignore stops counting, unignore resumes, remove and clear 
 test('page signals accept only fixed reasons and third-party http(s) addresses from content scripts', async () => {
   const h = harness();
   await h.ready;
-  const page = { id: 'test', url: 'https://www.uukanshu.cc/book/1.html', tab: { id: 6, url: 'https://www.uukanshu.cc/book/1.html' } };
+  const page = { id: 'test', url: 'https://www.uukanshu.cc/book/1.html', tab: { id: 6, incognito: false, url: 'https://www.uukanshu.cc/book/1.html' } };
   await h.send({ type: 'FLAG_CANDIDATES', items: [
     { url: 'https://acceptable.a-ads.com/2453155/', reason: 'ad-size-frame' },
     { url: 'https://img.uukanshu.cc/side.html', reason: 'ad-size-frame' },
@@ -1590,6 +1592,23 @@ test('page signals accept only fixed reasons and third-party http(s) addresses f
   const flags = await flagsOf(h);
   assert.deepEqual(Object.keys(flags).sort(), ['acceptable.a-ads.com', 'img.uukanshu.cc', 'label.example']);
   assert.deepEqual(flags['acceptable.a-ads.com'].reasons, ['ad-size-frame']);
+});
+
+test('private and unknown tabs leave no persisted flag or flag log through either producer', async () => {
+  const h = harness(); await h.ready;
+  for (const incognito of [true, undefined]) {
+    const tab = { id: 4, incognito, url: 'https://private.example/' };
+    h.state.tabs[4] = tab;
+    for (const firefox of [true, false]) loaded(h, AD_SCRIPT, { firefox, page: tab.url });
+    await h.send({ type: 'FLAG_CANDIDATES', items: [{ reason: 'ad-label', url: 'https://ads.example/ads/' }] }, { id: 'test', url: tab.url, tab });
+    await settle();
+  }
+  delete h.state.tabs[4];
+  h.listeners.response({ type: 'script', tabId: 4, url: AD_SCRIPT, initiator: 'https://private.example/' });
+  await settle();
+  assert.deepEqual(await flagsOf(h), {});
+  assert.equal(h.state.storage.adFlags, undefined);
+  assert.ok(!(await h.send({ type: 'GET_LOG' })).entries.some(entry => /^Flagged /.test(entry.message)));
 });
 
 test('the flag store keeps the 500 most recently seen sites', async () => {

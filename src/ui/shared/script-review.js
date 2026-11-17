@@ -73,18 +73,18 @@
     }
     return { node, accepted: () => !result.count || accepted };
   }
-  function confirmBidi(source) {
+  function confirmBidi(source, description = 'Saved source', action = 'Acknowledge & enable') {
     if (!core.hasBidi(source)) return Promise.resolve(true);
     const dialog = document.createElement('dialog'), title = document.createElement('h2'), panes = document.createElement('div');
     const label = document.createElement('label'), preview = document.createElement('textarea'), actions = document.createElement('div');
     const cancel = document.createElement('button'), enable = document.createElement('button');
     const id = 'bidi-' + crypto.randomUUID();
     dialog.className = 'bidi-dialog'; title.id = id; title.textContent = 'Review hidden direction controls'; dialog.setAttribute('aria-labelledby', id);
-    panes.className = 'review-code'; label.htmlFor = preview.id = id + '-source'; label.textContent = 'Saved source · escaped, read only';
+    panes.className = 'review-code'; label.htmlFor = preview.id = id + '-source'; label.textContent = description + ' · escaped, read only';
     preview.value = core.escapeBidi(source); preview.readOnly = true; preview.spellcheck = false; preview.dir = 'ltr';
     const column = document.createElement('div'); column.append(label, preview); panes.append(column);
     const warning = bidiWarning(source, { id: 'bidiAcknowledge', acknowledge: true, onChange: () => { enable.disabled = !warning.accepted(); } });
-    cancel.type = enable.type = 'button'; cancel.textContent = 'Cancel'; enable.id = 'bidiEnable'; enable.textContent = 'Acknowledge & enable'; enable.className = 'primary'; enable.disabled = true;
+    cancel.type = enable.type = 'button'; cancel.textContent = 'Cancel'; enable.id = 'bidiEnable'; enable.textContent = action; enable.className = 'primary'; enable.disabled = true;
     actions.className = 'actions'; actions.append(cancel, enable); dialog.append(title, warning.node, panes, actions);
     return new Promise(resolve => {
       let approved = false;

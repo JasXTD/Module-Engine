@@ -491,6 +491,32 @@
     return 'const scopeMatcher=(' + createMatching.toString() + ')(' + JSON.stringify(usesSuffixes ? data : '') + ');\n';
   };
   const rules = metadata => JSON.stringify({ matches: metadata.matches, excludeMatches: metadata.excludeMatches, includes: metadata.includes, excludes: metadata.excludes });
+  // Serialized into the target world. A delayed MAIN runner uses this closure
+  // from document start, when page scripts have not replaced DOM/JS methods.
+  function guardDecision(name, allowed, early) {
+    if (allowed && !early) return;
+    const page = globalThis, loc = location, href = loc.href, define = Object.defineProperty;
+    const remove = page.removeEventListener?.bind(page);
+    let denied = false;
+    const quiet = event => {
+      if (denied && String(event.message).includes(name)) {
+        event.preventDefault(); event.stopImmediatePropagation(); remove?.('error', quiet, true);
+      }
+    };
+    try {
+      addEventListener('error', quiet, true);
+      if (!early) setTimeout(() => remove?.('error', quiet, true), 0);
+    } catch { /* Error reporting is optional. Scope enforcement is not. */ }
+    function deny() {
+      denied = true;
+      define(page, name, { __proto__: null, value: undefined, configurable: false });
+    }
+    if (!allowed) deny();
+    if (early) return () => {
+      if (!allowed || loc.href !== href) deny();
+      else remove?.('error', quiet, true);
+    };
+  }
   globalThis.BlockAdsMatching = Object.freeze({ ...matcher, create: createMatching,
     guard: metadata => prelude(metadata) + 'if(!scopeMatcher.allows(' + rules(metadata) + ',location.href))return;',
     // True when the native registration alone enforces the script's scope.
@@ -507,10 +533,8 @@
     // An early guard runs in its own document-start registration and keeps
     // its listener until the raw script's error arrives; otherwise the raw
     // script runs synchronously after the guard in the same injection.
-    rawGuard: (metadata, name, early) => '(()=>{"use strict";let allowed=false;try{' + prelude(metadata) +
-      'allowed=scopeMatcher.allows(' + rules(metadata) + ',location.href);}catch{}\nif(allowed)return;const name=' + JSON.stringify(name) + ';\n' +
-      // Hide only the expected redeclaration error from the console and page.
-      'const quiet=event=>{if(String(event.message).includes(name)){event.preventDefault();event.stopImmediatePropagation();removeEventListener("error",quiet,true);}};\n' +
-      'try{addEventListener("error",quiet,true);' + (early ? '' : 'setTimeout(()=>removeEventListener("error",quiet,true),0);') + '}catch{}\n' +
-      'Object.defineProperty(globalThis,name,{value:undefined,configurable:false});})();' });
+    rawGuard: (metadata, name, early) => (early ? 'const ' + name + 'AtRun=' : '') +
+      '(()=>{"use strict";let allowed=false;try{' + prelude(metadata) +
+      'allowed=scopeMatcher.allows(' + rules(metadata) + ',location.href);}catch{}\nconst name=' + JSON.stringify(name) + ';\n' +
+      'return (' + guardDecision.toString() + ')(name,allowed,' + early + ');})();' });
 })();

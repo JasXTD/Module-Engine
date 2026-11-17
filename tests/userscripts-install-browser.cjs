@@ -286,11 +286,19 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     check('Trusted review enables original bytes without substituting escaped text', bidiScript.enabled && bidiScript.source === bidiSource);
     const bidiPage = await browse('/install-page-bidi'); pages.push(bidiPage); await until('document.body.dataset.urlBidi==="yes"', bidiPage);
     check('Acknowledged URL script executes while the local ad stays blocked', await b.evaluate('window.fixtureAd===undefined', bidiPage));
-    const bidiUpdate = bidiSource.replace('@version 1.0', '@version 2.0') + '\n// \u2069 update';
+    fixtureState.sources['/usnet/bidi-dependency.js'] = { body: '// reviewed dependency \u2069' };
+    const bidiUpdate = bidiSource.replace('@version 1.0', '@version 2.0\n// @require ' + base + '/usnet/bidi-dependency.js') + '\n// \u2069 update';
     fixtureState.sources['/usnet/bidi.user.js'] = { body: bidiUpdate };
     await update();
     check('URL update review detects new direction controls', await b.evaluate('document.getElementById("reviewBidi").textContent.includes("U+2069")&&document.getElementById("reviewAfter").value.includes("\\\\u2069")', manager));
-    await click('applySource'); await ready(); await click('scriptEnabled');
+    await click('applySource'); await ready(); await click('prepareAssets');
+    await until('!document.getElementById("scriptEnabled").disabled');
+    await click('scriptEnabled');
+    await until('document.querySelector(".bidi-dialog[open] label[for]")?.textContent.includes("@require")');
+    check('Executable dependency review identifies the digest and escapes its control', await b.evaluate(
+      'document.querySelector(".bidi-dialog label[for]").textContent.includes("SHA-256")&&document.querySelector(".bidi-dialog textarea").value.includes("\\\\u2069")&&document.getElementById("bidiEnable").disabled', manager));
+    await click('bidiAcknowledge'); await click('bidiEnable');
+    await until('document.querySelector(".bidi-dialog[open] label[for]")?.textContent.includes("Saved source")');
     await until('Boolean(document.querySelector(".bidi-dialog[open]"))');
     check('Updating the source requires a fresh acknowledgment', await b.evaluate('!document.getElementById("bidiAcknowledge").checked&&document.getElementById("bidiEnable").disabled', manager));
     await b.pressKey('Escape', manager); await ready();
@@ -302,6 +310,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     await send({ type: 'US_UPDATE_SETTINGS', settings: { interceptLinks: true, autoCheck: true } }).catch(() => {});
     for (const name of ['install', 'link', 'link-next', 'view', 'bidi']) delete fixtureState.sources['/usnet/' + name + '.user.js'];
     delete fixtureState.sources['/usnet/link.meta.js'];
+    delete fixtureState.sources['/usnet/bidi-dependency.js'];
   }
 }
 module.exports = { runInstallation };

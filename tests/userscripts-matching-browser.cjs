@@ -36,7 +36,9 @@ async function runMatching({ b, manager, send, check, until, port, aliasState, e
   };
   const page = async url => {
     const target = await b.open(url); pages.add(target);
-    await until('document.body.dataset.matchingSettled === "true"', target);
+    // The blocker also requests its state on startup. Wait for its applied
+    // shield before closing the fixture, so its pending reply is not dropped.
+    await until('document.body.dataset.matchingSettled === "true" && Boolean(document.getElementById("blockads-cosmetic-shield"))', target);
     return target;
   };
   const marker = 'document.body.dataset.matchingRan="true";';
@@ -83,6 +85,11 @@ async function runMatching({ b, manager, send, check, until, port, aliasState, e
         await b.evaluate('matchingRawVar===1&&typeof matchingRawFunction==="function"&&matchingRawLexical===2', good));
       const earlier = b.scriptErrors ? (await b.scriptErrors()).length : 0;
       const bad = await page(base + '/matching/raw/skip');
+      if (world === 'page') {
+        const changed = await page(base + '/matching/raw/change');
+        check('A history change before document-end prevents raw code and declarations', await b.evaluate(
+          'location.pathname==="/matching/raw/skip"&&!("matchingRawVar" in window)&&typeof matchingRawLexical==="undefined"&&document.body.dataset.matchingRan===undefined', changed));
+      }
       check(name + ': excluded page runs no statement and creates no binding', await b.evaluate(
         'document.body.dataset.matchingRan===undefined&&!("matchingRawVar" in window)&&!("matchingRawFunction" in window)&&typeof matchingRawLexical==="undefined"', bad));
       (evidence.rawGuardPageErrors ||= {})[world] = await b.evaluate('window.pageErrors', bad);

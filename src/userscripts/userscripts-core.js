@@ -178,6 +178,7 @@
     if (typeof value !== 'string' || value.length > Math.ceil(LIMITS.asset / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) fail('Invalid or oversized cached asset.');
     return Uint8Array.from(atob(value), character => character.charCodeAt(0));
   }
+  const bidiDigests = assets => (assets || []).filter(asset => asset.bidi).map(asset => asset.sha256);
   function validateAssets(value, metadata) {
     if (value == null) return null;
     const specs = assetSpecs(metadata);
@@ -190,10 +191,11 @@
           entry.mime.length > 128 || /[\r\n]/.test(entry.mime)) fail('Invalid cached dependency metadata.');
       const data = decodeAsset(entry.body); total += data.length;
       if (data.length > LIMITS.asset || total > LIMITS.assets) fail('Dependencies support 256 KiB each and 1 MiB per script.');
+      let bidi = false;
       if (entry.kind === 'require') {
-        try { new TextDecoder('utf-8', { fatal: true }).decode(data); } catch { fail('@require must contain valid UTF-8 JavaScript.'); }
+        try { bidi = hasBidi(new TextDecoder('utf-8', { fatal: true }).decode(data)); } catch { fail('@require must contain valid UTF-8 JavaScript.'); }
       }
-      return { ...expected, sha256: entry.sha256, mime: entry.mime, body: entry.body };
+      return { ...expected, sha256: entry.sha256, mime: entry.mime, body: entry.body, ...(bidi ? { bidi: true } : {}) };
     });
   }
   const allows = (metadata, url) => matching.allows(metadata, url);
@@ -230,8 +232,14 @@
       const metadata = parse(script.source), identity = JSON.stringify([metadata.namespace, metadata.name]);
       if (identities.has(identity)) fail('A script with this @name and @namespace already exists. Edit the saved script instead.');
       identities.add(identity); total += bytes(script.source);
-      return { id: script.id, revision: script.revision, enabled: script.enabled, source: script.source,
-        token: script.token, autoPageApproved: script.autoPageApproved === true, values: validateValues(script.values), assets: validateAssets(script.assets, metadata),
+      const assets = validateAssets(script.assets, metadata);
+      const digests = bidiDigests(assets);
+      // Older enabled records have no dependency-review receipt. Pause just
+      // those scripts on read, including at startup and broker authorization.
+      const enabled = script.enabled && (!digests.length || JSON.stringify(digests) === JSON.stringify(script.reviewedRequires));
+      return { id: script.id, revision: script.revision, enabled, source: script.source,
+        ...(enabled && digests.length ? { reviewedRequires: digests } : {}),
+        token: script.token, autoPageApproved: script.autoPageApproved === true, values: validateValues(script.values), assets,
         tags: tags(script.tags ?? []), sourceURL: script.sourceURL == null ? null : sourceURL(script.sourceURL) };
     });
     const result = { schemaVersion: 1, revision: raw.revision, enabled: raw.enabled, scripts };
@@ -847,7 +855,9 @@
     return { id: id + (metadata.pageBridge ? '-1' : ''), ...matching.prefilter(metadata), runAt: metadata.runAt === 'document_body' ? 'document_start' : metadata.runAt,
       allFrames: metadata.allFrames, world: nativeWorld(metadata),
       ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { worldId: nativeId(script.id) } : {}),
-      js: [...(sentinel && !early ? [{ code: matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
+      js: [...(sentinel ? [{ code: early
+        ? 'if(typeof ' + sentinel + 'AtRun==="function")' + sentinel + 'AtRun();else Object.defineProperty(globalThis,' + JSON.stringify(sentinel) + ',{__proto__:null,value:undefined,configurable:false});'
+        : matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
   }
   // Raw code cannot be wrapped, and wrapped source is plain text: source such as
   // `}); })(); code; (function(){ (function(){` closes the wrapper and runs at
@@ -923,5 +933,5 @@
   }
   globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, metadataBlock, parse, allows, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,
-    sourceURL, compareVersions, sourceReview, tags, bindings, hasBidi, escapeBidi, bidiControls });
+    sourceURL, compareVersions, sourceReview, tags, bindings, hasBidi, escapeBidi, bidiControls, bidiDigests });
 })();

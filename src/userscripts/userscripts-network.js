@@ -28,7 +28,8 @@
       if (reserved + size > LIMITS.budget) fail('Userscript transfers are using the 64 MiB buffer budget. Wait for an active transfer to finish.');
       reserved += size; held += size;
     };
-    const initial = Math.min(limit, PROVISIONAL);
+    // Native upload-progress XHR buffers its whole response before returning.
+    const initial = details.upload ? limit : Math.min(limit, PROVISIONAL);
     take(request + initial); response = initial;
     const release = () => { if (!released) { released = true; reserved -= held; held = 0; } };
     release.grow = bytes => {
