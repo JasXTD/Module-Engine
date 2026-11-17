@@ -806,7 +806,10 @@ if (require.main === module) (async () => {
     const page = await browser.open(fixtureUrl);
     await until(browser, 'document.getElementById("ad") && getComputedStyle(document.getElementById("ad")).display === "none"', page);
     check(await browser.evaluate('getComputedStyle(document.getElementById("normal")).display !== "none"', page), 'cosmetic filter hides ad fixture and preserves ordinary content');
-    check(await browser.evaluate('getComputedStyle(document.getElementById("ad")).visibility === "hidden" && getComputedStyle(document.getElementById("ad")).pointerEvents === "none"', page), 'built-in hiding retains its visibility and pointer safeguards');
+    // .ad-slot is also a bundled generic selector, so the registered stylesheet can
+    // hide the fixture before the built-in rule and its extra safeguards arrive.
+    await until(browser, 'getComputedStyle(document.getElementById("ad")).visibility === "hidden" && getComputedStyle(document.getElementById("ad")).pointerEvents === "none"', page);
+    check(true, 'built-in hiding retains its visibility and pointer safeguards');
     check(await browser.evaluate('getComputedStyle(document.getElementById("fandom-lookalike")).display !== "none"', page),
       'Fandom-specific cosmetic rule preserves similarly named content on other sites');
     check(await browser.evaluate('getComputedStyle(document.getElementById("youtube-lookalike")).display !== "none"', page),
@@ -830,12 +833,55 @@ if (require.main === module) (async () => {
     })()`, page);
     await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display === "none"', page);
     check(true, 'a newly inserted element matches the bundled generic CSS without a page reload');
+    // Generic selectors arrive as two registered stylesheets, not in each frame's state.
+    const registered = await browser.evaluate('api.scripting.getRegisteredContentScripts()');
+    const sheet = id => registered.find(script => script.id === id);
+    check(sheet('community-generic')?.css?.some(file => file.endsWith('rules/community-generic.css')) &&
+      sheet('community-generic').js?.some(file => file.endsWith('src/blocking/generic-static.js')) &&
+      sheet('community-generic-excepted')?.css?.some(file => file.endsWith('rules/community-generic-excepted.css')),
+      'generic hiding is registered as a main and an excepted stylesheet with a companion script');
+    const covers = (patterns, site) => (patterns || []).some(pattern => {
+      const host = /^\*:\/\/\*\.(.+)\/\*$/.exec(pattern)?.[1];
+      return host && (site === host || site.endsWith('.' + host));
+    });
+    check([...bundleCosmetic.disableGeneric, ...bundleCosmetic.disableAll].every(site => covers(sheet('community-generic').excludeMatches, site) &&
+      covers(sheet('community-generic-excepted').excludeMatches, site)) &&
+      bundleCosmetic.genericStatic.exceptedSites.every(site => covers(sheet('community-generic-excepted').excludeMatches, site)),
+      'generichide and elemhide sites skip both stylesheets; sites exempting a selector skip the excepted one');
+    check(!(await browser.evaluate(`document.getElementById("blockads-cosmetic-shield").textContent.includes(${JSON.stringify(genericSelector)})`, page)),
+      'the frame state no longer carries the bundled generic selectors');
+    // The last plain selector sat past Blink's per-rule limit in the old single rule.
+    const exempted = new Set(Object.values(bundleCosmetic.allow).flat());
+    const lateSelector = bundleCosmetic.generic.filter(selector => /^\.[a-zA-Z][\w-]*$/.test(selector) && !exempted.has(selector)).at(-1);
+    const exceptedSelector = bundleCosmetic.genericStatic.excepted.find(selector => /^\.[a-zA-Z][\w-]*$/.test(selector));
+    const addGeneric = (target, entries) => browser.evaluate(`(() => {
+      for (const [id, className] of ${JSON.stringify(entries)}) {
+        const element = document.createElement('div'); element.id = id; element.className = className; element.textContent = 'Local generic fixture'; document.body.append(element);
+      }
+      return true;
+    })()`, target);
+    await addGeneric(page, [['lateGeneric', lateSelector.slice(1)], ['exceptedGeneric', exceptedSelector.slice(1)]]);
+    await until(browser, 'getComputedStyle(document.getElementById("lateGeneric")).display === "none" && getComputedStyle(document.getElementById("exceptedGeneric")).display === "none"', page);
+    check(true, 'the last generic selector and a selector other sites exempt both hide here');
+    // Each grouped rule must parse whole in this browser; a rejected rule would drop its neighbours.
+    evidence.genericSheets = await browser.evaluate(`Promise.all(['rules/community-generic.css', 'rules/community-generic-excepted.css'].map(async file => {
+      const text = await (await fetch(api.runtime.getURL(file))).text();
+      const rules = text.slice(text.indexOf('*/') + 2).split(' { display: none !important; }').map(rule => rule.trim()).filter(Boolean);
+      const rejected = rules.filter(rule => { const parsed = new CSSStyleSheet(); parsed.replaceSync(rule + ' { display: none !important; }'); return parsed.cssRules.length !== 1; });
+      return { file, bytes: text.length, rules: rules.length, grouped: rules.filter(rule => rule.includes(',\\n')).length,
+        rejectedGrouped: rejected.filter(rule => rule.includes(',\\n')).map(rule => rule.slice(0, 160)), rejectedSingle: rejected.filter(rule => !rule.includes(',\\n')) };
+    }))`);
+    check(evidence.genericSheets.every(item => item.grouped > 0 && !item.rejectedGrouped.length), 'this browser parses every grouped rule of both generic stylesheets');
     const toggleStarted = Date.now();
     await send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: false } });
     await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display !== "none"', page);
     check(true, 'turning generic cosmetics off restores the generic fixture');
+    check(await browser.evaluate('document.documentElement.hasAttribute("data-me-generic-off") && getComputedStyle(document.getElementById("lateGeneric")).display !== "none"', page),
+      'the open page revokes its registered generic stylesheets');
     await send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: true } });
     await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display === "none"', page);
+    check(await browser.evaluate('!document.documentElement.hasAttribute("data-me-generic-off") && getComputedStyle(document.getElementById("lateGeneric")).display === "none"', page),
+      'turning generic cosmetics on again reinstates the page\'s own stylesheets');
     evidence.cosmetic = { genericSelectors: bundleCosmetic.generic.length, toggleRoundTripMs: Date.now() - toggleStarted,
       styleCharacters: await browser.evaluate('document.getElementById("blockads-cosmetic-shield").textContent.length', page) };
 
@@ -875,6 +921,15 @@ if (require.main === module) (async () => {
     await until(browser, 'getComputedStyle(document.getElementById("genericAd")).display !== "none"', page);
     check(true, 'custom selector exceptions undo generic hiding without removing unrelated custom hiding');
     check(await browser.evaluate('getComputedStyle(document.getElementById("customCosmetic")).display === "none"', page), 'unrelated custom hiding remains active');
+    check(await browser.evaluate('document.documentElement.hasAttribute("data-me-generic-off") && getComputedStyle(document.getElementById("lateGeneric")).display === "none"', page),
+      'a custom generic exception revokes the stylesheets; the frame state carries the other generic selectors');
+    // A new load of that site is excluded from the stylesheets and starts from the frame state.
+    const excludedPage = await browser.open(fixtureUrl);
+    await addGeneric(excludedPage, [['genericAd', genericSelector.slice(1)], ['lateGeneric', lateSelector.slice(1)]]);
+    await until(browser, 'getComputedStyle(document.getElementById("lateGeneric")).display === "none"', excludedPage);
+    check(await browser.evaluate('getComputedStyle(document.getElementById("genericAd")).display !== "none" && !document.documentElement.hasAttribute("data-me-generic-off")', excludedPage),
+      'a site with a custom generic exception loads without the stylesheets and keeps its other generic hiding');
+    await browser.closePage(excludedPage);
 
     const enabledBeforeCosmeticPause = (await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).sort();
     await browser.evaluate(`(() => { const form = document.querySelector('[data-list="cosmeticPausedDomains"] form'); form.querySelector('input').value = '127.0.0.1'; form.requestSubmit(); return true; })()`, listsPage);

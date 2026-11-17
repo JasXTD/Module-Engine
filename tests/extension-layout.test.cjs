@@ -24,6 +24,15 @@ test('all manifest entry points and bundled rules resolve inside the package', (
   for(const entry of manifest.content_scripts)for(const file of [...entry.js,...(entry.css||[])])resource(file);
   for(const rule of manifest.declarative_net_request.rule_resources)resource(rule.path);
 });
+test('scripts and stylesheets the background registers resolve inside the package', () => {
+  const source = fs.readFileSync(path.join(root, 'src/background/background.js'), 'utf8');
+  const registered = [...source.matchAll(/["']((?:src|rules)\/[\w./-]+\.(?:js|css))["']/g)].map(match => match[1]);
+  for (const file of ['src/blocking/youtube.js', 'src/blocking/popups.js', 'src/blocking/notification-guard.js',
+    'rules/community-generic.css', 'rules/community-generic-excepted.css', 'src/blocking/generic-static.js']) {
+    assert.ok(registered.includes(file), file);
+  }
+  registered.forEach(file => resource(file));
+});
 test('HTML scripts, styles, icons and navigation links resolve relative to their own page', () => {
   for(const file of files.filter(file=>file.endsWith('.html'))){const text=fs.readFileSync(path.join(root,file),'utf8');
     for(const match of text.matchAll(/\b(?:src|href)=(['"])(.*?)\1/g))resource(match[2],file);

@@ -10,7 +10,7 @@ function collect(relative) {
   if (stat.isFile()) return [relative];
   if (!stat.isDirectory()) throw new Error('Unexpected extension package entry: ' + relative);
   return fs.readdirSync(absolute).filter(name => !name.startsWith('.') &&
-    (relative !== 'rules' || name.endsWith('.json'))).sort().flatMap(name => collect(relative + '/' + name));
+    (relative !== 'rules' || name.endsWith('.json') || name.endsWith('.css'))).sort().flatMap(name => collect(relative + '/' + name));
 }
 const files = Object.freeze(entries.flatMap(collect));
 module.exports = { files };

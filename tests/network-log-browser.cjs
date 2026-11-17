@@ -173,7 +173,7 @@ async function runNetworkLog({ b, manager, send, check, until, browse, scriptSou
     check('Deny proxy has no unexpected socket errors during network capture',evidence.proxyErrors.length===0);
     const errors=b.consoleErrors?await b.consoleErrors():b.events.filter(e=>e.method==='Runtime.exceptionThrown').map(e=>e.params.exceptionDetails);
     evidence.networkRuntimeErrors=errors;
-    const unloaded=e=>['/src/blocking/content.js','/src/appearance/website-theme.js'].some(file=>e.source==='moz-extension://'+b.id+file) && /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(e.text);
+    const unloaded=e=>['/src/blocking/content.js','/src/blocking/generic-static.js','/src/appearance/website-theme.js'].some(file=>e.source==='moz-extension://'+b.id+file) && /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(e.text);
     check('Network capture has no unexpected uncaught runtime errors',errors.filter(e=>!unloaded(e)).length===0);
   } catch(error) {
     if(logger)evidence.networkFailure=await get('({state,entries,latest,notice:document.getElementById("notice").textContent})',logger).catch(()=>null);

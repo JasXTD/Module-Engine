@@ -78,7 +78,8 @@ placed there by a person, and its record is updated deliberately.
 
 `scripts/community-list-tools.ps1` converts the snapshots into `rules/community.json` (the
 switchable `community_ruleset`), `rules/community-cosmetic.json` (generic and site-specific hiding rules
-and their exceptions) and `rules/community-info.json` (versions, counts and skipped filters by
+and their exceptions), the registered generic stylesheets `rules/community-generic.css` and
+`rules/community-generic-excepted.css`, and `rules/community-info.json` (versions, counts and skipped filters by
 reason). Blocks get priority 1, exceptions 2 and `$important` blocks 3; the allow list is 4, reported threats 5, custom blocks 50 and site pauses 10000.
 Exceptions for domains on Module Engine's own ad, tracker or site-check lists are dropped, and path
 exceptions exclude those domains. The build fails if the snapshots would exceed 29,000
@@ -104,6 +105,28 @@ builder and extension use the same parser in `cosmetic.js`. Unsupported syntax a
 unscoped advanced blocking are counted and skipped. Browser-native CSS validation
 runs again before a procedure is activated. The runtime still accepts schema 2
 bundles, which contain no advanced rules.
+
+Generic selectors are also compiled into two stylesheets that the extension
+registers for http(s) frames, instead of sending the list to every frame.
+`scripts/compile-generic-css.cjs`, run offline by the builder like the procedural
+compiler, writes every generic selector that no exception touches to
+`community-generic.css`, and those that some site exempts to
+`community-generic-excepted.css`, which is not injected on those sites. The
+optional `genericStatic` record lists the `excepted` selectors, their
+`exceptedSites`, and `perFrame` selectors that stay in each frame's state: those
+with an exception that applies everywhere except listed sites, and any the
+compiler cannot rewrite safely. `allow["*"]` selectors are in neither sheet.
+Without `genericStatic`, the runtime sends generic selectors in frame state as
+before.
+
+Every selector in the sheets carries `:not(:where([data-me-generic-off] *))`, so
+a frame can revoke both sheets by setting that attribute on its root element,
+without changing any selector's specificity. A rule holds at most 256 selectors
+and 8,000 selector characters, because Blink ignores selectors after the first
+8,192 simple selectors of one rule. Escaped or uncommon selectors get a rule of
+their own, so one that a browser rejects cannot void its neighbours.
+`tests/generic-css.test.cjs` checks that the committed stylesheets match a
+rebuild from the committed bundle.
 This browser-only format does not change the shared reviewed-domain v1 contract.
 
 ## Site ad hosts, browser-only list

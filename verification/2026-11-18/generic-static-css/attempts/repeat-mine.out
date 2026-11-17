@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 285,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-DFhARl\\evidence.json",
+  "error": "AssertionError [ERR_ASSERTION]: built-in hiding retains its visibility and pointer safeguards\n    at check (C:\\Users\\Tommy\\AppData\\Local\\Temp\\claude\\65b8fb512f966415\\f0cace1f-2bb4-433f-b7cf-e7d96dd7f3a3\\scratchpad\\repeat-mine\\tests\\browser-smoke.cjs:568:54)\n    at C:\\Users\\Tommy\\AppData\\Local\\Temp\\claude\\65b8fb512f966415\\f0cace1f-2bb4-433f-b7cf-e7d96dd7f3a3\\scratchpad\\repeat-mine\\tests\\browser-smoke.cjs:809:5\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}

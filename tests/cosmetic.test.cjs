@@ -60,6 +60,58 @@ test('custom exceptions remain available with community filtering disabled', () 
   assert.deepEqual(result.siteSelectors, ['.local']);
   assert.deepEqual(result.exceptions, ['.ad-slot']);
 });
+test('frames with the bundled stylesheets receive only the generic selectors those sheets leave out', () => {
+  const data = { generic: ['.base', '.excepted-a', '.excepted-b', '.per-frame', '.allowed'], hide: {},
+    allow: { 'shop.test': ['.excepted-a'], 'other.test': ['.excepted-b'], '*': ['.allowed'] },
+    scoped: [{ include: [], exclude: ['quiet.test'], selector: '.scoped-generic', exception: false }],
+    genericStatic: { excepted: ['.excepted-a', '.excepted-b'], exceptedSites: ['other.test', 'shop.test'], perFrame: ['.per-frame'] } };
+  const all = ['.base', '.excepted-a', '.excepted-b', '.per-frame', '.scoped-generic'];
+  // A frame without the sheets keeps the complete message-path list.
+  assert.deepEqual(resolve(data, 'news.test').genericSelectors, all);
+  assert.equal(resolve(data, 'news.test').genericStatic, false);
+  const news = resolve(data, 'news.test', { staticSheets: true });
+  assert.equal(news.genericStatic, true);
+  assert.deepEqual(news.genericSelectors, ['.per-frame', '.scoped-generic']);
+  // The excepted sheet skips its sites: their remaining excepted selectors come with the state.
+  const shop = resolve(data, 'www.shop.test', { staticSheets: true });
+  assert.equal(shop.genericStatic, true);
+  assert.deepEqual(shop.genericSelectors, ['.per-frame', '.excepted-b', '.scoped-generic']);
+  assert.deepEqual(resolve(data, 'quiet.test', { staticSheets: true }).genericSelectors, ['.per-frame']);
+});
+test('pauses, generichide, elemhide and own exceptions revoke the bundled stylesheets', () => {
+  const data = { generic: ['.base', '.other'], hide: {}, allow: {}, disableGeneric: ['quiet.test'], disableAll: ['reader.test'],
+    genericStatic: { excepted: [], exceptedSites: [], perFrame: [] } };
+  const sheets = { staticSheets: true };
+  assert.deepEqual(resolve(data, 'quiet.test', sheets), { ...resolve(data, 'quiet.test', sheets), genericStatic: false, genericSelectors: [] });
+  assert.equal(resolve(data, 'reader.test', sheets).genericStatic, false);
+  assert.deepEqual(resolve(data, 'reader.test', sheets).genericSelectors, [], 'an elemhide frame hides nothing, so receives nothing');
+  assert.equal(resolve(data, 'news.test', { ...sheets, generic: false }).genericStatic, false);
+  // A user's exception for a bundled generic selector cannot be expressed in a
+  // stylesheet: the frame revokes the sheets and receives the rest by message.
+  const custom = parse('news.test#@#.base\nshop.test#@#.unrelated');
+  const excepted = resolve(data, 'a.news.test', { ...sheets, custom });
+  assert.equal(excepted.genericStatic, false);
+  assert.deepEqual(excepted.genericSelectors, ['.other']);
+  assert.equal(resolve(data, 'shop.test', { ...sheets, custom }).genericStatic, true);
+  assert.equal(resolve(data, 'other.test', { ...sheets, custom }).genericStatic, true);
+  // Bundles without (or with malformed) stylesheet data never claim static coverage.
+  assert.equal(resolve({ generic: ['.base'] }, 'news.test', sheets).genericStatic, false);
+  assert.deepEqual(resolve({ generic: ['.base'] }, 'news.test', sheets).genericSelectors, ['.base']);
+  assert.equal(resolve({ ...data, genericStatic: { excepted: [1], exceptedSites: [], perFrame: [] } }, 'news.test', sheets).genericStatic, false);
+});
+test('hiding CSS splits long selector lists below the browser per-rule selector limit', () => {
+  const { hidingCss } = globalThis.BlockAdsCosmetic;
+  const selectors = [...Array.from({ length: 700 }, (_, i) => `.s${i}`), 'x'.repeat(1000), ...Array.from({ length: 400 }, (_, i) => `#long-selector-name-${i}`)];
+  const rules = hidingCss(selectors).split(' { display: none !important; }\n');
+  assert.equal(rules.pop(), '');
+  const groups = rules.map(rule => rule.split(',\n'));
+  assert.deepEqual(groups.flat(), selectors, 'every selector is kept, in order');
+  for (const group of groups) {
+    assert.ok(group.length <= 256 && (group.length === 1 || group.join('').length <= 8000), `rule of ${group.length} selectors`);
+  }
+  assert.ok(groups.length > 3);
+  assert.equal(hidingCss([]), '');
+});
 test('the built package retains thousands of generic selectors and site exceptions', () => {
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, '../rules/community-cosmetic.json'), 'utf8'));
   assert.equal(data.schemaVersion, 3);

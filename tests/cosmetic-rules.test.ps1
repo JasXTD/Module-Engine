@@ -67,6 +67,14 @@ $json = ConvertTo-CosmeticJson $result.Cosmetic | ConvertFrom-Json -AsHashtable
 Check ($json.schemaVersion -eq 3 -and $json.scoped.Count -eq 3 -and $json.generic.Count -eq 1) 'The new cosmetic contract survives JSON serialization.'
 Check ($json.procedural[0].procedure.ops[0].type -ceq 'text' -and $json.procedural[0].procedure.ops[0].value -ceq 'Sponsored') 'Compiled procedures survive JSON serialization.'
 Check ($json.procedural[1].procedure.ops[0].plan.ops[0].value -ceq '广告') 'Nested Unicode text survives the Node bridge and JSON serialization.'
+# Generic selectors also become the registered stylesheets. example.test exempts
+# .generic-ad, so it moves to the excepted sheet, which is not injected there.
+$revocable = '.generic-ad:not(:where([data-me-generic-off] *))'
+Check ($result.Cosmetic.genericStatic.excepted -contains '.generic-ad' -and $result.Cosmetic.genericStatic.exceptedSites -contains 'example.test') 'A generic selector with a site exception moves to the excepted stylesheet, which skips that site.'
+Check ($result.Stylesheets.excepted.Contains($revocable) -and !$result.Stylesheets.base.Contains('.generic-ad')) 'Excepted selectors stay out of the main stylesheet and remain revocable.'
+Check ($result.Stylesheets.base.StartsWith('@charset "UTF-8";') -and $result.Stylesheets.excepted.StartsWith('@charset "UTF-8";')) 'The stylesheets declare their encoding first.'
+Check ($result.Info.genericStylesheetSelectors -eq $json.generic.Count -and $result.Info.genericExceptedSites -eq $result.Cosmetic.genericStatic.exceptedSites.Count -and $result.Info.genericPerFrameSelectors -eq 0) 'Stylesheet coverage is reported.'
+Check ($json.genericStatic.excepted -contains '.generic-ad' -and $json.genericStatic.perFrame.Count -eq 0) 'Stylesheet metadata survives JSON serialization.'
 Check ($json.procedural[1].procedure.ops[1].selector -ceq '.section' -and $json.procedural[1].exclude[0] -ceq 'shop.example.test') 'Ancestor selectors and excluded sites survive compilation.'
 Check ($json.procedural[2].exception -and $json.procedural[3].exception -and !$json.procedural[3].include.Count) 'Both site and global procedural exceptions are preserved.'
 Check ($result.Info.skipped['cosmetic: procedural rule needs positive site scope'] -eq 1) 'Unscoped procedural blocking is refused.'

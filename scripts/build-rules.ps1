@@ -123,6 +123,9 @@ try {
     Test-CommunityRules $community.Rules
     $outputs['community.json'] = ConvertTo-LineJson $community.Rules
     $outputs['community-cosmetic.json'] = ConvertTo-CosmeticJson $community.Cosmetic
+    # Static generic hiding, registered by the extension; genericStatic in the JSON describes them.
+    $outputs['community-generic.css'] = $community.Stylesheets.base
+    $outputs['community-generic-excepted.css'] = $community.Stylesheets.excepted
     $outputs['community-info.json'] = ConvertTo-Json -InputObject $community.Info -Depth 6
     Write-RuleOutputs -Directory $rulesDir -Outputs $outputs
     Write-Host "Built $($sets['ads.json'].Count) ad rules ($siteHostCount from site checks; $($requestedAds.Rules.Count) user requests), $($sets['trackers.json'].Count) tracker rules, $($threats.Rules.Count) exact reported-threat rules (expire $($threats.Policy.expiresAt)); $(@($catalog.Domains | Where-Object category -CEQ 'unverified').Count) unverified domains are observation only; $($community.Rules.Count) community rules and $($community.Info.cosmeticSelectors) site hiding rules from $(@($community.Info.lists).Count) list(s)."

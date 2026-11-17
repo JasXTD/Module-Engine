@@ -29,6 +29,10 @@
   "exceptionsLimitedForBlockAdsRules": 228,
   "genericCosmeticSelectors": 14409,
   "scopedCosmeticRules": 24,
+  "genericStylesheetSelectors": 14409,
+  "genericExceptedSelectors": 386,
+  "genericExceptedSites": 620,
+  "genericPerFrameSelectors": 0,
   "proceduralCosmeticRules": 365,
   "cosmeticSiteExceptions": 348,
   "skipped": {

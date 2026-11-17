@@ -1,0 +1,377 @@
+{
+ "browser": "chrome",
+ "version": "Chrome/158.0.8127.37",
+ "source": "C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279",
+ "generic": true,
+ "probe": {
+  "early": ".ADBAR",
+  "late": ".zox_adv_widget"
+ },
+ "loads": [
+  {
+   "hiddenMs": {
+    "max": 374,
+    "min": 121
+   },
+   "framesShownBeforeHidden": 0,
+   "framesHidingLateProbe": 8,
+   "longTasksMs": [],
+   "mainThreadBusyMs": 432,
+   "breakdownMs": {
+    "ThreadControllerImpl::RunTask": 419,
+    "ParseHTML": 181,
+    "UpdateLayoutTree": 111,
+    "Receive mojo message": 40,
+    "Layout": 25,
+    "FunctionCall": 12,
+    "EventDispatch": 12,
+    "EvaluateScript": 11
+   },
+   "frames": [
+    {
+     "earlyHiddenMs": 121,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 133,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 281,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 290,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 346,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 354,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 364,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 374,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    }
+   ]
+  },
+  {
+   "hiddenMs": {
+    "max": 360,
+    "min": 123
+   },
+   "framesShownBeforeHidden": 0,
+   "framesHidingLateProbe": 8,
+   "longTasksMs": [],
+   "mainThreadBusyMs": 422,
+   "breakdownMs": {
+    "ThreadControllerImpl::RunTask": 410,
+    "ParseHTML": 181,
+    "UpdateLayoutTree": 103,
+    "Receive mojo message": 42,
+    "Layout": 26,
+    "FunctionCall": 12,
+    "EvaluateScript": 11,
+    "EventDispatch": 10
+   },
+   "frames": [
+    {
+     "earlyHiddenMs": 123,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 136,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 275,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 324,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 334,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 342,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 352,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 360,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    }
+   ]
+  },
+  {
+   "hiddenMs": {
+    "max": 409,
+    "min": 160
+   },
+   "framesShownBeforeHidden": 0,
+   "framesHidingLateProbe": 8,
+   "longTasksMs": [],
+   "mainThreadBusyMs": 450,
+   "breakdownMs": {
+    "ThreadControllerImpl::RunTask": 427,
+    "ParseHTML": 196,
+    "UpdateLayoutTree": 104,
+    "Receive mojo message": 42,
+    "EvaluateScript": 26,
+    "Layout": 22,
+    "BlinkScheduler_PerformMicrotaskCheckpoint": 19,
+    "FunctionCall": 10
+   },
+   "frames": [
+    {
+     "earlyHiddenMs": 160,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 208,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 327,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 336,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 351,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 358,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 368,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 409,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    }
+   ]
+  },
+  {
+   "hiddenMs": {
+    "max": 367,
+    "min": 130
+   },
+   "framesShownBeforeHidden": 0,
+   "framesHidingLateProbe": 8,
+   "longTasksMs": [],
+   "mainThreadBusyMs": 436,
+   "breakdownMs": {
+    "ThreadControllerImpl::RunTask": 424,
+    "ParseHTML": 183,
+    "UpdateLayoutTree": 110,
+    "Receive mojo message": 46,
+    "Layout": 23,
+    "FunctionCall": 14,
+    "EvaluateScript": 11,
+    "Paint": 11
+   },
+   "frames": [
+    {
+     "earlyHiddenMs": 130,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 141,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 321,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 330,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 340,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 350,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 358,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 367,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    }
+   ]
+  }
+ ],
+ "scripts": [
+  {
+   "id": "youtube-ads",
+   "excludeMatches": 0
+  },
+  {
+   "id": "notification-guard",
+   "excludeMatches": 0
+  },
+  {
+   "id": "community-generic",
+   "css": [
+    "rules/community-generic.css"
+   ],
+   "excludeMatches": 345
+  },
+  {
+   "id": "community-generic-excepted",
+   "css": [
+    "rules/community-generic-excepted.css"
+   ],
+   "excludeMatches": 944
+  }
+ ],
+ "warmup": [
+  {
+   "hiddenMs": {
+    "max": 386,
+    "min": 117
+   },
+   "framesShownBeforeHidden": 0,
+   "framesHidingLateProbe": 8,
+   "longTasksMs": [],
+   "mainThreadBusyMs": 480,
+   "breakdownMs": {
+    "ThreadControllerImpl::RunTask": 450,
+    "ParseHTML": 180,
+    "UpdateLayoutTree": 96,
+    "Receive mojo message": 66,
+    "EvaluateScript": 26,
+    "Layout": 26,
+    "BlinkScheduler_PerformMicrotaskCheckpoint": 26,
+    "FunctionCall": 20
+   },
+   "frames": [
+    {
+     "earlyHiddenMs": 117,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 141,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 304,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 316,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 325,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 334,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 342,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    },
+    {
+     "earlyHiddenMs": 386,
+     "shownBeforeHidden": false,
+     "lateHidden": true
+    }
+   ]
+  }
+ ],
+ "proxy": {
+  "denied": 60,
+  "peerResets": 0,
+  "errors": []
+ },
+ "summary": {
+  "loads": 4,
+  "medianMainThreadBusyMs": 436,
+  "longTasksPerLoad": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "longestTaskMs": 0,
+  "framesShownBeforeHidden": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "medianLastFrameHiddenMs": 374,
+  "framesHidingLateProbe": [
+   8,
+   8,
+   8,
+   8
+  ]
+ }
+}

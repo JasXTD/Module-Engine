@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 545,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-BaCYmw\\evidence.json",
+  "error": "Error: Condition timed out: pickerUI.getElementById(\"status\").textContent.includes('exception') && !pickerUI.getElementById(\"cancel\").disabled\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279\\tests\\browser-smoke.cjs:457:9)\n    at async verifyPicker (C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279\\tests\\picker-browser.cjs:150:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279\\tests\\browser-smoke.cjs:965:5"
+}

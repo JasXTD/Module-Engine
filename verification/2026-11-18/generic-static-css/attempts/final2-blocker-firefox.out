@@ -1,0 +1,7 @@
+{
+  "browser": "firefox",
+  "success": false,
+  "checks": 632,
+  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-7sxo0n\\evidence.json",
+  "error": "AssertionError [ERR_ASSERTION]: top-page and cross-origin-frame pop-ups never load\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279\\tests\\browser-smoke.cjs:568:54)\n    at C:\\Users\\Tommy\\Desktop\\BlockAds\\.claude\\worktrees\\agitated-nobel-98b279\\tests\\browser-smoke.cjs:1043:5"
+}

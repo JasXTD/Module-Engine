@@ -173,7 +173,7 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
     // a page. Match only this known lifecycle diagnostic, as the blocker and
     // install suites do, and retain it separately from extension/UI failures.
     evidence.navigationClosedPageErrors = evidence.browser === 'firefox' ? errors.filter(error =>
-      ['/src/blocking/content.js', '/src/appearance/website-theme.js'].some(file => error.source === 'moz-extension://' + b.id + file) &&
+      ['/src/blocking/content.js', '/src/blocking/generic-static.js', '/src/appearance/website-theme.js'].some(file => error.source === 'moz-extension://' + b.id + file) &&
       /^Promise (?:rejected|resolved) (?:after context unloaded|while context is inactive)/.test(error.text)) : [];
     evidence.navigationErrors = errors.filter(error => !evidence.navigationClosedPageErrors.includes(error));
     check('Navigation has no unexpected browser errors', evidence.navigationErrors.length === 0);

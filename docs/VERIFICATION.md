@@ -1,8 +1,87 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 reported-threat evidence window change, following the same day's website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 static generic hiding change, following the same day's reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Static generic hiding — 18 November 2026
+
+Generic EasyList selectors used to reach every frame in its settings reply: about 249 KiB of JSON per frame. The frame checked them one by one with `querySelector` and injected them as one 234 KiB style rule after the reply arrived, so every frame showed generic ads first. Blink also ignores the selectors after the first 8,192 simple selectors of one rule, so Chrome and Edge never applied about 6,200 of the 14,409 selectors; Firefox applied all of them.
+
+**What changed:**
+
+- The rule build compiles the generic selectors into two packaged stylesheets, using `scripts/compile-generic-css.cjs`:
+  - `rules/community-generic.css` holds the 14,023 selectors that no site exempts.
+  - `rules/community-generic-excepted.css` holds the 386 selectors some site exempts. It is not injected on those 620 sites.
+  - `genericStatic` in `community-cosmetic.json` describes both. `tests/generic-css.test.cjs` checks that the committed sheets match a rebuild.
+- The background registers both sheets for HTTP(S) frames through the existing verified script transaction:
+  - The registrations follow the global, Page hiding, Community lists and generic switches.
+  - They exclude paused, hiding-paused and `generichide`/`elemhide` sites, and sites with a custom exception for a bundled generic selector.
+- Every selector carries `:not(:where([data-me-generic-off] *))`. An open page revokes both sheets by setting that root attribute. It does so after a pause, a switch or a custom exception, and in a cross-origin frame of a paused page; its settings reply then carries the generic selectors that still apply. A companion content script, `src/blocking/generic-static.js`, tells the cosmetic content script that the sheets are present.
+- Settings replies carry site rules plus only the generic selectors the sheets leave out. They fell from about 249 KiB to 0.6 KiB on ordinary sites, and to 6–8 KiB on sites that exempt some generic selectors.
+- Rules in the sheets, and in the content script's fallback style, hold at most 256 selectors and 8,000 selector characters.
+- The DOMContentLoaded request stays, without the selectors. In Firefox, a frame's document-start request can see a stale tab URL. That URL decides the cross-origin pop-up guard and the top page's pauses and prompt exceptions. Removing the request let a frame pop-up load in one Firefox run.
+
+**Behaviour differences, also in the [user guide](USER_GUIDE.md#cosmetic-filtering):**
+
+- Chrome and Edge now apply all 14,409 generic selectors, as Firefox already did, so some extra elements may be hidden there.
+- In a cross-origin frame of a paused page, the sheets apply until that frame's settings reply arrives.
+- Firefox puts registered stylesheets after the page's own, so they win `!important` ties of equal specificity; Chrome and Edge put them first, so the page wins. Previously the style element was appended to the head when the reply arrived, so its order depended on timing (from the source, not measured).
+- About:blank frames still get no generic hiding.
+
+**Timing.** `node tests/generic-timing-browser.cjs chrome` loads an owned page with eight same-origin frames of 300 rows each. Chrome 158 ran 8 loads per variant, in two alternating rounds:
+
+| | Before (`main`) | This change | Generic hiding off |
+| --- | ---: | ---: | ---: |
+| Frames that showed a generic element before hiding it | 8 of 8 in every load | none | — |
+| Frames hiding the last plain generic selector | none | 8 of 8 | — |
+| Median renderer main-thread time per load | 438 ms | 434 ms | 184 ms |
+| Loads with a task of 50 ms or more | 0 of 8 | 0 of 8 | 0 of 8 |
+
+Hiding now lands before the first paint, and main-thread time is unchanged within the run-to-run spread. A separate sequential run measured 448 ms before and 509 ms after, with three tasks of 52–55 ms after the change; earlier runs measured 560 and 517 ms. The cost moved from JavaScript (message, JSON and `querySelector` checks) into native stylesheet parsing and matching, which now covers 75% more selectors in Chrome. Two alternatives were measured and not adopted:
+
+- A sheet without the revocation condition measured 361 ms against 560 ms before, in an earlier sequential run. But open pages could not be un-hidden without a reload.
+- `:not([data-me-generic-off] *)`, without `:where()`, measured 399 ms in the alternating rounds above, about 8% less. But it raises every rule's specificity by one class.
+
+**Design checks run first (Chrome 158 and Firefox, disposable profiles):**
+
+- Registered scripts run after the manifest content scripts: in the same pass in Chrome, at least a task later in Firefox. They share globals, so the companion can notify the cosmetic content script.
+- `scripting.removeCSS` cannot withdraw registered CSS in Chrome, though Firefox can, so revocation has to be in CSS.
+- A `revert-layer` revocation restored browser defaults rather than the page's own styles: `flex` became `block`. It was dropped.
+- Firefox and Chrome both parse every grouped rule of both sheets, as the blocker suite now checks.
+
+**648 Node tests** passed (20 new), with 35 cosmetic, 237 offline rule/import, 342 threat and 41 requested-host assertions, on the final commit, rebased onto `3412640`. Native offline results:
+
+| Browser | Full blocker/UI suite | Userscript layout | Same-tab navigation | Network log |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 798 | 724 | 78 | 49 |
+| Edge | 798 | 724 | 78 | — |
+| Firefox | 791 | 688 | 74 | 46 |
+
+All three blocker suites and the Firefox layout suite ran on the final commit, Firefox in version 160.0.1. The other userscript columns come from the same change one rebase earlier, on `e05c662`; the last rebase only added `3412640`, which changes different code. Firefox's blocker suite also passed twice with 791 checks on that earlier base.
+
+Each browser parsed every rule of both stylesheets (94 and 3 rules) with none rejected. The fixture page's own style element fell from about 234 KB to 1,534 characters. New unit tests cover the compiler and the committed sheets, the registrations and their rollback, and per-frame replies. They also cover the content script's ordering cases: a late companion, a wrong first judgement, and the DOMContentLoaded retry. The duplicate-request guard was shown to fail without its fix (4 requests instead of 3).
+
+Intermediate attempts are kept under `attempts/`:
+
+- Before the rebase onto the new `main`, the blocker suites passed 794 / 794 / 787. The Firefox userscript layout suite stopped once at the known blocked-pop-up tab step, which `f01d2c3` has since fixed.
+- On the rebased source, the Firefox blocker suite twice stopped at the picker's concurrent-exception step: Save after a concurrent exception, waiting for the exception message.
+  - It did not recur in 12 later Firefox attempts on this change, eight of them repeats within one run. `main` passed all 9 of its attempts.
+  - The cause was not found, so it is not attributed either way.
+- One Firefox run stopped at "built-in hiding retains its visibility and pointer safeguards". `.ad-slot` is also a bundled generic selector, so the stylesheet hid the fixture before the built-in rule and its extra safeguards arrived. The suite now waits for the safeguards; the assertion is unchanged.
+- With the DOMContentLoaded request removed, a cross-origin frame's pop-up loaded in Firefox ("top-page and cross-origin-frame pop-ups never load"). The request was restored.
+  - In the same set of runs, the 6-second button notice once expired during a screenshot, before its check.
+  - Both final Firefox runs passed.
+- The timing probe crashed when a browser reset a connection at its deny proxy. It now handles resets as the blocker suite does.
+- The first Firefox blocker run on the final commit never started. Firefox updated itself to 160.0.1 during launch, and the restart took over the disposable test profile, so the harness timed out waiting for BiDi. The rerun passed.
+
+Known limits:
+
+- Page code can remove the root attribute, much as it could remove the extension's style element.
+- Firefox timing was not measured: the trace-based probe supports Chrome and Edge. Per-frame stylesheet memory was not measured.
+- `tests/popup-guard-browser.cjs`, `tests/frame-redirects-browser.cjs` and `tests/same-tab-redirects-browser.cjs` still package the root layout used before 14 November, so they cannot load the current extension. They were not run; this predates the change.
+
+Tests used installed browsers, disposable profiles, owned loopback pages and deny proxies. No public site was contacted and nothing was installed. [Runs, timing and evidence](../verification/2026-11-18/generic-static-css/runs.json).
 
 ## Reported-threat evidence window — 18 November 2026
 

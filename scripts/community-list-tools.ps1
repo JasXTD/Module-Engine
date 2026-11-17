@@ -18,13 +18,12 @@ $CommunityCosmetic = [regex]'^(?<domains>[^\s/|^$@#]*)(?<sep>#@?[?$%]?#|\$@?\$)(
 $CommunityDomainOnly = [regex]'^\|\|(?<host>[^/^*|:?=&]+)\^\|?$'
 $CommunityOptions = [regex]'^[A-Za-z0-9~_,=|.*:/\-]+$'
 
-function ConvertTo-ProceduralRules($Candidates) {
-    if (!$Candidates.Count) { return @{ rules=@(); skipped=@{} } }
+function Invoke-CosmeticCompiler([string]$Script, [string]$Json, [string]$Name) {
     # No shell, packages or network: the installed Node runtime reads bounded
     # local JSON. Explicit UTF-8 preserves Chinese labels on every Windows locale.
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
-    $start.ArgumentList.Add((Join-Path $PSScriptRoot 'compile-procedural.cjs'))
+    $start.ArgumentList.Add((Join-Path $PSScriptRoot $Script))
     $start.UseShellExecute = $false
     $start.CreateNoWindow = $true
     $start.RedirectStandardInput = $true
@@ -37,15 +36,35 @@ function ConvertTo-ProceduralRules($Candidates) {
     try {
         $output = $process.StandardOutput.ReadToEndAsync()
         $errorOutput = $process.StandardError.ReadToEndAsync()
-        $write = $process.StandardInput.WriteAsync((ConvertTo-Json -InputObject @($Candidates) -Depth 5 -Compress))
-        if (!$write.Wait(10000)) { throw 'Procedural compiler input timed out.' }
+        $write = $process.StandardInput.WriteAsync($Json)
+        if (!$write.Wait(10000)) { throw "$Name compiler input timed out." }
         $process.StandardInput.Close()
-        if (!$process.WaitForExit(15000)) { throw 'Procedural compiler timed out.' }
+        if (!$process.WaitForExit(15000)) { throw "$Name compiler timed out." }
         if ($process.ExitCode -ne 0) { throw $errorOutput.GetAwaiter().GetResult() }
         return ($output.GetAwaiter().GetResult() | ConvertFrom-Json -AsHashtable)
     } finally {
         if (!$process.HasExited) { $process.Kill($true); $process.WaitForExit() }
         $process.Dispose()
+    }
+}
+
+function ConvertTo-ProceduralRules($Candidates) {
+    if (!$Candidates.Count) { return @{ rules=@(); skipped=@{} } }
+    return Invoke-CosmeticCompiler 'compile-procedural.cjs' (ConvertTo-Json -InputObject @($Candidates) -Depth 5 -Compress) 'Procedural'
+}
+
+# Generic selectors become two static stylesheets that the extension registers
+# instead of sending them to every frame. Selectors some site exempts form the
+# second sheet, which is not injected on those sites; see compile-generic-css.cjs.
+function ConvertTo-GenericStylesheets($Generic, $Allow, $Rules) {
+    $exceptions = @($Rules | Where-Object { $_.exception } | ForEach-Object {
+        [ordered]@{ include=@($_.include); exclude=@($_.exclude); selector=$_.selector } })
+    $json = ConvertTo-Json -InputObject ([ordered]@{ generic=@($Generic); allow=$Allow; exceptions=$exceptions }) -Depth 5 -Compress
+    $result = Invoke-CosmeticCompiler 'compile-generic-css.cjs' $json 'Generic stylesheet'
+    return @{
+        Stylesheets = $result.stylesheets
+        Static = [ordered]@{ excepted=@($result.genericStatic.excepted); exceptedSites=@($result.genericStatic.exceptedSites); perFrame=@($result.genericStatic.perFrame) }
+        Counts = $result.counts
     }
 }
 
@@ -312,13 +331,19 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     foreach ($reason in $procedural.skipped.Keys) { $skipped[$reason] = ($skipped[$reason] ?? 0) + $procedural.skipped[$reason] }
     $skippedSorted = [ordered]@{}
     foreach ($key in ($skipped.Keys | Sort-Object)) { $skippedSorted[$key] = $skipped[$key] }
+    $allowMap = & $toMap $allow
+    $sheets = ConvertTo-GenericStylesheets $generic $allowMap (@($scoped) + @($procedural.rules))
     return @{
         Rules = $rules
-        Cosmetic = [ordered]@{ schemaVersion=3; hide=$hideMap; allow=(& $toMap $allow); generic=@($generic); scoped=@($scoped); procedural=@($procedural.rules)
-            disableGeneric=@($disableGeneric); disableAll=@($disableAll) }
+        Cosmetic = [ordered]@{ schemaVersion=3; hide=$hideMap; allow=$allowMap; generic=@($generic); scoped=@($scoped); procedural=@($procedural.rules)
+            disableGeneric=@($disableGeneric); disableAll=@($disableAll); genericStatic=$sheets.Static }
+        Stylesheets = $sheets.Stylesheets
         Info = [ordered]@{ schemaVersion = 1; lists = $infoLists; networkRules = $rules.Count; groupedDomains = $groupedHosts
             cosmeticSites = $hideMap.Count; cosmeticSelectors = $selectorCount; exceptionsLimitedForBlockAdsRules = $limitedExceptions
             genericCosmeticSelectors = $generic.Count; scopedCosmeticRules = $scoped.Count
+            genericStylesheetSelectors = $sheets.Counts.base + $sheets.Counts.excepted
+            genericExceptedSelectors = $sheets.Counts.excepted; genericExceptedSites = $sheets.Counts.exceptedSites
+            genericPerFrameSelectors = $sheets.Counts.perFrame
             proceduralCosmeticRules = $procedural.rules.Count
             cosmeticSiteExceptions = $disableGeneric.Count + $disableAll.Count
             skipped = $skippedSorted }
@@ -351,7 +376,7 @@ function ConvertTo-CosmeticJson($Cosmetic) {
         $lines = foreach ($key in $Cosmetic[$name].Keys) { '    ' + (ConvertTo-Json -InputObject $key -Compress) + ': ' + (ConvertTo-Json -InputObject @($Cosmetic[$name][$key]) -Compress) }
         "  `"$name`": {" + ($lines ? "`n" + ($lines -join ",`n") + "`n  }" : '}')
     }
-    $extra = foreach ($name in @('schemaVersion','generic','scoped','procedural','disableGeneric','disableAll')) {
+    $extra = foreach ($name in @('schemaVersion','generic','scoped','procedural','disableGeneric','disableAll','genericStatic')) {
         '  "' + $name + '": ' + (ConvertTo-Json -InputObject $Cosmetic[$name] -Compress -Depth 32)
     }
     return "{`n" + (@($sections) + @($extra) -join ",`n") + "`n}"

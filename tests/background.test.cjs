@@ -84,8 +84,9 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       async getRegisteredContentScripts() {
         await tick();
         // Firefox echoes packaged files as full extension URLs.
+        const full = files => files?.map(file => `chrome-extension://test/${file}`);
         return clone(state.scripts).map(script => state.fullUrlScripts
-          ? { ...script, js: script.js.map(file => `chrome-extension://test/${file}`) } : script);
+          ? { ...script, ...(script.js ? { js: full(script.js) } : {}), ...(script.css ? { css: full(script.css) } : {}) } : script);
       },
       async registerContentScripts(scripts) {
         await fault('scripts');
@@ -428,6 +429,90 @@ test('generic and custom cosmetics honor switches, list exceptions and browser-s
   assert.equal((await get('example.com')).enabled, false);
 });
 
+const STATIC_BUNDLE = {
+  hide: { 'example.com': ['.site'] }, allow: { 'shop.example': ['.excepted-a'], 'other.example': ['.excepted-b'] },
+  generic: ['.generic', '.excepted-a', '.excepted-b'], disableGeneric: ['nogeneric.example'], disableAll: ['reader.example', 'sub.reader.example'],
+  genericStatic: { excepted: ['.excepted-a', '.excepted-b'], exceptedSites: ['other.example', 'shop.example'], perFrame: [] }
+};
+
+test('bundled generic stylesheets register with list and user exclusions and follow every switch', async () => {
+  const h = harness({ whitelistedDomains: ['paused.example'], cosmeticPausedDomains: ['quiet.example'],
+    customCosmeticFilters: 'mine.example#@#.generic\nalso.example#@#.unrelated' });
+  h.state.cosmeticText = JSON.stringify(STATIC_BUNDLE);
+  await h.ready;
+  const generic = () => h.state.scripts.filter(script => script.id.startsWith('community-generic')).toSorted((a, b) => a.id.localeCompare(b.id));
+  // reader.example already covers sub.reader.example; a custom exception for an unbundled selector excludes nothing.
+  const excluded = ['*://*.mine.example/*', '*://*.nogeneric.example/*', '*://*.paused.example/*', '*://*.quiet.example/*', '*://*.reader.example/*'];
+  const sheet = { matches: ['http://*/*', 'https://*/*'], runAt: 'document_start', world: 'ISOLATED', allFrames: true, persistAcrossSessions: true };
+  assert.deepEqual(generic(), [
+    { ...sheet, id: 'community-generic', excludeMatches: excluded, css: ['rules/community-generic.css'], js: ['src/blocking/generic-static.js'] },
+    { ...sheet, id: 'community-generic-excepted', excludeMatches: [...excluded, '*://*.other.example/*', '*://*.shop.example/*'].sort(),
+      css: ['rules/community-generic-excepted.css'] }]);
+  const writes = [];
+  for (const method of ['registerContentScripts', 'updateContentScripts', 'unregisterContentScripts']) {
+    const original = h.api.scripting[method];
+    h.api.scripting[method] = async args => { writes.push(method); return original(args); };
+  }
+  // Firefox echoes full stylesheet URLs; that is not a difference to rewrite.
+  h.state.fullUrlScripts = true;
+  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
+  assert.deepEqual(writes, []);
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'new.example', paused: true })).ok, true);
+  assert.deepEqual(writes, ['updateContentScripts'], 'a pause updates the registrations in place');
+  assert.ok(generic().every(script => script.excludeMatches.includes('*://*.new.example/*')));
+  const on = { enabled: true, cosmeticFiltering: true, genericCosmeticFiltering: true, rulesets: { community_ruleset: true } };
+  for (const patch of [{ genericCosmeticFiltering: false }, { cosmeticFiltering: false }, { rulesets: { community_ruleset: false } }, { enabled: false }]) {
+    assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch })).ok, true);
+    assert.deepEqual(generic(), [], JSON.stringify(patch));
+    assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: on })).ok, true);
+    assert.equal(generic().length, 2);
+  }
+  const before = clone(generic());
+  h.state.faults.scripts = 1;
+  assert.equal((await h.send({ type: 'SET_SITE_COSMETICS', domain: 'later.example', paused: true })).ok, false);
+  assert.deepEqual(generic(), before, 'a failed registration write keeps the verified exclusions');
+});
+
+test('an unreadable cosmetic bundle registers no generic stylesheets until it loads', async () => {
+  const h = harness();
+  h.state.cosmeticText = JSON.stringify(STATIC_BUNDLE);
+  h.state.faults.cosmetic = 1;
+  await h.ready;
+  assert.equal(h.state.scripts.some(script => script.id.startsWith('community-generic')), false);
+  assert.equal((await h.send({ type: 'GET_STATE' })).ok, true);
+  assert.equal(h.state.scripts.filter(script => script.id.startsWith('community-generic')).length, 2);
+});
+
+test('frames report the bundled stylesheets, and replies carry only the generic selectors they leave out', async () => {
+  const h = harness({ whitelistedDomains: ['paused.example'], customCosmeticFilters: 'mine.example#@#.generic' });
+  h.state.cosmeticText = JSON.stringify(STATIC_BUNDLE);
+  await h.ready;
+  const get = async (url, staticGeneric, top = url) => {
+    const state = await h.send({ type: 'GET_COSMETIC_STATE', ...(staticGeneric === undefined ? {} : { staticGeneric }) }, { id: 'test', url, frameId: 2, tab: { id: 1, url: top } });
+    return { enabled: state.enabled, genericStatic: state.genericStatic, staticAssumed: state.staticAssumed, genericSelectors: state.genericSelectors };
+  };
+  const all = ['.generic', '.excepted-a', '.excepted-b'];
+  // A frame's first request is judged from the registration; later ones state what it has.
+  assert.deepEqual(await get('https://news.example/'), { enabled: true, genericStatic: true, staticAssumed: true, genericSelectors: [] });
+  assert.deepEqual(await get('https://news.example/', false), { enabled: true, genericStatic: false, staticAssumed: false, genericSelectors: all });
+  // The excepted sheet skips an excepted site, which receives those selectors minus its own exceptions.
+  assert.deepEqual(await get('https://www.shop.example/', true), { enabled: true, genericStatic: true, staticAssumed: true, genericSelectors: ['.excepted-b'] });
+  // A site with a custom exception is excluded and receives everything else on its first request.
+  assert.deepEqual(await get('https://mine.example/'), { enabled: true, genericStatic: false, staticAssumed: false, genericSelectors: ['.excepted-a', '.excepted-b'] });
+  // A page that loaded the sheets before that exception was saved revokes them.
+  assert.deepEqual(await get('https://mine.example/', true), { enabled: true, genericStatic: false, staticAssumed: true, genericSelectors: ['.excepted-a', '.excepted-b'] });
+  // A cross-origin frame of a paused page received the sheets for its own URL; it revokes them.
+  assert.deepEqual(await get('https://child.example/', true, 'https://paused.example/'), { enabled: false, genericStatic: false, staticAssumed: null, genericSelectors: [] });
+  // generichide and elemhide frames get nothing generic, so the judgement does not matter.
+  assert.deepEqual(await get('https://nogeneric.example/', true), { enabled: true, genericStatic: false, staticAssumed: null, genericSelectors: [] });
+  assert.deepEqual(await get('https://a.reader.example/', true), { enabled: false, genericStatic: false, staticAssumed: null, genericSelectors: [] });
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: false } });
+  assert.deepEqual(await get('https://news.example/', true), { enabled: true, genericStatic: false, staticAssumed: null, genericSelectors: [] });
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { genericCosmeticFiltering: true } });
+  assert.deepEqual(await get('https://news.example/', true), { enabled: true, genericStatic: true, staticAssumed: true, genericSelectors: [] });
+  assert.deepEqual(await get('https://news.example/', false), { enabled: true, genericStatic: false, staticAssumed: false, genericSelectors: all });
+});
+
 test('domain canonicalization accepts URLs and IDN while rejecting filter injection', () => {
   const { shared } = harness();
   for (const [input, expected] of [
@@ -576,13 +661,15 @@ test('untrusted callers, malformed patches and quota violations cannot change se
 test('cosmetic state respects a cross-origin top-page exception using browser sender metadata', async () => {
   const h = harness({ whitelistedDomains: ['parent.example'] });
   const frame = { id: 'test', url: 'https://child.example/frame', tab: { id: 1, url: 'https://shop.parent.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: false, notificationPrompts: false, installPrompts: false, deceptiveButtons: false });
+  // This bundle has no generic stylesheets, so frames never keep or assume them.
+  const sheets = { genericStatic: false, staticAssumed: null };
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, frame), { ok: true, enabled: false, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: false, notificationPrompts: false, installPrompts: false, deceptiveButtons: false, ...sheets });
   const other = { ...frame, tab: { id: 1, url: 'https://unrelated.example/' } };
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE', domain: 'parent.example' }, other), { ok: true, enabled: true, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true, ...sheets });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: false } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: false, ads: true, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true, ...sheets });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { cosmeticFiltering: true, rulesets: { ads_ruleset: false } } });
-  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true });
+  assert.deepEqual(await h.send({ type: 'GET_COSMETIC_STATE' }, other), { ok: true, enabled: true, ads: false, siteSelectors: [], genericSelectors: [], exceptions: [], procedural: true, proceduralRules: [], disableAll: false, disableGeneric: false, flag: true, notificationPrompts: true, installPrompts: true, deceptiveButtons: true, ...sheets });
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, id: 'external' })).ok, false);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false } }, frame)).ok, false);
 });
@@ -1409,9 +1496,11 @@ test('community site hiding rules follow the frame host, its parents and excepti
 
 test('an unreadable site hiding file disables only list hiding rules, and a later request retries', async () => {
   const h = harness();
+  // Startup reads the file for the generic stylesheet exclusions; the frame reads it next.
+  h.state.faults.cosmetic = 2;
   await h.ready;
+  assert.equal(h.state.storage.protectionError, null, 'the other protections still verify');
   const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
-  h.state.faults.cosmetic = 1;
   const failed = await h.send({ type: 'GET_COSMETIC_STATE' }, frame);
   assert.deepEqual([failed.ok, failed.enabled, failed.siteSelectors], [true, true, []]);
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.length, 2);

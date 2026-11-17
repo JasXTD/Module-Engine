@@ -127,7 +127,8 @@
     }
   `;
 
-  // Community list rules for this site. The builder already refused braces and
+  // Community list rules for this site, plus any generic selectors the bundled
+  // stylesheets do not cover here. The builder already refused braces and
   // comments; a selector this browser cannot parse would void the whole rule, so
   // each is parsed first (querySelector also accepts "a, b" selector lists).
   // The result is cached: the same list arrives on every settings refresh.
@@ -142,9 +143,38 @@
       try { probe.querySelector(selector); return typeof selector === "string"; } catch { return false; }
     });
     lastSelectors = key;
-    lastCss = valid.length ? `\n${valid.join(",\n")} { display: none !important; }` : "";
+    lastCss = valid.length ? `\n${BlockAdsCosmetic.hidingCss(valid)}` : "";
     return lastCss;
   }
+
+  // Bundled generic hiding arrives as registered stylesheets. Their companion
+  // script runs after this one, so the first request is sent before this frame
+  // knows whether they are here; all document-start scripts have run by
+  // DOMContentLoaded, whose request states it. The sheets cannot be removed from
+  // a loaded page, so a root attribute revokes them when a pause, switch or
+  // exception now excludes this frame, and the reply then carries the generic
+  // selectors that still apply. As with the style element, page code can undo
+  // this until the next refresh.
+  const GENERIC_OFF = BlockAdsCosmetic.GENERIC_OFF_ATTRIBUTE;
+  let staticSheets = globalThis.BlockAdsGenericStatic === true;
+  let domReady = document.readyState !== "loading";
+  let staticKnown = staticSheets || domReady;
+  let staticAllowed = true;
+  let staticAssumed = null;
+  function syncStaticSheets() {
+    const root = document.documentElement;
+    if (root && staticSheets && !staticAllowed) { if (!root.hasAttribute(GENERIC_OFF)) root.setAttribute(GENERIC_OFF, ""); }
+    else root?.removeAttribute(GENERIC_OFF);
+    // A reply judged for the other case lacks, or repeats, the sheets' selectors.
+    // Before DOMContentLoaded, its request corrects that; afterwards, ask once.
+    if (domReady && staticKnown && staticAssumed !== null && staticAssumed !== staticSheets) {
+      staticAssumed = null;
+      void evaluateAndApply();
+    }
+  }
+  globalThis.BlockAdsCosmeticShield = Object.freeze({
+    staticReady() { staticSheets = staticKnown = true; syncStaticSheets(); }
+  });
 
   function applyCosmeticShield(state) {
     const existing = document.getElementById(STYLE_ID);
@@ -185,7 +215,7 @@
     if (installPopupGuard) popupGuardRequesting = true;
     try {
       const state = await api.runtime.sendMessage({
-        type: "GET_COSMETIC_STATE", installPopupGuard
+        type: "GET_COSMETIC_STATE", installPopupGuard, staticGeneric: staticSheets || (staticKnown ? false : null)
       });
       if (state?.popupGuard) popupGuardRequested = true;
       if (version !== evaluation) return;
@@ -200,6 +230,9 @@
       ].filter(Boolean));
       proceduralShield.setRules(state.enabled && !state.disableAll && state.procedural !== false ? state.proceduralRules || [] : []);
       setAdSignScanning(Boolean(state.flag));
+      staticAllowed = Boolean(state.enabled && state.genericStatic);
+      staticAssumed = typeof state.staticAssumed === "boolean" ? state.staticAssumed : null;
+      syncStaticSheets();
     } catch (error) {
       // Existing tabs may retain an invalidated context after extension reload.
       // Leave their current style intact and make the unavailable refresh visible.
@@ -273,7 +306,14 @@
   }
 
   evaluateAndApply();
-  document.addEventListener("DOMContentLoaded", evaluateAndApply, { once: true });
+  // Ask again once the document has parsed. A frame's document-start request can
+  // see stale tab details (Firefox may still report the tab's blank or previous
+  // URL), which the top page's pauses, prompt exceptions and the cross-origin
+  // pop-up guard depend on. This also retries a failed request.
+  document.addEventListener("DOMContentLoaded", () => {
+    domReady = staticKnown = true;
+    void evaluateAndApply();
+  }, { once: true });
   window.addEventListener('pagehide', event => {
     if (event.isTrusted) { pageSuspended = true; evaluation++; youtubeFallback?.setEnabled(false); proceduralShield.clear(); overlayShield.clear(); buttonShield.clear(); }
   });

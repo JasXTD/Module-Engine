@@ -88,6 +88,10 @@ const YOUTUBE_SCRIPT_ID = "youtube-ads";
 const YOUTUBE_DOMAINS = ["youtube.com", "youtube-nocookie.com"];
 // Pop-up blocking runs only on sites the person selected in the popup.
 const POPUP_SCRIPT_ID = "popup-blocker";
+// Bundled generic hiding, registered as static stylesheets instead of being sent
+// to every frame. The excepted sheet holds the selectors some sites exempt.
+const GENERIC_SCRIPT_ID = "community-generic";
+const GENERIC_EXCEPTED_SCRIPT_ID = "community-generic-excepted";
 let operationQueue = Promise.resolve();
 
 // Activity log: recent blocks and extension events for tracing. Kept in session
@@ -816,8 +820,42 @@ function makeDynamicRules(settings) {
 // Match patterns cannot put a wildcard before an IPv4 address or bare name.
 const sitePatterns = domain => /^[0-9.]+$/.test(domain) || !domain.includes(".")
   ? [`*://${domain}/*`] : [`*://*.${domain}/*`];
+// One pattern per site, leaving out sites whose listed parent already has a
+// subdomain wildcard pattern.
+const sitesPatterns = domains => {
+  const listed = new Set(domains);
+  const covered = domain => domain.split(".").some((_, i, labels) => {
+    const parent = labels.slice(i).join(".");
+    return i > 0 && listed.has(parent) && sitePatterns(parent)[0].startsWith("*://*.");
+  });
+  return [...new Set([...listed].filter(domain => !covered(domain)).flatMap(sitePatterns))].sort();
+};
 
-function makePageScripts(settings) {
+// Sites where the bundled generic stylesheets are not injected, or null when they
+// are not registered. Generic hiding stays off on paused and generichide/elemhide
+// sites. A custom exception for a bundled generic selector cannot be expressed in
+// a stylesheet, so its sites receive generic selectors in their frame state.
+function genericSheetScope(settings, data) {
+  const bundle = BlockAdsCosmetic.staticBundle(data);
+  if (!bundle || !settings.enabled || !settings.cosmeticFiltering || !settings.rulesets.community_ruleset ||
+      !settings.genericCosmeticFiltering) return null;
+  const customSites = customCosmeticRules(settings.customCosmeticFilters)
+    .filter(rule => rule.exception && bundle.generic.has(rule.selector)).flatMap(rule => rule.include);
+  const base = [...settings.whitelistedDomains, ...settings.cosmeticPausedDomains,
+    ...(data.disableGeneric || []), ...(data.disableAll || []), ...customSites];
+  return { base, excepted: [...base, ...bundle.sites] };
+}
+
+// Whether the stylesheets were injected into a frame at this URL, judged from the
+// current registration. The frame confirms it once their companion script runs.
+function genericSheetsExpected(settings, data, url) {
+  const scope = genericSheetScope(settings, data);
+  if (!scope || !/^https?:\/\//i.test(url || "")) return false;
+  const host = urlParts(url).host;
+  return !scope.base.some(domain => domainMatches(host, domain));
+}
+
+function makePageScripts(settings, data) {
   if (!settings.enabled) return [];
   // A paused scope is excluded from injection, like its network exception.
   const pausedWithin = sites => settings.whitelistedDomains.filter(paused =>
@@ -829,6 +867,7 @@ function makePageScripts(settings) {
       matches: YOUTUBE_DOMAINS.flatMap(sitePatterns),
       excludeMatches: pausedWithin(YOUTUBE_DOMAINS).flatMap(sitePatterns),
       js: ["src/blocking/youtube.js"],
+      css: [],
       runAt: "document_start",
       world: "MAIN",
       allFrames: true
@@ -840,6 +879,7 @@ function makePageScripts(settings) {
       matches: settings.popupBlockedDomains.flatMap(sitePatterns),
       excludeMatches: pausedWithin(settings.popupBlockedDomains).flatMap(sitePatterns),
       js: ["src/blocking/popups.js"],
+      css: [],
       runAt: "document_start",
       world: "MAIN",
       allFrames: true
@@ -851,6 +891,7 @@ function makePageScripts(settings) {
       matches: ["http://*/*", "https://*/*"],
       excludeMatches: [...new Set([...settings.whitelistedDomains, ...settings.promptAllowedDomains])].flatMap(sitePatterns),
       js: ["src/blocking/notification-guard.js"],
+      css: [],
       runAt: "document_start",
       world: "MAIN",
       // A native frame registration cannot see a cross-origin parent's pause.
@@ -858,17 +899,30 @@ function makePageScripts(settings) {
       allFrames: false
     });
   }
+  const generic = genericSheetScope(settings, data);
+  if (generic) {
+    // A frame matches its own URL here, so a cross-origin frame of a paused page
+    // still receives the sheets; its content script then revokes them through
+    // the root attribute. about:blank frames keep today's coverage: none.
+    const sheet = (id, excluded, css, js) => ({ id, matches: ["http://*/*", "https://*/*"], excludeMatches: sitesPatterns(excluded),
+      js, css: [css], runAt: "document_start", world: "ISOLATED", allFrames: true });
+    // The companion script tells the frame's content script that the sheets are present.
+    scripts.push(sheet(GENERIC_SCRIPT_ID, generic.base, "rules/community-generic.css", ["src/blocking/generic-static.js"]));
+    scripts.push(sheet(GENERIC_EXCEPTED_SCRIPT_ID, generic.excepted, "rules/community-generic-excepted.css", []));
+  }
   return scripts;
 }
 
 // Browsers differ in which defaults and URL forms they echo back.
 function normalizeScript(script) {
   const base = api.runtime.getURL("");
+  const files = list => (list || []).map(file => file.startsWith(base) ? file.slice(base.length) : file.replace(/^\//, ""));
   return {
     id: script.id,
     matches: script.matches || [],
     excludeMatches: script.excludeMatches || [],
-    js: (script.js || []).map(file => file.startsWith(base) ? file.slice(base.length) : file.replace(/^\//, "")),
+    js: files(script.js),
+    css: files(script.css),
     runAt: script.runAt || "document_idle",
     world: script.world || "ISOLATED",
     allFrames: Boolean(script.allFrames)
@@ -914,11 +968,13 @@ async function applyRules(target, threatStatus) {
     // Preserve document_start coverage while other protections change. Updates
     // retain the registration; an explicit [] clears a previous site exclusion.
     // applyRules is also used by rollback, so partially completed writes reconcile.
+    // A script lists only the file types it has.
+    const files = ({ js, css, ...script }) => ({ ...script, ...(js.length ? { js } : {}), ...(css.length ? { css } : {}) });
     if (removed.length) await api.scripting.unregisterContentScripts({ ids: removed });
-    if (changed.length) await api.scripting.updateContentScripts(changed.map(script => ({ ...script, persistAcrossSessions: true })));
+    if (changed.length) await api.scripting.updateContentScripts(changed.map(script => ({ ...files(script), persistAcrossSessions: true })));
     if (added.length) {
       await api.scripting.registerContentScripts(added.map(({ excludeMatches, ...script }) => ({
-        ...script, ...(excludeMatches.length ? { excludeMatches } : {}), persistAcrossSessions: true
+        ...files(script), ...(excludeMatches.length ? { excludeMatches } : {}), persistAcrossSessions: true
       })));
     }
   }
@@ -1032,10 +1088,13 @@ async function processRequest(message) {
     await retireInactiveThreats(threatStatus);
     loaded = await loadSettings();
     const desired = editSettings(loaded.settings, message);
+    // The generic stylesheets' exclusions come from the bundled exceptions.
+    const cosmetic = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset &&
+      desired.genericCosmeticFiltering ? await loadCommunityCosmetic() : {};
     const target = {
       enabled: RULESET_IDS.filter(id => desired.enabled && desired.rulesets[id]),
       dynamic: makeDynamicRules(desired),
-      scripts: makePageScripts(desired)
+      scripts: makePageScripts(desired, cosmetic)
     };
     beforeRules = await readRules();
     await applyRules(target, threatStatus);
@@ -1288,11 +1347,20 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const popupGuard = message.installPopupGuard === true && await injectPopupFrame(sender, settings, active);
       // Site rules follow this frame's own host, including a leading "www.".
       const frameHost = /^https?:\/\//i.test(sender.url || "") ? urlParts(sender.url).host : "";
-      const cosmetic = enabled && frameHost ? BlockAdsCosmetic.resolve(
-        settings.rulesets.community_ruleset ? await loadCommunityCosmetic() : {}, frameHost,
-        { generic: settings.genericCosmeticFiltering, custom: customCosmeticRules(settings.customCosmeticFilters) }
-      ) : { siteSelectors: [], genericSelectors: [], exceptions: [], proceduralRules: [] };
-      sendResponse({ ok: true, ...cosmetic, procedural: settings.proceduralFiltering, enabled: enabled && !cosmetic.disableAll, ads: active && settings.rulesets.ads_ruleset,
+      const data = enabled && frameHost && settings.rulesets.community_ruleset ? await loadCommunityCosmetic() : {};
+      // The frame reports whether the bundled generic stylesheets reached it once
+      // their companion script has run. Until then, judge from the registration.
+      const staticSheets = typeof message.staticGeneric === "boolean" ? message.staticGeneric
+        : genericSheetsExpected(settings, data, sender.url);
+      const cosmetic = enabled && frameHost ? BlockAdsCosmetic.resolve(data, frameHost,
+        { generic: settings.genericCosmeticFiltering, custom: customCosmeticRules(settings.customCosmeticFilters), staticSheets }
+      ) : { siteSelectors: [], genericSelectors: [], exceptions: [], proceduralRules: [], genericStatic: false };
+      // When generic hiding applies, the selectors sent depend on that judgement;
+      // the frame asks again if its stylesheets turn out otherwise.
+      const sheetsMatter = Boolean(cosmetic.genericStatic || (enabled && frameHost && BlockAdsCosmetic.staticBundle(data) &&
+        !cosmetic.disableGeneric && !cosmetic.disableAll));
+      sendResponse({ ok: true, ...cosmetic, staticAssumed: sheetsMatter ? staticSheets : null,
+        procedural: settings.proceduralFiltering, enabled: enabled && !cosmetic.disableAll, ads: active && settings.rulesets.ads_ruleset,
         notificationPrompts: promptsActive && settings.notificationPromptBlocking, installPrompts: promptsActive && settings.deceptivePromptBlocking,
         deceptiveButtons: promptsActive && settings.deceptiveButtonBlocking,
         flag: active && settings.flagSuspects, ...(popupGuard ? { popupGuard: true } : {}) });
