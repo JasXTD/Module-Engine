@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "reviewKind": "passive-dated-threat-reports",
   "reviewedOn": "2026-10-18",
-  "maxAgeDays": 90,
+  "maxAgeDays": 180,
   "sources": [
     {
       "id": "proofpoint-bluemoon",

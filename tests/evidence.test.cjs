@@ -13,7 +13,7 @@ test('bundled evidence verifies offline and retains exact scope and report date 
   const result=await verify(...original);
   assert.equal(result.catalog.domains.length,24);
   assert.ok(result.catalog.domains.every(item=>item.match==='exact' && /^2026-09(?:-\d{2})?$/.test(item.observedOn)));
-  assert.equal(result.policy.expiresAt,'2026-11-30T00:00:00Z');
+  assert.equal(result.policy.expiresAt,'2027-02-28T00:00:00Z');
   assert.equal(requests,0);
 });
 test('evidence refuses mismatched rule and policy bytes',async()=>{
@@ -38,8 +38,15 @@ test('evidence refuses malformed dates, future observations and expiry drift',as
     await assert.rejects(verify(...changed(b=>{for(const item of b.catalog.domains) item.observedOn=observedOn;})),/Invalid evidence entry|newer than|expiry policy/);
   }
 });
+test('evidence refuses a policy whose expiry does not use the 180-day window',async()=>{
+  for (const expiresAt of ['2026-11-30T00:00:00Z','2027-03-01T00:00:00Z']) {
+    const policy=json(original[2]);policy.expiresAt=expiresAt;const policyBytes=bytes(policy),bundle=json(original[0]);
+    bundle.policySha256=createHash('sha256').update(policyBytes).digest('hex');
+    await assert.rejects(verify(bytes(bundle),original[1],policyBytes),/expiry policy/);
+  }
+});
 test('evidence refuses unsupported catalogs and source duplication',async()=>{
-  for (const change of [b=>{b.schemaVersion=2;},b=>{b.catalog.maxAgeDays=900;},b=>{b.catalog.sources.push(b.catalog.sources[0]);},b=>{b.catalog.domains=[];}]) {
+  for (const change of [b=>{b.schemaVersion=2;},b=>{b.catalog.maxAgeDays=900;},b=>{b.catalog.maxAgeDays=90;},b=>{b.catalog.sources.push(b.catalog.sources[0]);},b=>{b.catalog.domains=[];}]) {
     await assert.rejects(verify(...changed(change)),/format|inconsistent|source/);
   }
 });

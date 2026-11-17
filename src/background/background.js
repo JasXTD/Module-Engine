@@ -44,6 +44,9 @@ const { normalizeDomain, normalizeDomains, domainMatches, sameSite } = BlockAds;
 const RULESET_IDS = ["ads_ruleset", "trackers_ruleset", "threats_ruleset", "community_ruleset"];
 const THREAT_CHECK_ALARM = "reported-threats-check";
 const THREAT_EXPIRY_ALARM = "reported-threats-expiry";
+// Must match $ThreatEvidenceMaxAgeDays in scripts/threat-report-tools.ps1 and
+// maxAgeDays in src/blocking/evidence.js.
+const THREAT_MAX_AGE_DAYS = 180;
 const DEFAULT_SETTINGS = {
   enabled: true,
   rulesets: Object.fromEntries(RULESET_IDS.map(id => [id, true])),
@@ -653,8 +656,8 @@ async function loadThreatStatus() {
       return Date.parse(value);
     });
     const [observed, reviewed, expires] = dates;
-    if (observed > reviewed || reviewed > Date.now() || expires <= reviewed || expires - observed > 90 * 86400000) {
-      throw new Error("The bundled evidence dates violate the 90-day review policy.");
+    if (observed > reviewed || reviewed > Date.now() || expires <= reviewed || expires - observed > THREAT_MAX_AGE_DAYS * 86400000) {
+      throw new Error(`The bundled evidence dates violate the ${THREAT_MAX_AGE_DAYS}-day review policy.`);
     }
     // Alarms may be lost across browser restarts. Recheck on every worker start
     // and command; the repeating guard also handles wall-clock changes.

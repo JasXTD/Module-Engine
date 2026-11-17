@@ -1,0 +1,6 @@
+Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2027-02-28T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22966 site hiding rules from 2 list(s).
+Exception: C:\Users\Tommy\Desktop\BlockAds\tests\threat-rules.test.ps1:14
+Line |
+  14 |      if (!$Condition) { throw "FAILED: $Description" }
+     |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | FAILED: 90 days from conservative September 1 floor

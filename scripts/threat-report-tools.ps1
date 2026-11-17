@@ -1,5 +1,9 @@
 #Requires -Version 7.0
 # Manual, passive evidence only. This code never resolves hosts or fetches reports.
+# Evidence window, in days after the earliest observation. Raised from 90 by the
+# user on 2026-11-18. Keep it equal to THREAT_MAX_AGE_DAYS in background.js and
+# maxAgeDays in evidence.js, which enforce the same window at runtime.
+$ThreatEvidenceMaxAgeDays = 180
 function Get-ThreatDate([string]$Value, [switch]$AllowMonth) {
     if ($AllowMonth -and $Value -cmatch '^\d{4}-\d{2}$') { $Value += '-01' }
     $parsed = [DateTimeOffset]::MinValue
@@ -16,7 +20,7 @@ function Read-ThreatReportCatalog([string]$Path, [DateTimeOffset]$Now = [DateTim
         Assert-JsonKeys $root @('schemaVersion','reviewKind','reviewedOn','maxAgeDays','sources','domains')
         if ($root.GetProperty('schemaVersion').GetInt32() -ne 1 -or
             (Get-JsonString $root.GetProperty('reviewKind')) -cne 'passive-dated-threat-reports' -or
-            $root.GetProperty('maxAgeDays').GetInt32() -ne 90) { throw 'Unsupported threat evidence policy.' }
+            $root.GetProperty('maxAgeDays').GetInt32() -ne $ThreatEvidenceMaxAgeDays) { throw 'Unsupported threat evidence policy.' }
         $reviewed = Get-ThreatDate (Get-JsonString $root.GetProperty('reviewedOn'))
         if ($reviewed -gt $Now) { throw 'Future review date.' }
         $sources = $root.GetProperty('sources')
@@ -59,7 +63,7 @@ function Read-ThreatReportCatalog([string]$Path, [DateTimeOffset]$Now = [DateTim
             # Month-only reports retain that precision in the source. Expiry uses
             # the FIRST day, never a made-up last-seen date or today's review date.
             $observed = Get-ThreatDate (Get-JsonString $entry.GetProperty('observedOn')) -AllowMonth
-            if ($observed -gt $sourceDates[$sourceId] -or $observed.AddDays(90) -le $reviewed) {
+            if ($observed -gt $sourceDates[$sourceId] -or $observed.AddDays($ThreatEvidenceMaxAgeDays) -le $reviewed) {
                 throw 'Evidence was future-dated or already stale at review.'
             }
             if ($observed -lt $earliest) { $earliest = $observed }
@@ -80,7 +84,7 @@ function Read-ThreatReportCatalog([string]$Path, [DateTimeOffset]$Now = [DateTim
                 schemaVersion=1; ruleCount=$rules.Count
                 evidenceFrom=$earliest.ToString('yyyy-MM-ddTHH:mm:ssZ')
                 reviewedAt=$reviewed.ToString('yyyy-MM-ddTHH:mm:ssZ')
-                expiresAt=$earliest.AddDays(90).ToString('yyyy-MM-ddTHH:mm:ssZ')
+                expiresAt=$earliest.AddDays($ThreatEvidenceMaxAgeDays).ToString('yyyy-MM-ddTHH:mm:ssZ')
             }
         }
     } finally { $document.Dispose() }

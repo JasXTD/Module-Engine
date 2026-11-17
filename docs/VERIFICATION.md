@@ -1,8 +1,28 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 website-theme detection and cosmetic wildcard-site section, following the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 reported-threat evidence window change, following the same day's website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Reported-threat evidence window — 18 November 2026
+
+The 24-host reported-threat batch was due to switch off on 30 November. A review on 18 November read every Proofpoint Threat Insight post and Volexity blog post published since its sources on 9 September. None renews it. Those posts cover credential phishing (TA419's newest hosts date from July), a proof of concept, a takedown with undated hosts, and IP-only or lab-only indicators. Only Volexity's 21 September post names exact hosts observed in the window, on 3–4 September. Replacing the batch with its three hosts would have moved expiry only to 2 December. The user chose to keep the existing hosts, so the evidence window was raised from 90 to 180 days. No host, source or observation date changed.
+
+- `scripts/threat-report-tools.ps1`, `src/background/background.js` and `src/blocking/evidence.js` now share one 180-day window. The builder and the evidence panel accept only `maxAgeDays: 180`; the runtime refuses an expiry more than 180 days after `evidenceFrom`.
+- `lists/reported-threats.json` declares the new window. The rebuilt policy and evidence bundle expire the batch at **28 February 2027 00:00 UTC**; `rules/threats.json` is byte-identical. Only the three threat outputs were taken from a temporary build, so other generated rule files in the shared checkout were not rewritten.
+
+Before the tests were updated, the threat suite's pinned-expiry assertion and 6 Node tests failed on the old date (kept under `attempts/`). New checks cover the window boundary:
+
+- The builder accepts an observation 179 days before review and rejects one at exactly 180.
+- The builder and the evidence panel refuse a 90-day catalog.
+- The evidence panel refuses 90-day and over-180-day expiries.
+- The runtime refuses an expiry one second past the window.
+
+The new builder-boundary and evidence-panel checks fail against the previous commit.
+
+**624 Node tests** passed, with no failures or skips. **342 threat evidence/build** (4 new) and **237 offline rule/import** assertions passed. The full offline blocker suites passed **789 Chrome 158**, **789 Edge 157** and **782 Firefox 160** checks. Each run included the active-policy check and all 216 reported-threat probes, and its recorded runtime hashes match the workspace files. The runs used the shared checkout, which also held the uncommitted website-theme and cosmetic work below.
+
+Expiry timing is covered by the injected-clock unit harness; no browser ran across the boundary. A blocked name can now be up to 180 days past its reported observation, and current ownership was not rechecked. No reported host was visited, resolved or contacted. Reload Module Engine from the browser's extensions page to load the new policy. See [the evidence summary](../verification/2026-11-18/threat-window/summary.json).
 
 ## Website-theme detection and cosmetic wildcard sites — 18 November 2026
 

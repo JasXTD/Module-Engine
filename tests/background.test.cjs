@@ -69,7 +69,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
         await fault('dynamic');
         if (state.faults.ignoreDynamic) { state.faults.ignoreDynamic--; return; }
         state.dynamic = clone([...state.dynamic.filter(rule => !removeRuleIds.includes(rule.id)), ...addRules]);
-        if (state.expireOnDynamic) { state.now = Date.parse('2026-11-30T00:00:00Z'); state.expireOnDynamic = false; }
+        if (state.expireOnDynamic) { state.now = Date.parse('2027-02-28T00:00:00Z'); state.expireOnDynamic = false; }
       },
       async setExtensionActionOptions() {}
     },
@@ -628,7 +628,7 @@ test('worker wake checks packaged evidence and restores missing expiry alarms wi
   await h.ready;
   assert.equal(h.state.storage.threatStatus.available, true);
   assert.equal(h.state.storage.threatStatus.count, 24);
-  assert.equal(h.state.alarms['reported-threats-expiry'].scheduledTime, Date.parse('2026-11-30T00:00:00Z'));
+  assert.equal(h.state.alarms['reported-threats-expiry'].scheduledTime, Date.parse('2027-02-28T00:00:00Z'));
   assert.equal(h.state.alarms['reported-threats-check'].periodInMinutes, 60);
   h.state.alarms = {};
   await h.listeners.startup();
@@ -637,10 +637,10 @@ test('worker wake checks packaged evidence and restores missing expiry alarms wi
 });
 
 test('expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors', async () => {
-  const h = harness({ customBlockedDomains: ['custom.example'] }, 5000, '2026-11-29T23:59:59Z');
+  const h = harness({ customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
   await h.ready;
   assert.ok(h.state.enabled.includes('threats_ruleset'));
-  h.state.now = Date.parse('2026-11-30T00:00:00Z');
+  h.state.now = Date.parse('2027-02-28T00:00:00Z');
   await h.listeners.alarm({ name: 'reported-threats-expiry' });
   assert.deepEqual(h.state.enabled.sort(), ['ads_ruleset', 'community_ruleset', 'trackers_ruleset']);
   assert.equal(h.state.dynamic.length, 1);
@@ -650,7 +650,7 @@ test('expiry alarm disables reported threats at the boundary without changing sa
 });
 
 test('an expired bundle cannot be re-enabled by startup, upgrade or a settings request', async () => {
-  const h = harness({}, 5000, '2026-12-01T00:00:00Z');
+  const h = harness({}, 5000, '2027-03-01T00:00:00Z');
   h.state.enabled = [...ids];
   await h.ready;
   for (const event of ['startup', 'installed']) await h.listeners[event]();
@@ -676,7 +676,8 @@ test('malformed, missing and future evidence disables only the threat layer and 
   const baseline = JSON.parse(policyText);
   for (const text of ['{}', '{', 'x'.repeat(4097), JSON.stringify({ ...baseline, extra: true }),
     JSON.stringify({ ...baseline, reviewedAt: '2099-01-01T00:00:00Z' }),
-    JSON.stringify({ ...baseline, expiresAt: '2027-01-01T00:00:00Z' }),
+    // One second beyond the 180-day evidence window.
+    JSON.stringify({ ...baseline, expiresAt: '2027-02-28T00:00:01Z' }),
     JSON.stringify({ ...baseline, evidenceFrom: '2026-09-31T00:00:00Z' })]) {
     h.state.policyText = text;
     const result = await h.send({ type: 'GET_STATE' });

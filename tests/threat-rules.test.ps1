@@ -24,7 +24,7 @@ $baseline = Snapshot
 $catalog = $original | ConvertFrom-Json -AsHashtable
 $result = Read-ThreatReportCatalog (Join-Path $root 'lists/reported-threats.json') ([DateTimeOffset]'2026-10-18T04:00:00Z')
 Assert-True ($result.Rules.Count -eq 24) '24 independently dated exact hosts'
-Assert-True ($result.Policy.expiresAt -ceq '2026-11-30T00:00:00Z') '90 days from conservative September 1 floor'
+Assert-True ($result.Policy.expiresAt -ceq '2027-02-28T00:00:00Z') '180 days from conservative September 1 floor'
 $display = Get-Content -LiteralPath (Join-Path $output 'threat-evidence.json') -Raw | ConvertFrom-Json -AsHashtable
 Assert-True ($display.schemaVersion -eq 1 -and $display.catalog.domains.Count -eq 24) 'display bundle contains only validated reported hosts'
 Assert-True ($display.rulesSha256 -ceq (Get-FileHash -LiteralPath (Join-Path $output 'threats.json')).Hash.ToLowerInvariant()) 'display bundle binds the exact published rule bytes'
@@ -43,7 +43,7 @@ for ($i = 0; $i -lt $result.Rules.Count; $i++) {
         Assert-True ($url -notmatch $rule.condition.regexFilter) 'no inferred subdomain or lookalike blocking'
     }
 }
-foreach ($fault in @('undated','future-observation','invalid-date','old-at-review','future-review','bad-policy','scope','duplicate-host',
+foreach ($fault in @('undated','future-observation','invalid-date','old-at-review','future-review','bad-policy','old-policy','scope','duplicate-host',
     'unknown-source','suspected','root-platform','unknown-field','duplicate-key','source-http','source-host','source-userinfo','source-txt','missing-section','too-many','invalid-utf8','oversized')) {
     $fixture = $original | ConvertFrom-Json -AsHashtable
     switch ($fault) {
@@ -53,6 +53,7 @@ foreach ($fault in @('undated','future-observation','invalid-date','old-at-revie
         'old-at-review' { $fixture.domains[0].observedOn = '2026-01' }
         'future-review' { $fixture.reviewedOn = '2099-01-01' }
         'bad-policy' { $fixture.maxAgeDays = 365 }
+        'old-policy' { $fixture.maxAgeDays = 90 }
         'scope' { $fixture.domains[0].match = 'subdomains' }
         'duplicate-host' { $fixture.domains += $fixture.domains[0] }
         'unknown-source' { $fixture.domains[0].sourceId = 'unknown' }
@@ -76,7 +77,20 @@ foreach ($fault in @('undated','future-observation','invalid-date','old-at-revie
     Assert-True $rejected "reject $fault"
     Assert-True ((Snapshot) -ceq $baseline) "failed $fault input preserves all published files"
 }
+# The 180-day window: an observation 179 days before review is accepted, and one
+# exactly 180 days before review is already stale.
+$edge = $original | ConvertFrom-Json -AsHashtable
+$edge.domains = @($edge.domains[0])
+$edge.domains[0].observedOn = '2026-04-22'
+[IO.File]::WriteAllText($fixturePath, ($edge | ConvertTo-Json -Depth 10))
+$inside = Read-ThreatReportCatalog $fixturePath ([DateTimeOffset]'2026-10-18T04:00:00Z')
+Assert-True ($inside.Policy.expiresAt -ceq '2026-10-19T00:00:00Z') 'observation 179 days before review is accepted and expires 180 days after it'
+$edge.domains[0].observedOn = '2026-04-21'
+[IO.File]::WriteAllText($fixturePath, ($edge | ConvertTo-Json -Depth 10))
+$stale = $false
+try { $null = Read-ThreatReportCatalog $fixturePath ([DateTimeOffset]'2026-10-18T04:00:00Z') } catch { $stale = $true }
+Assert-True $stale 'observation exactly 180 days before review is stale'
 # A later rebuild cannot launder evidence age. The runtime must retire this bundle.
-$late = Read-ThreatReportCatalog (Join-Path $root 'lists/reported-threats.json') ([DateTimeOffset]'2027-01-01T00:00:00Z')
+$late = Read-ThreatReportCatalog (Join-Path $root 'lists/reported-threats.json') ([DateTimeOffset]'2027-03-01T00:00:00Z')
 Assert-True ($late.Policy.expiresAt -ceq $result.Policy.expiresAt) 'rebuild does not extend expiry'
 Write-Host "PASS: $script:checks threat evidence/build assertions. Isolated fixture directory: $temporary"

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "rulesSha256": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
-  "policySha256": "b9948e80ad8c56e1c266db8f1c40c580f772904c7e5d1455d8959af3e4b54298",
+  "policySha256": "977446804c449600d26ca20478c850e55af18c688f65a8d71c288dcbf022c4e5",
   "catalog": {
     "schemaVersion": 1,
     "reviewKind": "passive-dated-threat-reports",
     "reviewedOn": "2026-10-18",
-    "maxAgeDays": 90,
+    "maxAgeDays": 180,
     "sources": [
       {
         "id": "proofpoint-bluemoon",

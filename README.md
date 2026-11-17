@@ -104,7 +104,7 @@ Blocked-tab cleanup applies to new tabs with a browser-reported opener and a con
 
 Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
 
-The bundled lists are manually maintained and do not update automatically. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer uses dated evidence and disables itself when that evidence expires; its current policy expires on **30 November 2026 at 00:00 UTC**. It is not comprehensive malware protection.
+The bundled lists are manually maintained and do not update automatically. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer uses dated evidence and disables itself 180 days after the earliest reported observation; its current policy expires on **28 February 2027 at 00:00 UTC**. It is not comprehensive malware protection.
 
 Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
 

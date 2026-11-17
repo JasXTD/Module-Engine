@@ -139,11 +139,17 @@ web-hosted text files and binary download URLs are rejected. Human source review
 necessary: a well-formed record alone does not prove that its claims are true.
 
 The builder emits `rules/threats.json` and `rules/threat-policy.json` together. The whole
-batch expires 90 days after its earliest observation. Month-only evidence uses the first
+batch expires 180 days after its earliest observation. Month-only evidence uses the first
 day of that month conservatively, without inventing a precise last-seen date. The review
-date and later rebuilds do not refresh evidence. Current expiry: 2026-11-30 00:00 UTC.
+date and later rebuilds do not refresh evidence. Current expiry: 2027-02-28 00:00 UTC.
 Old bundles remain reproducible; the runtime disables expired rules rather than silently
 extending them. A manual new evidence review is required to renew coverage.
+
+The window was 90 days until 18 November 2026. That day's review found no qualifying
+newer report from either publisher, and the user chose to keep these 24 hosts for 180
+days rather than let the layer lapse on 30 November. No observation date or source
+changed; only the allowed age did. The builder and the evidence panel accept only this
+window, and the runtime refuses an expiry more than 180 days after the evidence date.
 
 Run `pwsh -NoProfile -File tests/threat-rules.test.ps1` for offline schema, expiry,
 exact-boundary, legacy-exclusion and failed-publication checks. See the

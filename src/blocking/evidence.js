@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const publishers = Object.freeze({Proofpoint:'www.proofpoint.com',Volexity:'www.volexity.com'});
+  // Evidence window in days; must match the builder and background.js.
+  const maxAgeDays = 180;
   const text = (value,max) => typeof value === 'string' && value.length > 0 && value.length <= max;
   const date = value => {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}(-\d{2})?$/.test(value)) return false;
@@ -20,7 +22,7 @@
     const [rulesHash,policyHash] = await Promise.all([hash(rulesBytes),hash(policyBytes)]);
     if (rulesHash !== bundle.rulesSha256 || policyHash !== bundle.policySha256) throw new Error('Evidence does not match the packaged rules and policy. Rebuild and reload Module Engine.');
     const catalog=bundle.catalog, rules=parse(rulesBytes,128*1024);
-    if (catalog?.schemaVersion !== 1 || catalog.reviewKind !== 'passive-dated-threat-reports' || catalog.maxAgeDays !== 90 ||
+    if (catalog?.schemaVersion !== 1 || catalog.reviewKind !== 'passive-dated-threat-reports' || catalog.maxAgeDays !== maxAgeDays ||
         !date(catalog.reviewedOn) || !Array.isArray(catalog.sources) || !catalog.sources.length || catalog.sources.length > 10 ||
         !Array.isArray(catalog.domains) || !catalog.domains.length || catalog.domains.length > 100 ||
         policy?.schemaVersion !== 1 || policy.ruleCount !== catalog.domains.length || !Array.isArray(rules) || rules.length !== catalog.domains.length ||
@@ -53,7 +55,7 @@
       }
       hosts.add(item.host);
     }
-    if (Date.parse(policy.evidenceFrom) !== earliest || Date.parse(policy.expiresAt) !== earliest+90*86400000) throw new Error('Evidence dates do not match the packaged expiry policy.');
+    if (Date.parse(policy.evidenceFrom) !== earliest || Date.parse(policy.expiresAt) !== earliest+maxAgeDays*86400000) throw new Error('Evidence dates do not match the packaged expiry policy.');
     return {catalog,policy};
   }
   globalThis.BlockAdsEvidence=Object.freeze({verify});
