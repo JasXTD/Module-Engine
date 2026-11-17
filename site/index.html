@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Module Engine</title>
+<meta name="description" content="Module Engine is a local browser extension for Chrome, Edge and Firefox that blocks ads and trackers and runs reviewed userscripts, each with its own switch.">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAEXklEQVR42u2cv4sTQRTH5w9IOzDNNCKSIoXFIvHIIViJV7hFBC38D/KH2KW4IqUoYut/IOpaCFcIHtYpAqKFIF6R4oqVBxNZ1Muv3dnM7HwefNvM473PTmZ233tKNWja2IE2dqKNnWljC23sXBu71MaWaC8tXQwLF1OJ7UCFZNrYTBs71cYuSFhrWriYZ4dMfK6NPSMZB5fkIG8z8UMSHywIQ5+J72ljTwl08JIc9ZpOfl8be05wo5Hkqt9U8kfa2AuCGp0kZ6O6yR9rYy8JZrSS3I3rPPkkvxsQjPb5z2fb79bfQX+X0z4Hvm4eDHvbAMBVr8NXxG1e8hCobmu4DgDe8CXwxnDdu30ClIZynn52gX8+6RKYtJRVAZgSkOQ0rQJAMUeCRSXVMi4CkqYGytWZeV3o/uMb5dOXN8vX57fKj7+OvErWkLVkzab8f/joSfnsxavy0+cv5Y+fF14la8hasmYLAEyUKzb0skB2fK18/j7znvSrJGuLD/v6f3R8t3zz7oP3pF8lWVt88AjATLmK08Z//M7J9fLtt9sHS/5K4oP4sqv/904elIuv3w+W/JXEB/HFEwCFcmXHjT/5ISS/CsEuO4E8dSEkvwqBp51grnzU7R9y21/3d7Ct/4fc9tf9HfjoO1A+DnyhJX+lbQ6GcvgKLfkr+TgYNg6AnMBDBUB82+S/nMBDBUB8Cx6ANq56da6Im/xv46pX54oYPAChJn+lTf6HmvyVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAyhMYTWMFrD/ABAc2jizaG0h0fVHu4HAAZERDMgwg8AjIiJZkSMPwAYEhXFkCi/ADAmLvgxce0AgMIVAAAAQQAABAAIABAAIABAAMCLoG75z6vgRP3nY1CNj0Gx+8/n4Bqfg2P3n4KQmgUhsftPSViNkrDY/acotGZRaOz+UxZesyw8dv9pDKnZGBK7/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADSG0BhCaxitYTSHptIcuqQ9PNn28KUAMGdARLIDIuYCQMGImGRHxBQCwIwhUckOiZoJABPGxCU7Jm4iAAwYmJisBkpMG7sgGMlpoVamjZ0SkOQ0rQKQEZDklKmqaWPPCEoyOlN/mzY2JzDJKFf/M3aBRJ/+CgBDAtR5DdU608aeEqTO6lRtMm1sTxt7TrA6J8lpT21j2ti+NvaCoHVGksu+2sW0sSNt7CXBi16Sw5Hax7SxYyCIPvljVcfcTsDfQZzb/kg1Ye5MwMEwrgNfXzVp7nbAFTGCq97Wp/09QRjyxjDMN3wbX/I0DEIOCMEkPleHMvcpeUpRSbvFHC7mmQrJXHnZxBWaFq7kfEnC9q/bdzEsXEwnf8q4GrLfMhRiRahqlk4AAAAASUVORK5CYII=">
+<style>
+/* Layout: a control-panel landing page. Full-width bands hold a 1120px
+   column; the hero pairs the pitch with a working copy of the toolbar popup.
+   Colours and fonts are the extension's own (src/ui/shared/ui.css): dark by
+   default, light when the device asks. System fonts only, so the page makes
+   no requests to other sites. */
+:root {
+  color-scheme: dark;
+  --bg: #0d0f12;
+  --band: #111419;
+  --surface: #15181d;
+  --surface-2: #1c2026;
+  --line: #2a2f37;
+  --line-strong: #414853;
+  --text: #edf0f3;
+  --muted: #a4adb8;
+  --accent: #c8f23a;
+  --accent-ink: #c8f23a;
+  --accent-soft: rgba(200, 242, 58, 0.13);
+  --on-accent: #161a08;
+  --switch-off: #333943;
+  --knob: #d7dce2;
+  --code: #0a0c0f;
+  --syn-comment: #98b68d;
+  --syn-keyword: #c6a0ed;
+  --syn-string: #92c8aa;
+  --syn-literal: #e4b084;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f2f3ee; --band: #e9ebe3; --surface: #ffffff; --surface-2: #f4f5f1;
+    --line: #dcdfd5; --line-strong: #b6bbad; --text: #15181b; --muted: #545c65;
+    --accent: #c8f23a; --accent-ink: #456300; --accent-soft: rgba(120, 160, 0, 0.14); --on-accent: #161a08;
+    --switch-off: #c9cdc1; --knob: #ffffff; --code: #f7f8f4;
+    --syn-comment: #52684d; --syn-keyword: #7040a0; --syn-string: #1e6f58; --syn-literal: #9b4b16;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f3ee; --band: #e9ebe3; --surface: #ffffff; --surface-2: #f4f5f1;
+  --line: #dcdfd5; --line-strong: #b6bbad; --text: #15181b; --muted: #545c65;
+  --accent: #c8f23a; --accent-ink: #456300; --accent-soft: rgba(120, 160, 0, 0.14); --on-accent: #161a08;
+  --switch-off: #c9cdc1; --knob: #ffffff; --code: #f7f8f4;
+  --syn-comment: #52684d; --syn-keyword: #7040a0; --syn-string: #1e6f58; --syn-literal: #9b4b16;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); }
+img { max-width: 100%; }
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+code, pre { font-family: var(--mono); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.band { background: var(--band); border-block: 1px solid var(--line); }
+section > .wrap { padding-block: 72px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); letter-spacing: -0.01em; }
+h3 { font-size: 1.1rem; }
+p { margin: 0; }
+.section-lede { color: var(--muted); max-width: 64ch; margin-top: 10px; }
+.eyebrow { color: var(--accent-ink); font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Header */
+.site-head .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-block: 16px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 700; font-family: var(--display); font-size: 1.05rem; }
+.site-head nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.site-head nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+.site-head nav a:hover { color: var(--text); }
+
+/* Hero */
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; align-items: center; padding-block: 56px 72px; }
+.pitch { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); letter-spacing: -0.02em; }
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 56ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--line-strong);
+  background: var(--surface-2); color: var(--text); text-decoration: none; font-weight: 600; }
+.button:hover { border-color: var(--muted); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 10px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
+.facts div { display: flex; flex-direction: column-reverse; }
+.facts dt { color: var(--muted); font-size: 0.85rem; }
+.facts dd { margin: 0; font-family: var(--mono); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.facts-note { color: var(--muted); font-size: 0.8rem; }
+
+/* The popup copy */
+.demo { margin: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.popup { width: 100%; max-width: 380px; margin-inline: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25); overflow: hidden; }
+.popup-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.popup-head .name { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; flex: 1; }
+.popup-head strong { font-family: var(--display); }
+.status { font-family: var(--mono); font-size: 0.75rem; color: var(--accent-ink); }
+.status.paused { color: var(--muted); }
+.popup-site { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+.popup-site code { color: var(--text); }
+.popup-group { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.popup-group:last-of-type { border-bottom: 0; }
+.group-label { padding: 6px 16px 2px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 16px; cursor: pointer; }
+.row span { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.row strong { font-weight: 600; font-size: 0.93rem; }
+.row small { color: var(--muted); font-size: 0.8rem; }
+.paused .row { opacity: 0.55; }
+.popup-note { margin: 0; padding: 10px 16px 14px; font-size: 0.85rem; color: var(--muted); min-height: 3em; }
+.demo figcaption { color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+/* Switches: real checkboxes, drawn like the extension's own */
+input[type="checkbox"].switch { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 40px; height: 24px; margin: 0;
+  border-radius: 999px; background: var(--switch-off); cursor: pointer; transition: background-color 0.15s; }
+input[type="checkbox"].switch::before { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--knob); transition: transform 0.15s; }
+input[type="checkbox"].switch:checked { background: var(--accent); }
+input[type="checkbox"].switch:checked::before { transform: translateX(16px); background: var(--on-accent); }
+input[type="checkbox"].switch:disabled { cursor: not-allowed; }
+
+/* Features */
+.feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+.feature { display: flex; flex-direction: column; gap: 10px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+.feature p { color: var(--muted); }
+.code { margin: 6px 0 0; padding: 12px 14px; background: var(--code); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto;
+  font-size: 0.8rem; line-height: 1.55; color: var(--text); }
+.c-comment { color: var(--syn-comment); } .c-key { color: var(--syn-keyword); } .c-string { color: var(--syn-string); } .c-literal { color: var(--syn-literal); }
+
+/* Comparison */
+.compare-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 48px; align-items: end; }
+.checked { color: var(--muted); font-size: 0.9rem; }
+.table-scroll { margin-top: 28px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.92rem; }
+.cmp caption { text-align: left; padding: 16px 18px 6px; font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+.cmp th, .cmp td { padding: 11px 14px; text-align: left; vertical-align: top; border-top: 1px solid var(--line); }
+.cmp thead th { font-family: var(--display); font-size: 0.92rem; white-space: nowrap; }
+.cmp tbody th { font-weight: 600; color: var(--muted); width: 17%; }
+.cmp th:first-child { position: sticky; left: 0; background: var(--surface); }
+.cmp .me { background: var(--accent-soft); }
+.cmp thead .me { color: var(--accent-ink); }
+.yes, .no { display: inline-block; margin-right: 6px; padding: 0 7px; border-radius: 5px; font-family: var(--mono); font-size: 0.75rem; line-height: 1.6; font-weight: 600; }
+.yes { background: var(--accent); color: var(--on-accent); }
+.no { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line-strong); }
+.table-note { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+.fits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; margin-top: 36px; padding: 0; list-style: none; }
+.fits li { padding-left: 16px; border-left: 2px solid var(--line-strong); }
+.fits strong { display: block; }
+.fits span { color: var(--muted); }
+
+/* Install */
+.install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+.install { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.install ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; }
+.install li::marker { color: var(--accent-ink); font-family: var(--mono); }
+.install .note { color: var(--muted); font-size: 0.9rem; }
+.address { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.address code { padding: 2px 8px; background: var(--code); border: 1px solid var(--line); border-radius: 6px; font-size: 0.85rem; overflow-wrap: anywhere; }
+.copy { font: 600 0.75rem var(--sans); padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); cursor: pointer; }
+.requirements { margin-top: 18px; color: var(--muted); }
+
+/* Privacy, tests, footer */
+.limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 40px; margin: 28px 0 0; padding: 0; list-style: none; }
+.limits li { padding-top: 14px; border-top: 1px solid var(--line); }
+.limits strong { display: block; margin-bottom: 4px; }
+.limits span { color: var(--muted); }
+.tests-title { margin-top: 48px; }
+.tests { display: flex; flex-wrap: wrap; gap: 16px 40px; margin: 18px 0 12px; }
+.tests div { display: flex; flex-direction: column-reverse; }
+.tests dt { color: var(--muted); font-size: 0.85rem; }
+.tests dd { margin: 0; font-family: var(--mono); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.site-foot .wrap { padding-block: 40px 56px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 48px; color: var(--muted); font-size: 0.88rem; }
+.site-foot h2 { font-size: 1rem; color: var(--text); margin-bottom: 8px; }
+.site-foot ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.site-foot p + p { margin-top: 10px; }
+
+@media (max-width: 860px) {
+  .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 36px; padding-block: 32px 56px; }
+  .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compare-intro, .site-foot .wrap { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  section > .wrap { padding-block: 52px; }
+  .feature-grid, .install-grid, .fits, .limits { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAEXklEQVR42u2cv4sTQRTH5w9IOzDNNCKSIoXFIvHIIViJV7hFBC38D/KH2KW4IqUoYut/IOpaCFcIHtYpAqKFIF6R4oqVBxNZ1Muv3dnM7HwefNvM473PTmZ233tKNWja2IE2dqKNnWljC23sXBu71MaWaC8tXQwLF1OJ7UCFZNrYTBs71cYuSFhrWriYZ4dMfK6NPSMZB5fkIG8z8UMSHywIQ5+J72ljTwl08JIc9ZpOfl8be05wo5Hkqt9U8kfa2AuCGp0kZ6O6yR9rYy8JZrSS3I3rPPkkvxsQjPb5z2fb79bfQX+X0z4Hvm4eDHvbAMBVr8NXxG1e8hCobmu4DgDe8CXwxnDdu30ClIZynn52gX8+6RKYtJRVAZgSkOQ0rQJAMUeCRSXVMi4CkqYGytWZeV3o/uMb5dOXN8vX57fKj7+OvErWkLVkzab8f/joSfnsxavy0+cv5Y+fF14la8hasmYLAEyUKzb0skB2fK18/j7znvSrJGuLD/v6f3R8t3zz7oP3pF8lWVt88AjATLmK08Z//M7J9fLtt9sHS/5K4oP4sqv/904elIuv3w+W/JXEB/HFEwCFcmXHjT/5ISS/CsEuO4E8dSEkvwqBp51grnzU7R9y21/3d7Ct/4fc9tf9HfjoO1A+DnyhJX+lbQ6GcvgKLfkr+TgYNg6AnMBDBUB82+S/nMBDBUB8Cx6ANq56da6Im/xv46pX54oYPAChJn+lTf6HmvyVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAyhMYTWMFrD/ABAc2jizaG0h0fVHu4HAAZERDMgwg8AjIiJZkSMPwAYEhXFkCi/ADAmLvgxce0AgMIVAAAAQQAABAAIABAAIABAAMCLoG75z6vgRP3nY1CNj0Gx+8/n4Bqfg2P3n4KQmgUhsftPSViNkrDY/acotGZRaOz+UxZesyw8dv9pDKnZGBK7/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADSG0BhCaxitYTSHptIcuqQ9PNn28KUAMGdARLIDIuYCQMGImGRHxBQCwIwhUckOiZoJABPGxCU7Jm4iAAwYmJisBkpMG7sgGMlpoVamjZ0SkOQ0rQKQEZDklKmqaWPPCEoyOlN/mzY2JzDJKFf/M3aBRJ/+CgBDAtR5DdU608aeEqTO6lRtMm1sTxt7TrA6J8lpT21j2ti+NvaCoHVGksu+2sW0sSNt7CXBi16Sw5Hax7SxYyCIPvljVcfcTsDfQZzb/kg1Ye5MwMEwrgNfXzVp7nbAFTGCq97Wp/09QRjyxjDMN3wbX/I0DEIOCMEkPleHMvcpeUpRSbvFHC7mmQrJXHnZxBWaFq7kfEnC9q/bdzEsXEwnf8q4GrLfMhRiRahqlk4AAAAASUVORK5CYII=" width="28" height="28" alt=""><span>Module Engine</span></a>
+    <nav aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#compare">Compare</a>
+      <a href="#install">Install</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <div class="wrap">
+    <div class="pitch">
+      <p class="eyebrow">Browser extension · Chrome, Edge, Firefox</p>
+      <h1 id="hero-title">Ad blocking and userscripts, each with its own switch.</h1>
+      <p class="lede">Module Engine filters ads and trackers with the browser's built-in rule engine and runs only the userscripts you have reviewed. Turn either one off without touching the other. There is no account and no telemetry, and the filter lists ship inside the extension.</p>
+      <div class="cta">
+        <a class="button primary" href="#install">Install from source</a>
+        <a class="button" href="#compare">See how it compares</a>
+      </div>
+      <dl class="facts">
+        <div><dt>bundled network rules</dt><dd>9,436</dd></div>
+        <div><dt>site hiding rules</dt><dd>22,966</dd></div>
+        <div><dt>lists downloaded at runtime</dt><dd>0</dd></div>
+      </dl>
+      <p class="facts-note">Counts from the 18 November 2026 build.</p>
+    </div>
+
+    <figure class="demo">
+      <div class="popup">
+        <div class="popup-head">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAEXklEQVR42u2cv4sTQRTH5w9IOzDNNCKSIoXFIvHIIViJV7hFBC38D/KH2KW4IqUoYut/IOpaCFcIHtYpAqKFIF6R4oqVBxNZ1Muv3dnM7HwefNvM473PTmZ233tKNWja2IE2dqKNnWljC23sXBu71MaWaC8tXQwLF1OJ7UCFZNrYTBs71cYuSFhrWriYZ4dMfK6NPSMZB5fkIG8z8UMSHywIQ5+J72ljTwl08JIc9ZpOfl8be05wo5Hkqt9U8kfa2AuCGp0kZ6O6yR9rYy8JZrSS3I3rPPkkvxsQjPb5z2fb79bfQX+X0z4Hvm4eDHvbAMBVr8NXxG1e8hCobmu4DgDe8CXwxnDdu30ClIZynn52gX8+6RKYtJRVAZgSkOQ0rQJAMUeCRSXVMi4CkqYGytWZeV3o/uMb5dOXN8vX57fKj7+OvErWkLVkzab8f/joSfnsxavy0+cv5Y+fF14la8hasmYLAEyUKzb0skB2fK18/j7znvSrJGuLD/v6f3R8t3zz7oP3pF8lWVt88AjATLmK08Z//M7J9fLtt9sHS/5K4oP4sqv/904elIuv3w+W/JXEB/HFEwCFcmXHjT/5ISS/CsEuO4E8dSEkvwqBp51grnzU7R9y21/3d7Ct/4fc9tf9HfjoO1A+DnyhJX+lbQ6GcvgKLfkr+TgYNg6AnMBDBUB82+S/nMBDBUB8Cx6ANq56da6Im/xv46pX54oYPAChJn+lTf6HmvyVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAyhMYTWMFrD/ABAc2jizaG0h0fVHu4HAAZERDMgwg8AjIiJZkSMPwAYEhXFkCi/ADAmLvgxce0AgMIVAAAAQQAABAAIABAAIABAAMCLoG75z6vgRP3nY1CNj0Gx+8/n4Bqfg2P3n4KQmgUhsftPSViNkrDY/acotGZRaOz+UxZesyw8dv9pDKnZGBK7/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADSG0BhCaxitYTSHptIcuqQ9PNn28KUAMGdARLIDIuYCQMGImGRHxBQCwIwhUckOiZoJABPGxCU7Jm4iAAwYmJisBkpMG7sgGMlpoVamjZ0SkOQ0rQKQEZDklKmqaWPPCEoyOlN/mzY2JzDJKFf/M3aBRJ/+CgBDAtR5DdU608aeEqTO6lRtMm1sTxt7TrA6J8lpT21j2ti+NvaCoHVGksu+2sW0sSNt7CXBi16Sw5Hax7SxYyCIPvljVcfcTsDfQZzb/kg1Ye5MwMEwrgNfXzVp7nbAFTGCq97Wp/09QRjyxjDMN3wbX/I0DEIOCMEkPleHMvcpeUpRSbvFHC7mmQrJXHnZxBWaFq7kfEnC9q/bdzEsXEwnf8q4GrLfMhRiRahqlk4AAAAASUVORK5CYII=" width="28" height="28" alt="">
+          <span class="name"><strong>Module Engine</strong><span class="status" id="demoStatus">Ad blocking on</span></span>
+        </div>
+        <div class="popup-site"><span>This site</span><code>news.example</code></div>
+        <div class="popup-group" id="demoLayers">
+          <p class="group-label">Ad blocking</p>
+          <label class="row" for="demoAds"><span><strong>Block ads on every site</strong><small>Pause it without touching your scripts</small></span><input class="switch" type="checkbox" id="demoAds" checked></label>
+          <label class="row layer" for="demoLayerAds"><span><strong>Ad networks &amp; pop-unders</strong><small>Banner ads, video ads and pop-up scripts</small></span><input class="switch" type="checkbox" id="demoLayerAds" checked></label>
+          <label class="row layer" for="demoLayerTrackers"><span><strong>Trackers &amp; fingerprinting</strong><small>Cross-site analytics and session recorders</small></span><input class="switch" type="checkbox" id="demoLayerTrackers" checked></label>
+          <label class="row layer" for="demoLayerCommunity"><span><strong>Community lists</strong><small>EasyList and EasyList China</small></span><input class="switch" type="checkbox" id="demoLayerCommunity" checked></label>
+        </div>
+        <div class="popup-group">
+          <p class="group-label">Userscripts</p>
+          <label class="row" for="demoScripts"><span><strong>Reader tweaks</strong><small id="demoScriptState">Runs on news.example</small></span><input class="switch" type="checkbox" id="demoScripts" checked></label>
+        </div>
+        <p class="popup-note" id="demoNote" aria-live="polite">Both modules are on.</p>
+      </div>
+      <figcaption>A working copy of the idea, not the real popup. Switch ad blocking off and the script keeps running.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band" id="features" aria-labelledby="features-title">
+  <div class="wrap">
+    <h2 id="features-title">What it does</h2>
+    <p class="section-lede">Two modules with separate switches, plus the protections and tools around them. Everything runs inside the extension.</p>
+    <div class="feature-grid">
+      <article class="feature">
+        <h3>Ad and tracker filtering</h3>
+        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList and EasyList China snapshots add element hiding and advanced hiding rules. Add blocked or always-allowed domains, request filters and your own hiding rules, or pick an element on the page.</p>
+        <pre class="code"><code><span class="c-literal">||ads.example^</span><span class="c-key">$third-party</span>
+news.example<span class="c-key">##</span><span class="c-string">.ad-slot</span>
+news.example<span class="c-key">##</span><span class="c-string">div:has-text(Sponsored)</span></code></pre>
+      </article>
+      <article class="feature">
+        <h3>Protection beyond filters</h3>
+        <p>An optional per-site guard stops pop-ups, embedded-frame takeovers and redirect chains before their first request. Separate switches block new notification requests, install-to-play overlays and fake Play or Download buttons placed by ads. Ordinary downloads keep working.</p>
+      </article>
+      <article class="feature">
+        <h3>Userscripts you review first</h3>
+        <p>Import, write or install <code>.user.js</code> files from a URL. You see the source and the access a script asks for before it runs, and new scripts start switched off. Daily update checks stage new versions; nothing changes until you approve it.</p>
+        <pre class="code"><code><span class="c-comment">// ==UserScript==</span>
+<span class="c-comment">// </span><span class="c-key">@name</span>      Reader tweaks
+<span class="c-comment">// </span><span class="c-key">@match</span>     <span class="c-string">https://news.example/*</span>
+<span class="c-comment">// </span><span class="c-key">@grant</span>     <span class="c-literal">GM.getValue</span>
+<span class="c-comment">// ==/UserScript==</span></code></pre>
+      </article>
+      <article class="feature">
+        <h3>GM APIs, both spellings</h3>
+        <p>Storage and change listeners, menu commands, cross-origin requests, element and tab helpers, clipboard, notifications, downloads and scoped cookie access, as <code>GM_*</code> and <code>GM.*</code>. Files from <code>@require</code> and <code>@resource</code> download only when you choose Prepare dependencies.</p>
+      </article>
+      <article class="feature">
+        <h3>Appearance</h3>
+        <p>A system, light or dark theme for the popup and every Module Engine page, with seven accent colours or any colour you pick. Optionally, light websites get a dark version while the theme is dark, with per-site exceptions.</p>
+      </article>
+      <article class="feature">
+        <h3>Logs and agent debugging</h3>
+        <p>A local activity log, and optional network capture that records request details without headers or bodies. An opt-in local MCP server lets an AI agent read status, scripts and errors after you approve it. With a second approval it can propose script changes that wait for your review.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="compare" aria-labelledby="compare-title">
+  <div class="wrap">
+    <div class="compare-intro">
+      <div>
+        <h2 id="compare-title">How it compares</h2>
+        <p class="section-lede">Module Engine is the only one here that blocks ads and runs userscripts in one extension. Each of the others does one of those jobs, and several do it more completely.</p>
+      </div>
+      <p class="checked">Checked against each project's own pages and recent reporting on 18 November 2026. Sources are listed at the foot of the page.</p>
+    </div>
+
+    <div class="table-scroll" role="region" aria-labelledby="cmp-scripts" tabindex="0">
+      <table class="cmp">
+        <caption id="cmp-scripts">Userscript managers</caption>
+        <thead>
+          <tr><th scope="col"><span class="sr-only">Compared</span></th><th scope="col" class="me">Module Engine</th><th scope="col">Violentmonkey</th><th scope="col">Tampermonkey</th><th scope="col">Greasemonkey</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Chrome and Edge</th><td class="me"><span class="yes">Yes</span>Manifest V3, version 121+</td><td><span class="yes">Yes</span>Chrome build is Manifest V3</td><td><span class="yes">Yes</span>Manifest V3</td><td><span class="no">No</span>Firefox only</td></tr>
+          <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span>Version 128+</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Safari</th><td class="me"><span class="no">No</span></td><td>Not listed</td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
+          <tr><th scope="row">How you get it</th><td class="me">Load the source folder; not in any store</td><td>Chrome, Edge and Firefox stores</td><td>Browser stores and the App Store</td><td>Firefox Add-ons</td></tr>
+          <tr><th scope="row">Script updates</th><td class="me">Checked daily, applied only after you review them</td><td>Automatic, from each script's metadata</td><td>Automatic</td><td>Automatic since version 4.7</td></tr>
+          <tr><th scope="row">Cloud sync</th><td class="me">None; scripts stay in this browser</td><td>Dropbox, OneDrive, Google Drive, WebDAV</td><td>Google Drive, Dropbox, OneDrive, WebDAV, browser sync</td><td>Not listed</td></tr>
+          <tr><th scope="row">Built-in ad blocking</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+          <tr><th scope="row">Licence</th><td class="me">None chosen yet</td><td>MIT</td><td>Closed source</td><td>MIT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">On Chrome and Edge, every Manifest V3 userscript manager, Module Engine included, needs the browser's Allow User Scripts switch (Chrome 138 and later) or Developer mode before scripts can run.</p>
+
+    <div class="table-scroll" role="region" aria-labelledby="cmp-blockers" tabindex="0">
+      <table class="cmp">
+        <caption id="cmp-blockers">Ad blockers</caption>
+        <thead>
+          <tr><th scope="col"><span class="sr-only">Compared</span></th><th scope="col" class="me">Module Engine</th><th scope="col">uBlock Origin</th><th scope="col">uBlock Origin Lite</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Chrome and Edge</th><td class="me"><span class="yes">Yes</span>Manifest V3</td><td><span class="no">No</span>Chrome removed Manifest V2 extensions, and Edge is switching them off</td><td><span class="yes">Yes</span>Manifest V3</td></tr>
+          <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span>The full version</td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Filter lists</th><td class="me">EasyList and EasyList China snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
+          <tr><th scope="row">List updates</th><td class="me">Only with a new build; nothing is fetched at runtime</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
+          <tr><th scope="row">Element hiding</th><td class="me"><span class="yes">Yes</span>Including a supported subset of advanced (procedural) rules</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="no">No</span>Only one built-in filter, for YouTube player data</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Element picker</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Userscripts</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+          <tr><th scope="row">Licence</th><td class="me">None chosen yet</td><td>GPLv3</td><td>GPLv3</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="fits" aria-label="When another extension fits better">
+      <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, scriptlets and lists that keep themselves current.</span></li>
+      <li><strong>You want current lists on Chrome without rebuilding anything.</strong><span>uBlock Origin Lite refreshes its rules with every store release.</span></li>
+      <li><strong>You run many scripts, rare GM APIs or several computers.</strong><span>Tampermonkey and Violentmonkey cover more of the userscript API and sync through cloud storage. Module Engine holds up to 32 scripts.</span></li>
+      <li><strong>You need an open-source licence or a store install.</strong><span>Violentmonkey and Greasemonkey are MIT, both uBlock Origins are GPLv3, and all of them install from browser stores. Module Engine has no licence yet and loads from its source folder.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band" id="install" aria-labelledby="install-title">
+  <div class="wrap">
+    <h2 id="install-title">Install from source</h2>
+    <p class="section-lede">Module Engine isn't in any store yet. Load the folder that contains <code>manifest.json</code>.</p>
+    <div class="install-grid">
+      <article class="install" aria-labelledby="install-chromium">
+        <h3 id="install-chromium">Chrome and Edge</h3>
+        <ol>
+          <li>Open <span class="address"><code id="addrChrome">chrome://extensions</code><button class="copy" type="button" data-copy="addrChrome">Copy</button></span> or <span class="address"><code id="addrEdge">edge://extensions</code><button class="copy" type="button" data-copy="addrEdge">Copy</button></span></li>
+          <li>Turn on <strong>Developer mode</strong>.</li>
+          <li>Select <strong>Load unpacked</strong> and choose the folder that contains <code>manifest.json</code>.</li>
+          <li>Open <strong>Module Engine</strong> from the extensions menu.</li>
+        </ol>
+        <p class="note">To run userscripts, also turn on <strong>Allow User Scripts</strong> on the extension's details page. After updating the source, select <strong>Reload</strong> on the extensions page, then reload open tabs.</p>
+      </article>
+      <article class="install" aria-labelledby="install-firefox">
+        <h3 id="install-firefox">Firefox</h3>
+        <ol>
+          <li>Open <span class="address"><code id="addrFirefox">about:debugging#/runtime/this-firefox</code><button class="copy" type="button" data-copy="addrFirefox">Copy</button></span></li>
+          <li>Select <strong>Load Temporary Add-on</strong>.</li>
+          <li>Choose the folder's <code>manifest.json</code>.</li>
+        </ol>
+        <p class="note">A temporary add-on is removed when Firefox restarts. A permanent install needs Mozilla signing.</p>
+      </article>
+    </div>
+    <p class="requirements">Needs Chrome or Edge 121 or later, or Firefox 128 or later. The optional MCP server also needs Node.js.</p>
+  </div>
+</section>
+
+<section id="privacy" aria-labelledby="privacy-title">
+  <div class="wrap">
+    <h2 id="privacy-title">Privacy and limits</h2>
+    <ul class="limits">
+      <li><strong>No telemetry</strong><span>Settings, scripts, cached dependencies and logs stay in the browser's extension storage. Nothing is sent to the project.</span></li>
+      <li><strong>Lists don't update by themselves</strong><span>The bundled EasyList snapshots are from 19 October 2026. Newer filters arrive only with a new build.</span></li>
+      <li><strong>Reported threats expire</strong><span>The threat layer blocks 24 hosts from dated public reports and switches itself off on 28 February 2027. It is not full malware protection.</span></li>
+      <li><strong>Filtering is never complete</strong><span>Lists can miss ads or affect legitimate pages, and sites change. Video sites can show ads that rules cannot separate from the video.</span></li>
+      <li><strong>Scripts can see what they match</strong><span>An enabled script can read its pages, and a network grant lets it send data. Review the code and access before you turn one on.</span></li>
+      <li><strong>Dark websites are an approximation</strong><span>The website theme inverts colours with a filter, so some images, logos and dimming layers look different from a site's own dark design.</span></li>
+    </ul>
+
+    <h3 class="tests-title">Latest test run</h3>
+    <dl class="tests">
+      <div><dt>unit tests</dt><dd>624</dd></div>
+      <div><dt>Chrome checks</dt><dd>789</dd></div>
+      <div><dt>Edge checks</dt><dd>789</dd></div>
+      <div><dt>Firefox checks</dt><dd>782</dd></div>
+    </dl>
+    <p class="section-lede">18 November 2026. Browser checks run offline, with throwaway profiles and local test pages only. Dated records are in <code>docs/VERIFICATION.md</code> in the source folder.</p>
+  </div>
+</section>
+</main>
+
+<footer class="site-foot band">
+  <div class="wrap">
+    <div>
+      <h2>Module Engine</h2>
+      <p>Formerly BlockAds Shield. The bundled EasyList and EasyList China filters are by the EasyList authors, under the <a href="https://easylist.to/pages/licence.html" rel="noopener">EasyList licence</a>. No project-wide licence has been chosen for Module Engine's own source yet.</p>
+      <p>This page loads nothing from other sites.</p>
+    </div>
+    <div>
+      <h2>Comparison sources (18 November 2026)</h2>
+      <ul>
+        <li><a href="https://violentmonkey.github.io/" rel="noopener">Violentmonkey site</a> and <a href="https://github.com/violentmonkey/violentmonkey" rel="noopener">repository</a></li>
+        <li>Tampermonkey FAQ on <a href="https://www.tampermonkey.net/faq.php?q=Q406" rel="noopener">browsers</a>, <a href="https://www.tampermonkey.net/faq.php?q=Q209" rel="noopener">Allow User Scripts</a> and <a href="https://www.tampermonkey.net/faq.php?q=Q105" rel="noopener">sync</a>; <a href="https://en.wikipedia.org/wiki/Tampermonkey" rel="noopener">licence history</a></li>
+        <li><a href="https://github.com/greasemonkey/greasemonkey" rel="noopener">Greasemonkey repository</a> and <a href="https://wiki.greasespot.net/Version" rel="noopener">version history</a></li>
+        <li><a href="https://github.com/gorhill/uBlock" rel="noopener">uBlock Origin repository</a>; PCWorld on <a href="https://www.pcworld.com/article/3212428/firefox-is-now-the-last-major-browser-that-still-supports-ublock-origin.html" rel="noopener">Chrome</a> and <a href="https://www.pcworld.com/article/3209789/microsoft-edge-is-about-to-lose-ublock-origin-too.html" rel="noopener">Edge</a></li>
+        <li><a href="https://github.com/uBlockOrigin/uBOL-home" rel="noopener">uBlock Origin Lite repository</a> and <a href="https://github.com/uBlockOrigin/uBOL-home/releases" rel="noopener">releases</a></li>
+        <li>Chrome's <a href="https://developer.chrome.com/docs/extensions/reference/api/userScripts" rel="noopener">userScripts API</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+  // The popup copy: the ad-blocking switch pauses its layers; the script switch is separate.
+  const ads = document.getElementById('demoAds'), script = document.getElementById('demoScripts');
+  const layers = [...document.querySelectorAll('.layer input')];
+  const group = document.getElementById('demoLayers'), status = document.getElementById('demoStatus');
+  const scriptState = document.getElementById('demoScriptState'), note = document.getElementById('demoNote');
+  function render() {
+    for (const layer of layers) layer.disabled = !ads.checked;
+    group.classList.toggle('paused', !ads.checked);
+    status.textContent = ads.checked ? 'Ad blocking on' : 'Ad blocking paused';
+    status.classList.toggle('paused', !ads.checked);
+    scriptState.textContent = script.checked ? 'Runs on news.example' : 'Switched off';
+    note.textContent = ads.checked && script.checked ? 'Both modules are on.'
+      : script.checked ? 'Ad blocking is paused. Reader tweaks still runs.'
+      : ads.checked ? 'The script is off. Ads are still blocked.'
+      : 'Both are off. Nothing is filtered or run.';
+  }
+  ads.addEventListener('change', render);
+  script.addEventListener('change', render);
+  render();
+
+  // Copy buttons: the clipboard can be refused, so fall back to selecting the text.
+  for (const button of document.querySelectorAll('button[data-copy]')) {
+    button.addEventListener('click', async () => {
+      const target = document.getElementById(button.dataset.copy);
+      try {
+        await navigator.clipboard.writeText(target.textContent);
+        button.textContent = 'Copied';
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        button.textContent = 'Selected';
+      }
+      setTimeout(() => { button.textContent = 'Copy'; }, 1600);
+    });
+  }
+})();
+</script>
+</body>
+</html>

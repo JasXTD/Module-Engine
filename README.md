@@ -1,20 +1,36 @@
+<img src="icons/icon128.png" alt="Module Engine icon" width="64" height="64">
+
 # Module Engine
 
 A modular browser extension for **Chrome, Edge and Firefox**, combining local ad blocking with an optional userscript manager.
 
 Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved debugging that is read-only by default; it needs an installed Node runtime but no packages. Formerly **BlockAds Shield**.
 
+The [project site](site/index.html) gives a one-page overview with install steps and a comparison with Violentmonkey, Tampermonkey, Greasemonkey and uBlock Origin. Open it in any browser; it loads nothing from other sites.
+
+## Screenshots
+
+![Modules & scripts with ad blocking and userscripts both active, two sample scripts in the library and one open in the editor](docs/screenshots/modules.png)
+
+| Toolbar popup | My lists |
+| :---: | :---: |
+| <img src="docs/screenshots/popup.png" width="300" alt="The toolbar popup on example.com, with site controls, protection switches and filter layers"> | <img src="docs/screenshots/lists.png" alt="My lists, with custom request filters, page hiding and domain lists"> |
+
+![Appearance, with the theme, accent colour and dark-website settings](docs/screenshots/appearance.png)
+
+These show the dark theme with the default lime accent in Chrome. The scripts are samples, and the popup is shown as it appears on `example.com`.
+
 ## Features
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
 - **Ad and tracker filtering:** bundled network rules, EasyList snapshots, cosmetic hiding, advanced page hiding and a visual element picker.
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
-- **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). Confirmed blocked blank pop-up tabs are also cleaned up automatically.
+- **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
 - **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
 - **Prompt protection:** blocks new page notification requests and hides recognized notification reminders and install-to-play/download overlays. Separate switches and trusted-site exceptions keep ad blocking active. See [coverage and limits](docs/USER_GUIDE.md#notification-and-install-prompts).
 - **Deceptive button protection:** stops recognized play/download actions inside ad placements, external links covering real video players and Play links to installers/scripts. Ordinary downloads remain available; this is conservative detection, not a file scanner. See [controls and limits](docs/USER_GUIDE.md#deceptive-play-and-download-buttons).
 - **Userscripts:** import, edit, enable and export `.user.js` files, or install them from a URL or an opened `.user.js` link after review. Daily `@downloadURL`/`@updateURL` checks stage newer versions for your approval; nothing is applied silently ([installs and updates](docs/USER_GUIDE.md#installing-and-updating-scripts)). Scripts get GM storage, listeners, page commands, DOM/tab helpers, clipboard writes, notifications, downloads, scoped cookie access, extended URL matching, cached dependencies/resources and bounded cross-origin HTTP requests. Execution supports `unsafeWindow` in the selected world, `@top-level-await` and `@unwrap` with any supported scope; see the [compatibility limits](docs/USER_GUIDE.md#execution-compatibility).
-- **Script installation and updates:** install from a direct URL and manually check for updates, with source/access review and approval before replacement. Saved values are retained.
+- **Script installation and updates:** install from a direct URL, then check for updates yourself or wait for the daily check. Every replacement shows its source and access for approval first, and saved values are retained.
 - **Editor tools:** syntax highlighting and errors, metadata suggestions, tags and execution order. An optional authenticated localhost helper tracks one external `.user.js` file; changes enter a draft only when you choose. See [editing and external-file setup](docs/USER_GUIDE.md#editing-and-organizing-scripts).
 - **Local activity and review:** inspect extension events, supported blocked-request logs and suspected-ad flags before choosing what to block.
 - **Appearance:** choose a system, light or dark theme and an accent colour (seven presets or any custom colour) for the popup and every Module Engine page. Accent text and edges adjust to stay readable in both themes. Optionally, light websites follow the dark theme too, with per-site exceptions. See [appearance](docs/USER_GUIDE.md#appearance).
@@ -32,7 +48,7 @@ The extension is currently installed from source. The blocker declares Chrome/Ed
 3. Select **Load unpacked** and choose the repository folder containing `manifest.json`.
 4. Open **Module Engine** from the extensions menu.
 
-After pulling or editing source files, select **Reload** on the extension's browser page, then reload affected website tabs.
+To run userscripts, also turn on **Allow User Scripts** on Module Engine's extension-details page (Chrome 138 and later; earlier versions use Developer mode). After pulling or editing source files, select **Reload** on the extension's browser page, then reload affected website tabs.
 
 ### Firefox
 
@@ -66,50 +82,68 @@ For scripts with `@require` or `@resource`, save the script, choose **Prepare de
 
 Scripts can grant `GM_addElement` / `GM.addElement` to create DOM elements, or `GM_openInTab` / `GM.openInTab` to open HTTP(S) tabs and close their own tabs through a returned handle. Both API styles return synchronously. See the [helper options, lifecycle and compatibility limits](docs/USER_GUIDE.md#element-and-tab-helpers).
 
-The manager supports a focused subset of userscript metadata and GM APIs, without automatic script updates or full Violentmonkey compatibility. See the [compatibility table and request limits](docs/USER_GUIDE.md#modules-and-userscripts).
+The manager supports a focused subset of userscript metadata and GM APIs. Updates are checked daily but never applied without your review, and compatibility with Violentmonkey and Tampermonkey scripts is partial. See the [compatibility table and request limits](docs/USER_GUIDE.md#modules-and-userscripts).
 
 Clipboard, notification and download helpers need an exact `@grant` plus optional browser access. Select the script and choose **Allow helper access**. Both legacy and modern spellings are supported; downloads use HTTP(S), `@connect` scope, a 16 MiB cap and unique filenames unless `conflictAction` asks to overwrite or prompt. HTTP requests support FormData, ReadableStream bodies, `user`/`password` Basic authentication, upload progress, 8 MiB bodies/responses and up to five checked redirects. Upload progress needs helper access; Firefox also needs it to follow redirects. See [request options and limits](docs/USER_GUIDE.md#userscript-http-requests) and [desktop helper behavior](docs/USER_GUIDE.md#clipboard-notifications-and-downloads).
 
-## Browser support and verification
+## Logs, network capture and MCP
 
 Open **Modules & scripts → Network** for optional request/response metadata capture. Choose all browser traffic or one tab, then **Start new capture**. Filter requests, inspect timing/errors, pause the live view or export filtered JSON. Capture is local, off by default and bounded; it does not collect headers or bodies. See [network capture and its limits](docs/USER_GUIDE.md#network-log).
 
-**MCP** is now a sidebar entry as well as a button on Modules & scripts. Approve **Captured network request metadata** to let an agent use `module_engine_get_network_log`. Start capture yourself in a separate Network tab; the MCP tool can only read sanitized metadata. See [network approval and filters](docs/MCP.md#reading-captured-network-requests).
+**MCP** is a sidebar entry as well as a button on Modules & scripts. Approve **Captured network request metadata** to let an agent use `module_engine_get_network_log`. Start capture yourself in a separate Network tab; the MCP tool can only read sanitized metadata. See [network approval and filters](docs/MCP.md#reading-captured-network-requests).
 
-The **14 November 2026 Network pass** passed **510 Node tests**, **49 / 49 / 46** native capture/GM checks and **739 / 739 / 733** full blocker/UI checks in Chrome, Edge and Firefox. These were safely offline with disposable profiles. See the [network verification record](docs/VERIFICATION.md#network-metadata-capture--14-november-2026).
+## How it compares
 
-The **14 November 2026 localhost-MCP pass** passed **469 Node tests**, **637 offline rule assertions**, both MCP transports in Chrome/Edge/Firefox, and **739 / 739 / 733** full blocker checks. It also adds the user-requested `wheelroot.com` domain block, including subdomains, without claiming independent malware verification. See the [localhost-MCP verification record](docs/VERIFICATION.md#localhost-mcp-and-requested-domain--14-november-2026) and [connection setup](docs/MCP.md).
+Module Engine is the only one of these extensions that both blocks ads and runs userscripts. This was checked against each project's own pages and recent reporting on 18 November 2026. The [project site](site/index.html#compare) has the detailed tables and sources.
 
-The earlier **14 November 2026 button-protection pass** passed **454 Node tests**, **622 offline rule assertions**, and **721 Chrome / 721 Edge / 715 Firefox blocker checks**. Deceptive controls, ordinary playback/downloads, trusted-site exceptions and existing ad, prompt and Reddit protection were checked with local fixtures. See the [button-protection verification record](docs/VERIFICATION.md#button-protection--14-november-2026) for scope and limits; the earlier [prompt-protection record](docs/VERIFICATION.md#prompt-protection--14-november-2026) retains its own snapshot.
+| Extension | Blocks ads | Runs userscripts | Chrome and Edge | Firefox | Licence |
+| --- | --- | --- | --- | --- | --- |
+| **Module Engine** | Yes | Yes | Yes, Manifest V3 | Yes | None chosen yet |
+| Violentmonkey | No | Yes | Yes; Chrome build is Manifest V3 | Yes | MIT |
+| Tampermonkey | No | Yes | Yes, Manifest V3 | Yes | Closed source |
+| Greasemonkey | No | Yes | No | Yes | MIT |
+| uBlock Origin | Yes | No | No longer (Manifest V2) | Yes | GPLv3 |
+| uBlock Origin Lite | Yes | No | Yes, Manifest V3 | Yes | GPLv3 |
 
-The **13 November 2026 page-compatibility pass** passed **408 unit tests**, **78 Chrome / 78 Edge / 75 Firefox page checks**, and full userscript and blocker regressions. Real page globals, GM APIs, policy fallback, scope/revocation and MCP error capture were verified with owned offline fixtures. See the [page-compatibility verification record](docs/VERIFICATION.md#page-script-compatibility--13-november-2026).
+The others go further in their own areas:
 
-The Reddit app-popup repair and full blocker suites passed offline on **11 November 2026**: Chrome **571**, Edge **571** and Firefox **565** checks. These use synthetic page layouts; live Reddit coverage is not yet verified. See the [current verification record](docs/VERIFICATION.md#reddit-app-popup-repair--11-november-2026).
+- uBlock Origin keeps its lists current and adds scriptlets and dynamic filtering.
+- uBlock Origin Lite refreshes its rules with every store release.
+- Tampermonkey and Violentmonkey cover more of the userscript API and sync scripts through cloud storage.
 
-The **13 November 2026 execution compatibility pass** passed **370 unit tests**, **443 Chrome / 443 Edge / 362 Firefox userscript checks**, and **573 Chrome / 573 Edge / 567 Firefox blocker checks**, using disposable profiles and synthetic local fixtures. See [the execution/cookie verification record](docs/VERIFICATION.md#userscript-execution-compatibility--13-november-2026) for limits and retained evidence.
+Module Engine's lists change only with a new build. It holds up to 32 scripts and installs from source.
 
-The earlier broader userscript matching pass completed on **13 November 2026**:
+## Browser support and verification
 
-| Browser | Userscript checks | Ad-blocking checks | Blocked-tab cleanup checks |
-| --- | ---: | ---: | ---: |
-| Chrome 157 | 401 core and matching | 573 passed | 25 passed |
-| Edge 157 | 401 core and matching | 573 passed | 25 passed |
-| Firefox 160.0 | 322 core and matching | 567 passed | 28 passed |
+Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
-There were also **358 passing unit tests** and **596 offline PowerShell assertions**. Native checks used disposable profiles, owned loopback pages and fixed local-only aliases behind deny proxies. They covered matching, current-frame GM authorization and existing editor, installation, storage, menu, tab and request behavior. Regex compilation/evaluation is bounded, and suffix lookups remain local. Optional desktop-helper permission tests were not rerun in this matching pass; their earlier results remain separate. See the [verification records and limitations](docs/VERIFICATION.md#broader-userscript-matching--13-november-2026).
+On **18 November 2026** the current code passed:
 
-Blocked-tab cleanup applies to new tabs with a browser-reported opener and a confirmed blocked initial navigation. Existing, pinned, previously loaded and uncertain tabs stay open. A blocked link intentionally opened in a new tab can also qualify. Full behavior is documented in the [user guide](docs/USER_GUIDE.md#controls-and-scope).
+- **624 Node tests**;
+- **30 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
+- **789 Chrome, 789 Edge and 782 Firefox** browser checks, run offline with disposable profiles and local test pages.
+
+That run covered the website-theme detection fix, hiding rules kept beside `name.*` wildcard sites, the 180-day reported-threat window and the Firefox userscript layout fixes. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+
+- Appearance;
+- same-tab MCP navigation;
+- network capture and localhost MCP;
+- button and prompt protection;
+- page and execution compatibility;
+- URL matching;
+- Reddit repairs.
 
 ## Privacy and limits
 
 Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
 
-The bundled lists are manually maintained and do not update automatically. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer uses dated evidence and disables itself 180 days after the earliest reported observation; its current policy expires on **28 February 2027 at 00:00 UTC**. It is not comprehensive malware protection.
+The bundled lists are manually maintained and do not update automatically; the current EasyList and EasyList China snapshots are from 19 October 2026. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer uses dated evidence and disables itself 180 days after the earliest reported observation; its current policy expires on **28 February 2027 at 00:00 UTC**. It is not comprehensive malware protection.
 
 Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
 
 ## Documentation
 
+- [Project site](site/index.html): a one-page overview, install steps and the comparison with other extensions.
 - [User guide](docs/USER_GUIDE.md): modules, controls, custom filters, permissions and the element picker.
 - [Development](docs/DEVELOPMENT.md): source organization, rule builds and local working files.
 - [Verification](docs/VERIFICATION.md): dated results, offline test commands and explicit live-test opt-ins.
@@ -127,6 +161,7 @@ node --test tests/*.test.cjs
 pwsh -NoProfile -File tests/cosmetic-rules.test.ps1
 pwsh -NoProfile -File tests/rules.test.ps1
 pwsh -NoProfile -File tests/threat-rules.test.ps1
+pwsh -NoProfile -File tests/requested-ad-hosts.test.ps1
 ```
 
 Browser test commands and offline isolation details are in [Verification](docs/VERIFICATION.md#verification). Keep raw working output in `.artifacts/`; reviewed historical evidence remains under `verification/`.
