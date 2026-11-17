@@ -277,7 +277,7 @@
           emit(job, payload.event, payload);
           if (['error', 'abort', 'timeout'].includes(payload.event)) job.transportFailed = true;
         }
-      }, { limit: BlockAdsUserScriptNetwork.LIMITS.download, budgetOwned: true });
+      }, { limit: BlockAdsUserScriptNetwork.LIMITS.download, budget: job.releaseBudget });
       if (!alive(job) || job.transportFailed) { forget(job); return; }
       if (!loaded || loaded.status < 200 || loaded.status >= 300) throw new Error('Download returned HTTP ' + (loaded?.status || 0) + '.');
       await allowed(job);

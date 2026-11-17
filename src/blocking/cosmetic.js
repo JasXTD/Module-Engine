@@ -5,6 +5,14 @@
   const LIMITS = Object.freeze({ text: 100000, rules: 500, selector: 1000 });
   const PROCEDURAL_NAME = /^(?:-abp-|has-text|contains|xpath|matches-|upward|min-text-length|watch-attr|others|remove|style|if$|if-not|nth-ancestor)/i;
   const OPERATORS = new Set(['has', '-abp-has', 'has-text', '-abp-contains', 'upward']);
+  const DESCENDANT_OPERATOR = 'Procedural operators must follow their CSS subject directly; a space or combinator before an operator (descendant matching) is unsupported.';
+  // True when the text ends in an unescaped combinator: whitespace, >, + or ~.
+  function endsWithCombinator(text) {
+    if (!/[\s>+~]$/.test(text)) return false;
+    let slashes = 0;
+    for (let i = text.length - 2; i >= 0 && text[i] === '\\'; i--) slashes++;
+    return slashes % 2 === 0;
+  }
 
   // Inspect syntax outside strings and attribute selectors. A procedural-looking
   // string in an attribute is just data. No filter text is ever evaluated as JS.
@@ -78,6 +86,9 @@
       if (!first) throw new Error('Unsupported or nested procedural operator.');
       const subject = value.slice(0, first.index).trim();
       if (!subject || syntax(subject).commas.length) throw new Error('A procedural rule needs one explicit CSS subject, without a top-level selector list.');
+      // `.content :has-text(x)` targets descendants of .content. Trimming the
+      // combinator away would hide .content itself, so refuse it instead.
+      if (endsWithCombinator(value.slice(0, first.index))) throw new Error(DESCENDANT_OPERATOR);
       const plan = { css: css(subject), ops: [] };
       let tail = value.slice(first.index);
       while (tail) {
@@ -123,7 +134,10 @@
           if (!arg || arg.length > 200) throw new Error('Literal text must contain 1 to 200 characters.');
           plan.ops.push({ type: 'text', value: arg });
         }
-        tail = tail.slice(end + 1).trim();
+        const rest = tail.slice(end + 1);
+        // A space between procedures is a descendant combinator, not chaining.
+        if (/^\s/.test(rest) && rest.trim()) throw new Error(DESCENDANT_OPERATOR);
+        tail = rest.trim();
       }
       return plan;
     }

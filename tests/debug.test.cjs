@@ -11,7 +11,9 @@ function fixture(t, inspect, readNetwork) {
   const library = { enabled: true, active: true, available: true, scripts: [{ id, revision: 1, enabled: true, source: '// source',
     metadata: { name: 'Example', version: '1', world: 'USER_SCRIPT' }, token: 'private-capability', values: { secret: 'private-value' }, tags: [] }] };
   const host = BlockAdsDebug.create(api, { userscripts: { inspect: async () => { state.reads++; return inspect ? inspect() : library; }, setDiagnosticSink: sink => { state.sink = sink; } },
-    blocking: async () => ({ enabled: true }), activity: async () => [{ time: 1, kind: 'blocked', url: 'https://user:secret@example.test/path?q=secret#token', cookies: 'private-cookie' }],
+    blocking: async () => ({ enabled: true }), activity: async () => [{ time: 1, kind: 'blocked', url: 'https://user:secret@example.test/path?q=secret#token', cookies: 'private-cookie' },
+      // The shape background.js writes for a blocked request.
+      { time: 2, kind: 'blocked', layer: 'Ads', ruleId: 42, host: 'ads.example.test', path: '/pixel.gif', type: 'image', site: 'news.example.test', tabId: 7 }],
     network: async args => { state.networkReads++; return readNetwork ? readNetwork(args) : { ok: true, entries: [], capture: { active: false } }; } });
   t.after(() => host.close());
   function port(sender = { id: 'owned', url: api.runtime.getURL('src/ui/mcp/debug.html') }) {
@@ -41,6 +43,8 @@ test('scope guards and explicit projections never return GM values, cookies or c
   assert.equal(/private-capability|private-value/.test(JSON.stringify(script)), false);
   assert.equal((await f.read(all, 'list_scripts')).scripts[0].source, undefined);
   const logs = await f.read(all, 'get_logs'); assert.equal(logs.entries[0].url, 'https://example.test/path'); assert.equal(JSON.stringify(logs).includes('private-cookie'), false);
+  assert.deepEqual(logs.entries[1], { kind: 'activity', time: 2, event: 'blocked', message: '', site: 'news.example.test', host: 'ads.example.test',
+    path: '/pixel.gif', type: 'image', layer: 'Ads', ruleId: 42, tabId: 7 }, 'blocked entries keep the server, path and rule');
   assert.equal((await f.read(all, 'check_url', { url: 'https://example.test/page' })).scripts[0].matches, true);
   assert.equal((await f.read(all, 'status', { type: 'UPDATE_SETTINGS' })).ok, false);
   assert.equal((await f.read(all, 'eval')).ok, false);

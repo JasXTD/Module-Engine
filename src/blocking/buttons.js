@@ -125,18 +125,39 @@
       return false;
     }
 
-    function overPlayer(action, event) {
+    // A link with no text or media cannot be a player's own title, channel or
+    // logo link; over a video it only traps the click.
+    function emptyLink(link) {
+      const walker = doc.createTreeWalker(link, 5);
+      let next, count = 0;
+      while ((next = walker.nextNode())) {
+        if (++count > 64) return false;
+        if (next.nodeType === 3 ? next.textContent.trim() && !next.parentElement?.closest('script,style,noscript')
+          : next.matches('img,svg,picture,canvas,video,iframe,object,embed')) return false;
+      }
+      return !link.getAttribute('aria-label')?.trim() && !link.getAttribute('title')?.trim();
+    }
+
+    // The link must actually cover the player: at least half of the video's
+    // area, or any empty click trap. Players' own title, channel and "watch on"
+    // links sit over a strip or corner of the video and stay usable.
+    function overPlayer(action, link, event) {
       const box = action.getBoundingClientRect();
       const keyboard = event.type.startsWith('key') || event.type === 'click' && event.detail === 0;
       const touch = event.changedTouches?.[0];
       const x = keyboard ? box.x + box.width / 2 : touch?.clientX ?? event.clientX;
       const y = keyboard ? box.y + box.height / 2 : touch?.clientY ?? event.clientY;
       if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      const cover = link.getBoundingClientRect();
+      let empty;
       for (const root of new Set([action.getRootNode(), doc])) {
         for (const node of (root.elementsFromPoint?.(x, y) || []).slice(0, 24)) {
           if (node.localName !== 'video' || action.contains(node)) continue;
           const rect = node.getBoundingClientRect();
-          if (rect.width >= 80 && rect.height >= 45) return true;
+          if (rect.width < 80 || rect.height < 45) continue;
+          const overlap = Math.max(0, Math.min(cover.right, rect.right) - Math.max(cover.left, rect.left)) *
+            Math.max(0, Math.min(cover.bottom, rect.bottom) - Math.max(cover.top, rect.top));
+          if (overlap >= rect.width * rect.height / 2 || (empty ??= emptyLink(link))) return true;
         }
       }
       return false;
@@ -160,7 +181,7 @@
         }
       }
       return reasonFor({ kind, ad: Boolean(kind && inAdPlacement(action)), external,
-        overPlayer: external && overPlayer(action, event), installer });
+        overPlayer: external && overPlayer(action, link, event), installer });
     }
 
     function intercept(event) {

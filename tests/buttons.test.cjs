@@ -49,6 +49,39 @@ test('disabled, cleared and invalidated documents do not inspect clicks; re-enab
   assert.deepEqual(problems,['fixture failure']);assert.equal(callbacks.size,11);
 });
 
+test('only links that cover the player, or empty click traps, count as player overlays', () => {
+  const { Document, h } = require('./mini-dom.cjs');
+  const page = vm.createContext({ URL });
+  for (const file of ['../src/shared/shared.js', '../src/blocking/buttons.js']) vm.runInContext(fs.readFileSync(require.resolve(file), 'utf8'), page);
+  const click = (pageHost, link, extra = []) => {
+    const doc = new Document();
+    doc.location = { hostname: pageHost, href: 'https://' + pageHost + '/embed/x' }; doc.baseURI = doc.location.href;
+    const video = h(doc, 'video', { rect: { x: 0, y: 0, width: 640, height: 360 } });
+    const player = h(doc, 'div', { class: 'player', rect: { x: 0, y: 0, width: 640, height: 360 } }, video, ...extra, link(doc));
+    doc.body.append(player);
+    const anchor = player.querySelector('a');
+    doc.hits = [anchor, player, video, doc.body, doc.documentElement];
+    page.BlockAdsButtons.create({ document: doc }).setEnabled(true);
+    const event = { type: 'click', button: 0, detail: 1, clientX: 40, clientY: 20, isTrusted: false, cancelable: true, stopped: false,
+      composedPath: () => { const path = []; for (let node = anchor; node; node = node.parentNode) path.push(node); return path; },
+      preventDefault() {}, stopImmediatePropagation() { this.stopped = true; } };
+    for (const listener of doc.defaultView.listeners.get('click')) listener(event);
+    return event.stopped;
+  };
+  // A player's own title or "watch on" link over a strip of the video stays usable,
+  // including sibling hosts that the conservative same-site test treats as external.
+  assert.equal(click('www.youtube-nocookie.com', doc => h(doc, 'a', { href: 'https://www.youtube.com/watch?v=abc', rect: { x: 12, y: 10, width: 300, height: 24 } }, 'Video title')), false);
+  assert.equal(click('player.twitch.tv', doc => h(doc, 'a', { href: 'https://www.twitch.tv/channel', rect: { x: 12, y: 10, width: 160, height: 24 } },
+    h(doc, 'img', { alt: 'channel' }))), false);
+  // A link covering the player, or an empty trap of any size, is blocked.
+  assert.equal(click('video.example', doc => h(doc, 'a', { href: 'https://ads.example/go', rect: { x: 0, y: 0, width: 640, height: 360 } }, 'Play video')), true);
+  assert.equal(click('video.example', doc => h(doc, 'a', { href: 'https://ads.example/go', rect: { x: 0, y: 0, width: 400, height: 300 } }, 'Watch')), true);
+  assert.equal(click('video.example', doc => h(doc, 'a', { href: 'https://ads.example/go', rect: { x: 20, y: 10, width: 120, height: 80 } })), true);
+  assert.equal(click('video.example', doc => h(doc, 'a', { href: 'https://ads.example/go', rect: { x: 20, y: 10, width: 120, height: 80 }, 'aria-label': 'Channel' })), false);
+  // Same-site player links are never external.
+  assert.equal(click('video.example', doc => h(doc, 'a', { href: 'https://video.example/next', rect: { x: 0, y: 0, width: 640, height: 360 } })), false);
+});
+
 test('button capture is packaged at document start in all frames with its hostname dependency and no extra permission', () => {
   const manifest=JSON.parse(fs.readFileSync(require.resolve('../manifest.json'),'utf8'));
   const entry=manifest.content_scripts.find(entry=>entry.js.includes('src/blocking/content.js'));

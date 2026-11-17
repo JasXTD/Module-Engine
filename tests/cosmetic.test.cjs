@@ -69,3 +69,18 @@ test('the built package retains thousands of generic selectors and site exceptio
   assert.equal(new Set(data.generic).size, data.generic.length);
   for (const selector of data.generic) assert.doesNotThrow(() => safeSelector(selector));
 });
+
+test('procedural operators after a space or combinator are refused instead of hiding the ancestor', () => {
+  const { compileSelector } = globalThis.BlockAdsCosmetic;
+  // Each form targets descendants; dropping the combinator would hide the subject itself.
+  for (const selector of ['.content :has-text(Sponsored)', '.feed > div:has(> a) :has-text(Promoted)', '.a:has-text(x) :has-text(y)',
+    'div :upward(1)', '.card > :has-text(Ad)', 'section div:has(> .x :has-text(y))']) {
+    assert.throws(() => compileSelector(selector), /follow their CSS subject directly/, selector);
+    assert.throws(() => parse('example.com##' + selector), /Line 1: Procedural operators must follow/, selector);
+  }
+  assert.deepEqual(compileSelector('.content:has-text(Sponsored)'), { css: '.content', ops: [{ type: 'text', value: 'Sponsored' }] });
+  assert.deepEqual(compileSelector('.feed > div:has(> a):has-text(Promoted)').ops.map(op => op.type), ['has', 'text']);
+  // An escaped space is part of the subject, not a combinator; the subject is still refused as incomplete.
+  assert.throws(() => compileSelector(String.raw`.a\ :has-text(x)`), /Incomplete CSS escape/);
+  assert.deepEqual(compileSelector('.a:has-text(x) ').ops, [{ type: 'text', value: 'x' }], 'trailing whitespace is not a combinator');
+});

@@ -314,10 +314,13 @@ async function isDynamicBlock(ruleId) {
 }
 
 // Chrome and Edge report rule matches while the extension is loaded unpacked.
-// Firefox has no such event, so only events are logged there.
+// Firefox has no such event, so only events are logged there. Matches include
+// allow rules (site pauses, community-list exceptions) and header rules (the
+// pop-up sandbox, userscript upload guards); only verified block actions are
+// logged as blocked requests.
 async function logRuleMatch({ rule, request }) {
   try {
-    if (rule.rulesetId === "_dynamic" && !(await isDynamicBlock(rule.ruleId))) return;
+    if (!(await matchedBlock(rule))) return;
     const { host, path } = urlParts(request.url);
     const source = request.initiator || request.documentUrl || request.originUrl || "";
     await addLog({

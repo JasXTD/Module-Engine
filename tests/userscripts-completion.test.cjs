@@ -34,3 +34,36 @@ test('external codes cannot select arbitrary hosts, paths, schemes or MCP ports 
   for(const code of ['ME1.1234.'+token,'MEF1.0.'+token,'MEF1.65536.'+token,'MEF1.01234.'+token,'MEF1.1234.'+token+'/read','http://example.test','MEF1.1234.short'])assert.throws(()=>pairing(code));
   assert.equal(normalize('a\r\nb\rc\n'),'a\nb\nc\n');
 });
+test('a complete token keeps Enter for a new line; longer options stay one Ctrl+Space away', () => {
+  const vm = require('node:vm'), fs = require('node:fs');
+  const listeners = new Map(), element = extra => ({ hidden: true, textContent: '', style: {}, children: [], attributes: new Map(),
+    setAttribute(name, value) { this.attributes.set(name, value); }, removeAttribute(name) { this.attributes.delete(name); },
+    addEventListener(type, listener) { listeners.set(this.name + ':' + type, listener); }, ...extra });
+  const list = element({ name: 'list', id: 'sourceSuggestions', scrollHeight: 40, replaceChildren(...items) { this.children = items; } });
+  const input = element({ name: 'input', value: '', selectionStart: 0, selectionEnd: 0, disabled: false, scrollTop: 0, clientHeight: 400,
+    focus() {}, setSelectionRange(from, to) { this.selectionStart = from; this.selectionEnd = to; }, dispatchEvent(event) { listeners.get('input:' + event.type)?.(event); } });
+  const elements = { sourceSuggestions: list, showSuggestions: element({ name: 'button' }), completionStatus: element({ name: 'status' }) };
+  const document = { getElementById: id => elements[id], createElement: () => element({ name: 'option', scrollIntoView() {} }),
+    // insertText replaces the selection, as in the browser.
+    execCommand(command, _ui, text) { input.value = input.value.slice(0, input.selectionStart) + text + input.value.slice(input.selectionEnd);
+      input.selectionStart = input.selectionEnd = input.selectionStart + text.length; return true; } };
+  const context = vm.createContext({ document, Event: class { constructor(type) { this.type = type; } }, BlockAdsUserScriptCore });
+  vm.runInContext(fs.readFileSync(require.resolve('../src/ui/manager/userscripts-completion.js'), 'utf8'), context);
+  context.BlockAdsCompletion.attach(input);
+  const type = value => { input.value = value; input.selectionStart = input.selectionEnd = value.length; listeners.get('input:input')({ isComposing: false }); };
+  const key = (name, extra = {}) => { let prevented = false; listeners.get('input:keydown')({ key: name, isComposing: false, ctrlKey: false, altKey: false, metaKey: false, shiftKey: false,
+    preventDefault() { prevented = true; }, ...extra }); return prevented; };
+  for (const complete of ['GM_setValue', 'GM.getValue', 'GM.xmlHttpRequest']) {
+    type(start + '// @grant ' + complete);
+    assert.equal(list.hidden, true, complete + ': no automatic list for a complete grant');
+    assert.equal(key('Enter'), false, complete + ': Enter is left to the textarea');
+    assert.equal(input.value, start + '// @grant ' + complete);
+  }
+  type(start + '// @na');
+  assert.equal(list.hidden, false); assert.equal(key('Enter'), true); assert.equal(input.value, start + '// @name');
+  type(start + '// @grant GM_setValue');
+  assert.equal(key(' ', { code: 'Space', ctrlKey: true }), true); assert.equal(list.hidden, false, 'Ctrl+Space still lists GM_setValues');
+  assert.deepEqual(list.children.map(option => option.textContent), ['GM_setValues']);
+  assert.equal(suggest(start + '// @grant GM_setValue', start.length + 21).exact, true);
+  assert.equal(suggest(start + '// @grant GM_setValu', start.length + 20).exact, false);
+});

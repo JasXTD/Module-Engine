@@ -1226,6 +1226,21 @@ test('activity log records blocks with layer, server, path and site, but not sit
   assert.equal(h.state.session.activityLog.length, entries.length, 'log is saved to session storage');
 });
 
+test('activity log omits allow and header-rule matches from packaged, dynamic and session rules', async () => {
+  const h = harness({ popupBlockedDomains: ['video.example'] });
+  await h.ready;
+  const community = JSON.parse(fs.readFileSync(path.join(root, 'rules/community.json'), 'utf8'));
+  const allow = community.find(rule => rule.action.type === 'allow'), block = community.find(rule => rule.action.type === 'block');
+  const sandbox = h.state.dynamic.find(rule => rule.action.type === 'modifyHeaders');
+  assert.ok(allow && block && sandbox);
+  const request = { url: 'https://cdn.example/a.js', type: 'script', tabId: 3, initiator: 'https://news.example' };
+  for (const rule of [{ rulesetId: 'community_ruleset', ruleId: allow.id }, { rulesetId: '_dynamic', ruleId: sandbox.id },
+    { rulesetId: '_session', ruleId: 950000001 }, { rulesetId: 'community_ruleset', ruleId: block.id }]) h.listeners.ruleMatched({ rule, request });
+  await settle();
+  const { entries } = await h.send({ type: 'GET_LOG' });
+  assert.deepEqual(entries.filter(entry => entry.kind === 'blocked').map(entry => [entry.layer, entry.ruleId]), [['Community lists', block.id]]);
+});
+
 test('settings changes and failures are logged as events, and only the newest 1000 entries are kept', async () => {
   const h = harness();
   await h.ready;

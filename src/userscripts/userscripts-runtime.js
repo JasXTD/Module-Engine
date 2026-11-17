@@ -19,6 +19,12 @@
       worldId: script.worldId || '', js: script.js };
   }
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // Chromium's storage returns object keys sorted, including nested GM values,
+  // so storage readback is compared by content. Arrays keep their order: the
+  // library's script order is the start order.
+  const sortedKeys = (key, item) => item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.keys(item).sort().map(name => [name, item[name]])) : item;
+  const sameStored = (a, b) => JSON.stringify(a, sortedKeys) === JSON.stringify(b, sortedKeys);
   const sortedScripts = scripts => scripts.map(normalized).sort((a, b) => a.id.localeCompare(b.id));
   const sortedWorlds = worlds => worlds.map(world => ({ worldId: world.worldId, messaging: Boolean(world.messaging),
     csp: world.csp || '' })).sort((a, b) => a.worldId.localeCompare(b.worldId));
@@ -389,14 +395,14 @@
         if (current.available) await apply(await target(next), current);
         storageAttempted = true;
         await api.storage.local.set({ [KEY]: next });
-        if (!same(await read(), next)) throw new Error('The userscript library could not be verified after saving.');
+        if (!sameStored(await read(), next)) throw new Error('The userscript library could not be verified after saving.');
         reconcileConnections(next, current.available);
         lastError = '';
         return view(next, current);
       } catch (error) {
         const failures = [];
         if (storageAttempted) {
-          try { await api.storage.local.set({ [KEY]: before }); if (!same(await read(), before)) throw new Error('Storage rollback could not be verified.'); }
+          try { await api.storage.local.set({ [KEY]: before }); if (!sameStored(await read(), before)) throw new Error('Storage rollback could not be verified.'); }
           catch (rollback) { failures.push(errorText(rollback)); }
         }
         if (current.available) {
@@ -678,11 +684,11 @@
       library.revision++;
       try {
         await api.storage.local.set({ [KEY]: core.library(library) });
-        if (!same(await read(), library)) throw new Error('Script values could not be verified after saving.');
+        if (!sameStored(await read(), library)) throw new Error('Script values could not be verified after saving.');
       } catch (error) {
         try {
           await api.storage.local.set({ [KEY]: before });
-          if (!same(await read(), before)) throw new Error('Script value rollback could not be verified.');
+          if (!sameStored(await read(), before)) throw new Error('Script value rollback could not be verified.');
         } catch (rollback) {
           for (const connection of connections.values()) if (connection.scriptId === script.id) closeConnection(connection);
           throw new Error(errorText(error) + ' Value rollback failed: ' + errorText(rollback));

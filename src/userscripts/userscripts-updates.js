@@ -47,9 +47,10 @@
   // @version line in a well-formed leading block is read.
   function metaVersion(text) {
     if (typeof text !== 'string') return null;
-    const header = /^\uFEFF?\s*\/\/\s*==UserScript==[ \t]*\r?\n([\s\S]*?)^[ \t]*\/\/[ \t]*==\/UserScript==[ \t]*(?:\r?\n|$)/m.exec(text);
-    if (!header || text.slice(0, header.index).trim() || header[1].length > 16384) return null;
-    const versions = [...header[1].matchAll(/^[ \t]*\/\/[ \t]*@version[ \t]+(\S[^\r\n]*?)[ \t]*\r?$/gm)].map(match => match[1]);
+    const block = core.metadataBlock(text);
+    if (block === null || block.length > 16384) return null;
+    // Greedy capture, trimmed afterwards: a lazy value before trailing blanks was quadratic.
+    const versions = [...block.matchAll(/^[ \t]*\/\/[ \t]*@version[ \t]+(\S[^\r\n]*)$/gm)].map(match => match[1].trimEnd());
     return versions.length === 1 && versions[0].length <= 2048 ? versions[0] : null;
   }
   function state(raw) {

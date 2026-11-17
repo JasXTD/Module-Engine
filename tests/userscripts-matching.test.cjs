@@ -8,11 +8,19 @@ require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/u
 const matching = globalThis.BlockAdsMatching, core = globalThis.BlockAdsUserScriptCore;
 const metadata = (matches = [], includes = [], excludeMatches = [], excludes = []) => ({ matches, includes, excludeMatches, excludes });
 const source = (rules, body = 'globalThis.ran=true;') => '// ==UserScript==\n// @name Matching fixture\n' + rules + '\n// ==/UserScript==\n' + body;
+// The browser runs each registered js entry as its own script, in order. Out of
+// scope, the scope guard makes the script's top-level `let` fail before it runs.
+const inject = (registration, context, options) => {
+  for (const { code } of registration.js) {
+    try { vm.runInContext(code, context, options); }
+    catch (error) { if (!(error?.name === 'SyntaxError' && /__moduleEngineScope_/.test(error.message))) throw error; }
+  }
+};
 const accepts = (rules, value) => core.allows(core.parse(source(rules)), value);
 function wrapper(rules, url) {
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source(rules) };
   const context = vm.createContext({ URL, location: { href: url } });
-  vm.runInContext(core.registration(record).js[0].code, context, { timeout: 1000 });
+  inject(core.registration(record), context, { timeout: 1000 });
   return context.ran === true;
 }
 

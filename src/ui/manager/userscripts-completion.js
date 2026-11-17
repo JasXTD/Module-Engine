@@ -16,8 +16,10 @@
     if (!options) return null;
     const from = caret - typed.length, tail = /^[\w:.-]*/.exec(source.slice(caret))[0];
     const to = caret + tail.length;
-    const items = options.filter(item => item.toLowerCase().startsWith(typed.toLowerCase()) && item !== source.slice(from, to));
-    return items.length ? { from, to, items, kind: value ? '@' + key : 'Metadata key' } : null;
+    const token = source.slice(from, to), items = options.filter(item => item.toLowerCase().startsWith(typed.toLowerCase()) && item !== token);
+    // exact: the token is already a complete option, such as GM_setValue while
+    // GM_setValues remains. Typing must not then let Enter replace it.
+    return items.length ? { from, to, items, kind: value ? '@' + key : 'Metadata key', exact: options.includes(token) } : null;
   }
   function attach(input) {
     const list = document.getElementById('sourceSuggestions'), button = document.getElementById('showSuggestions');
@@ -33,6 +35,8 @@
     function show(explicit = false) {
       if (composing || inserting || input.disabled) { hide(); return; }
       result = suggest(input.value, input.selectionStart, input.selectionEnd);
+      // Longer options for a complete token appear only on request (Ctrl+Space).
+      if (result?.exact && !explicit) result = null;
       if (!result) { hide(); if (explicit) status.textContent = 'Place the caret after @ in the metadata block, or in a grant, run-at or inject-into value.'; return; }
       original = input.value; caret = input.selectionStart;
       list.replaceChildren(...result.items.map((text, index) => {

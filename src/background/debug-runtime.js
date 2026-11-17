@@ -199,8 +199,11 @@
       if (name === 'module_engine_get_logs') {
         const kind = args.kind || 'all', limit = args.limit || 50, entries = [];
         if (kind !== 'userscript' && !args.scriptId) for (const entry of (await activity()).slice(-100)) {
+          // Field names follow background.js's activity log: blocked requests and
+          // closed pop-ups record the server as host, plus a query-free path.
           const item = { kind: 'activity', time: entry.time, event: text(entry.kind, 32), message: text(entry.message),
-            site: text(entry.site, 253), domain: text(entry.domain, 253), type: text(entry.type, 64), layer: text(entry.layer, 128) };
+            site: text(entry.site, 253), host: text(entry.host, 253), path: text(entry.path, 150), type: text(entry.type, 64), layer: text(entry.layer, 128) };
+          if (Number.isSafeInteger(entry.ruleId)) item.ruleId = entry.ruleId;
           if (entry.url) item.url = protocol.safeURL(entry.url);
           if (Number.isInteger(entry.tabId)) item.tabId = entry.tabId;
           entries.push(item);

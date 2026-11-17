@@ -3,13 +3,22 @@
   'use strict';
   const protectedContent = 'main,[role="main"],article,shreddit-post,shreddit-comment,form,textarea,[contenteditable="true"]';
   const modalSelector = 'dialog[open],[role="dialog"],[aria-modal="true"],[popover]';
+  const overlaySelector = 'dialog,[role="dialog"],[aria-modal="true"],[popover]';
   const text = element => (element.textContent || '').slice(0, 4000).replace(/\s+/g, ' ').trim();
   const parentOf = element => element.parentElement || element.getRootNode().host;
+  // Computed values that stop the page from scrolling or receiving input.
+  const lockValue = (property, value) => property.startsWith('overflow-') ? /^(hidden|clip)$/.test(value) :
+    property === 'position' ? value === 'fixed' : ['pointer-events', 'touch-action'].includes(property) && value === 'none';
+  const LOCK_PROPERTIES = ['overflow-x', 'overflow-y', 'pointer-events', 'touch-action', 'position'];
 
   function create({ document: doc, isAlive = () => true, onProblem = () => {} }) {
     const win = doc.defaultView;
     const marker = 'data-module-engine-overlay-' + crypto.getRandomValues(new Uint32Array(2)).join('-');
     const hidden = new Map(), styles = new Map(), inert = new Map(), sheets = new Map();
+    // Root styles seen while no prompt was hidden and no override was ours.
+    // A site's permanent `overflow-x: hidden` or `touch-action: none` is not a
+    // prompt lock and must survive the prompt.
+    const baseline = new Map();
     let enabled = false, timer = null, failed = false, watchedRoots = [doc], rules = [];
     const css = `[${marker}] { display: none !important; pointer-events: none !important; }`;
     const observer = new MutationObserver(() => schedule());
@@ -47,6 +56,19 @@
       return result;
     }
 
+    // Cheap pre-check before the text policy: only an action inside a fixed or
+    // dialog-like container can belong to a prompt. Ordinary page controls such
+    // as product-grid "Add to cart" buttons must not spend the candidate budget.
+    function overlayAncestor(anchor, cache) {
+      for (let node = anchor, depth = 0; node && depth < 10; node = parentOf(node), depth++) {
+        if (node === doc.documentElement || node === doc.body) return false;
+        let overlay = cache.get(node);
+        if (overlay === undefined) cache.set(node, overlay = node.matches(overlaySelector) || win.getComputedStyle(node).position === 'fixed');
+        if (overlay) return true;
+      }
+      return false;
+    }
+
     function popupFor(anchor, rule) {
       let result = null;
       for (let node = anchor, depth = 0; node && depth < 10; node = parentOf(node), depth++) {
@@ -54,7 +76,7 @@
         const scope = node.shadowRoot || node;
         if (!rule.matches(scope)) continue;
         const style = win.getComputedStyle(node), box = node.getBoundingClientRect();
-        const overlay = node.matches('dialog,[role="dialog"],[aria-modal="true"],[popover]') || style.position === 'fixed' &&
+        const overlay = node.matches(overlaySelector) || style.position === 'fixed' &&
           box.width >= (rule.small ? 200 : win.innerWidth * 0.4) && box.height >= (rule.small ? 60 : Math.min(200, win.innerHeight * 0.25));
         if (overlay && (visible(node) || hidden.has(node))) result = node;
       }
@@ -104,17 +126,23 @@
 
     function restoreLocks(detached = false) {
       for (const [element, properties] of styles) {
+        const owned = new Set();
         for (const [property, saved] of properties) {
-          const owned = element.style.getPropertyValue(property) === saved.value && element.style.getPropertyPriority(property) === 'important';
-          if (owned) {
-            // Once the prompt is removed, do not reinstall its orphaned lock.
-            if (detached) element.style.removeProperty(property);
-            else if (saved.before) element.style.setProperty(property, saved.before, saved.priority);
-            else element.style.removeProperty(property);
-          }
-          const computed = detached && owned && element.isConnected ? win.getComputedStyle(element).getPropertyValue(property) : '';
-          const classLock = property.startsWith('overflow-') ? /^(hidden|clip)$/.test(computed) :
-            property === 'position' ? computed === 'fixed' : ['pointer-events', 'touch-action'].includes(property) && computed === 'none';
+          if (element.style.getPropertyValue(property) !== saved.value || element.style.getPropertyPriority(property) !== 'important') continue;
+          owned.add(property);
+          // Once the prompt is removed, do not reinstall its orphaned lock.
+          if (detached) element.style.removeProperty(property);
+          else if (saved.before) element.style.setProperty(property, saved.before, saved.priority);
+          else element.style.removeProperty(property);
+        }
+        // Read every value before reapplying any override: overflow-x depends on overflow-y.
+        const style = detached && owned.size && element.isConnected ? win.getComputedStyle(element) : null;
+        const computed = Object.fromEntries(LOCK_PROPERTIES.map(property => [property, style?.getPropertyValue(property) || '']));
+        for (const [property, saved] of properties) {
+          // A leftover lock class keeps vertical scrolling locked. Horizontal
+          // clipping or disabled touch panning alone is usually the site's layout.
+          const classLock = owned.has(property) && lockValue(property, computed[property]) &&
+            (!['overflow-x', 'touch-action'].includes(property) || lockValue('overflow-y', computed['overflow-y']));
           if (classLock) {
             // A leftover class can still lock the page after the prompt leaves.
             // Keep our override until that class changes, another modal opens,
@@ -129,13 +157,32 @@
       inert.clear();
     }
 
-    function unlock(roots) {
+    // Record root styles only while nothing is hidden or overridden by us and no
+    // other modal is open, so the snapshot is the page's own resting state.
+    function recordBaseline() {
+      baseline.clear();
       for (const element of [doc.documentElement, doc.body].filter(Boolean)) {
         const style = win.getComputedStyle(element);
-        for (const axis of ['x', 'y']) if (/^(hidden|clip)$/.test(style.getPropertyValue('overflow-' + axis))) setStyle(element, 'overflow-' + axis, 'auto');
-        if (style.pointerEvents === 'none') setStyle(element, 'pointer-events', 'auto');
-        if (style.touchAction === 'none') setStyle(element, 'touch-action', 'auto');
-        if (style.position === 'fixed') {
+        baseline.set(element, Object.fromEntries(LOCK_PROPERTIES.map(property => [property, style.getPropertyValue(property)])));
+      }
+    }
+
+    function unlock(roots) {
+      for (const element of [doc.documentElement, doc.body].filter(Boolean)) {
+        const style = win.getComputedStyle(element), resting = baseline.get(element);
+        const locked = property => lockValue(property, style.getPropertyValue(property));
+        // Common permanent layout values (hiding horizontal overflow, maps and
+        // games disabling touch panning) are kept when the page already had them
+        // at rest. Vertical, pointer and fixed-body locks are always released:
+        // a deceptive page can apply them before it inserts its prompt.
+        const layout = property => Boolean(resting && lockValue(property, resting[property]));
+        const vertical = locked('overflow-y');
+        if (vertical) setStyle(element, 'overflow-y', 'auto');
+        // Clipping only the horizontal axis does not stop scrolling.
+        if (vertical && locked('overflow-x') && !layout('overflow-x')) setStyle(element, 'overflow-x', 'auto');
+        if (locked('pointer-events')) setStyle(element, 'pointer-events', 'auto');
+        if (locked('touch-action') && !layout('touch-action')) setStyle(element, 'touch-action', 'auto');
+        if (locked('position')) {
           const offset = /^-\d+(\.\d+)?px$/.test(style.top) ? -parseFloat(style.top) : win.scrollY;
           setStyle(element, 'position', 'static');
           setStyle(element, 'top', 'auto');
@@ -172,8 +219,9 @@
         }
         for (const [root, sheet] of sheets) if (root !== doc && !root.host.isConnected) { sheet.remove(); sheets.delete(root); }
         let candidates = 0;
+        const overlays = new Map();
         for (const rule of rules) for (const scope of roots) for (const anchor of scope.querySelectorAll(rule.selector)) {
-          if (!rule.anchor(anchor)) continue;
+          if (!rule.anchor(anchor) || !overlayAncestor(anchor, overlays)) continue;
           if (++candidates > 64) throw new Error('Prompt candidate limit reached');
           const popup = popupFor(anchor, rule);
           if (popup) { desired.add(popup); matched.set(popup, rule); }
@@ -205,7 +253,9 @@
         if (!desired.size) {
           restoreLocks(!otherModal);
           for (const sheet of sheets.values()) sheet.remove();
-          sheets.clear(); return;
+          sheets.clear();
+          if (!otherModal && !styles.size && !hidden.size) recordBaseline();
+          return;
         }
         for (const popup of desired) {
           // Close a nested native modal as well as hiding its fixed wrapper.

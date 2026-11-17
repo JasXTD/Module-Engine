@@ -16,7 +16,7 @@
   let helperPermissions = [], allowedPermissions = new Set();
   let editorKey = 0;
   const externalEditor = ModuleEngineExternalEditor.create({
-    state: () => ({ key: editorKey, locked: busy || confirming || Boolean(installation) || !editor || Boolean(stale()),
+    state: () => ({ key: editorKey, locked: busy || confirming || Boolean(installation) || !editor || Boolean(stale()) || preparing(),
       source: el('scriptSource').value, dirty: sourceDirty(), identity: selected()?.metadata }),
     confirm,
     load: source => {
@@ -25,6 +25,9 @@
     }
   });
   const sourceDirty = () => editor !== null && el('scriptSource').value !== editor.source;
+  // Preparing dependencies commits a new revision of the open script. An edit
+  // made meanwhile could no longer be saved, so the draft waits for the result.
+  const preparing = () => Boolean(assetJob && editor?.id === assetJob.id);
   const tagsDirty = () => Boolean(editor?.id && el('scriptTags').value !== editor.tags);
   const dirty = () => sourceDirty() || tagsDirty();
   const allTags = script => [...new Set([...(script.tags || []), ...(script.metadata.tags || [])])];
@@ -136,7 +139,7 @@
     el('prepareAssets').disabled = locked || Boolean(assetJob) || !script || script.enabled || dirty() || stale();
     el('prepareAssets').textContent = script?.assets ? 'Download again' : 'Prepare dependencies';
     el('cancelAssets').hidden = !assetJob; el('cancelAssets').disabled = locked;
-    el('dependencyStatus').textContent = assetJob ? 'Downloading dependencies… Other module controls remain available.' : !script || dirty() || stale() ? 'Save and reopen the current source first.'
+    el('dependencyStatus').textContent = assetJob ? 'Downloading dependencies… This script’s source and tags can be edited again when the download ends; other controls remain available.' : !script || dirty() || stale() ? 'Save and reopen the current source first.'
       : script.enabled ? 'Disable this script to download dependencies again.' : script.assets ? 'Cached. Review the contents, then enable this script.' : 'Prepare dependencies before enabling this script.';
   }
   function render() {
@@ -213,7 +216,7 @@
     const script = selected(), changed = dirty();
     const position = script ? library.scripts.indexOf(script) : -1;
     el('organization').hidden = !script;
-    el('scriptTags').disabled = locked || !script || stale();
+    el('scriptTags').disabled = locked || !script || stale() || preparing();
     el('saveTags').disabled = locked || !script || !tagsDirty() || sourceDirty() || stale();
     el('orderPosition').textContent = 'Position ' + (position + 1) + ' of ' + total;
     el('moveEarlier').disabled = locked || changed || stale() || position <= 0;
@@ -232,9 +235,9 @@
       : script?.enabled ? 'Unsaved changes. Saving turns this script off until you switch it back on.'
       : 'Unsaved changes. A saved script stays off until you switch it on.';
     el('saveHint').classList.toggle('dirty', changed);
-    el('scriptSource').disabled = locked || !editor;
-    el('showSuggestions').disabled = locked || !editor;
-    if (locked) completion.hide();
+    el('scriptSource').disabled = locked || !editor || preparing();
+    el('showSuggestions').disabled = locked || !editor || preparing();
+    if (locked || preparing()) completion.hide();
     externalEditor.render();
     el('saveScript').disabled = locked || !editor || (!sourceDirty() && Boolean(editor.id));
     el('discardDraft').disabled = locked || !editor || (!changed && !stale());

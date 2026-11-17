@@ -4,6 +4,16 @@ const vm = require('node:vm');
 require('../vendor/publicsuffix/suffixes.js'); require('../src/userscripts/userscripts-matching.js'); require('../src/userscripts/userscripts-page.js'); require('../src/userscripts/userscripts-core.js'); require('../src/userscripts/userscripts-network.js'); require('../src/userscripts/userscripts-updates.js'); require('../src/userscripts/userscripts-offscreen.js'); require('../src/userscripts/userscripts-xhr.js'); require('../src/userscripts/clipboard.js'); require('../src/userscripts/userscripts-actions.js'); require('../src/userscripts/userscripts-runtime.js'); require('../src/background/modules.js');
 const core = globalThis.BlockAdsUserScriptCore;
 const clone = value => structuredClone(value);
+// The browser runs each registered js entry as its own script, in order. Out of
+// scope, the scope guard makes the script's top-level `let` fail before it runs.
+const inject = (registration, context, options) => {
+  for (const { code } of registration.js) {
+    try { vm.runInContext(code, context, options); }
+    catch (error) { if (!(error?.name === 'SyntaxError' && /__moduleEngineScope_/.test(error.message))) throw error; }
+  }
+};
+const sortedKeys = value => Array.isArray(value) ? value.map(sortedKeys) : value && typeof value === 'object'
+  ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sortedKeys(value[key])])) : value;
 const source = (name = 'Example', metadata = '', body = 'document.body.dataset.script = "ran";') =>
   '// ==UserScript==\n// @name ' + name + '\n// @namespace tests\n// @match https://example.test/*\n' + metadata + '// ==/UserScript==\n' + body;
 function harness(initial, options = {}) {
@@ -54,7 +64,8 @@ function harness(initial, options = {}) {
     },
     permissions: { contains: async ({ permissions }) => permissions.every(permission => permission === 'userScripts' ? state.granted : state.helperPermissions.has(permission)), onAdded: event('added'), onRemoved: event('removed') },
     storage: { local: {
-      async get() { fault('read'); return clone(state.data); },
+      // Chromium returns object keys sorted, including nested values.
+      async get() { fault('read'); return options.insertionOrderStorage ? clone(state.data) : sortedKeys(clone(state.data)); },
       async set(patch) { fault('save'); Object.assign(state.data, clone(patch)); state.writes++; fault('afterSave'); }
     } },
     userScripts: {
@@ -67,7 +78,7 @@ function harness(initial, options = {}) {
         fault('register');
         for (const script of scripts) {
           assert.ok(!state.scripts.some(item => item.id === script.id), 'no duplicate native IDs');
-          new vm.Script(script.js[0].code); // The mock never executes untrusted code.
+          for (const entry of script.js) new vm.Script(entry.code); // The mock never executes untrusted code.
           state.scripts.push(clone(script));
         }
         fault('afterRegister');
@@ -116,10 +127,11 @@ function harness(initial, options = {}) {
     const context = vm.createContext({ URL, URLSearchParams, TextEncoder, TextDecoder, Blob, FormData, atob, btoa, setTimeout, clearTimeout, queueMicrotask,
       console: { error: (...args) => errors.push(args.map(String).join(' ')) }, chrome: { runtime }, location: { href: from.url },
       addEventListener: (name, callback) => { const list = events.get(name) || []; list.push(callback); events.set(name, list); },
+      removeEventListener: (name, callback) => { const list = events.get(name) || []; if (list.includes(callback)) list.splice(list.indexOf(callback), 1); },
       MouseEvent: class { constructor(type, options) { this.type = type; Object.assign(this, options); } },
       document: { body: {}, documentElement: {} }, ...extra.globals });
     const record = state.data.userscriptManager.scripts.find(item => item.id === id);
-    vm.runInContext(core.registration(record).js[0].code, context);
+    inject(core.registration(record), context);
     return { context, run: code => vm.runInContext(code, context), errors, ports, messages, from,
       event: (name, event = {}) => { for (const callback of events.get(name) || []) callback({ isTrusted: true, ...event }); } };
   }
@@ -404,6 +416,19 @@ test('an asynchronous userscript cannot use GM cookies after disabling while it 
   assert.equal(r.context.result, 'revoked'); assert.equal(h.state.cookieCalls.length, 0);
 });
 const compatibilityGrants = core.GRANTS.filter(grant => !['none', 'GM.info', 'GM_info', 'GM.addStyle', 'GM_addStyle'].includes(grant)).map(grant => '// @grant ' + grant + '\n').join('');
+test('GM values persist when storage returns keys sorted, as Chromium does', async () => {
+  const h = harness(); const script = await h.enable(await h.save('Sorted values', '// @grant GM.setValue\n// @grant GM.setValues\n// @grant GM.deleteValue\n// @grant GM.getValue\n'));
+  // Each write is out of alphabetical order: a later key that sorts first, and nested keys.
+  for (const [key, value] of [['saved', 1], ['counter', 2], ['user', { name: 'x', id: 1, prefs: { zoom: 2, alpha: true } }]]) {
+    const response = await h.value(script.id, 'set', { key, value });
+    assert.equal(response.ok, true, key + ': ' + response.error);
+  }
+  assert.equal((await h.value(script.id, 'setMany', { values: { zeta: 1, beta: [{ y: 1, x: 2 }] } })).ok, true);
+  assert.equal((await h.value(script.id, 'delete', { key: 'beta' })).ok, true);
+  assert.deepEqual(h.state.data.userscriptManager.scripts[0].values,
+    { saved: 1, counter: 2, user: { name: 'x', id: 1, prefs: { zoom: 2, alpha: true } }, zeta: 1 });
+  assert.deepEqual((await h.value(script.id, 'get', { key: 'user' })).value, { name: 'x', id: 1, prefs: { zoom: 2, alpha: true } });
+});
 test('tags normalize old libraries and keep local organization separate from author metadata', async () => {
   const h = harness(); let script = await h.enable(await h.save('Tagged', '// @tag reading\n// @tag reading\n// @grant GM.setValue\n'));
   assert.deepEqual(script.metadata.tags, ['reading']); assert.deepEqual(script.tags, []);
@@ -1081,7 +1106,7 @@ test('default timing, GM_info grant metadata and case-insensitive globs match co
   assert.equal(core.allows(parsed, 'https://other.test/pATH'), true);
   assert.equal(core.allows(parsed, 'https://other.test/Path/secret'), false);
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('Info', '// @grant GM.info\n// @author Offline\n', 'globalThis.info = GM.info;') };
-  const context = vm.createContext({ URL, location: { href: 'https://example.test/page' } }); vm.runInContext(core.registration(record).js[0].code, context);
+  const context = vm.createContext({ URL, location: { href: 'https://example.test/page' } }); inject(core.registration(record), context);
   assert.deepEqual(json(context.info.script.grant), ['GM.info']);
   assert.equal(context.info.script.author, 'Offline'); assert.equal(context.info.script.runAt, 'document-end');
   assert.equal(context.info.scriptWillUpdate, false); assert.equal(context.info.uuid, record.id);
@@ -1331,10 +1356,26 @@ test('larger Firefox downloads preserve exact bytes and release their shared buf
   completeDownload(h,1); const result=await pending;
   assert.equal(result.response.size,body.length);
   const releases=[];
-  for(let i=0;i<4;i++)releases.push(BlockAdsUserScriptNetwork.reserve({},16*1024*1024));
+  for(let i=0;i<4;i++){const release=BlockAdsUserScriptNetwork.reserve({},16*1024*1024);release.grow(16*1024*1024);releases.push(release);}
   assert.throws(()=>BlockAdsUserScriptNetwork.reserve({},1),/budget/);
   for(const release of releases){release();release();}
-  BlockAdsUserScriptNetwork.reserve({},64*1024*1024)();
+  const whole=BlockAdsUserScriptNetwork.reserve({},64*1024*1024);whole.grow(64*1024*1024);whole();
+});
+test('transfer budget grows with received bytes instead of reserving every response cap up front', () => {
+  const { LIMITS, reserve } = BlockAdsUserScriptNetwork;
+  // The documented 32 concurrent requests fit before any of them has a body.
+  const held = []; let refused;
+  try {
+    for (let i = 0; i < 32; i++) held.push(reserve({}, LIMITS.response));
+    const active = reserve({}, LIMITS.response); held.push(active);
+    active.grow(5 * 1024 * 1024); active.grow(LIMITS.response); active.grow(LIMITS.response * 2);
+    for (let i = 0; i < 16 && !refused; i++) {
+      try { const release = reserve({}, LIMITS.download); held.push(release); release.grow(LIMITS.download); }
+      catch (error) { refused = error; }
+    }
+  } finally { for (const release of held) release(); }
+  assert.match(refused?.message || '', /64 MiB buffer budget/, 'growth past the shared budget is refused');
+  const whole = reserve({}, LIMITS.budget); whole.grow(LIMITS.budget); whole();
 });
 
 test('abort, timeout, port loss and module disable settle network promises once and release capacity', async t => {
@@ -1475,7 +1516,7 @@ test('include-only native registration satisfies Chromium without granting scope
   assert.equal(registration.matches.length, 1);
   assert.equal(core.allows(core.parse(record.source), registration.matches[0]), false);
   const context = vm.createContext({ URL, location: { href: registration.matches[0] } });
-  vm.runInContext(registration.js[0].code, context);
+  inject(registration, context);
   assert.equal(context.ran, undefined);
   assert.equal(core.allows(core.parse(record.source), 'https://example.test/included-page'), true);
 });
@@ -1483,7 +1524,7 @@ test('include-only native registration satisfies Chromium without granting scope
 test('missing native messaging fails closed before a privileged source body runs', () => {
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('No native world', '// @grant GM_getValue\n', 'globalThis.ran=true;') };
   const errors = [], context = vm.createContext({ URL, location: { href: 'https://example.test/page' }, chrome: { runtime: {} }, console: { error: (...args) => errors.push(args.map(String).join(' ')) } });
-  vm.runInContext(core.registration(record).js[0].code, context);
+  inject(core.registration(record), context);
   assert.equal(context.ran, undefined);
   assert.ok(errors.some(error => error.includes('10 isolated script worlds')));
 });
@@ -1968,7 +2009,7 @@ test('page relay registrations preserve native authorization, live scope and cap
   assert.equal((await h.value(script.id, 'get', { key: 'x' }, { ...h.sender(), userScriptWorldId: 'MAIN' })).ok, false);
   assert.equal((await h.value(script.id, 'set', { key: 'x', value: 1 })).ok, false);
   const token = h.state.data.userscriptManager.scripts[0].token;
-  assert.ok(!h.state.scripts[0].js[0].code.includes(token));
+  assert.ok(!h.state.scripts[0].js.some(entry => entry.code.includes(token)));
   h.state.frames.set('7:0', { url: 'https://outside.invalid/' });
   assert.equal((await h.value(script.id, 'get', { key: 'x' })).ok, false);
   h.state.frames.clear();
@@ -2000,12 +2041,26 @@ test('icon and update metadata is explained visibly; parsing fetches nothing', (
   assert.equal(parsed.warnings.length, 2);
   assert.ok(parsed.warnings.some(warning => /@updateURL .*Install from URL/.test(warning)));
 });
+test('metadata parsing stays linear on padded sources without a closing marker', () => {
+  // These inputs took several seconds each with a multiline backtracking regex.
+  const cases = ['\n'.repeat(131000) + '// ==UserScript==\n', '// ==UserScript==\n' + '// @name x\n'.repeat(11000),
+    '// ==UserScript==\n// @name a' + ' '.repeat(16000) + 'b\n// @namespace n\n// @match https://a.test/*\n// ==/UserScript==\n'];
+  const started = performance.now();
+  for (const text of cases) { try { core.parse(text); } catch {} }
+  assert.ok(performance.now() - started < 1000, 'parsing must not stall the background worker');
+  assert.equal(core.metadataBlock(cases[0]), null);
+  // Equivalent results for ordinary layouts: BOM, leading blank lines, CRLF, compact markers, trailing blanks.
+  const parsed = core.parse('﻿  \r\n// ==UserScript==\r\n// @name  Spaced name \t\r\n// @namespace n\r\n// @match https://a.test/*\r\n//==/UserScript==\r\ncode');
+  assert.deepEqual([parsed.name, parsed.namespace, parsed.metaStr], ['Spaced name', 'n', '// @name  Spaced name \t\r\n// @namespace n\r\n// @match https://a.test/*\r\n']);
+  assert.equal(core.metadataBlock('// ==UserScript==\n// ==/UserScript=='), '');
+  assert.equal(core.metadataBlock('x\n// ==UserScript==\n// ==/UserScript==\n'), null);
+});
 test('generated GM helpers reject lossy values in the script world before native transport', async () => {
   let messages = 0;
   const record = { id: crypto.randomUUID(), token: 'a'.repeat(64), source: source('Value contract',
     '// @grant GM.setValue\n', "globalThis.results=Promise.all([undefined,NaN,Infinity,BigInt(1),new Date(),{bad:undefined},()=>{}].map(value=>GM.setValue('bad',value).then(()=>false,()=>true)));") };
   const context=vm.createContext({URL,addEventListener(){},location:{href:'https://example.test/page'},chrome:{runtime:{async sendMessage(){messages++;return {ok:true};}}}});
-  vm.runInContext(core.registration(record).js[0].code,context);
+  inject(core.registration(record), context);
   assert.ok((await context.results).every(Boolean));
   assert.equal(messages,0);
 });

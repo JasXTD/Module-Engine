@@ -114,6 +114,40 @@ test('unwrap guards extended scopes before any raw statement or declaration runs
   }
 });
 
+test('wrapped source that closes its wrapper cannot run outside the declared scope', () => {
+  // Plain-text source can end the generated function and run at top level,
+  // past the in-wrapper scope check. The sentinel guard stops the whole script.
+  const breakout = 'globalThis.ran=true;\n}); })(); globalThis.escaped=true; (function(){ (function(){';
+  const cases = [
+    ['// @exclude *private*\n', '', 'https://example.test/page', 'https://example.test/private'],
+    ['', 'https://example.test:8443/*', 'https://example.test:8443/page', 'https://example.test/page'],
+    ['// @include /^https:\\/\\/example\\.test\\/only/\n', 'include-only', 'https://example.test/only', 'https://bank.test/']
+  ];
+  const worlds = [['', [['USER_SCRIPT', 2]]], ['// @inject-into page\n// @grant none\n', [['MAIN', 1], ['MAIN', 1]]],
+    // document-body registers natively at document start, so its guard leads the same injection.
+    ['// @inject-into page\n// @grant none\n// @run-at document-body\n', [['MAIN', 2]]],
+    ['// @inject-into page\n// @grant GM.getValue\n', [['MAIN', 1], ['USER_SCRIPT', 2]]]];
+  for (const [rules, pattern, yes, no] of cases) for (const [world, shape] of worlds) {
+    let text = source(world + rules, breakout);
+    if (pattern === 'include-only') text = text.replace('// @match https://example.test/*\n', '');
+    else if (pattern) text = text.replace('https://example.test/*', pattern);
+    const registrations = core.registrations({ id: '12345678-1234-1234-1234-123456789abc', token: 'f'.repeat(64), source: text });
+    assert.deepEqual(registrations.map(item => [item.world, item.js.length]), shape, 'guard before the wrapped source: ' + world + rules + pattern);
+    // Native injection runs every entry as its own script; an early guard runs first at document start.
+    const run = href => {
+      const scope = context({ location: { href }, document: { body: {}, documentElement: {} }, addEventListener() {} });
+      for (const item of registrations.flatMap(registration => registration.js)) { try { vm.runInContext(item.code, scope); } catch {} }
+      return scope;
+    };
+    assert.equal(run(no).escaped, undefined, 'no statement ran out of scope: ' + world + rules + pattern + ' ' + no);
+    if (!world.includes('GM.')) assert.equal(run(yes).escaped, true, 'the reviewed source still runs in scope: ' + world + rules + pattern);
+  }
+  // Native-exact scopes keep their single entry: the browser enforces the scope.
+  const exact = core.registrations({ id: '12345678-1234-1234-1234-123456789abc', token: 'f'.repeat(64), source: source('', breakout) });
+  assert.deepEqual(exact.map(item => item.js.length), [1]);
+  assert.ok(!exact[0].js[0].code.includes('__moduleEngineScope_'));
+});
+
 test('the unwrap guard hides only its own redeclaration error', () => {
   for (const world of ['', '// @inject-into page\n']) {
     const text = source('// @unwrap\n' + world + '// @exclude *private*\n', 'globalThis.ran=true;');

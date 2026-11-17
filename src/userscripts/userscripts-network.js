@@ -14,12 +14,30 @@
     .map(byte => byte.toString(16).padStart(2, '0')).join('');
   let api, offscreen, reserved = 0, guardReady, ensureObserver = async () => {};
   const observed = new Map(), transfers = new Set(), GUARD_ID = 950000001, ANONYMOUS_ID = 950000002;
+  // Response space reserved before any bytes arrive. Reserving the whole
+  // response cap up front let eight idle or long-polling requests (or four
+  // downloads) exhaust the shared budget for every script.
+  const PROVISIONAL = 256 * 1024, GROWTH = 1024 * 1024;
+  // Returns release(); release.grow(bytes) extends the response share to cover
+  // `bytes` (bounded by `limit`) and throws when the shared budget is exhausted.
   function reserve(details, limit) {
-    const size = limit + (details.body ? Math.floor(details.body.length * 3 / 4) : 0) +
+    const request = (details.body ? Math.floor(details.body.length * 3 / 4) : 0) +
       (details.formData ? core.bytes(JSON.stringify(details.formData)) : 0);
-    if (reserved + size > LIMITS.budget) fail('Userscript transfers are using the 64 MiB buffer budget. Wait for an active transfer to finish.');
-    reserved += size; let released = false;
-    return () => { if (!released) { released = true; reserved -= size; } };
+    let held = 0, response = 0, released = false;
+    const take = size => {
+      if (reserved + size > LIMITS.budget) fail('Userscript transfers are using the 64 MiB buffer budget. Wait for an active transfer to finish.');
+      reserved += size; held += size;
+    };
+    const initial = Math.min(limit, PROVISIONAL);
+    take(request + initial); response = initial;
+    const release = () => { if (!released) { released = true; reserved -= held; held = 0; } };
+    release.grow = bytes => {
+      if (released || bytes <= response) return;
+      // Grow in steps so a streamed body does not touch the budget per chunk.
+      const target = Math.min(limit, Math.max(bytes, response + GROWTH));
+      take(target - response); response = target;
+    };
+    return release;
   }
   const extensionRequest = details => {
     try {
@@ -115,10 +133,13 @@
     }
     return form;
   }
-  async function readBody(response, limit, signal, progress = () => {}) {
+  // account(bytes) is told the buffered size before it is retained; it may throw.
+  async function readBody(response, limit, signal, progress = () => {}, account = () => {}) {
     const total = Number(response.headers.get('content-length')) || 0;
     if (total > limit) { await response.body?.cancel(); fail('Response exceeds the download size limit.'); }
     if (!response.body) return new Uint8Array();
+    try { if (total) account(total); }
+    catch (error) { await response.body.cancel(); throw error; }
     const reader = response.body.getReader(), chunks = []; let loaded = 0, reported = 0;
     try {
       while (true) {
@@ -127,6 +148,7 @@
         if (done) break;
         loaded += value.length;
         if (loaded > limit) fail('Response exceeds the download size limit.');
+        account(loaded);
         chunks.push(value);
         if (loaded - reported >= 65536) { reported = loaded; progress({ loaded, total, lengthComputable: total > 0 }); }
       }
@@ -312,14 +334,15 @@
     }
     return next;
   }
-  async function request(details, controller, emit, { limit = LIMITS.response, budgetOwned = false } = {}) {
+  // `budget` is a caller-owned reservation from reserve(); otherwise one is held here.
+  async function request(details, controller, emit, { limit = LIMITS.response, budget } = {}) {
     const transfer = { details, controller }; transfers.add(transfer);
     let timeout = false;
     const timer = setTimeout(() => { timeout = true; controller.abort(); }, details.timeout);
     const initial = { readyState: 1, status: 0, statusText: '', finalUrl: details.url, responseHeaders: '' };
     let state = initial, release;
     try {
-      if (!budgetOwned) release = reserve(details, limit);
+      if (!budget) release = budget = reserve(details, limit);
       emit({ event: 'loadstart', ...state }); emit({ event: 'readystatechange', ...state });
       let current = details, response;
       for (let count = 0; ; count++) {
@@ -338,7 +361,7 @@
       const bytes = await readBody(response, limit, controller.signal, current.upload ? undefined : progress => {
         if (state.readyState !== 3) { state.readyState = 3; emit({ event: 'readystatechange', ...state }); }
         emit({ event: 'progress', ...state, ...progress });
-      });
+      }, budget.grow);
       controller.signal.throwIfAborted();
       emit({ event: 'load', ...state, readyState: 4, body: encode(bytes) });
     } catch (error) {

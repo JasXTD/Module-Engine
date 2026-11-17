@@ -38,16 +38,30 @@
     if (value === '<all_urls>') return ['http://*/*', 'https://*/*'];
     return [matching.matchPattern(value).normalized];
   }
-  function parse(source) {
-    if (typeof source !== 'string' || !source.trim() || bytes(source) > LIMITS.source) fail('A script must contain at most 128 KiB of UTF-8 source.');
+  // The leading metadata block's body, or null. Linear time: one anchored
+  // opening match, then one forward scan for the first closing line. A single
+  // multiline regex retried its lazy body scan from every line start, which
+  // took seconds on a padded 128 KiB file without a closing marker.
+  function metadataBlock(text) {
+    if (typeof text !== 'string') return null;
+    const opening = /^\uFEFF?\s*\/\/\s*==UserScript==[ \t]*\r?\n/.exec(text);
+    if (!opening) return null;
     // Keep the closing marker on its own line: \s* could start between CR and LF
     // and leave the preceding metadata value with a stray carriage return.
-    const header = /^\uFEFF?\s*\/\/\s*==UserScript==[ \t]*\r?\n([\s\S]*?)^[ \t]*\/\/[ \t]*==\/UserScript==[ \t]*(?:\r?\n|$)/m.exec(source);
-    if (!header || source.slice(0, header.index).trim() || header[1].length > 16384) fail('Start the file with a // ==UserScript== metadata block and close it with // ==/UserScript==.');
+    const closing = /^[ \t]*\/\/[ \t]*==\/UserScript==[ \t]*(?:\r?\n|$)/gm;
+    closing.lastIndex = opening[0].length;
+    const end = closing.exec(text);
+    return end ? text.slice(opening[0].length, end.index) : null;
+  }
+  function parse(source) {
+    if (typeof source !== 'string' || !source.trim() || bytes(source) > LIMITS.source) fail('A script must contain at most 128 KiB of UTF-8 source.');
+    const block = metadataBlock(source);
+    if (block === null || block.length > 16384) fail('Start the file with a // ==UserScript== metadata block and close it with // ==/UserScript==.');
     const entries = Object.create(null), informational = Object.create(null), warnings = [];
-    for (const line of header[1].split(/\r?\n/)) {
+    for (const line of block.split(/\r?\n/)) {
       if (/^\s*(?:\/\/\s*)?$/.test(line)) continue;
-      const entry = /^\s*\/\/\s*@([\w:-]+)(?:[ \t]+(.*?))?[ \t]*$/.exec(line);
+      // Greedy value capture: a lazy value before trailing blanks was quadratic.
+      const entry = /^\s*\/\/\s*@([\w:-]+)(?:[ \t]+(.*))?$/.exec(line);
       if (!entry) fail('Metadata lines must use // @key value.');
       const [, key, raw = ''] = entry, value = raw.trim();
       if (INFORMATIONAL.has(key) || /^(name|description):[\w-]+$/.test(key)) {
@@ -114,7 +128,7 @@
     return { name, namespace, version: one('version', '1.0'), explicitVersion: one('version'), description: one('description'),
       matches, excludeMatches, includes, excludes, grants, runAt, allFrames: !entries.noframes,
       world: injection === 'page' || injection === 'auto' && !unwrap ? 'MAIN' : 'USER_SCRIPT', injection, pageBridge, requires, resources, connects, informational,
-      unwrap, topLevelAwait, tags: tags(entries.tag || []), metaStr: header[1], explicitRunAt: one('run-at'), warnings: unique(warnings) };
+      unwrap, topLevelAwait, tags: tags(entries.tag || []), metaStr: block, explicitRunAt: one('run-at'), warnings: unique(warnings) };
   }
   function tags(value) {
     if (!Array.isArray(value) || value.length > 16 || value.some(tag => typeof tag !== 'string' ||
@@ -793,11 +807,16 @@
     const pageInfo = { ...info, uuid: pageUUID(metadata) };
     const dependencies = (assets || []).filter(asset => asset.kind === 'require').map(asset => new TextDecoder().decode(decodeAsset(asset.body)) + '\n;');
     const lines = metadata.unwrap ? [...dependencies, script.source] : ['(function () {', "'use strict';"];
+    // Scopes the native registration cannot express exactly get a sentinel
+    // guard (see scopeSentinel), so no statement of this script runs out of scope.
+    const sentinel = scopeSentinel(metadata), early = earlyGuard(metadata);
     // Native userScripts combine match patterns OR include globs (unlike content
     // scripts). Coarse native globs avoid spending worlds on unrelated pages;
     // this bounded guard and the broker enforce exact URL/fragment semantics.
     if (!metadata.unwrap) {
-      lines.push(matching.guard(metadata));
+      // A sentinel guard in the same injection has already decided scope at this
+      // moment; an early guard ran at document start, so recheck at run time.
+      if (!sentinel || early) lines.push(matching.guard(metadata));
       // Only isolated worlds hold the install ID and capability. Native MAIN
       // scripts never message the broker, and the page bridge strips both below.
       const config = { ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { id: script.id, token: script.token } : {}),
@@ -819,8 +838,7 @@
       } else lines.push(invoke(config));
       lines.push('})();');
     }
-    // Raw code that needs an exact scope check declares the guard's sentinel.
-    const sentinel = rawSentinel(metadata);
+    // Code that needs an exact scope check declares the guard's sentinel at top level.
     if (sentinel) lines.push(';let ' + sentinel + ';');
     lines.push('//# sourceURL=' + sourceName(metadata));
     // Chrome still requires a nonempty matches array even for include-only
@@ -829,10 +847,15 @@
     return { id: id + (metadata.pageBridge ? '-1' : ''), ...matching.prefilter(metadata), runAt: metadata.runAt === 'document_body' ? 'document_start' : metadata.runAt,
       allFrames: metadata.allFrames, world: nativeWorld(metadata),
       ...(nativeWorld(metadata) === 'USER_SCRIPT' ? { worldId: nativeId(script.id) } : {}),
-      js: [...(sentinel && !earlyGuard(metadata) ? [{ code: matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
+      js: [...(sentinel && !early ? [{ code: matching.rawGuard(metadata, sentinel, false) }] : []), { code: lines.join('\n') }] };
   }
-  function rawSentinel(metadata) {
-    if (!metadata.unwrap || matching.exact(metadata)) return '';
+  // Raw code cannot be wrapped, and wrapped source is plain text: source such as
+  // `}); })(); code; (function(){ (function(){` closes the wrapper and runs at
+  // top level, past an in-wrapper `return`. When the native registration alone
+  // cannot enforce the scope, a separate guard defines this name out of scope
+  // and the script's top-level `let` then fails before any statement runs.
+  function scopeSentinel(metadata) {
+    if (matching.exact(metadata)) return '';
     // Page code can list this global on excluded pages. Like sourceName, it
     // hashes the identity: the install ID is unique to every user, and a source
     // hash is unique to a user who customized the script.
@@ -874,9 +897,12 @@
   }
   // Page listeners registered before a later run-at would see the skipped
   // script's error event. A separate document-start guard listens first.
-  const earlyGuard = metadata => metadata.world === 'MAIN' && metadata.runAt !== 'document_start';
+  // Page bridges run their registered code in USER_SCRIPT, so they guard in-injection.
+  // document-body registers natively at document start: no page listener exists
+  // yet, and a same-injection guard cannot be ordered after the script.
+  const earlyGuard = metadata => nativeWorld(metadata) === 'MAIN' && !['document_start', 'document_body'].includes(metadata.runAt);
   function registrations(script, order) {
-    const metadata = executionMetadata(script), runner = registration(script, order), sentinel = rawSentinel(metadata);
+    const metadata = executionMetadata(script), runner = registration(script, order), sentinel = scopeSentinel(metadata);
     if (sentinel && earlyGuard(metadata)) return [{ id: nativeId(script.id, order) + '-0', ...matching.prefilter(metadata), runAt: 'document_start',
       allFrames: metadata.allFrames, world: 'MAIN', js: [{ code: matching.rawGuard(metadata, sentinel, true) }] }, runner];
     if (!metadata.pageBridge) return [runner];
@@ -895,7 +921,7 @@
     return { url: url.href, active: options.active !== false, insert: options.insert !== false, pinned: options.pinned === true,
       ...(options.container !== undefined ? { container: options.container } : {}) };
   }
-  globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, parse, allows, jsonValue, tabOptions,
+  globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, metadataBlock, parse, allows, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,
     sourceURL, compareVersions, sourceReview, tags, bindings, hasBidi, escapeBidi, bidiControls });
 })();
