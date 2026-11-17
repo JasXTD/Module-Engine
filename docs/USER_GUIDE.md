@@ -299,13 +299,15 @@ Your choice is stored in this browser profile's extension storage and never leav
 Turn on **Use the dark theme on websites** to give light websites a dark version whenever the theme is dark: always with **Dark**, while your device is dark with **System**, and never with **Light**. It is off by default, and open pages change as soon as you switch it or the theme. While it is off, websites are left exactly as they are.
 
 - **How it looks:** a page's colours are inverted with their hues kept, so a white page turns near-black and dark text turns light. Photos, video, canvases and embedded frames are turned back to their own colours. SVG images are treated as icons and follow the text colour. Modal dialogs and pop-overs are darkened too, and full-screen video shows its own colours.
-- **Already-dark sites** are recognised from their own colours and left alone, including sites that switch to their own dark theme after loading.
+- **Already-dark sites** are recognised from their own colours and left alone, including sites that switch to their own dark theme after loading. Cookie notices and dialogs that dim the whole window are looked through, so they do not decide whether a site is dark. A page's own background counts more than a dark banner across part of the screen.
 - **Sites that keep their own colours:** turn off **Dark website theme** in the popup's **This site** section, or add a site under **Sites that keep their own colours** on the Appearance page. Each entry includes its subdomains and everything embedded in that site's pages. Turning the switch back on removes the entry that covers the site.
 
 This is a filter-based dark mode, so it is an approximation, not each site's own design:
 
 - Strongly saturated colours in images and video can look slightly duller.
 - Background pictures set in a site's stylesheets are inverted.
+- Dark sections of a light page, such as a dark banner, turn light along with the rest of the page.
+- The dimming layer behind a cookie notice or a dialog brightens the page to grey instead of darkening it. Dialogs built with the HTML `<dialog>` element dim correctly.
 - Dark logos with transparent backgrounds can be hard to see.
 - Frames that Module Engine cannot run in, such as built-in PDF viewers, keep their light colours.
 - Busy pages may scroll less smoothly.

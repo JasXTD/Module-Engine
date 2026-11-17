@@ -5,7 +5,9 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const zlib = require('node:zlib');
-const SWATCH = [200, 120, 60];
+// Light enough that the page filter alone would make it dark (about 80,53,4):
+// a mid-tone such as 200,120,60 comes out of the filter almost unchanged.
+const SWATCH = [235, 205, 150];
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // A solid 24-bit bitmap: a raster image with a known colour, no encoder needed.
@@ -66,6 +68,19 @@ function serve(req, res) {
   else if (url.pathname === '/website-theme/frame') res.end(page('<p>A light frame from another origin.</p>'));
   else if (url.pathname === '/website-theme/dark') res.end(page('<p>Already dark.</p>').replace('<body>', '<body class="night">'));
   else if (url.pathname === '/website-theme/late') res.end(page('<p>Turns dark after it loads.</p>'));
+  // Real-world patterns: a cookie notice dimming the window, a dialog whose backdrop
+  // wraps it, a dark banner over a light page, and an app root with its own dark theme.
+  else if (url.pathname === '/website-theme/consent') res.end(page(`<p id="words">Words behind a cookie notice.</p>
+    <div id="notice" style="position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.6)">
+    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;height:90px;background:#fff">We use cookies.</div></div>`));
+  else if (url.pathname === '/website-theme/modal') res.end(page(`<p id="words">Words behind a dialog.</p><script>window.openModal = () => {
+    document.body.classList.add('modal-open');
+    document.body.insertAdjacentHTML('beforeend', '<div id="backdrop" style="position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.5)"><div style="margin:30vh auto;width:260px;height:90px;background:#fff">A dialog.</div></div>');
+  };</script>`));
+  else if (url.pathname === '/website-theme/banner') res.end(page(`<header style="position:absolute;inset:0 0 auto 0;height:62vh;background:#16213e"></header>
+    <p id="words" style="top:80vh">Light content below a dark banner.</p>`));
+  else if (url.pathname === '/website-theme/app') res.end(page(`<style>#app { min-height: 100vh; } #app.dark { background: #111; color: #eee; }</style>
+    <div id="app"><p id="words">An app root.</p></div><script>window.goDark = () => { document.getElementById('app').className = 'dark'; };</script>`));
   else { res.statusCode = 404; res.end('Not found'); }
   return true;
 }
@@ -164,6 +179,30 @@ async function verify({ browser, until, check, temporary, origin, url, popup }) 
     await browser.evaluate('(document.body.classList.add("night"), true)', late);
     await settled(late, 'off');
     check(true, 'a page that switches to its own dark theme is left alone from then on');
+
+    // A dimming layer is looked through: the page behind a cookie notice is light,
+    // so it is darkened from the start and stays dark once the notice is gone.
+    const consent = await open(origin + '/website-theme/consent');
+    await settled(consent, 'on');
+    await browser.evaluate('(document.getElementById("notice").remove(), true)', consent);
+    const [, consentPage] = await sample(consent, 'consent', ['#words'], ([, page]) => dark(page));
+    check(await state(consent) === 'on' && dark(consentPage), `a light page behind a cookie notice is dark from the start (${consentPage} once dismissed)`);
+    const modal = await open(origin + '/website-theme/modal');
+    await settled(modal, 'on');
+    await browser.evaluate('(openModal(), true)', modal);
+    // A body class is checked on the next frame; this outlasts any paced check too.
+    await pause(900);
+    check(await state(modal) === 'on', 'opening a dialog whose backdrop wraps it leaves the page dark');
+    const banner = await open(origin + '/website-theme/banner');
+    await settled(banner, 'on');
+    const [, bannerPage] = await sample(banner, 'banner', ['#words'], ([, page]) => dark(page));
+    check(dark(bannerPage), `a light page with a dark banner across the top of the window is darkened (${bannerPage})`);
+    const app = await open(origin + '/website-theme/app');
+    await settled(app, 'on');
+    await browser.evaluate('(goDark(), true)', app);
+    await settled(app, 'off');
+    const [, appPage] = await sample(app, 'app', ['#words'], ([, page]) => dark(page));
+    check(dark(appPage), `an app root that switches to its own dark theme after loading keeps it (${appPage})`);
 
     // The popup's switch for the current site; the popup tab names the fixture as its site.
     await browser.evaluate('(activeHostname = "127.0.0.1", renderWebsiteTheme(), true)', popup);

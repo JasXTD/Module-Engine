@@ -157,13 +157,22 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
                 $domains = [Collections.Generic.List[string]]::new()
                 $excluded = [Collections.Generic.List[string]]::new()
                 $invalid = $false
+                $dropped = 0
                 foreach ($scope in $domainText.Split(',')) {
                     $negative = $scope.StartsWith('~')
                     $hostName = ConvertTo-CommunityHost ($negative ? $scope.Substring(1) : $scope)
-                    if (!$hostName) { $invalid = $true; break }
-                    if ($negative) { $excluded.Add($hostName) } else { $domains.Add($hostName) }
+                    if ($hostName) { if ($negative) { $excluded.Add($hostName) } else { $domains.Add($hostName) }; continue }
+                    # An unsupported site, such as a name.* wildcard, is dropped from a rule's
+                    # sites: the rule then covers fewer sites, never more. Dropping an excluded
+                    # site would widen the rule, so that skips the whole rule.
+                    if ($negative) { $invalid = $true; break }
+                    $dropped++
                 }
-                if ($invalid) { & $skip 'cosmetic: wildcard or invalid domain'; continue }
+                # A rule whose every site was dropped is skipped. Applying only its
+                # exclusions would make a site rule generic.
+                if ($invalid -or ($dropped -and !$domains.Count)) { & $skip 'cosmetic: wildcard or invalid domain'; continue }
+                # Counted per dropped site, not per rule: the rule itself is kept.
+                if ($dropped) { $partial = 'cosmetic: wildcard or invalid site dropped from a kept rule'; $skipped[$partial] = $dropped + ($skipped[$partial] ?? 0) }
                 if ($isProcedure) {
                     $proceduralCandidates.Add([ordered]@{ include=@($domains); exclude=@($excluded); selector=$selector; exception=$isException })
                     continue

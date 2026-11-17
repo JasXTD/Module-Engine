@@ -21,6 +21,13 @@
   // Attributes sites switch their own themes with. Inline styles are left out:
   // many pages rewrite them on every scroll frame.
   const THEME_ATTRIBUTES = ['class', 'data-theme', 'data-color-mode', 'data-color-scheme', 'data-bs-theme', 'dark', 'theme'];
+  // Points sampled in the window, and how many of them the page's own background
+  // is worth: a dark banner across part of the first screen does not make a light
+  // page dark, while a page whose content is dark at every point is.
+  const SAMPLES = [[0.5, 0.5], [0.25, 0.3], [0.75, 0.3], [0.25, 0.75], [0.75, 0.75]], BASE_WEIGHT = 3;
+  // After loading, a theme change below <body> is checked at most this often:
+  // busy pages change classes deep in the page all the time.
+  const RECHECK_MS = 500;
   // Measured in Chrome 157 and Firefox 160: Firefox's root filter also covers the
   // top layer (modal dialogs, popovers and their backdrops); Chrome's covers
   // neither it nor the page scrollbar. tests/website-theme-browser.cjs checks
@@ -45,6 +52,8 @@
   const systemDark = matchMedia('(prefers-color-scheme: dark)');
   let value = null, topHost = null, topRequested = false, pageDark = false;
   let frames = 0, pending = 0, observer = null, style = null, painter = null;
+  let timer = 0, lastCheck = 0, overflow = false;
+  const touched = new Set();
 
   // Computed colours are rgb() for most pages; newer colour syntaxes go through a canvas.
   function rgba(colour) {
@@ -59,29 +68,58 @@
   const luminance = channels => channels.slice(0, 3).map(channel => channel / 255)
     .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
     .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
-  // The first mostly opaque background at or above an element.
-  function backgroundAt(element) {
-    for (let node = element; node; node = node.parentElement) {
-      const colour = rgba(getComputedStyle(node).backgroundColor);
-      if (colour[3] >= 0.5) return colour;
+  // An element's background colour with its own opacity applied.
+  function paint(style) {
+    const colour = rgba(style.backgroundColor);
+    return [colour[0], colour[1], colour[2], colour[3] * (Number(style.opacity) || 0)];
+  }
+  // A see-through layer fixed over nearly the whole window and raised above the
+  // page, such as the dimming backdrop of a cookie notice or a dialog. What it
+  // covers is the page. Without a raised stacking order it is more likely the
+  // page's own tinted background, which counts.
+  function overlay(element, style, alpha) {
+    if (alpha >= 0.95 || style.position !== 'fixed') return false;
+    const box = element.getBoundingClientRect();
+    if (box.width < innerWidth * 0.9 || box.height < innerHeight * 0.9) return false;
+    for (let node = element; node && node !== document.body && node !== root; node = node.parentElement) {
+      if (parseInt(getComputedStyle(node).zIndex, 10) > 0) return true;
     }
-    return null;
+    return false;
   }
   // Without a background of its own, a page shows the canvas: dark only when it asks for a dark scheme.
   function canvas() {
     const scheme = getComputedStyle(root).colorScheme + ' ' + (document.querySelector('meta[name="color-scheme"]')?.content || '');
     return /\bdark\b/.test(scheme) && (!/\blight\b/.test(scheme) || systemDark.matches) ? [18, 18, 18, 1] : [255, 255, 255, 1];
   }
-  // Samples the page's own colours where people read. Media says nothing about the page.
+  // The colour seen at a point: the first mostly opaque background among the
+  // elements painted there, topmost first, looking through dimming layers.
+  // Media says nothing about the page, so a point on media is not counted.
+  function sample(x, y) {
+    for (const element of document.elementsFromPoint(x, y)) {
+      if (element.closest(MEDIA)) return null;
+      const style = getComputedStyle(element), colour = paint(style);
+      if (colour[3] >= 0.5 && !overlay(element, style, colour[3])) return colour;
+    }
+    return canvas();
+  }
+  // What shows behind the page's content: the body's background, the root's, or the canvas.
+  function base() {
+    for (const node of [document.body, root]) {
+      const colour = paint(getComputedStyle(node));
+      if (colour[3] >= 0.5) return colour;
+    }
+    return canvas();
+  }
+  // Weighs the page's background and its colours where people read.
   function detect() {
     if (!document.body) return;
-    const samples = [];
-    for (const [x, y] of [[0.5, 0.5], [0.25, 0.3], [0.75, 0.3], [0.25, 0.75], [0.75, 0.75]]) {
-      const element = document.elementFromPoint(innerWidth * x, innerHeight * y);
-      if (element && !element.closest(MEDIA)) samples.push(backgroundAt(element) || canvas());
+    const dark = colour => luminance(colour) < 0.2;
+    let votes = BASE_WEIGHT, darkVotes = dark(base()) ? BASE_WEIGHT : 0;
+    for (const [x, y] of SAMPLES) {
+      const colour = sample(innerWidth * x, innerHeight * y);
+      if (colour) { votes++; if (dark(colour)) darkVotes++; }
     }
-    if (!samples.length) samples.push(backgroundAt(document.body) || canvas());
-    pageDark = samples.filter(colour => luminance(colour) < 0.2).length * 2 > samples.length;
+    pageDark = darkVotes * 2 > votes;
   }
 
   function render() {
@@ -98,11 +136,12 @@
   // Leaves no trace when the setting is off.
   function stop() {
     observer?.disconnect(); observer = null;
+    clearTimeout(timer); timer = 0; touched.clear(); overflow = false;
     style?.remove(); style = null;
     root.removeAttribute(ATTRIBUTE);
   }
   function check() {
-    pending = 0;
+    pending = 0; touched.clear(); overflow = false; lastCheck = performance.now();
     if (!value?.websites) return;
     if (settings.websitesDark(value, systemDark.matches)) detect();
     render();
@@ -110,17 +149,54 @@
     if (document.readyState !== 'complete' && ++frames < 600) schedule();
   }
   function schedule() { if (!pending) pending = requestAnimationFrame(check); }
-  // Pages switch their own themes on <html> or <body>, and a page that removes
-  // the style or attribute gets them back. A check changes nothing when the
-  // state already matches, so the observer cannot feed itself.
+  // Pages switch their own themes on <html> or <body>, checked on the next
+  // frame, or on a wrapper spanning the whole page, such as an app's root,
+  // checked at most every RECHECK_MS. A page that removes the style or
+  // attribute gets them back. A check changes nothing when the state already
+  // matches, so the observer cannot feed itself.
   function watch() {
-    observer = new MutationObserver(schedule);
+    observer = new MutationObserver(changed);
     observer.observe(root, { attributeFilter: [...THEME_ATTRIBUTES, ATTRIBUTE], childList: true });
-    if (document.body) observer.observe(document.body, { attributeFilter: THEME_ATTRIBUTES });
+    if (document.body) observer.observe(document.body, { attributeFilter: THEME_ATTRIBUTES, subtree: true });
+  }
+  function changed(records) {
+    let now = false;
+    for (const record of records) {
+      if (record.target === root || record.target === document.body) now = true;
+      else if (!near(record.target)) continue;
+      else if (touched.size < 64) touched.add(record.target);
+      else overflow = true;
+    }
+    if (now) schedule(); else if (touched.size) later();
+  }
+  // A wrapper spanning the page sits near the top of it. Deeper changes, such
+  // as a carousel or a button's state, are never worth a check.
+  function near(node) {
+    let depth = 0;
+    for (let parent = node.parentElement; parent && parent !== document.body; parent = parent.parentElement) if (++depth > 4) return false;
+    return true;
+  }
+  // A check already queued sees these changes too; one only for them waits its
+  // turn. Too many changed wrappers to measure are checked anyway.
+  function later() {
+    if (timer || pending) return;
+    if (!value?.websites || !settings.websitesDark(value, systemDark.matches)) { touched.clear(); overflow = false; return; }
+    timer = setTimeout(() => {
+      timer = 0;
+      const wide = overflow || [...touched].some(spansPage);
+      touched.clear(); overflow = false;
+      if (wide) schedule();
+    }, Math.max(0, lastCheck + RECHECK_MS - performance.now()));
+  }
+  // As wide as the window and nearly as tall as the page.
+  function spansPage(node) {
+    if (!node.isConnected) return false;
+    const box = node.getBoundingClientRect();
+    return box.width >= innerWidth * 0.9 && box.height >= Math.max(root.scrollHeight, innerHeight) * 0.9;
   }
   document.addEventListener('readystatechange', () => {
     if (!observer || !value?.websites) return;
-    if (document.body) observer.observe(document.body, { attributeFilter: THEME_ATTRIBUTES });
+    if (document.body) observer.observe(document.body, { attributeFilter: THEME_ATTRIBUTES, subtree: true });
     schedule();
   });
 

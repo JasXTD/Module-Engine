@@ -1,0 +1,254 @@
+[
+  {
+    "probe": "control-light-page",
+    "state": "on"
+  },
+  {
+    "probe": "consent-sync",
+    "stateWithOverlay": "on",
+    "stateAfterDismiss": "on",
+    "backgroundAfterDismiss": [
+      13,
+      13,
+      13
+    ]
+  },
+  {
+    "probe": "consent-async",
+    "state": "on",
+    "backgroundBefore": [
+      13,
+      13,
+      13
+    ],
+    "backdropPixel": [
+      150,
+      150,
+      150
+    ],
+    "consentBoxPixel": [
+      13,
+      13,
+      13
+    ]
+  },
+  {
+    "probe": "modal-ancestor",
+    "beforeOpen": "on",
+    "whileOpen": "on",
+    "backdropPixelWhileOpen": [
+      128,
+      128,
+      128
+    ],
+    "afterClose": "on"
+  },
+  {
+    "probe": "modal-sibling",
+    "whileOpen": "on",
+    "backgroundClosed": [
+      13,
+      13,
+      13
+    ],
+    "backdropPixelWhileOpen": [
+      127,
+      127,
+      127
+    ],
+    "afterClose": "on"
+  },
+  {
+    "probe": "hero",
+    "state": "on",
+    "heroPixel": [
+      203,
+      213,
+      239
+    ],
+    "blankAreaBelowHero": [
+      13,
+      13,
+      13
+    ]
+  },
+  {
+    "probe": "pictures",
+    "state": "on",
+    "imgSand": {
+      "pixel": [
+        223,
+        196,
+        156
+      ],
+      "original": [
+        235,
+        205,
+        150
+      ],
+      "ifInverted": [
+        80,
+        53,
+        4
+      ],
+      "looksLike": "original colours"
+    },
+    "imgNavy": {
+      "pixel": [
+        49,
+        58,
+        94
+      ],
+      "original": [
+        40,
+        50,
+        90
+      ],
+      "ifInverted": [
+        187,
+        196,
+        232
+      ],
+      "looksLike": "original colours"
+    },
+    "imgSwatch": {
+      "pixel": [
+        223,
+        196,
+        156
+      ],
+      "original": [
+        200,
+        120,
+        60
+      ],
+      "ifInverted": [
+        183,
+        111,
+        57
+      ],
+      "looksLike": "original colours"
+    },
+    "cssSand": {
+      "pixel": [
+        80,
+        53,
+        4
+      ],
+      "original": [
+        235,
+        205,
+        150
+      ],
+      "ifInverted": [
+        80,
+        53,
+        4
+      ],
+      "looksLike": "inverted"
+    },
+    "cssNavy": {
+      "pixel": [
+        187,
+        196,
+        232
+      ],
+      "original": [
+        40,
+        50,
+        90
+      ],
+      "ifInverted": [
+        187,
+        196,
+        232
+      ],
+      "looksLike": "inverted"
+    },
+    "cssSwatch": {
+      "pixel": [
+        80,
+        53,
+        4
+      ],
+      "original": [
+        200,
+        120,
+        60
+      ],
+      "ifInverted": [
+        183,
+        111,
+        57
+      ],
+      "looksLike": "inverted"
+    },
+    "inlineSand": {
+      "pixel": [
+        223,
+        196,
+        156
+      ],
+      "original": [
+        235,
+        205,
+        150
+      ],
+      "ifInverted": [
+        80,
+        53,
+        4
+      ],
+      "looksLike": "original colours"
+    }
+  },
+  {
+    "probe": "wrapper-dark-after-load",
+    "state": "off",
+    "pixelBeforeSiteTheme": [
+      227,
+      227,
+      227
+    ],
+    "pixelAfterSiteTurnsDark": [
+      17,
+      17,
+      17
+    ]
+  },
+  {
+    "probe": "dark-slow-head",
+    "stateMidLoad": "on",
+    "pixelMidLoad": [
+      17,
+      17,
+      17
+    ],
+    "finalState": "off",
+    "history": [
+      {
+        "t": 46.69999998807907,
+        "v": null,
+        "body": false
+      },
+      {
+        "t": 60.30000001192093,
+        "v": "on",
+        "body": false
+      },
+      {
+        "t": 1577.6000000238419,
+        "v": "off",
+        "body": true
+      },
+      {
+        "t": 1588,
+        "paint": "first-paint"
+      },
+      {
+        "t": 1588,
+        "paint": "first-contentful-paint"
+      }
+    ]
+  }
+]

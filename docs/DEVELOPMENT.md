@@ -42,7 +42,11 @@ A `localStorage` copy of the theme and accent (`moduleEngineAppearance`) is appl
 
 - **Filter:** the root gets `invert(0.95) hue-rotate(180deg)`. Media gets `invert(1) hue-rotate(180deg)`, except media nested in other turned-back media and SVG images, which are treated as icons. A fixed, filtered `::before` layer covers the canvas, which Chrome leaves outside the root filter. Full screen removes every filter.
 - **Engine differences:** measured in Chrome 157 and Firefox 160, Firefox's root filter also covers the top layer and backdrops, while Chrome's covers neither the top layer nor the page scrollbar. The script picks the matching rules by engine, and the browser test checks the rendered pixels.
-- **Already-dark pages:** the script samples five points per page, skipping media, reading each sample's own background. That reflects the page's own colours, since filters do not change computed styles. It checks every frame while the page loads, then when a theme attribute (class or a common theme data attribute) changes on `<html>` or `<body>`. Inline style changes are ignored, because many pages rewrite them while scrolling. It restores its style or attribute if a page removes them.
+- **Already-dark pages:** the script reads the page's own colours, which filters do not change in computed styles.
+  - At each of five points it walks the elements painted there (`elementsFromPoint`, topmost first) to the first mostly opaque background. A point on media is not counted.
+  - It looks through dimming layers: see-through (`opacity` included), `position: fixed` and covering at least 90% of the window, with a positive `z-index` on the layer or an ancestor. Cookie notices and dialog backdrops are like this; a fixed tint that is not raised counts as the page's own background.
+  - The body's background (else the root's, else the canvas) is worth three points, so a dark banner across part of the first screen does not make a light page dark.
+- **Rechecks:** every frame while the page loads, then on the next frame when a theme attribute (class or a common theme data attribute) changes on `<html>` or `<body>`. A theme attribute change below `<body>` is checked at most every 500 ms, and only when the changed element is as wide as the window and nearly as tall as the page, such as an app's root. Inline style changes are ignored, because many pages rewrite them while scrolling. It restores its style or attribute if a page removes them.
 - **Exceptions** follow the tab's site. A same-origin frame reads it, Chrome supplies `location.ancestorOrigins`, and a cross-origin Firefox frame asks the background with `WEBSITE_THEME_TOP`, which answers from the sender's tab record.
 
 Run `node --test tests/theme.test.cjs tests/website-theme.test.cjs`. These cover:
@@ -56,7 +60,7 @@ Run `node --test tests/theme.test.cjs tests/website-theme.test.cjs`. These cover
 Two browser modules run inside `node tests/browser-smoke.cjs <browser>`:
 
 - `tests/appearance-browser.cjs` drives the real Appearance page. It checks explicit themes over emulated system schemes, accent tokens on every open page, reload, a same-tab section, the narrow layout and Reset.
-- `tests/website-theme-browser.cjs` serves owned localhost pages and reads rendered screenshot pixels. It checks the page, image, cross-origin frame, dialog and backdrop; already-dark and later-dark pages; and the popup and Appearance controls. `--website-theme-only` runs just that part.
+- `tests/website-theme-browser.cjs` serves owned localhost pages and reads rendered screenshot pixels. It checks the page, image, cross-origin frame, dialog and backdrop; already-dark and later-dark pages; a cookie notice, a dialog whose backdrop wraps it, a dark banner and an app root that turns dark; and the popup and Appearance controls. Its test image is light, so an image left inverted would read dark. `--website-theme-only` runs just that part.
 
 ### YouTube filtering and registration
 

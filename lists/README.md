@@ -91,6 +91,11 @@ contains global selectors, and `scoped` contains `{include, exclude, selector,
 exception}` rules with excluded sites. `disableGeneric` and `disableAll` hold
 host-wide `generichide` and `elemhide` exceptions. Path-specific and unsupported
 option combinations are counted as skipped rather than expanded to a whole site.
+A site the builder cannot represent, such as an `amazon.*` wildcard (which needs a
+public-suffix lookup), is dropped from a rule's site list and counted; the rule is kept
+for its other sites. A rule is skipped instead when every included site was dropped,
+since its exclusions alone would make it generic, or when an excluded site is
+unsupported, since dropping an exclusion would widen the rule.
 `procedural` contains `{include, exclude, selector, exception, procedure}` records.
 The procedure holds a CSS subject and ordered text/child/ancestor operations, with
 nested child plans preserved. These are data, never JavaScript or regex source.

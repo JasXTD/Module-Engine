@@ -1,8 +1,70 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 17 November 2026 Appearance section, following the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 website-theme detection and cosmetic wildcard-site section, following the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Website-theme detection and cosmetic wildcard sites — 18 November 2026
+
+A review on 18 November used offline probe pages, in Chrome and Firefox, to test the dark website theme on common page patterns. It also traced hiding rules missing from the community bundle. Both problems are fixed.
+
+**Website theme.** The already-dark check misjudged four kinds of page:
+
+- A cookie notice that dims the whole window at load kept the site light for the whole visit, even after it was dismissed.
+- Opening a dialog whose dimming backdrop wraps it turned the whole page back to light while it was open.
+- A dark banner across the top of a light page kept the page light.
+- An app root that switched to its own dark theme after loading was inverted to light grey.
+
+`src/appearance/website-theme.js` now:
+
+- samples the elements painted at each point (`elementsFromPoint`), looking through see-through layers that are fixed, cover the window and are raised by a positive `z-index`;
+- counts the page's own background as three of the five points;
+- after loading, rechecks a theme attribute change below `<body>` at most every 500 ms. It does so only for an element within five levels of `<body>` that spans the page, so carousels and buttons start no work.
+
+The same probe pages, before → after (Chrome / Firefox):
+
+| Page | Before | After |
+| --- | --- | --- |
+| Cookie notice, then dismissed | `off`, page 255 | `on`, page 13 / 12 |
+| Dialog with a wrapping backdrop, open | `off` | `on` |
+| Dark banner over a light page | `off`, page 255 | `on`, page 13 / 12 |
+| App root turns dark after load | `on`, page 227 / 224 | `off`, own 17 |
+
+A dark page waiting on a slow `<head>` script still shows no light flash: first paint follows detection in both engines.
+
+The browser check's test image changed from (200,120,60) to a light (235,205,150). The page filter leaves the old colour almost unchanged (183,111,57), so an image left inverted could still pass. With the new colour it would read about (80,53,4) and fail.
+
+**Cosmetic wildcard sites.** `scripts/community-list-tools.ps1` skipped a whole hiding rule when any of its sites was a `name.*` wildcard. For example, EasyList's `##.ad` rule lists about 300 sites, cnn.com, nytimes.com and foxnews.com among them, together with `tripadvisor.*`. The converter now drops only the unsupported site. A rule is still skipped when no included site is left, which would make it generic, or when an excluded site is unsupported, which would widen it.
+
+The rebuilt bundle:
+
+- 517 more site selectors (22,449 → 22,966), on 238 more sites (9,684 → 9,922), with none removed;
+- generic, scoped, procedural and exception data unchanged;
+- whole-rule wildcard skips down from 317 to 249; 94 dropped sites are counted in `community-info.json`;
+- every other generated rule file byte-identical.
+
+| Check | Result |
+| --- | ---: |
+| Node unit tests | 623 passed (3 new) |
+| Cosmetic compiler / rule import / threat / requested-host assertions | 30 (9 new) / 237 / 338 / 41 |
+| Full blocker/UI suite, Chrome / Edge / Firefox | 789 / 789 / 782 |
+| Website-theme pass alone, Chrome / Edge / Firefox | 29 / 29 / 28 |
+
+The three new unit tests fail against the original `website-theme.js`, and the extended converter test fails against the original converter. With the original script, the browser pass stops at the new cookie-notice check. All pass after the fix, and every earlier test passes on both versions.
+
+The suites ran on a copy of the baseline commit plus only these files, so concurrent edits by other sessions could not leak in. The full suites used Chrome 157.0.8103.79, Edge 157.0.4341.60 and Firefox 160.0. Chrome updated itself to 158.0.8127.37 before the website-theme pass alone, which also passed.
+
+One attempt in the shared working tree failed: `tests/rules.test.ps1` ("offline rebuild is deterministic"). Another session changed the threat list between that test's two builds; the same suite passed on the frozen copy. The first Firefox website-theme run stopped at browser startup and passed on retry.
+
+Known limits:
+
+- Sites given only as `name.*` wildcards are still unsupported; that needs public-suffix matching (249 rules).
+- Dimming layers other than `<dialog>` backdrops still render as a grey veil (127–150 on a 12–13 page).
+- A see-through layer without a positive `z-index` counts as the page's own background.
+- A first screen that is dark at all five points makes a page count as dark, even if it is light further down.
+- No live sites were visited.
+
+[Evidence, probe results and hashes](../verification/2026-11-18/website-theme-detection/summary.json).
 
 ## Appearance — 17 November 2026
 
