@@ -66,6 +66,13 @@
       "js": ["src/shared/shared.js", "src/blocking/cosmetic.js", "src/blocking/procedural.js", "src/blocking/overlays.js", "src/blocking/reddit.js", "src/blocking/prompts.js", "src/blocking/buttons.js", "src/blocking/youtube-fallback.js", "src/blocking/content.js"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/shared/appearance-settings.js", "src/appearance/website-theme.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "browser_specific_settings": {

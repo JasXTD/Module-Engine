@@ -165,11 +165,10 @@
 #scriptSource { display: block; min-height: 0; resize: none; color: transparent; caret-color: var(--text); outline: none; box-shadow: none; }
 #scriptSource::selection { background: var(--accent-soft); color: var(--text); }
 #sourceErrorLine { position: absolute; left: 0; right: 0; height: 20px; background: color-mix(in srgb, var(--danger, #b42318) 12%, transparent); border-left: 3px solid var(--danger, #b42318); pointer-events: none; }
-.syntax-comment { color: #52684d; } .syntax-keyword { color: #7040a0; } .syntax-string { color: #1e6f58; } .syntax-literal { color: #9b4b16; }
+.syntax-comment { color: var(--syntax-comment); } .syntax-keyword { color: var(--syntax-keyword); } .syntax-string { color: var(--syntax-string); } .syntax-literal { color: var(--syntax-literal); }
 .syntax-status { display: flex; gap: 8px; align-items: start; margin-top: 8px; font-size: 12px; min-height: 22px; }
 .syntax-status p { flex: 1; overflow-wrap: anywhere; }
 .syntax-status button { flex: none; min-height: 24px; padding: 1px 8px; font-size: 11.5px; }
-@media (prefers-color-scheme: dark) { .syntax-comment { color: #98b68d; } .syntax-keyword { color: #c6a0ed; } .syntax-string { color: #92c8aa; } .syntax-literal { color: #e4b084; } }
 @media (forced-colors: active) { #sourceHighlight { visibility: hidden; } #scriptSource { color: CanvasText; caret-color: CanvasText; } }
 .editor-actions { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: space-between; margin-top: 12px; }
 .save-hint { flex-basis: 100%; color: var(--text-2); font-size: 12px; }

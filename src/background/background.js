@@ -1253,6 +1253,13 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return false;
   }
+  if (message?.type === "WEBSITE_THEME_TOP") {
+    // Website theme exceptions follow the tab's site. A cross-origin frame cannot
+    // read it, so answer from the browser's tab record, never from page data.
+    const valid = sender.id === api.runtime.id && Number.isInteger(sender.tab?.id);
+    sendResponse(valid ? { ok: true, host: urlParts(sender.tab.url).host } : { ok: false, error: "A content-script context is required." });
+    return false;
+  }
   if (message?.type === "GET_COSMETIC_STATE") {
     // A frame cannot read its cross-origin top page directly. Use browser-provided
     // sender metadata, never a page-supplied hostname, for the parent exception.

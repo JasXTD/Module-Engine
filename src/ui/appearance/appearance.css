@@ -1,0 +1,113 @@
+/* Appearance page. Shared tokens and controls live in ui.css. */
+.choice { display: flex; flex-direction: column; gap: 14px; }
+.choice h2 + p { margin-top: 3px; }
+
+/* Each radio stays in the page for keyboard and screen-reader use; its label shows the state. */
+.segmented input, .swatch input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+.segmented label:has(input:focus-visible), .swatch:has(input:focus-visible) { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.segmented label:has(input:disabled), .swatch:has(input:disabled) { cursor: not-allowed; opacity: 0.6; }
+
+/* Theme: the chosen option is a raised chip on a track, like the popup's tabs. */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 420px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.segmented label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmented label:hover { color: var(--text); }
+.segmented label:has(input:checked) { background: var(--tab-on); border-color: var(--line); box-shadow: var(--tab-shadow); color: var(--text); }
+
+/* Accent colour: one chip per preset. The chosen one is the current accent,
+   so its check mark uses the accent's own readable text colour. */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 5px 13px 5px 6px;
+  background: var(--btn);
+  border: 1px solid var(--btn-line);
+  border-radius: 999px;
+  box-shadow: var(--btn-shadow);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.swatch:hover { background: var(--btn-hover); border-color: var(--text-2); }
+.swatch:has(input:checked), .swatch:has(input:checked):hover { border-color: var(--accent-text); box-shadow: 0 0 0 1px var(--accent-text); }
+.swatch-dot {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+  color: var(--on-accent);
+}
+.swatch:has(input:checked) .swatch-dot::after {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  -webkit-mask: var(--i-check) center / contain no-repeat;
+  mask: var(--i-check) center / contain no-repeat;
+}
+
+.custom-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.custom-accent label { font-weight: 600; }
+input[type="color"] {
+  width: 52px;
+  height: 34px;
+  padding: 3px;
+  background: var(--btn);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--btn-shadow);
+  cursor: pointer;
+}
+input[type="color"]:disabled { cursor: not-allowed; opacity: 0.6; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
+.accent-value { color: var(--text-2); font-family: var(--mono); font-size: 12px; }
+
+/* Websites: one switch, then the sites that keep their own colours. */
+.website-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
+.website-switch > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.website-switch:has(input:disabled) { cursor: not-allowed; }
+.exceptions { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.exceptions h3 { font-size: 13.5px; }
+.exception-form { display: flex; gap: 8px; max-width: 520px; }
+.exception-form input { flex: 1; min-width: 0; }
+.exception-list { display: flex; flex-direction: column; gap: 4px; max-width: 520px; list-style: none; }
+.exception-list:empty, .exception-list:not(:empty) + .muted { display: none; }
+.exception-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 4px 3px 10px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono); font-size: 12px; }
+.exception-list li span { min-width: 0; overflow-wrap: anywhere; }
+.exception-list button { flex: none; min-height: 26px; padding: 2px 9px; font-family: var(--sans); font-size: 12px; }
+
+.preview-sample { display: grid; gap: 12px; }
+.sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sample-switch { display: inline-flex; align-items: center; gap: 8px; }

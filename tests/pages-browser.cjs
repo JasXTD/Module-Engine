@@ -7,7 +7,8 @@ const loaded={
   'src/ui/popup/popup.html':"doc.body.getAttribute('aria-busy') === 'false' && !doc.getElementById('masterToggle').disabled",
   'src/ui/manager/manager.html':"!doc.getElementById('newScript').disabled",
   'src/ui/lists/lists.html':"doc.querySelectorAll('#siteHosts tbody tr').length > 0 && !doc.querySelector('section[data-list] input').disabled",
-  'src/ui/log/log.html':"doc.querySelectorAll('#entryTable tbody tr').length > 0"
+  'src/ui/log/log.html':"doc.querySelectorAll('#entryTable tbody tr').length > 0",
+  'src/ui/appearance/appearance.html':"!doc.querySelector('input[name=\"mode\"]').disabled"
 };
 // The page background proves the scheme's @media block won, not just its default.
 const background={dark:'rgb(13, 15, 18)',light:'rgb(242, 243, 238)'};
@@ -80,6 +81,8 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
       }
     }
     await setColourScheme(null,Object.values(open));
+    // Appearance choices on top of the system themes checked above; it resets them afterwards.
+    await require('./appearance-browser.cjs')({browser,until,check,temporary,url,pages:open,press,setColourScheme});
 
     const shown=selector=>`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).display !== 'none'`;
     // src/ui/shared/ui.css: a table with no rows gives way to its empty message.
@@ -152,7 +155,7 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     // Narrow layouts: extension pages cannot set a viewport in every browser, but a frame has its own.
     const host=await browser.open(url('src/ui/log/log.html')); extras.push(host);
     await wait(`(doc => ${loaded['src/ui/log/log.html']})(document)`,host);
-    for (const [file,widths] of [['src/ui/popup/popup.html',[350]],['src/ui/manager/manager.html',[1100,380]],['src/ui/lists/lists.html',[1100,380]],['src/ui/log/log.html',[1100,380]]]) for (const width of widths) {
+    for (const [file,widths] of [['src/ui/popup/popup.html',[350]],['src/ui/manager/manager.html',[1100,380]],['src/ui/lists/lists.html',[1100,380]],['src/ui/log/log.html',[1100,380]],['src/ui/appearance/appearance.html',[1100,380]]]) for (const width of widths) {
       await browser.evaluate(`(() => {document.getElementById('layoutFrame')?.remove();const frame=document.createElement('iframe');frame.id='layoutFrame';
         frame.style.cssText='position:fixed;left:0;top:0;width:${width}px;height:900px;border:0';frame.src=${JSON.stringify(url(file))};document.body.append(frame);return true;})()`,host);
       await wait(`(doc => doc.location.pathname.endsWith(${JSON.stringify(file)}) && doc.readyState === 'complete' && ${loaded[file]})(document.getElementById('layoutFrame').contentDocument)`,host);
@@ -204,7 +207,7 @@ module.exports=async function verifyPages({browser,send,state,until,check,tempor
     await managerReady();
     check(await browser.evaluate(`(() => {const status=document.getElementById('status'),badge=document.getElementById('blockerStatus');
       return status.classList.contains('success') && badge.textContent==='Active' && badge.classList.contains('active') && document.getElementById('blockingEnabled').checked;})()`,manager),'manager reports ad blocking active on its verified state');
-    check(await browser.evaluate(`document.querySelector('.rail-links a[aria-current="page"]').pathname === '/src/ui/manager/manager.html' && [...document.querySelectorAll('.rail-links a')].map(link=>link.pathname).join() === '/src/ui/manager/manager.html,/src/ui/lists/lists.html,/src/ui/log/log.html,/src/ui/network/network.html,/src/ui/mcp/debug.html'`,manager),'manager side menu links every page and marks the current one');
+    check(await browser.evaluate(`document.querySelector('.rail-links a[aria-current="page"]').pathname === '/src/ui/manager/manager.html' && [...document.querySelectorAll('.rail-links a')].map(link=>link.pathname).join() === '/src/ui/manager/manager.html,/src/ui/lists/lists.html,/src/ui/log/log.html,/src/ui/network/network.html,/src/ui/mcp/debug.html,/src/ui/appearance/appearance.html'`,manager),'manager side menu links every page and marks the current one');
     check(await browser.evaluate("!document.getElementById('accessPanel').hidden && !document.getElementById('grantAccess').hidden && !document.getElementById('userscriptsEnabled').checked",manager),'manager explains that userscript access has not been granted');
     const editorEmpty="(() => {const shown=id=>document.getElementById(id).getClientRects().length>0;return shown('editorEmpty') && !shown('editorBody') && !shown('runControl');})()";
     check(await browser.evaluate(editorEmpty,manager),'with no script open the editor shows an empty state, not disabled controls');

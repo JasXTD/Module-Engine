@@ -2,7 +2,7 @@
 
 Run commands from the repository root. The extension uses bundled JavaScript, HTML and CSS without a package-install step. Node 22+ runs the JavaScript tests; PowerShell 7+ runs the offline list builder and rule tests.
 
-Keep `manifest.json` at the repository root and load that same folder as the unpacked extension. Application JavaScript, HTML and CSS live under `src/`: `background/` coordinates extension lifecycle and modules, `blocking/` contains page/network protection, `userscripts/` owns parsing and execution, `ui/` groups each page with its editor/assets, and `shared/` holds common contracts. Icons, rules and vendored assets remain in their existing top-level directories. Node helpers stay in `mcp/` and `development/`; tests and maintenance tools stay in `tests/` and `scripts/`. No bundler or installation step is required.
+Keep `manifest.json` at the repository root and load that same folder as the unpacked extension. Application JavaScript, HTML and CSS live under `src/`: `background/` coordinates extension lifecycle and modules, `blocking/` contains page/network protection, `userscripts/` owns parsing and execution, `appearance/` holds the website theme, `ui/` groups each page with its editor/assets, and `shared/` holds common contracts. Icons, rules and vendored assets remain in their existing top-level directories. Node helpers stay in `mcp/` and `development/`; tests and maintenance tools stay in `tests/` and `scripts/`. No bundler or installation step is required.
 
 Manifest entries, `runtime.getURL`, offscreen document URLs and injected-script file lists are extension-root relative. HTML navigation/assets and worker `importScripts` are relative to their page/worker. Keep that distinction when adding paths. `scripts/extension-files.cjs` supplies one runtime inventory to every browser package and hash list, excluding local Node helpers and transient files. `tests/extension-layout.test.cjs` checks the inventory and static manifest/HTML/worker/injection references; native suites cover dynamically selected resources. Historical verification records retain the old paths belonging to their tested snapshots.
 
@@ -26,9 +26,37 @@ The offline Reddit browser fixtures use the production content scripts and setti
 
 ### Same-tab section navigation
 
-`src/ui/shared/navigation.js` lets each existing packaged page host the other sections in lazy, retained, same-origin frames. Only the five fixed section paths can be routed. Each document keeps its own state and native ports; no connection secrets move to storage or another context. Native MCP and Network sender URL checks are unchanged. The host URL stays fixed and section history uses `history.state`; Back/Forward reuse documents. Modal reviews prevent switching, and external links leave the whole tab. Hidden Network and Activity log views pause UI polling while capture and MCP remain alive. Closing/reloading the tab unloads the documents and revokes their ports.
+`src/ui/shared/navigation.js` lets each existing packaged page host the other sections in lazy, retained, same-origin frames. Only the six fixed section paths can be routed. Each document keeps its own state and native ports; no connection secrets move to storage or another context. Native MCP and Network sender URL checks are unchanged. The host URL stays fixed and section history uses `history.state`; Back/Forward reuse documents. Modal reviews prevent switching, and external links leave the whole tab. Hidden Network and Activity log views pause UI polling while capture and MCP remain alive. Closing/reloading the tab unloads the documents and revokes their ports.
 
 Run `node tests/userscripts-browser.cjs chrome --navigation-only`, substitute `edge`, and `node tests/userscripts-firefox.cjs firefox --navigation-only`. Add `--mcp-http` for the optional HTTP transport. These native offline fixtures exercise retained documents, same-tab links, unsaved drafts, pending proposals and trusted decisions, native script execution, MCP scope preservation/reapproval, Network capture, Back/Forward, direct MCP entry, reload/close revocation and blocked localhost ad canaries. Desktop/narrow screenshots are retained with the disposable evidence; Firefox uses its current viewport. No desktop helper permissions or new dependencies are required.
+
+### Appearance
+
+The setting is stored in `storage.local` under `appearance` as `{ mode, accent, websites, websiteExceptions }`; the default (System, `#c8f23a`, websites off, no sites) is stored as no value. `src/shared/appearance-settings.js` defines it once for extension pages, the popup and the website content script: validation, comparison, subdomain-inclusive exceptions and when websites are dark. Pages write it directly. It does not pass through the background's settings transactions, because no browser rules depend on it.
+
+`src/ui/shared/theme.js` loads in the `<head>` of every packaged page, after its stylesheets and `appearance-settings.js`. It applies the theme (`data-theme="light"` or `"dark"` on `<html>`; absent for System) and a chosen accent (`data-accent` plus `--theme-*` custom properties). `src/ui/shared/ui.css` maps those onto its tokens. The light theme block appears twice, once for the explicit choice and once inside the `prefers-color-scheme` query, because CSS cannot share one block between the two. Theme-dependent colours belong in those token blocks, not in page stylesheets with their own media queries.
+
+A `localStorage` copy of the theme and accent (`moduleEngineAppearance`) is applied synchronously before first paint, then replaced by the stored value; a change that arrives first wins over that older read. Firefox can clear extension `localStorage` with site data, so it is only a cache. The default lime keeps its hand-tuned values. For any other accent, `theme.js` keeps the chosen fill and shifts OKLCH lightness at a constant hue until text reaches 4.5:1 against the theme's surfaces and accent tints, and edges reach 1.9:1 against cards. On-accent text is whichever of a dark tint or white contrasts more, with black or white as the fallback.
+
+`src/appearance/website-theme.js` is a separate manifest content script for HTTP(S) pages, all frames and `about:blank` children, at `document_start`. It is static rather than registered because the blocker's rule transaction owns every registered content script. It reads `appearance` straight from storage, without waking the background, and applies later changes live. While websites are off it adds nothing to a page. Otherwise it inserts one style element and sets `data-module-engine-dark="on"` or `"off"` on `<html>`.
+
+- **Filter:** the root gets `invert(0.95) hue-rotate(180deg)`. Media gets `invert(1) hue-rotate(180deg)`, except media nested in other turned-back media and SVG images, which are treated as icons. A fixed, filtered `::before` layer covers the canvas, which Chrome leaves outside the root filter. Full screen removes every filter.
+- **Engine differences:** measured in Chrome 157 and Firefox 160, Firefox's root filter also covers the top layer and backdrops, while Chrome's covers neither the top layer nor the page scrollbar. The script picks the matching rules by engine, and the browser test checks the rendered pixels.
+- **Already-dark pages:** the script samples five points per page, skipping media, reading each sample's own background. That reflects the page's own colours, since filters do not change computed styles. It checks every frame while the page loads, then when a theme attribute (class or a common theme data attribute) changes on `<html>` or `<body>`. Inline style changes are ignored, because many pages rewrite them while scrolling. It restores its style or attribute if a page removes them.
+- **Exceptions** follow the tab's site. A same-origin frame reads it, Chrome supplies `location.ancestorOrigins`, and a cross-origin Firefox frame asks the background with `WEBSITE_THEME_TOP`, which answers from the sender's tab record.
+
+Run `node --test tests/theme.test.cjs tests/website-theme.test.cjs`. These cover:
+
+- the accent derivation across preset, edge and random colours;
+- the token, light-block and accent-rule structure of `ui.css`;
+- `<head>` loading and side-menu consistency on every page;
+- cache and storage ordering and failures;
+- every website-theme decision against an offline document.
+
+Two browser modules run inside `node tests/browser-smoke.cjs <browser>`:
+
+- `tests/appearance-browser.cjs` drives the real Appearance page. It checks explicit themes over emulated system schemes, accent tokens on every open page, reload, a same-tab section, the narrow layout and Reset.
+- `tests/website-theme-browser.cjs` serves owned localhost pages and reads rendered screenshot pixels. It checks the page, image, cross-origin frame, dialog and backdrop; already-dark and later-dark pages; and the popup and Appearance controls. `--website-theme-only` runs just that part.
 
 ### YouTube filtering and registration
 

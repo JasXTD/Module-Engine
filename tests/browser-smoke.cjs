@@ -500,6 +500,7 @@ if (require.main === module) (async () => {
     if (require('./youtube-browser.cjs').serve(req, res)) return;
     if (require('./buttons-browser.cjs').serve(req, res)) return;
     if (require('./prompts-browser.cjs').serve(req, res)) return;
+    if (require('./website-theme-browser.cjs').serve(req, res)) return;
     requests.push(req.url);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/html');
@@ -599,6 +600,14 @@ if (require.main === module) (async () => {
       await browser.closePage(page);
       check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
         'no uncaught errors during the focused prompt fixture checks');
+      evidence.success = true; return;
+    }
+    const websiteTheme = () => require('./website-theme-browser.cjs').verify({ browser, until, check, temporary, origin: new URL(fixtureUrl).origin, popup: browser.popup,
+      url: file => `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/${file}` });
+    if (process.argv.includes('--website-theme-only')) {
+      await websiteTheme();
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during the focused website theme checks');
       evidence.success = true; return;
     }
     if (process.argv.includes('--reddit-only')) {
@@ -1098,6 +1107,7 @@ if (require.main === module) (async () => {
     await browser.screenshot(path.join(temporary, 'popup-final.png'));
     await require('./pages-browser.cjs')({ browser, send, state, until, check, temporary,
       url: file => `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/${file}` });
+    await websiteTheme();
     if (browser.consoleErrors) {
       // Prove the reader sees extension pages before trusting an empty result.
       const canary = 'module-engine-console-canary';

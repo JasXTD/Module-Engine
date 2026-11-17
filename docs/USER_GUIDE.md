@@ -279,9 +279,38 @@ Capture starts off and uses session memory, with up to **2,000 entries or 2 MiB*
 
 URL credentials, query strings and fragments are removed before retention. Headers, cookies, request bodies and response bodies are not recorded. Paths can still contain private information, so review an export before sharing it. Capture itself uploads nothing. The separate **Captured network request metadata** approval on **MCP** lets your connected agent read bounded, filtered copies. That scope starts unchecked; it cannot start, stop or clear capture. Your MCP client may retain returned metadata. See [MCP network access](MCP.md#reading-captured-network-requests).
 
-**MCP** is available in the sidebar. Sections switch within the same tab, preserving MCP approval, Network capture, editor drafts and scroll positions. The MCP sidebar indicator shows when it is connected and how many proposals await review. Back and Forward switch sections too. Closing or reloading the tab ends its MCP connection and capture; switching sections does not extend their 30-minute limits. Use a modified click if you intentionally want a separate tab.
+**MCP** and **Appearance** are available in the sidebar. Sections switch within the same tab, preserving MCP approval, Network capture, editor drafts and scroll positions. The MCP sidebar indicator shows when it is connected and how many proposals await review. Back and Forward switch sections too. Closing or reloading the tab ends its MCP connection and capture; switching sections does not extend their 30-minute limits. Use a modified click if you intentionally want a separate tab.
 
 Coverage is limited to browser-reported HTTP(S) traffic and WebSocket handshakes. It cannot show other Windows apps, WebSocket messages, response content or every browser/cache/blocked event. A failed request does not prove Module Engine blocked it; the available browser error is shown. Use **Activity log** for rule-match attribution where the browser provides it. Selected-tab capture excludes requests the browser attributes to a background context, including some GM HTTP requests; choose all-browser scope to inspect those.
+
+## Appearance
+
+Choose **Appearance** in the sidebar of any Module Engine page. Each choice saves as you make it and applies at once to the popup and every open Module Engine page, including sections already open in the same tab.
+
+- **Theme:** **System**, the default, follows your device's light or dark setting and changes with it. **Light** or **Dark** keeps that theme whatever the device uses.
+- **Accent colour:** fills switches that are on, main buttons and the current page in the sidebar, and colours links and highlighted text. Pick one of seven presets, or use **Custom colour** for any colour; **Lime** is the default. Filled controls use your exact colour. Where needed, text and edges use a lighter or darker shade of the same hue: accent text keeps at least a 4.5:1 contrast ratio (WCAG AA) in both themes, and text on a filled button is dark or white, whichever reads better.
+- Success messages and switches use the accent, so the page tells you when a custom colour is close to the warning or error colours, or to a switch that is off.
+- **Reset theme and colour** returns to System and Lime. It leaves the website setting and its sites as they are.
+
+Your choice is stored in this browser profile's extension storage and never leaves the computer. Each page also keeps a copy of the theme and accent in its local storage so it opens in the right theme straight away. If that copy is missing, for example after Firefox clears site data, a page can show the default theme briefly before your choice loads.
+
+### Dark websites
+
+Turn on **Use the dark theme on websites** to give light websites a dark version whenever the theme is dark: always with **Dark**, while your device is dark with **System**, and never with **Light**. It is off by default, and open pages change as soon as you switch it or the theme. While it is off, websites are left exactly as they are.
+
+- **How it looks:** a page's colours are inverted with their hues kept, so a white page turns near-black and dark text turns light. Photos, video, canvases and embedded frames are turned back to their own colours. SVG images are treated as icons and follow the text colour. Modal dialogs and pop-overs are darkened too, and full-screen video shows its own colours.
+- **Already-dark sites** are recognised from their own colours and left alone, including sites that switch to their own dark theme after loading.
+- **Sites that keep their own colours:** turn off **Dark website theme** in the popup's **This site** section, or add a site under **Sites that keep their own colours** on the Appearance page. Each entry includes its subdomains and everything embedded in that site's pages. Turning the switch back on removes the entry that covers the site.
+
+This is a filter-based dark mode, so it is an approximation, not each site's own design:
+
+- Strongly saturated colours in images and video can look slightly duller.
+- Background pictures set in a site's stylesheets are inverted.
+- Dark logos with transparent backgrounds can be hard to see.
+- Frames that Module Engine cannot run in, such as built-in PDF viewers, keep their light colours.
+- Busy pages may scroll less smoothly.
+
+Add a site that looks wrong to the list. A page's first moment can still be light while the setting loads, and Windows contrast themes switch the website theme off. The element picker and the notices Module Engine shows on websites follow the page's colours.
 
 ## Notification and install prompts
 

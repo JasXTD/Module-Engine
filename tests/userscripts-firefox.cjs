@@ -83,7 +83,7 @@ const root = path.resolve(__dirname, '..');
     // reports of those dropped replies are kept as evidence, not failures.
     const unexpectedErrors = async () => {
       const reported = await b.consoleErrors();
-      evidence.closedPageErrors = reported.filter(error => error.source === 'moz-extension://' + b.id + '/src/blocking/content.js' &&
+      evidence.closedPageErrors = reported.filter(error => ['/src/blocking/content.js', '/src/appearance/website-theme.js'].some(file => error.source === 'moz-extension://' + b.id + file) &&
         /^Promise (?:rejected|resolved) (?:after context unloaded|while context is inactive)/.test(error.text));
       return reported.filter(error => !evidence.closedPageErrors.includes(error));
     };

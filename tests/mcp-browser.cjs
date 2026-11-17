@@ -121,7 +121,7 @@ async function runMCPTransports(context) {
   evidence.mcpRuns.push({...evidence.mcpChanges,checks:evidence.checks.length-before,exit:evidence.mcpChangesExit});
   const errors=b.consoleErrors?await b.consoleErrors():b.events.filter(e=>e.method==='Runtime.exceptionThrown').map(e=>e.params.exceptionDetails);
   const expected=e=>JSON.stringify(e).includes('Owned offline debug error');
-  const unloaded=e=>e.source==='moz-extension://'+b.id+'/src/blocking/content.js' && /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(e.text);
+  const unloaded=e=>['/src/blocking/content.js','/src/appearance/website-theme.js'].some(file=>e.source==='moz-extension://'+b.id+file) && /^(?:Promise resolved after context unloaded|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(e.text);
   evidence.mcpExpectedErrors=errors.filter(expected);evidence.mcpClosedPageErrors=errors.filter(unloaded);
   evidence.mcpUnexpectedErrors=errors.filter(e=>!expected(e)&&!unloaded(e));
   check('MCP transports and network reads have no unexpected uncaught runtime errors',evidence.mcpUnexpectedErrors.length===0);

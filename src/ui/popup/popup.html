@@ -6,6 +6,8 @@
   <title>Module Engine</title>
   <link rel="stylesheet" href="../shared/ui.css" />
   <link rel="stylesheet" href="popup.css" />
+  <script src="../../shared/appearance-settings.js"></script>
+  <script src="../shared/theme.js"></script>
 </head>
 <body>
   <div class="app">
@@ -59,6 +61,14 @@
             <span class="layer-desc" id="promptScope">Turn off to allow prompts and buttons on a trusted site</span>
           </div>
           <input type="checkbox" id="toggleSitePrompts" aria-label="Protect against prompts and deceptive buttons on this site" disabled />
+        </div>
+        <!-- Shown while Appearance applies the theme to websites. -->
+        <div class="layer-row" id="websiteThemeRow" hidden>
+          <div class="layer-info">
+            <span class="layer-name">Dark website theme</span>
+            <span class="layer-desc" id="websiteThemeScope">Turn off to keep this site's own colours</span>
+          </div>
+          <input type="checkbox" id="toggleWebsiteTheme" aria-label="Use the dark website theme on this site" disabled />
         </div>
         <p id="siteScope" class="scope-note"></p>
       </section>

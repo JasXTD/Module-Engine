@@ -34,9 +34,9 @@ async function runLayout(context) {
   const expected = error => /Owned page failure|Owned offline debug error/.test(JSON.stringify(error));
   // As in the blocker suite, Firefox logs replies discarded after the test
   // closes a fixture tab. Preserve these browser-generated lifecycle reports;
-  // only the exact messages from our content script are exempt from failure.
+  // only the exact messages from our two content scripts are exempt from failure.
   const unloaded = error => evidence.browser === 'firefox' &&
-    error.source === 'moz-extension://' + b.id + '/src/blocking/content.js' &&
+    ['/src/blocking/content.js', '/src/appearance/website-theme.js'].some(file => error.source === 'moz-extension://' + b.id + file) &&
     /^(?:Promise resolved after context unloaded|Promise resolved while context is inactive|Promise rejected after context unloaded: Actor 'Conduits' destroyed before query 'RuntimeMessage' was resolved)\s*$/.test(error.text);
   evidence.layoutExpectedErrors = errors.filter(expected);
   evidence.layoutClosedPageErrors = errors.filter(unloaded);

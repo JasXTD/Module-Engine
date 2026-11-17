@@ -1,8 +1,93 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 16 November 2026 same-tab MCP navigation change, following the direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 17 November 2026 Appearance section, following the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Appearance — 17 November 2026
+
+A sixth sidebar section, **Appearance**, chooses System, Light or Dark and an accent colour: seven presets or any custom colour. Optionally, light websites follow a dark theme too.
+
+**Module Engine pages:**
+
+- `src/ui/shared/theme.js` runs in the `<head>` of every packaged page, including the popup and same-tab sections. It applies a `localStorage` copy of the theme and accent before first paint, then the stored `appearance` value, and follows later changes.
+- An explicit theme overrides the system scheme, and the editor's syntax colours became theme tokens so they follow it too.
+- A custom accent keeps its exact fill. Its text and edges shift in OKLCH lightness at constant hue until text reaches 4.5:1 and edges 1.9:1 against each theme's surfaces. The default lime keeps its hand-tuned values, and default users store nothing.
+
+**Websites** are off by default:
+
+- When switched on, the new manifest content script `src/appearance/website-theme.js` applies a filter-based dark mode whenever the theme is dark. Media and frames are turned back to their own colours.
+- Already-dark pages are recognised and left alone, and per-site exceptions follow the tab's site.
+- While websites are off it reads one setting per frame and changes nothing.
+- No permission was added. The blocker's registered-script transaction is untouched; the one background change answers a frame's question about its tab's site.
+
+**620 Node tests** passed (18 new), with 21 cosmetic, 237 offline rule/import and 338 threat evidence/build assertions, and syntax checks for 18 changed JavaScript files. Final native offline results:
+
+| Browser | Full blocker/UI suite (with Appearance and websites) | Same-tab navigation | Userscript layout | Network log |
+| --- | ---: | ---: | ---: | ---: |
+| Chrome | 785 | 78 | 724 | 49 |
+| Edge | 785 | 78 | 724 | — |
+| Firefox | 778 | 74 | 685 | 46 |
+
+These **4,806 native checks** include two passes per browser that use real pointer clicks.
+
+The **Appearance pass**:
+
+- Light and Dark beat an emulated opposite system scheme on the popup, Modules & scripts, My lists, Activity log and Appearance pages, including editor syntax colours. System then follows both schemes again.
+- The Sky preset reaches every page with the derived text and edge shades for each theme, and the popup's master switch fills with it.
+- A custom red is saved, selects no preset and shows the status-colour caution.
+- A reloaded page reapplies the saved choice and shares the first-paint copy.
+- A choice made in a same-tab Appearance section updates its host page.
+- Reset clears storage, attributes and the cache everywhere.
+
+The **website pass** reads rendered screenshot pixels on owned localhost pages:
+
+- An open light page darkens without a reload. In Chrome and Firefox the page measured 12–13, a raster image (200,120,60) came back as (192–194,120–121,66–67), and a light cross-origin frame darkened itself to 24–25.
+- A modal dialog is dark, and its backdrop dims the page instead of lightening it.
+- Already-dark pages, and a page that turns dark after loading, are left alone.
+- The popup's site switch and Appearance's typed list keep a site and its cross-origin frames in their own colours.
+- Light and System follow the device, a reloaded page comes up dark, and switching off removes every trace.
+- Reset keeps the website setting and its sites.
+
+Both themes, the Websites card, the popup row and desktop/narrow layouts were inspected in Chrome and Firefox screenshots. Engine behaviour that differs was measured, not assumed:
+
+- Chrome's root filter leaves the canvas, top layer and page scrollbar outside it; Firefox's covers them, backdrops included.
+- The website theme picks its rules by engine, and the pixel checks pass in both.
+
+Unit tests cover the colour contrast across 424 colours, `ui.css` token and light-block parity, page wiring, and every website-theme decision against an offline document. Each targeted regression was shown to fail against a deliberately broken copy:
+
+- the stale-read guard removed;
+- a single changed light token;
+- text left unadjusted;
+- a page without `theme.js`;
+- inline-style mutations no longer filtered.
+
+Firefox reports "Promise resolved after context unloaded" when a page closes while a content script awaits extension storage. Five suites exempted that exact browser-generated message only for `src/blocking/content.js`. They now also exempt it for `src/appearance/website-theme.js`, with the same message patterns; the Chromium paths are unchanged. The final Firefox layout and navigation runs each logged one such website-theme report, so without the exemption they would have failed.
+
+Intermediate attempts are listed in the summary:
+
+- Fixture corrections:
+  - Chromium returns stored objects with sorted keys.
+  - Switch transitions must finish before their colours are read.
+  - Frame controls below the 485-pixel test viewport must be scrolled into view.
+  - A pixel sample must avoid text.
+  - A background tab hears colour-scheme changes only once shown.
+- One Chrome navigation run failed with "Inspected target navigated or closed" while waiting through a tab reload; later runs passed.
+- The Firefox userscript layout suite passed on its eighth completed attempt on the final source; a ninth, earlier run was stopped while the test exemption was corrected. The seven failures stopped at:
+  - the install-update step, five times, where a tagged library row is re-rendered before its click (`tests/userscripts-install-browser.cjs:143`);
+  - the external-editor file watch, once;
+  - the blocked-pop-up tab check, once, which reads tabs before the background has finished closing one.
+- The untouched baseline commit failed the same install-update step in one of two focused install runs and the external-editor step in one of two layout runs. The 16 November record already lists this Edge/Firefox update-row sequencing failure as open, so these failures are not attributed to this change. They remain unresolved.
+
+Known limits:
+
+- The first-paint guarantee for Module Engine pages rests on unit tests and the `<head>` placement check, not paint timing.
+- A website's first moment can still be light while its setting loads.
+- The native colour picker cannot be automated, so its value and events were set directly.
+- Filter-based website darkening dulls strongly saturated media and inverts stylesheet background pictures.
+- The Chrome and Edge navigation and layout runs used the harness before the Firefox-only exemption change; those Firefox-only filters do not affect them.
+
+Tests used installed browsers, disposable profiles, owned localhost content and deny proxies. No public sites, personal profiles or new software were involved. [Evidence, exact checks and source hashes](../verification/2026-11-17/appearance/summary.json).
 
 ## Same-tab MCP navigation — 16 November 2026
 

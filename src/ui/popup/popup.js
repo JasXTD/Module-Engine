@@ -1,7 +1,7 @@
 /* Module Engine popup: render verified state and keep unsuccessful input available. */
 "use strict";
 const api = typeof browser !== "undefined" ? browser : chrome;
-const { normalizeDomain, whitelistScope } = BlockAds;
+const { normalizeDomain, whitelistScope, domainMatches } = BlockAds;
 const byId = id => document.getElementById(id);
 const masterToggle = byId("masterToggle");
 const statusText = byId("statusText");
@@ -63,11 +63,48 @@ async function detectActiveTabDomain() {
   currentDomainEl.title = activeHostname;
 }
 
+// The website theme belongs to Appearance, not protection: its switch follows
+// that setting and stays usable whatever the blocker's state.
+const theme = globalThis.ModuleEngineTheme;
+const websiteThemeRow = byId("websiteThemeRow");
+const toggleWebsiteTheme = byId("toggleWebsiteTheme");
+const websiteThemeScope = byId("websiteThemeScope");
+let themeReady = false, themeSaving = false, themeError = "";
+function renderWebsiteTheme() {
+  const value = theme.current();
+  const scope = activeHostname ? whitelistScope(activeHostname, value.websiteExceptions) : "";
+  websiteThemeRow.hidden = !themeReady || !value.websites;
+  toggleWebsiteTheme.checked = Boolean(activeHostname) && !scope;
+  toggleWebsiteTheme.disabled = !themeReady || themeSaving || !activeHostname;
+  websiteThemeScope.textContent = themeError || (!activeHostname ? "Available on HTTP(S) pages"
+    : scope ? `Off for ${scope} and its subdomains. Turning it on removes that exception.`
+    : value.mode === "light" ? "Applies when the theme is dark" : "Turn off to keep this site's own colours");
+}
+toggleWebsiteTheme.addEventListener("change", async () => {
+  const value = theme.current();
+  if (!themeReady || !activeHostname) return;
+  // On removes every exception covering this site, as Resume does for site pauses.
+  const websiteExceptions = toggleWebsiteTheme.checked
+    ? value.websiteExceptions.filter(domain => !domainMatches(activeHostname, domain))
+    : [...value.websiteExceptions, activeHostname];
+  themeSaving = true; themeError = ""; renderWebsiteTheme();
+  try { await theme.save({ ...value, websiteExceptions }); }
+  catch (error) { themeError = "Could not save: " + (error?.message || error); }
+  themeSaving = false; renderWebsiteTheme();
+});
+theme.subscribe(renderWebsiteTheme);
+void theme.ready.then(result => {
+  themeReady = result.ok;
+  if (!result.ok) themeError = "Appearance unavailable: " + result.error;
+  renderWebsiteTheme();
+});
+
 function renderUI() {
   const settings = currentSettings;
   document.body.setAttribute("aria-busy", String(busy));
   // Tabs only change what is on screen, so they stay usable while a command runs.
   for (const element of document.querySelectorAll('input, button:not([role="tab"])')) element.disabled = busy || !settings || element.dataset.commandBusy === 'true';
+  renderWebsiteTheme();
   retryButton.disabled = busy;
   errorPanel.textContent = lastError;
   errorPanel.hidden = !lastError;

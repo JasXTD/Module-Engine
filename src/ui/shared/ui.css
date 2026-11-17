@@ -1,5 +1,7 @@
 /* Module Engine design system, shared by every extension page.
- * System fonts and inline icons only; no external presentation assets. */
+ * System fonts and inline icons only; no external presentation assets.
+ * Themes: dark by default and light when the system asks for it, unless
+ * theme.js sets data-theme="light" or "dark" on <html> from Appearance. */
 :root {
   color-scheme: dark;
   --bg: #0d0f12;
@@ -28,14 +30,54 @@
   --tab-on: #2c323b;
   --tab-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   --chip: #272c34;
+  --syntax-comment: #98b68d;
+  --syntax-keyword: #c6a0ed;
+  --syntax-string: #92c8aa;
+  --syntax-literal: #e4b084;
   --radius: 10px;
   --radius-sm: 6px;
   --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, "Courier New", monospace;
 }
 
+/* The light theme, chosen in Appearance or followed from the system. CSS
+   cannot share one block between a selector and a media query, so the two
+   blocks below are identical; tests/theme.test.cjs keeps them that way. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f3ee;
+  --surface: #ffffff;
+  --surface-2: #f4f5f1;
+  --surface-3: #e6e8e0;
+  --line: #dcdfd5;
+  --line-strong: #b6bbad;
+  --text: #15181b;
+  --text-2: #545c65;
+  --accent: #c8f23a;
+  --accent-soft: rgba(120, 160, 0, 0.14);
+  --accent-text: #456300;
+  --accent-edge: #a3c81d;
+  --on-accent: #161a08;
+  --warn: #8f5a00;
+  --warn-soft: rgba(190, 125, 0, 0.11);
+  --danger: #bf2a20;
+  --danger-soft: rgba(191, 42, 32, 0.08);
+  --switch-off: #c9cdc1;
+  --btn: #ffffff;
+  --btn-hover: #f2f3ee;
+  --btn-line: #c2c7b8;
+  --btn-shadow: 0 1px 2px rgba(25, 30, 15, 0.1);
+  --tab-on: #ffffff;
+  --tab-shadow: 0 1px 3px rgba(25, 30, 15, 0.16);
+  --chip: #eceee7;
+  --syntax-comment: #52684d;
+  --syntax-keyword: #7040a0;
+  --syntax-string: #1e6f58;
+  --syntax-literal: #9b4b16;
+}
+
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme="dark"]) {
     color-scheme: light;
     --bg: #f2f3ee;
     --surface: #ffffff;
@@ -62,13 +104,40 @@
     --tab-on: #ffffff;
     --tab-shadow: 0 1px 3px rgba(25, 30, 15, 0.16);
     --chip: #eceee7;
+    --syntax-comment: #52684d;
+    --syntax-keyword: #7040a0;
+    --syntax-string: #1e6f58;
+    --syntax-literal: #9b4b16;
+  }
+}
+
+/* A chosen accent colour (any but the default lime). theme.js derives the
+   --theme-* values for each theme, so accent text and edges stay readable.
+   These rules must follow the theme blocks above, which they override. */
+:root[data-accent] {
+  --accent: var(--theme-accent);
+  --on-accent: var(--theme-on-accent);
+  --accent-text: var(--theme-accent-text-dark);
+  --accent-edge: var(--theme-accent-edge-dark);
+  --accent-soft: var(--theme-accent-soft-dark);
+}
+:root[data-accent][data-theme="light"] {
+  --accent-text: var(--theme-accent-text-light);
+  --accent-edge: var(--theme-accent-edge-light);
+  --accent-soft: var(--theme-accent-soft-light);
+}
+@media (prefers-color-scheme: light) {
+  :root[data-accent]:not([data-theme="dark"]) {
+    --accent-text: var(--theme-accent-text-light);
+    --accent-edge: var(--theme-accent-edge-light);
+    --accent-soft: var(--theme-accent-soft-light);
   }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 /* A section keeps its document and native ports while another section is shown.
-   Only these five packaged views are framed; external navigation leaves the tab. */
+   Only these six packaged views are framed; external navigation leaves the tab. */
 html.me-section-away, body.me-section-away { overflow: hidden; }
 body.me-section-away > :not(.me-section-frame) { display: none !important; }
 .me-section-frame { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg); z-index: 100; }
@@ -135,6 +204,7 @@ summary { cursor: pointer; font-weight: 600; }
   --i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
   --i-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4h11.5L20 7.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z'/%3E%3Cpath d='M8 4v4.5h7V4M7.5 20v-6h9v6'/%3E%3C/svg%3E");
   --i-book: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z'/%3E%3C/svg%3E");
+  --i-palette: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5a8.5 8.5 0 0 0 0 17c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7h2.1a3.9 3.9 0 0 0 3.9-3.9c0-4-3.8-7.3-8.5-7.3z'/%3E%3Cpath d='M7.6 11.6h.01M9.6 7.7h.01M14.1 7.2h.01M17 10.4h.01' stroke-width='3'/%3E%3C/svg%3E");
 }
 .ic-grid { --icon: var(--i-grid); }
 .ic-list { --icon: var(--i-list); }
@@ -157,6 +227,7 @@ summary { cursor: pointer; font-weight: 600; }
 .ic-undo { --icon: var(--i-undo); }
 .ic-save { --icon: var(--i-save); }
 .ic-book { --icon: var(--i-book); }
+.ic-palette { --icon: var(--i-palette); }
 
 /* Controls. A button has a filled surface, a visible edge and a small shadow in
  * both themes; an icon, when present, sits before its label. */
@@ -394,10 +465,9 @@ td button { min-height: 28px; padding: 3px 9px; font-size: 12px; }
     border-bottom: 1px solid var(--line);
   }
   .rail-brand { padding: 0; }
-  /* The page buttons become three equal buttons across the top. */
+  /* The page buttons become equal buttons across the top, two to a row when there are four or more. */
   .rail-pages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .rail-pages:has(> li:nth-child(4)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rail-pages > li:nth-child(5):last-child { grid-column: 1 / -1; }
   .rail-pages a {
     flex-direction: column;
     justify-content: center;
