@@ -11,20 +11,26 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     'GM.getValue("visits",0).then(n=>{document.body.dataset.installed="1.1";document.body.dataset.kept=String(n);});');
   fixtureState.sources ||= {}; fixtureState.sources['/usnet/install.user.js'] = { body: v1 };
   const front = async (target = manager) => b.front ? b.front(target) : b.send('Target.activateTarget', { targetId: target.id });
-  const click = async (id, target = manager) => {
+  // `locator` is evaluated again on every attempt, so a replaced element is found afresh.
+  const press = async (locator, label, target) => {
     await front(target);
     for (let attempt = 1; attempt <= 5; attempt++) {
-      const point = await until(`(()=>{const e=document.getElementById(${JSON.stringify(id)});if(!e||e.disabled)return null;
+      const point = await until(`(()=>{const e=${locator};if(!e||e.disabled)return null;
         e.scrollIntoView({block:'center',behavior:'instant'});const r=e.getBoundingClientRect(),p={x:r.x+r.width/2,y:r.y+r.height/2};
         if(!r.width||!r.height||!e.contains(document.elementFromPoint(p.x,p.y)))return null;
         globalThis.__installClickProbe?.abort();const probe=new AbortController();globalThis.__installClickProbe=probe;globalThis.__installClicked=false;
         e.addEventListener('click',()=>{globalThis.__installClicked=true;probe.abort();},{capture:true,signal:probe.signal});return p;})()`, target);
       await b.clickAt(point.x, point.y, target);
       if (await b.evaluate('globalThis.__installClicked', target)) return;
-      (evidence.lostInstallClicks ||= []).push({ id, attempt });
+      (evidence.lostInstallClicks ||= []).push({ id: label, attempt });
     }
-    throw new Error('Pointer click did not reach ' + id);
+    throw new Error('Pointer click did not reach ' + label);
   };
+  const click = (id, target = manager) => press('document.getElementById(' + JSON.stringify(id) + ')', id, target);
+  // Every render rebuilds the library rows. A storage change near the end of an
+  // update check can schedule one more refresh after the library first looks
+  // settled, so an id added to a row would be lost; find the row by data-id.
+  const clickRow = id => press('document.querySelector(' + JSON.stringify('.script-item[data-id="' + id + '"]') + ')', 'library row ' + id, manager);
   const status = () => b.evaluate('document.getElementById("installStatus").textContent', manager);
   const ready = () => until('!document.getElementById("refresh").disabled', manager);
   const dialogReady = () => until('document.getElementById("installDialog").open&&!document.getElementById("fetchSource").disabled', manager);
@@ -41,9 +47,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
   const cancel = async () => { await click('cancelSource'); await ready(); };
   const current = async () => (await send({ type: 'US_LIST' })).scripts.find(script => script.id === ids[0]);
   const select = async () => {
-    await click('refresh'); await ready();
-    await b.evaluate('document.querySelector(\'.script-item[data-id="' + ids[0] + '"]\').id="installSelection"', manager);
-    await click('installSelection');
+    await click('refresh'); await ready(); await clickRow(ids[0]);
   };
   const capture = async (name, width, bottom = false) => {
     if (b.send) await b.send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false }, manager);
@@ -139,8 +143,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     check('Update checks omit cookies and referrers', fixtureState.hits.slice(before).every(hit => !hit.cookie && !hit.referer));
     check('A staged update leaves the installed script unchanged', (await send({ type: 'US_LIST' })).scripts.find(item => item.id === script.id).source === linked('1.0'));
     check('The library marks the script with a pending update', await b.evaluate('Boolean(document.querySelector(\'.script-item[data-id="' + script.id + '"] .script-state.update\'))', manager));
-    await b.evaluate('document.querySelector(\'.script-item[data-id="' + script.id + '"]\').id="linkedSelection"', manager);
-    await click('linkedSelection');
+    await clickRow(script.id);
     await until('!document.getElementById("reviewUpdate").hidden&&document.getElementById("updateResult").textContent.includes("1.0 → 2.0")');
     for (const [name, selector] of [['update-pane', '#scriptUpdates'], ['update-settings', '.update-settings']]) {
       if (b.send) for (const width of [1280, 390]) {

@@ -2,7 +2,7 @@
 const fs = require('node:fs/promises'), path = require('node:path');
 const { createHash } = require('node:crypto');
 const { createServer } = require('../development/server.cjs');
-async function runDevelopment({ b, manager, send, check, until, browse, scriptSource, click, temp, evidence, select, input }) {
+async function runDevelopment({ b, manager, send, check, until, browse, scriptSource, click: harnessClick, temp, evidence, select, input }) {
   const source = scriptSource('External editor fixture', '// @grant none\n', 'document.documentElement.dataset.editorOriginal="yes";');
   const raw = source.replaceAll('\n','\r\n'), file = path.join(temp, 'owned-editor.user.js');
   let helper, id; const pages = [];
@@ -11,6 +11,23 @@ async function runDevelopment({ b, manager, send, check, until, browse, scriptSo
   const place = offset => b.evaluate('(()=>{const e=document.getElementById("scriptSource");e.focus();e.setSelectionRange('+offset+','+offset+');e.scrollTop=0;})()',manager);
   const status = text => until('document.getElementById("externalStatus").textContent.includes('+JSON.stringify(text)+')');
   const atomic = async value => { const next=path.join(temp,'next-editor.user.js');await fs.writeFile(next,value);await fs.rename(next,file); };
+  // Loading a file or a suggestion focuses the source editor, and Firefox can then
+  // scroll the page to its caret a frame later. A press measured before that scroll
+  // lands on whatever moved under the pointer; a lost Stop left the old file tracked.
+  // Let pending scrolls run before each press, then confirm that the press arrived.
+  const click = async id => {
+    await b.front(manager);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await b.evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        globalThis.__developmentProbe?.abort();const probe=new AbortController();globalThis.__developmentProbe=probe;globalThis.__developmentClicked=false;
+        addEventListener('click',event=>{if(document.getElementById(${JSON.stringify(id)})?.contains(event.target)){globalThis.__developmentClicked=true;probe.abort();}},{capture:true,signal:probe.signal});
+        resolve(true);})))`, manager);
+      await harnessClick(id);
+      if (await b.evaluate('globalThis.__developmentClicked', manager)) return;
+      (evidence.lostDevelopmentClicks ||= []).push({ id, attempt });
+    }
+    throw new Error('Pointer click did not reach ' + id);
+  };
   async function screenshots(name) {
     if (b.send) {
       for(const width of [1280,390]) {

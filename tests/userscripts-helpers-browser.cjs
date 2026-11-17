@@ -90,12 +90,18 @@ async function runHelpers({ b, manager, send, check, until, browse, scriptSource
     await event('helper-blocked');
     const failure = await until('helperTabEvents.find(e=>e.type==="error"&&e.details.url.endsWith("/helper-blocked"))?.details', manager);
     check('DNR still blocks an owned loopback destination opened through a userscript', ['net::ERR_BLOCKED_BY_CLIENT', 'NS_ERROR_ABORT'].includes(failure.error));
-    if ((await tabs()).some(tab => tab.id === failure.tabId)) {
+    // Popup cleanup tracks a tab only when its creation event names an opener, then
+    // closes it asynchronously once the block is confirmed, so a tab listed right
+    // after the error may be about to close. Decide from the same creation event.
+    const created = await until('helperTabEvents.find(e=>e.type==="created"&&e.tab.id===' + failure.tabId + ')?.tab', manager);
+    if (Number.isInteger(created.openerTabId)) {
+      await until('helperTabEvents.some(e=>e.type==="removed"&&e.id===' + failure.tabId + ')', manager);
+      check('Popup cleanup closes a blocked API tab that had an opener at creation', true);
+    } else {
       // Chrome can publish tabs.create's onCreated event before it assigns the
       // opener. Conservative popup cleanup correctly preserves that uncertain
       // tab; its script still has an explicit, owned close capability.
-      const created = await b.evaluate('helperTabEvents.find(e=>e.type==="created"&&e.tab.id===' + failure.tabId + ')?.tab', manager);
-      check('A retained blocked API tab had no opener at creation', created && !Number.isInteger(created.openerTabId));
+      check('A blocked API tab without an opener at creation is retained', (await tabs()).some(tab => tab.id === failure.tabId));
       await event('helper-close-blocked');
     }
     await wait('document.documentElement.dataset.blockedClosed==="true"');
