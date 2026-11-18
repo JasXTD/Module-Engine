@@ -1,8 +1,37 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 change that turns Reported Threats off by default and adds signed list updates, following the same day's repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 filter-list updates change, following the same day's change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Filter-list updates — 18 November 2026
+
+The user asked for EasyList and EasyList China to update themselves from their publishers. Nothing was pushed.
+
+- **Converter port.** `src/blocking/community-lists.js` ports the PowerShell converter to JavaScript. On the bundled snapshots it gives `rules/community.json` byte for byte (9,223 rules). It also gives the same site hiding data, generic stylesheets, counts and skipped-filter reasons (`tests/community-convert.test.cjs`). It converts both lists, about 102,000 lines, in 0.3–0.4 seconds in Node.
+- **Checks.** A new setting, *Update filter lists automatically*, is on by default; existing installs get it too, because the key is new. While protection, Community lists and the setting are on, the background downloads both lists as often as they ask: EasyList every 4 days and EasyList China daily, so daily. After a failure it waits 12 hours. A download needs:
+  - an Adblock Plus header, the expected title and a numeric version;
+  - no list older than the one in use, and at least one newer;
+  - a conversion that keeps at least half of the bundled network and site hiding rules.
+- **Installed as a change.** Measured in disposable profiles, Chrome 158 accepts 29,000 dynamic rules (its limit is 30,000), but Firefox 160 refuses 9,500 (its limit is 5,000). The bundled rules therefore cannot simply move to dynamic rules. Instead, the update switches off the bundled rules the new lists dropped with `updateStaticRules`, which both browsers support. It adds new or changed rules as dynamic rules from ID 1,000,001. Merged domain rules are compared domain by domain, so one dropped domain re-adds the other 999 of its chunk and one new domain adds one rule.
+- **Safety and scope.** If the browser refuses a change, the previous lists stay. An update made for another release's snapshots is set aside. A change too large for the browser's limits is refused. Site hiding follows the new lists, while generic hiding stays with the release's packaged stylesheets. My lists has a *Filter lists* card with the versions, the change, the last check, the setting and *Check for updates*; the popup line adds "updated".
+
+**686 Node tests** passed, with no failures or skips; 19 are new. The background test harness keeps list updates off unless a test turns them on, so unrelated tests make no downloads. The new tests check that the bundled rules plus the change give exactly the converted lists, domain by domain. Four deliberate faults were each caught: checking with the setting off, skipping the rollback, dropping the rest of a changed chunk, and letting list exceptions undo Module Engine's own blocks. **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host** assertions passed.
+
+The full blocker suites passed **800 Chrome 158**, **800 Edge 157** and **793 Firefox 160** checks. Their fresh profiles tried EasyList at startup, the deny proxy refused it, and nothing else changed. The signed threat-update suite passed **57** checks in each browser. In Chrome and Edge, the redirect suites passed **38**, **28** and **56** checks.
+
+The new `tests/community-updates-browser.cjs` passed **26 checks** in each browser. A loopback server, listed as the publishers in a copy of the extension, served the bundled snapshots with a newer EasyList version and real edits. In each browser:
+
+- the new profile updated itself without cookies or a referrer;
+- the browser switched off exactly bundled rules 1 and 336 and held 3 added rules;
+- the added domain and pattern were blocked, while the dropped domain and pattern were not;
+- the rest of the changed chunk and untouched bundled rules still blocked;
+- a new site hiding rule hid its element on a loopback page;
+- My lists and the popup showed the update, *Check for updates* found the lists current, and the Community switch removed and restored the added rules without a download.
+
+The deny proxy refused only the browsers' own background traffic.
+
+Limits: the real publishers were not contacted, and the fixture serves its lists without the publishers' caching. Both lists download together, about 2.7 MB a day, because EasyList China asks daily. Generic hiding does not follow updates. The 5,000 switched-off and dynamic-rule limits were checked with small changes and a lowered limit, not with a full-size change. See [the evidence summary](../verification/2026-11-18/filter-list-updates/summary.json).
 
 ## Reported Threats off by default, signed list updates — 18 November 2026
 

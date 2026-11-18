@@ -1,0 +1,63 @@
+{
+  "taskDate": "2026-11-18",
+  "task": "EasyList and EasyList China update themselves from their publishers, converted in the extension and installed as a change from the bundled community rules",
+  "baselineCommit": "ee28aa3",
+  "decisions": [
+    "The user asked for the filter lists to update from upstream, as part of auto-updating the threat list, filter lists and extension.",
+    "Automatic filter-list updates are on by default. The setting is new, so existing installs get it too; it can be turned off in My lists.",
+    "Generic hiding stays with the release, because its stylesheets are packaged files."
+  ],
+  "browserLimits": {
+    "method": "Disposable profiles with an unpacked copy, offline (scratch probe).",
+    "chrome": { "version": "Chrome/158.0.8127.37", "MAX_NUMBER_OF_DYNAMIC_RULES": 30000, "dynamicRulesAccepted": [4900, 9500, 29000], "updateStaticRules": "disabled and re-enabled bundled rules 1-3" },
+    "firefox": { "version": "Firefox 160.0.1", "MAX_NUMBER_OF_DYNAMIC_RULES": 5000, "MAX_NUMBER_OF_DISABLED_STATIC_RULES": 5000, "dynamicRulesAccepted": [4900],
+      "dynamicRulesRefused": [9500, 29000], "updateStaticRules": "disabled and re-enabled bundled rules 1-3" },
+    "consequence": "The 9,223 bundled community rules cannot become dynamic rules in Firefox, so an update switches off dropped bundled rules and adds only new or changed ones."
+  },
+  "converterEquivalence": {
+    "test": "tests/community-convert.test.cjs",
+    "rulesCommunityJson": "byte for byte, 9,223 rules",
+    "alsoEqual": ["site hiding data", "generic stylesheets compiled from it", "counts and skipped-filter reasons", "list titles, versions and dates"],
+    "conversionTimeNode": "0.3-0.4 s for about 102,000 lines"
+  },
+  "unitTests": { "passed": 686, "failed": 0, "skipped": 0, "cancelled": 0, "new": 19,
+    "newFiles": ["tests/community-convert.test.cjs", "tests/community-updates.test.cjs", "tests/community-update-fixture.cjs"],
+    "runsInARow": 3 },
+  "faultInjection": [
+    { "fault": "automatic checks with the setting off", "caughtBy": "11 tests, including the setting test" },
+    { "fault": "no rollback after the browser refuses a change", "caughtBy": 2 },
+    { "fault": "drop the rest of a changed domain chunk", "caughtBy": "the domain-by-domain equivalence test" },
+    { "fault": "let list exceptions undo Module Engine's own blocks", "caughtBy": 2 }
+  ],
+  "ruleTests": [
+    { "script": "tests/cosmetic-rules.test.ps1", "result": "PASS: 35 cosmetic compilation assertions" },
+    { "script": "tests/rules.test.ps1", "result": "PASS: 237 offline rule/import assertions" },
+    { "script": "tests/threat-rules.test.ps1", "result": "PASS: 342 threat evidence/build assertions" },
+    { "script": "tests/requested-ad-hosts.test.ps1", "result": "PASS: 41 requested-host assertions" }
+  ],
+  "runs": [
+    { "name": "blocker-chrome", "browser": "Chrome/158.0.8127.37", "checks": 800, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "blocker-edge", "browser": "Edg/157.0.4341.60", "checks": 800, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "blocker-firefox", "browser": "Firefox 160.0.1", "checks": 793, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "list-updates-chrome", "browser": "Chrome/158.0.8127.37", "checks": 26, "success": true, "listRequests": 4 },
+    { "name": "list-updates-edge", "browser": "Edg/157.0.4341.60", "checks": 26, "success": true, "listRequests": 4 },
+    { "name": "list-updates-firefox", "browser": "Firefox 160.0.1", "checks": 26, "success": true, "listRequests": 4 },
+    { "name": "threat-updates-chrome", "browser": "Chrome/158.0.8127.37", "checks": 57, "success": true },
+    { "name": "threat-updates-edge", "browser": "Edg/157.0.4341.60", "checks": 57, "success": true },
+    { "name": "threat-updates-firefox", "browser": "Firefox 160.0.1", "checks": 57, "success": true },
+    { "name": "popup-guard-chrome", "checks": 38, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "popup-guard-edge", "checks": 38, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "frame-redirects-chrome", "checks": 28, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "frame-redirects-edge", "checks": 28, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "same-tab-redirects-chrome", "checks": 56, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 },
+    { "name": "same-tab-redirects-edge", "checks": 56, "success": true, "packageFiles": 93, "sourceHashMismatches": 0 }
+  ],
+  "listUpdateRun": "A loopback server, listed as the publishers in the copy's rules/community-info.json, served the bundled snapshots with EasyList version 202611171200: one domain and one pattern dropped, one domain, one pattern and site hiding rules added. Each browser switched off bundled rules 1 and 336 and held dynamic rules 1000001-1000003.",
+  "deniedRequests": "Only the browsers' own background traffic reached the deny proxies. In the blocker suites, each fresh profile's startup list check to the real publishers was refused there, which changed nothing else.",
+  "limits": [
+    "The real publishers were not contacted, and the fixture serves its lists without the publishers' caching.",
+    "Both lists download together, so the check follows EasyList China's daily interval: about 2.7 MB a day.",
+    "Generic hiding does not follow updates.",
+    "The 5,000-rule limits were checked with small changes and a lowered limit, not with a full-size change."
+  ]
+}

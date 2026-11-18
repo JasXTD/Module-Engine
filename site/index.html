@@ -228,7 +228,7 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
       <dl class="facts">
         <div><dt>bundled network rules</dt><dd>9,436</dd></div>
         <div><dt>site hiding rules</dt><dd>22,966</dd></div>
-        <div><dt>lists downloaded at runtime</dt><dd>0</dd></div>
+        <div><dt>filter lists kept up to date</dt><dd>2</dd></div>
       </dl>
       <p class="facts-note">Counts from the 18 November 2026 build.</p>
     </div>
@@ -339,7 +339,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
           <tr><th scope="row">Chrome and Edge</th><td class="me"><span class="yes">Yes</span>Manifest V3</td><td><span class="no">No</span>Chrome removed Manifest V2 extensions, and Edge is switching them off</td><td><span class="yes">Yes</span>Manifest V3</td></tr>
           <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span>The full version</td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Filter lists</th><td class="me">EasyList and EasyList China snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
-          <tr><th scope="row">List updates</th><td class="me">Only with a new build; nothing is fetched at runtime</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
+          <tr><th scope="row">List updates</th><td class="me">Downloaded from their publishers as often as they ask and converted on your computer; generic hiding with each release</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
           <tr><th scope="row">Element hiding</th><td class="me"><span class="yes">Yes</span>Including a supported subset of advanced (procedural) rules</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="no">No</span>Only one built-in filter, for YouTube player data</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Element picker</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
@@ -392,7 +392,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
     <h2 id="privacy-title">Privacy and limits</h2>
     <ul class="limits">
       <li><strong>No telemetry</strong><span>Settings, scripts, cached dependencies and logs stay in the browser's extension storage. Nothing is sent to the project.</span></li>
-      <li><strong>Lists don't update by themselves</strong><span>The bundled EasyList snapshots are from 19 October 2026. Newer filters arrive only with a new build.</span></li>
+      <li><strong>Lists update from their publishers</strong><span>While Community lists is on, EasyList and EasyList China are downloaded as often as they ask, without cookies or a referrer, and converted on your computer. Generic hiding changes only with a new release. You can turn updates off in My lists.</span></li>
       <li><strong>Reported threats are opt-in and expire</strong><span>Off until you turn it on, the threat layer blocks 24 hosts from dated public reports and switches itself off on 28 February 2027. It is not full malware protection.</span></li>
       <li><strong>Filtering is never complete</strong><span>Lists can miss ads or affect legitimate pages, and sites change. Video sites can show ads that rules cannot separate from the video.</span></li>
       <li><strong>Scripts can see what they match</strong><span>An enabled script can read its pages, and a network grant lets it send data. Review the code and access before you turn one on.</span></li>
@@ -401,7 +401,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
 
     <h3 class="tests-title">Latest test run</h3>
     <dl class="tests">
-      <div><dt>unit tests</dt><dd>667</dd></div>
+      <div><dt>unit tests</dt><dd>686</dd></div>
       <div><dt>Chrome checks</dt><dd>800</dd></div>
       <div><dt>Edge checks</dt><dd>800</dd></div>
       <div><dt>Firefox checks</dt><dd>793</dd></div>

@@ -74,7 +74,10 @@ snapshot stored under `community/`: `id`, `title`, `file`, HTTPS `source`, `lice
 `downloadedAtUtc` and `sha256`. The builder refuses unknown or missing fields, duplicate ids,
 files outside `community/`, non-HTTPS sources, future download times, files over 8 MiB, and
 any file whose SHA-256 differs from its record. It never downloads anything: a new snapshot is
-placed there by a person, and its record is updated deliberately.
+placed there by a person, and its record is updated deliberately. The `source` addresses also
+reach `rules/community-info.json`, from which the extension downloads newer copies at runtime and
+converts them with `src/blocking/community-lists.js`, a port of this converter that must give the
+same rules from these snapshots (see [Development](../docs/DEVELOPMENT.md#filter-list-updates-in-the-extension)).
 
 `scripts/community-list-tools.ps1` converts the snapshots into `rules/community.json` (the
 switchable `community_ruleset`), `rules/community-cosmetic.json` (generic and site-specific hiding rules

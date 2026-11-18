@@ -32,6 +32,29 @@ let threatExpiryTimer = null;
 let threatStatus = null;
 let protectionVerified = false;
 let checkingThreats = false;
+let communityStatus = null;
+let checkingLists = false;
+
+// The EasyList snapshots in use, bundled or updated, and the last check.
+function renderFilterLists() {
+  const status=communityStatus, updates=status?.updates;
+  byId('communityListUpdates').checked=Boolean(settings?.communityListUpdates);
+  byId('communityListUpdates').disabled=busy || !settings;
+  byId('checkFilterLists').disabled=busy || checkingLists || !status?.lists.length;
+  if (!status) { byId('filterListsStatus').textContent='Reading list details…'; byId('filterListsCheck').textContent=''; return; }
+  const lists=status.lists.map(list => `${list.title} ${list.version || ''}`.trim()).join(' and ');
+  byId('filterListsStatus').textContent=!status.lists.length ? `List details are unavailable. ${updates.notice}`.trim()
+    : `${lists} · ${(status.networkRules ?? 0).toLocaleString()} network rules · ${status.source === 'update'
+      ? `updated: ${status.changed.disabled.toLocaleString()} bundled rules switched off, ${status.changed.added.toLocaleString()} added`
+      : 'bundled with this version'}.`;
+  const when=updates.checkedAt ? new Date(updates.checkedAt).toLocaleString() : '';
+  const last=checkingLists ? 'Checking now…' : !updates.checkedAt ? 'Not checked yet.'
+    : updates.result === 'error' ? `The last check, ${when}, failed: ${updates.error}`
+    : updates.result === 'installed' ? `The last check, ${when}, installed newer lists.`
+    : `Last checked ${when}: up to date.`;
+  const off=!updates.enabled ? ' Automatic updates are off.' : !settings?.rulesets.community_ruleset ? ' Automatic updates wait while the Community lists layer is off.' : '';
+  byId('filterListsCheck').textContent=`${last}${off}${updates.notice && status.lists.length ? ' '+updates.notice : ''}`;
+}
 
 // Automatic updates: where they come from, the last check and the Check button.
 function renderThreatUpdates() {
@@ -273,6 +296,7 @@ function renderFlags(filter) {
 function render() {
   const filter = byId("filter").value.trim().toLowerCase();
   renderThreatEvidence(filter);
+  renderFilterLists();
   if (settings && !networkDraftDirty) {
     networkDraftBase = settings.customNetworkFilters;
     if (byId("networkFilters").value !== networkDraftBase) byId("networkFilters").value = networkDraftBase;
@@ -353,6 +377,7 @@ async function execute(message) {
   try {
     const response = await api.runtime.sendMessage(message);
     if (response?.settings) settings = response.settings;
+    if (response?.communityStatus) communityStatus = response.communityStatus;
     if (response?.threatStatus) {
       threatStatus = response.threatStatus;
       void loadThreatEvidence();
@@ -450,6 +475,15 @@ byId("saveFilters").addEventListener("click", async () => {
     } else byId("filterStatus").textContent = byId("notice").textContent;
   } catch (error) { byId("filterStatus").textContent = error.message; }
 });
+byId("communityListUpdates").addEventListener("change", event => {
+  void run({ type: "UPDATE_SETTINGS", patch: { communityListUpdates: event.target.checked } });
+});
+byId("checkFilterLists").addEventListener("click", async () => {
+  checkingLists = true;
+  render();
+  try { await run({ type: "CHECK_LIST_UPDATES" }); }
+  finally { checkingLists = false; render(); }
+});
 byId("checkThreatUpdate").addEventListener("click", async () => {
   checkingThreats = true;
   render();
@@ -464,7 +498,7 @@ api.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if ("adFlags" in changes) void refreshFlags();
   if (changes.protectionError?.newValue) { protectionVerified=false; render(); }
-  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
+  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "communityStatus", "communityListUpdates", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
 });
 (async () => {
   render();

@@ -26,6 +26,7 @@
       <div class="rail-group">
         <p class="eyebrow">Filters</p>
         <ul class="rail-links">
+          <li><a href="#filterLists">Filter lists</a></li>
           <li><a href="#requestFiltering">Request filters</a></li>
           <li><a href="#pageHiding">Page hiding</a></li>
         </ul>
@@ -64,6 +65,14 @@
       <p id="notice" class="notice" role="status" hidden></p>
 
       <h2 class="eyebrow group-title">Filters</h2>
+      <section class="card" id="filterLists">
+            <h2>Filter lists</h2>
+            <p id="filterListsStatus" role="status" class="muted">Reading list details…</p>
+            <label class="check"><input type="checkbox" id="communityListUpdates" disabled /> Update filter lists automatically</label>
+            <p class="muted">While the Community lists layer is on, Module Engine downloads EasyList and EasyList China from their publishers as often as they ask, without cookies or a referrer, and converts them on this computer. Network rules and site hiding follow the new lists; generic hiding changes only with a new version of Module Engine.</p>
+            <p id="filterListsCheck" role="status" class="muted"></p>
+            <div class="toolbar"><button type="button" id="checkFilterLists" disabled>Check for updates</button></div>
+          </section>
       <section class="card" id="requestFiltering">
             <h2>Custom request filters <span id="networkCount" class="muted"></span></h2>
             <p class="muted">Block a specific URL path or request type without blocking an entire hosting domain. Exceptions allow only matching requests; reported threats and explicit domain blocks still win.</p>

@@ -276,6 +276,16 @@ Successful builds write `rules/ads.json`, `rules/trackers.json`, an empty compat
 
 Every output is staged before replacement. A failed write triggers restoration of already replaced files; a lock prevents concurrent builds. Sudden power loss during multi-file publication is not an atomic transaction, so retain backups and rerun a successful build before reloading if publication is interrupted.
 
+### Filter-list updates in the extension
+
+`src/blocking/community-lists.js` is a JavaScript port of `ConvertFrom-CommunityLists` in `scripts/community-list-tools.ps1`. The extension uses it to convert EasyList and EasyList China downloads.
+
+- **Keeping the two converters in step.** `tests/community-convert.test.cjs` runs the port on the bundled snapshots. It requires `rules/community.json` byte for byte, plus the same site hiding data, generic stylesheets and counts. Change both converters together and rebuild; the test fails until they agree. It mirrors PowerShell's case-insensitive `-match` and .NET's trim set.
+- **Download checks.** `src/background/community-updates.js` downloads from the `source` of each list in `rules/community-info.json`. Limits are 8 MiB and 60 seconds per list, with no cookies or referrer, and redirects only to HTTPS. It refuses a download unless it has an Adblock Plus header, the expected title and a numeric version, and no list is older than the one in use.
+- **The installed change.** After conversion, `difference()` compares the result with `rules/community.json`. Merged domain rules are compared by domain, other rules by meaning. Dropped bundled rules are switched off with `updateStaticRules`, and new or changed rules become dynamic rules from ID 1,000,001. `tests/community-updates.test.cjs` checks that the bundled rules plus the change give exactly the converted rules, domain by domain.
+- **Storage.** The background keeps the change (`communityUpdate`) apart from its site hiding data (`communityUpdateCosmetic`), and uses it only while its `baseline`, the bundled snapshot hashes, matches the release. Generic hiding stays with the packaged stylesheets.
+- **Browser test.** `node tests/community-updates-browser.cjs chrome|edge|firefox` serves edited snapshots from loopback to a copy of the extension whose `community-info.json` lists that server.
+
 ### Publishing a reported-threat update
 
 Installs can take a newer reported-threat list without a new release. The list is published as four files in a public folder, and the extension trusts only public keys built into it. `src/shared/update-config.js` holds the folder address (`threatSource`) and those keys. While `threatSource` is empty, a build never checks for updates. `scripts/update-signing.cjs` writes that file and signs the folder; it is offline.

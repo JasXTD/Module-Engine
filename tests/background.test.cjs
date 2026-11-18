@@ -13,8 +13,10 @@ const threatsOn = { rulesets: { threats_ruleset: true } };
 
 function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}, options = {}) {
   const listeners = {};
-  const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
-  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], updateRequests: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
+  // Automatic filter-list updates stay off unless a test sets them: they would
+  // download and write in the background of unrelated tests.
+  const state = { session, storage: clone({ communityListUpdates: false, ...initial }), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
+  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], updateRequests: [], listRequests: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
     cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
       allow: { 'shop.example.com': ['.ad-box'] } }) });
   class Clock extends Date { static now() { return state.now; } }
@@ -54,6 +56,13 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       async getEnabledRulesets() { await fault('enabledRead'); return clone(state.enabled); },
       async getSessionRules() { await fault('sessionRulesRead'); return clone(state.sessionRules || []); },
       async getDisabledRuleIds({ rulesetId }) { await fault('disabledRead'); return clone(state.disabledRules?.[rulesetId] || []); },
+      async updateStaticRules({ rulesetId, disableRuleIds = [], enableRuleIds = [] }) {
+        await fault('staticRules');
+        const disabled = new Set(state.disabledRules?.[rulesetId] || []);
+        for (const id of disableRuleIds) disabled.add(id);
+        for (const id of enableRuleIds) disabled.delete(id);
+        state.disabledRules = { ...state.disabledRules, [rulesetId]: [...disabled] };
+      },
       async getDynamicRules() {
         await fault('dynamicRead');
         const rules = clone(state.dynamic);
@@ -134,6 +143,17 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     if (ruleset) {
       await fault('ruleFile');
       return { ok: true, json: async () => clone(options.rulesets?.[ruleset.id] || JSON.parse(fs.readFileSync(path.join(root, ruleset.path), 'utf8'))) };
+    }
+    // Packaged list descriptions, which filter-list updates read.
+    const packaged = ['rules/community-info.json', 'rules/reviewed-domains.json', 'rules/site-ad-hosts-info.json'].find(file => url === 'chrome-extension://test/' + file);
+    if (packaged) {
+      state.fetches.push(url);
+      return { ok: true, json: async () => JSON.parse(fs.readFileSync(path.join(root, packaged), 'utf8')) };
+    }
+    // The list publishers, faked by options.listServer.
+    if (options.listServer && /^https:\/\/(easylist\.to|easylist-downloads\.adblockplus\.org)\//.test(url)) {
+      state.listRequests.push({ url, init: { ...init, signal: undefined } });
+      return options.listServer(url);
     }
     assert.equal(url, 'chrome-extension://test/rules/threat-policy.json', 'only a packaged local file may be read');
     state.fetches.push(url);
@@ -1950,4 +1970,161 @@ test('update checks start only from the extension interface, share one run, and 
   await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
   assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
   assert.equal(h.state.enabled.includes('threats_ruleset'), false);
+});
+
+// Filter-list updates. The fake publishers serve the bundled snapshots with a
+// later version and a few real edits (tests/community-update-fixture.cjs).
+const listFixture = require('./community-update-fixture.cjs');
+const LIST_SOURCES = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root, 'rules/community-info.json'), 'utf8')).lists.map(list => [list.source, list.id]));
+const NEWER = '202611171200';
+function listHarness({ initial = {}, limit = 5000, now = AFTER_REVIEW, texts = {} } = {}) {
+  const server = { texts: { easylist: listFixture.upstream('easylist', { version: NEWER }), 'easylist-china': listFixture.upstream('easylist-china'), ...texts }, status: 200 };
+  const listServer = url => {
+    const body = server.status === 200 ? server.texts[LIST_SOURCES[url]] : undefined;
+    const bytes = new TextEncoder().encode(body ?? '');
+    return { ok: body !== undefined, status: body !== undefined ? 200 : server.status === 200 ? 404 : server.status, redirected: false, url,
+      headers: { get: () => null }, arrayBuffer: async () => bytes.buffer };
+  };
+  return { ...harness({ communityListUpdates: true, ...initial }, limit, now, {}, { listServer }), server };
+}
+// Waits for a running list check and the reconciliation it ends with.
+async function listsSettled(h) {
+  await h.ready;
+  for (let pending; (pending = vm.runInContext('communityCheck', h.context));) await pending;
+  await vm.runInContext('operationQueue', h.context);
+}
+const listRules = h => h.state.dynamic.filter(rule => rule.id > 1000000);
+const disabledRules = h => [...(h.state.disabledRules?.community_ruleset || [])].sort((a, b) => a - b);
+const listCheck = async h => { const result = await h.send({ type: 'CHECK_LIST_UPDATES' }); await listsSettled(h); return result; };
+
+test('a new install updates its filter lists as a change from the bundled rules, with the new site hiding', async () => {
+  const h = listHarness({ initial: { communityListUpdates: undefined } });
+  await listsSettled(h);
+  assert.deepEqual(h.state.listRequests.map(request => request.url).sort(), Object.keys(LIST_SOURCES).sort());
+  for (const { init } of h.state.listRequests) assert.deepEqual([init.credentials, init.referrerPolicy, init.cache], ['omit', 'no-referrer', 'no-store']);
+  const state = await h.send({ type: 'GET_STATE' });
+  assert.equal(state.settings.communityListUpdates, true, 'automatic list updates are on by default');
+  assert.deepEqual([state.communityStatus.source, state.communityStatus.lists[0].version, state.communityStatus.updates.result], ['update', NEWER, 'installed']);
+  assert.deepEqual(state.communityStatus.changed, { disabled: 2, added: 3 });
+  assert.deepEqual(disabledRules(h), [1, listFixture.removedSingle.id], 'the bundled rules the new list dropped are switched off');
+  assert.deepEqual(listRules(h).map(rule => rule.id), [1000001, 1000002, 1000003]);
+  assert.ok(h.state.enabled.includes('community_ruleset'), 'the bundled ruleset stays on beside the change');
+  const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
+  assert.ok((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.includes('.fresh-ad-slot'), 'site hiding comes from the new lists');
+  const log = await h.send({ type: 'GET_LOG' });
+  assert.ok(log.entries.some(entry => /^Installed EasyList 202611171200 and EasyList China \d+: 2 bundled rules switched off, 3 rules added$/.test(entry.message)));
+  h.listeners.ruleMatched({ rule: { ruleId: 1000002, rulesetId: '_dynamic' }, request: { url: 'https://fresh-ad-server.example/a.js', type: 'script', initiator: 'https://news.example', tabId: 1 } });
+  await settle();
+  assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => entry.kind === 'blocked' && entry.layer === 'Community lists' && entry.host === 'fresh-ad-server.example'));
+});
+
+test('unchanged lists change nothing, and the next check waits for the interval the lists ask for', async () => {
+  const h = listHarness({ texts: { easylist: listFixture.upstream('easylist') } });
+  await listsSettled(h);
+  const state = await h.send({ type: 'GET_STATE' });
+  assert.deepEqual([state.communityStatus.source, state.communityStatus.updates.result], ['bundled', 'current']);
+  assert.equal(h.state.storage.communityUpdate, undefined);
+  assert.deepEqual([disabledRules(h), listRules(h)], [[], []]);
+  assert.equal(h.state.listRequests.length, 2);
+  assert.equal(state.communityStatus.updates.interval, 86400000, 'EasyList asks for 4 days, EasyList China for 1; both download together');
+  h.state.now += 23 * 3600000;
+  await h.listeners.alarm({ name: 'reported-threats-check' });
+  await listsSettled(h);
+  assert.equal(h.state.listRequests.length, 2, 'not checked again within the day');
+  h.state.now += 3600000 + 1;
+  await h.listeners.alarm({ name: 'reported-threats-check' });
+  await listsSettled(h);
+  assert.equal(h.state.listRequests.length, 4);
+});
+
+test('wrong, older, truncated or unreachable lists are refused, and the lists in use stay', async () => {
+  const h = listHarness();
+  await listsSettled(h);
+  const installed = clone(h.state.storage.communityUpdate), dynamic = clone(h.state.dynamic), disabled = disabledRules(h);
+  const later = '202611180300';
+  const refused = [
+    [{ easylist: listFixture.upstream('easylist', { version: later, title: 'Something else' }) }, /titled "Something else"/],
+    [{ easylist: listFixture.upstream('easylist', { version: '202610010000' }) }, /EasyList \(202610010000\) is older than the one in use \(202611171200\)/],
+    [{ easylist: listFixture.upstream('easylist', { version: later, shrink: true }) }, /under half of the bundled/],
+    [{ easylist: '<!doctype html><title>Sign in</title>' }, /did not download as a filter list/]
+  ];
+  for (const [texts, error] of refused) {
+    Object.assign(h.server.texts, texts);
+    const result = await listCheck(h);
+    assert.equal(result.ok, true);
+    assert.equal(result.communityStatus.updates.result, 'error', String(error));
+    assert.match(result.communityStatus.updates.error, error);
+    assert.deepEqual(h.state.storage.communityUpdate, installed);
+    assert.deepEqual([h.state.dynamic, disabledRules(h)], [dynamic, disabled]);
+  }
+  h.server.status = 503;
+  assert.match((await listCheck(h)).communityStatus.updates.error, /HTTP 503 from easylist\.to/);
+  assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => /^Filter-list update check failed: HTTP 503/.test(entry.message)));
+  h.server.status = 200;
+  h.server.texts.easylist = listFixture.upstream('easylist', { version: later, changes: false });
+  const next = await listCheck(h);
+  assert.deepEqual([next.communityStatus.updates.result, next.communityStatus.lists[0].version, next.communityStatus.changed], ['installed', later, { disabled: 0, added: 0 }]);
+  assert.deepEqual([listRules(h), disabledRules(h)], [[], []], 'a later list equal to the bundled one needs no change');
+});
+
+test('automatic checks need protection, the community layer and the setting; checks start from the interface only', async () => {
+  for (const initial of [{ communityListUpdates: false }, { rulesets: { community_ruleset: false } }, { enabled: false }]) {
+    const h = listHarness({ initial });
+    await listsSettled(h);
+    await h.send({ type: 'GET_STATE' });
+    await listsSettled(h);
+    assert.deepEqual(h.state.listRequests, [], JSON.stringify(initial));
+  }
+  const h = listHarness({ initial: { communityListUpdates: false } });
+  await listsSettled(h);
+  const page = { id: 'test', url: 'https://example.com/', tab: { id: 1, url: 'https://example.com/' } };
+  assert.equal((await h.send({ type: 'CHECK_LIST_UPDATES' }, page)).ok, false);
+  assert.deepEqual(h.state.listRequests, []);
+  assert.equal((await listCheck(h)).communityStatus.updates.result, 'installed', 'Check now works with automatic updates off');
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: false } } });
+  assert.deepEqual(listRules(h), [], 'the community switch removes the added rules');
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: true } } });
+  assert.equal(listRules(h).length, 3);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { communityListUpdates: true } });
+  assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Automatic filter-list updates turned on'));
+});
+
+test('an update made for another release is set aside and the bundled rules come back', async () => {
+  const h = listHarness();
+  await listsSettled(h);
+  const saved = clone(h.state.storage);
+  saved.communityUpdate.baseline = 'easylist:' + '0'.repeat(64);
+  const next = listHarness({ initial: { ...saved, communityListUpdates: false } });
+  next.state.disabledRules = { community_ruleset: disabledRules(h) };
+  await listsSettled(next);
+  const state = await next.send({ type: 'GET_STATE' });
+  assert.equal(state.communityStatus.source, 'bundled');
+  assert.deepEqual([disabledRules(next), listRules(next)], [[], []], 'disabled bundled rules are switched back on');
+});
+
+test('a change needing more disabled or dynamic rules than the browser allows is refused', async () => {
+  const h = listHarness({ initial: { communityListUpdates: false } });
+  await listsSettled(h);
+  h.api.declarativeNetRequest.MAX_NUMBER_OF_DISABLED_STATIC_RULES = 1;
+  assert.match((await listCheck(h)).communityStatus.updates.error, /2 bundled rules would be switched off, and this browser allows 1/);
+  assert.equal(h.state.storage.communityUpdate, undefined);
+  const small = listHarness({ initial: { communityListUpdates: false, customBlockedDomains: ['a.example', 'b.example'] }, limit: 4 });
+  await listsSettled(small);
+  const result = await listCheck(small);
+  assert.match(result.communityStatus.updates.error, /^The new lists could not be used\. The installed filter-list update needs 3 dynamic rules/);
+  assert.equal(small.state.storage.communityUpdate, undefined);
+  assert.deepEqual([disabledRules(small), small.state.dynamic.length], [[], 2], 'the bundled rules and your own stay as they were');
+});
+
+test('a change the browser refuses is removed again, keeping the lists that worked', async () => {
+  const h = listHarness();
+  await listsSettled(h);
+  const installed = clone(h.state.storage.communityUpdate), dynamic = clone(h.state.dynamic), disabled = disabledRules(h);
+  h.server.texts.easylist = listFixture.upstream('easylist', { version: '202611180300', changes: false });
+  h.state.faults.staticRules = 1;
+  const result = await listCheck(h);
+  assert.match(result.communityStatus.updates.error, /^The new lists could not be used\. Changes were not applied\. (Error: )?Injected staticRules failure/);
+  assert.deepEqual(h.state.storage.communityUpdate, installed);
+  assert.deepEqual([h.state.dynamic, disabledRules(h)], [dynamic, disabled]);
+  assert.equal(h.state.storage.protectionError, null, 'the restored lists are verified again');
 });

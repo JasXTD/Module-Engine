@@ -52,6 +52,8 @@ let lastError = "";
 let quarantinedDomains = [];
 let refreshPending = false;
 let threatStatus = null;
+// The lists in use, bundled or updated, from the background.
+let communityStatus = null;
 
 async function detectActiveTabDomain() {
   const [tab] = await api.tabs.query({ active: true, currentWindow: true });
@@ -139,9 +141,11 @@ function renderUI() {
   toggleDeceptiveButtons.checked = settings.deceptiveButtonBlocking;
   toggleProcedural.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;
   toggleCommunity.checked = settings.rulesets.community_ruleset;
-  const lists = communityInfo?.lists || [];
-  communityStatusEl.textContent = !communityInfo ? "Snapshot details unavailable" : !lists.length ? "No list snapshot is built"
-    : `${lists.map(list => list.title).join(" + ")} · ${communityInfo.networkRules.toLocaleString()} rules · ${(lists[0].lastModified || "").replace(/ \d\d:\d\d.*$/, "")}`;
+  const updated = communityStatus?.source === "update" && communityStatus.lists.length ? communityStatus : null;
+  const lists = updated?.lists || communityInfo?.lists || [];
+  communityStatusEl.textContent = !updated && !communityInfo ? "Snapshot details unavailable" : !lists.length ? "No list snapshot is built"
+    : `${lists.map(list => list.title).join(" + ")} · ${(updated || communityInfo).networkRules.toLocaleString()} rules · ` +
+      `${(lists[0].lastModified || "").replace(/ \d\d:\d\d.*$/, "")}${updated ? " · updated" : ""}`;
   toggleFlags.checked = settings.flagSuspects;
   flagStatusEl.classList.toggle("has-flags", Boolean(flagCount));
   flagStatusEl.textContent = !settings.flagSuspects ? "Off: ad-like servers that get through are not flagged"
@@ -244,6 +248,7 @@ async function runCommand(message, preserveError = false) {
     const response = await api.runtime.sendMessage(message);
     if (response?.settings) currentSettings = response.settings;
     threatStatus = response?.threatStatus || null;
+    if (response?.communityStatus) communityStatus = response.communityStatus;
     quarantinedDomains = response?.quarantinedDomains || [];
     if (!response?.ok) throw new Error(response?.error || "The extension did not return a verified state.");
     if (threatStatus?.error) lastError = threatStatus.error;
@@ -373,7 +378,7 @@ allowForm.addEventListener("submit", async event => {
 });
 retryButton.addEventListener("click", () => runCommand({ type: "GET_STATE" }));
 api.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "cosmeticPausedDomains", "customCosmeticFilters", "customNetworkFilters", "flagSuspects", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "promptAllowedDomains"].some(key => key in changes)) return;
+  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "cosmeticPausedDomains", "customCosmeticFilters", "customNetworkFilters", "flagSuspects", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus", "communityStatus", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "promptAllowedDomains"].some(key => key in changes)) return;
   if (busy) refreshPending = true;
   else void runCommand({ type: "GET_STATE" }, true);
 });

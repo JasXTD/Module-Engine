@@ -23,7 +23,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 ## Features
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
-- **Ad and tracker filtering:** bundled network rules, EasyList snapshots, cosmetic hiding, advanced page hiding and a visual element picker.
+- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, cosmetic hiding, advanced page hiding and a visual element picker.
 - **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. The layer switches itself off when its evidence expires, and a newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
 - **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
@@ -112,7 +112,7 @@ The others go further in their own areas:
 - uBlock Origin Lite refreshes its rules with every store release.
 - Tampermonkey and Violentmonkey cover more of the userscript API and sync scripts through cloud storage.
 
-Module Engine's lists change only with a new build. It holds up to 32 scripts and installs from source.
+Module Engine updates EasyList and EasyList China from their publishers and converts them on your computer; its generic hiding changes only with a new release. It holds up to 32 scripts and installs from source.
 
 ## Browser support and verification
 
@@ -120,11 +120,11 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **18 November 2026** the current code passed:
 
-- **667 Node tests**;
+- **686 Node tests**;
 - **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
-- **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update checks** in each browser, run offline with disposable profiles and local test pages.
+- **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;
@@ -137,9 +137,9 @@ That run covered Reported Threats being off by default, signed reported-threat u
 
 ## Privacy and limits
 
-Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. While Reported Threats is on, a release that names an update folder downloads its signed list once a day, without cookies or a referrer. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
+Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. While Community lists is on, EasyList and EasyList China are downloaded from their publishers as often as they ask (EasyList China asks daily). While Reported Threats is on, a release that names an update folder downloads its signed list once a day. Neither download carries cookies or a referrer. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
 
-The bundled filter lists are manually maintained and do not update automatically; the current EasyList and EasyList China snapshots are from 19 October 2026. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
+The bundled EasyList and EasyList China snapshots are from 19 October 2026. While the Community lists layer is on, Module Engine downloads newer copies as often as their publishers ask and converts them on your computer. Network rules and site hiding follow the new copies; generic hiding changes only with a new release. You can turn these updates off in My lists. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
 
 Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
 

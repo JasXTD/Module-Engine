@@ -17,6 +17,7 @@ if (!globalThis.BlockAdsUserScripts && typeof importScripts === "function") impo
 if (!globalThis.BlockAdsDebug && typeof importScripts === "function") importScripts("../shared/debug-protocol.js", "debug-runtime.js");
 if (!globalThis.ModuleEngineNetworkLog && typeof importScripts === "function") importScripts("network-log.js");
 if (!globalThis.ModuleEngineThreatUpdates && typeof importScripts === "function") importScripts("../shared/update-config.js", "../blocking/evidence.js", "threat-updates.js");
+if (!globalThis.ModuleEngineCommunityUpdates && typeof importScripts === "function") importScripts("../blocking/community-lists.js", "community-updates.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const networkLog = ModuleEngineNetworkLog.create(api);
 const userscriptHost = BlockAdsUserScripts.create(api);
@@ -53,6 +54,14 @@ const THREAT_MAX_AGE_DAYS = 180;
 const THREAT_UPDATE_KEY = "threatUpdate";
 const THREAT_UPDATE_STATUS_KEY = "threatUpdateStatus";
 const THREAT_UPDATE_INTERVAL = 24 * 3600000;
+// Filter-list updates (community-updates.js). The installed change (versions,
+// disabled bundled rule IDs and added rules) is kept apart from its site hiding
+// data, which only the cosmetic loader reads.
+const COMMUNITY_UPDATE_KEY = "communityUpdate";
+const COMMUNITY_COSMETIC_KEY = "communityUpdateCosmetic";
+const COMMUNITY_STATUS_KEY = "communityUpdateStatus";
+// After a failed check; a successful one waits for the lists' own interval.
+const COMMUNITY_RETRY = 12 * 3600000;
 const DEFAULT_SETTINGS = {
   enabled: true,
   // Reported Threats is opt-in. Every profile saves its full settings on its
@@ -70,6 +79,8 @@ const DEFAULT_SETTINGS = {
   customNetworkFilters: "",
   cosmeticPausedDomains: [],
   flagSuspects: true,
+  // Download newer EasyList snapshots while the community layer is on.
+  communityListUpdates: true,
   whitelistedDomains: [],
   customBlockedDomains: [],
   popupBlockedDomains: [],
@@ -278,23 +289,84 @@ async function clearLog() {
 }
 
 function loadCommunityCosmetic() {
-  communityCosmetic ??= fetch(api.runtime.getURL("rules/community-cosmetic.json"))
-    .then(response => {
-      if (!response.ok) throw new Error("The bundled site hiding rules could not be read.");
-      return response.json();
-    })
-    .then(data => {
-      if (!data || !data.hide || !data.allow || (data.schemaVersion !== undefined && ![2, 3].includes(data.schemaVersion))) {
-        throw new Error("The bundled cosmetic format is unsupported; rebuild the rules.");
-      }
-      return data;
-    })
-    .catch(error => {
-      communityCosmetic = null;
-      console.warn("[Module Engine] Site hiding rules unavailable:", error);
-      return { hide: {}, allow: {} };
+  communityCosmetic ??= (async () => {
+    const response = await fetch(api.runtime.getURL("rules/community-cosmetic.json"));
+    if (!response.ok) throw new Error("The bundled site hiding rules could not be read.");
+    const data = await response.json();
+    if (!data || !data.hide || !data.allow || (data.schemaVersion !== undefined && ![2, 3].includes(data.schemaVersion))) {
+      throw new Error("The bundled cosmetic format is unsupported; rebuild the rules.");
+    }
+    // An installed filter-list update replaces site hiding. Generic hiding stays
+    // with the release, because its stylesheets are packaged files. If the update
+    // cannot be read, the bundled hiding is used rather than none.
+    const update = await loadCommunityUpdate().catch(error => {
+      console.warn("[Module Engine] The installed filter-list update could not be read:", error);
+      return null;
     });
+    if (!update) return data;
+    const saved = (await api.storage.local.get([COMMUNITY_COSMETIC_KEY]))[COMMUNITY_COSMETIC_KEY];
+    if (saved?.id !== update.id || !siteHidingShape(saved)) return data;
+    const { hide, allow, scoped, procedural, disableGeneric, disableAll } = saved;
+    return { ...data, hide, allow, scoped, procedural, disableGeneric, disableAll };
+  })().catch(error => {
+    communityCosmetic = null;
+    console.warn("[Module Engine] Site hiding rules unavailable:", error);
+    return { hide: {}, allow: {} };
+  });
   return communityCosmetic;
+}
+
+const stringList = value => Array.isArray(value) && value.every(item => typeof item === "string");
+const selectorMap = value => Boolean(value) && typeof value === "object" && !Array.isArray(value) && Object.values(value).every(stringList);
+function siteHidingShape(saved) {
+  return Boolean(saved) && selectorMap(saved.hide) && selectorMap(saved.allow) && Array.isArray(saved.scoped) && Array.isArray(saved.procedural) &&
+    stringList(saved.disableGeneric) && stringList(saved.disableAll);
+}
+
+// The bundled lists' description (versions, sources, counts), read once per worker.
+let communityInfoLoad = null;
+function loadBundledCommunityInfo() {
+  communityInfoLoad ??= fetch(api.runtime.getURL("rules/community-info.json")).then(response => {
+    if (!response.ok) throw new Error("The bundled filter-list description could not be read.");
+    return response.json();
+  }).then(info => {
+    if (!Array.isArray(info?.lists) || !info.lists.length || !info.lists.every(list => typeof list?.id === "string" && typeof list.sha256 === "string")) {
+      throw new Error("The bundled filter-list description is invalid.");
+    }
+    return info;
+  }).catch(error => { communityInfoLoad = null; throw error; });
+  return communityInfoLoad;
+}
+// The bundled snapshots an installed update was made against.
+const communityBaseline = info => info.lists.map(list => `${list.id}:${list.sha256}`).join(",");
+
+// The installed filter-list change, while it fits this release: a new release
+// brings newer bundled lists, and browsers re-enable bundled rules on update.
+async function loadCommunityUpdate() {
+  const saved = (await api.storage.local.get([COMMUNITY_UPDATE_KEY]))[COMMUNITY_UPDATE_KEY];
+  if (!saved) return null;
+  const info = await loadBundledCommunityInfo();
+  const { isListRule } = ModuleEngineCommunityUpdates;
+  if (saved.schemaVersion !== 1 || typeof saved.id !== "string" || saved.baseline !== communityBaseline(info) || !Array.isArray(saved.lists) ||
+      !Array.isArray(saved.disable) || !saved.disable.every(id => Number.isInteger(id) && id > 0) ||
+      !Array.isArray(saved.add) || !saved.add.every(rule => rule && isListRule(rule) && rule.condition && rule.action)) return null;
+  return saved;
+}
+
+// The bundled rules and the domains list exceptions must leave alone, for a
+// check: the rule file is 2.6 MiB, so it is read only then.
+async function loadBundledCommunity() {
+  const read = async file => {
+    const response = await fetch(api.runtime.getURL(file));
+    if (!response.ok) throw new Error(`The bundled ${file} could not be read.`);
+    return response.json();
+  };
+  const [info, rules, catalog, siteHosts] = await Promise.all([loadBundledCommunityInfo(), read("rules/community.json"),
+    read("rules/reviewed-domains.json"), read("rules/site-ad-hosts-info.json")]);
+  // As in the build: Module Engine's own ad, tracker and site-check domains.
+  const protectedDomains = [...catalog.domains.filter(item => item.category !== "unverified").map(item => item.domain),
+    ...siteHosts.map(item => item.domain)];
+  return { info, rules, protectedDomains };
 }
 
 function urlParts(value) {
@@ -346,8 +418,10 @@ async function logRuleMatch({ rule, request }) {
     if (!(await matchedBlock(rule))) return;
     const { host, path } = urlParts(request.url);
     const source = request.initiator || request.documentUrl || request.originUrl || "";
-    // An installed reported-threat update runs as dynamic rules in its own ID range.
-    const layer = rule.rulesetId === "_dynamic" && isThreatRule({ id: rule.ruleId }) ? "threats_ruleset" : rule.rulesetId;
+    // Installed list updates run as dynamic rules in their own ID ranges.
+    const updated = rule.rulesetId === "_dynamic" ? { id: rule.ruleId } : null;
+    const layer = updated && isThreatRule(updated) ? "threats_ruleset"
+      : updated && ModuleEngineCommunityUpdates.isListRule(updated) ? "community_ruleset" : rule.rulesetId;
     await addLog({
       kind: "blocked", layer: LAYER_NAMES[layer] || rule.rulesetId, ruleId: rule.ruleId,
       host, path, type: request.type, site: urlParts(source).host, tabId: request.tabId
@@ -644,6 +718,7 @@ function describeChanges(before, after) {
   if (before.customCosmeticFilters !== after.customCosmeticFilters) changes.push(`Saved ${customCosmeticRules(after.customCosmeticFilters).length} custom cosmetic rules`);
   if (before.customNetworkFilters !== after.customNetworkFilters) changes.push(`Saved ${customNetworkRules(after.customNetworkFilters).length} custom network rules`);
   if (before.flagSuspects !== after.flagSuspects) changes.push(`Flagging suspected ads turned ${onOff(after.flagSuspects)}`);
+  if (before.communityListUpdates !== after.communityListUpdates) changes.push(`Automatic filter-list updates turned ${onOff(after.communityListUpdates)}`);
   const lists = [["customBlockedDomains", "Custom block added", "Custom block removed"],
     ["cosmeticPausedDomains", "Hiding disabled on", "Hiding enabled on"],
     ["promptAllowedDomains", "Prompts and buttons allowed on", "Prompt and button protection restored on"],
@@ -757,9 +832,10 @@ async function loadThreats() {
   }
 }
 
-// An installed update's dynamic rules use IDs above RULE_ID_BASE; the person's
-// own dynamic rules count up from 1.
-const isThreatRule = rule => rule.id > ModuleEngineThreatUpdates.RULE_ID_BASE;
+// An installed threat update's dynamic rules use IDs 900,001 to 900,999 (at most
+// 100 rules); filter-list updates use 1,000,001 and up, and the person's own
+// dynamic rules count up from 1.
+const isThreatRule = rule => rule.id > ModuleEngineThreatUpdates.RULE_ID_BASE && rule.id < ModuleEngineThreatUpdates.RULE_ID_BASE + 1000;
 
 function constrainThreatRules(target, status) {
   if (status?.available && Date.parse(status.expiresAt) <= Date.now()) status.available = false;
@@ -839,6 +915,117 @@ async function installThreatUpdate(files, source) {
   throw new Error(`The new list could not be used. ${applied.ok ? applied.threatStatus.error : applied.error}`.trim());
 }
 
+// The installed filter-list change for this request, and what the interface
+// shows: the lists in use and how the last check went. If the bundled list
+// description cannot be read, the bundled rules stay as they are.
+async function loadCommunity(settings) {
+  const saved = (await api.storage.local.get([COMMUNITY_STATUS_KEY]))[COMMUNITY_STATUS_KEY] || {};
+  const updates = { enabled: settings.communityListUpdates, checkedAt: typeof saved.checkedAt === "string" ? saved.checkedAt : null,
+    result: ["installed", "current", "error"].includes(saved.result) ? saved.result : null,
+    error: typeof saved.error === "string" ? saved.error : "", interval: Number.isFinite(saved.interval) ? saved.interval : null, notice: "" };
+  try {
+    const info = await loadBundledCommunityInfo();
+    const update = await loadCommunityUpdate();
+    const lists = (update?.lists || info.lists).map(({ id, title, version, lastModified }) => ({ id, title, version: version ?? null, lastModified: lastModified ?? null }));
+    return { update, status: { source: update ? "update" : "bundled", id: update?.id ?? null, lists,
+      networkRules: update?.info?.networkRules ?? info.networkRules ?? null, cosmeticSelectors: update?.info?.cosmeticSelectors ?? info.cosmeticSelectors ?? null,
+      changed: update ? { disabled: update.disable.length, added: update.add.length } : null, networkApplied: Boolean(update), updates } };
+  } catch (error) {
+    return { update: null, status: { source: null, id: null, lists: [], networkRules: null, cosmeticSelectors: null, changed: null, networkApplied: false,
+      updates: { ...updates, notice: error.message || String(error) } } };
+  }
+}
+
+// One filter-list check at a time. Downloads and conversion run outside the
+// settings queue; installation runs inside it, against the lists in use then.
+let communityCheck = null;
+function checkCommunityLists() {
+  communityCheck ??= runCommunityCheck().finally(() => { communityCheck = null; });
+  return communityCheck;
+}
+
+// Due once the lists' own interval has passed since the last successful check,
+// or 12 hours after a failed one, while the community layer and automatic
+// updates are on. Nothing is requested otherwise.
+function communityCheckDue(settings, status) {
+  if (communityCheck || !settings.enabled || !settings.rulesets.community_ruleset || !settings.communityListUpdates || !status.lists.length) return false;
+  const { checkedAt, result, interval } = status.updates;
+  const last = Date.parse(checkedAt);
+  // A clock that moved backwards makes the last check look future-dated.
+  if (!Number.isFinite(last) || last > Date.now()) return true;
+  return Date.now() - last >= (result === "error" ? COMMUNITY_RETRY : interval || ModuleEngineCommunityUpdates.checkInterval(""));
+}
+
+async function runCommunityCheck() {
+  const checkedAt = new Date(Date.now()).toISOString();
+  let outcome;
+  try {
+    const { download, checkList, checkInterval, compareVersions } = ModuleEngineCommunityUpdates;
+    const info = await loadBundledCommunityInfo();
+    const lists = [];
+    for (const list of info.lists) {
+      const { text } = await download(list.source);
+      lists.push({ id: list.id, title: list.title, text, header: checkList(text, list) });
+    }
+    const interval = Math.min(...lists.map(list => checkInterval(list.header.expires)));
+    const inUse = (await loadCommunityUpdate())?.lists || info.lists;
+    if (!compareVersions(inUse, lists.map(list => ({ id: list.id, title: list.title, version: list.header.version })))) {
+      outcome = { result: "current", error: "", interval };
+    } else {
+      // The 2.6 MiB bundled rules are read only once newer lists have arrived.
+      const bundled = await loadBundledCommunity();
+      const converted = BlockAdsCommunityLists.convert(lists, { protectedDomains: bundled.protectedDomains, compileSelector: BlockAdsCosmetic.compileSelector });
+      outcome = { ...(await enqueue(() => installCommunityUpdate(bundled, converted, checkedAt))), interval };
+    }
+  } catch (error) {
+    outcome = { result: "error", error: error.message || String(error) };
+    await addLog({ kind: "event", message: `Filter-list update check failed: ${outcome.error}` });
+  }
+  await api.storage.local.set({ [COMMUNITY_STATUS_KEY]: { checkedAt, ...outcome } });
+  return reconcile();
+}
+
+// Installs converted lists that are newer than the lists in use and keep most
+// of the bundled rules, as a change from the bundled ruleset, then applies it.
+// If the browser does not take it, the previous lists are put back.
+async function installCommunityUpdate(bundled, converted, checkedAt) {
+  const { compareVersions, checkSize, difference } = ModuleEngineCommunityUpdates;
+  const current = await loadCommunityUpdate();
+  const versions = converted.info.lists.map(list => ({ ...list, version: list.version ?? null, lastModified: list.lastModified ?? null }));
+  if (!compareVersions(current?.lists || bundled.info.lists, versions)) return { result: "current", error: "" };
+  checkSize(converted.info, bundled.info);
+  const change = difference(bundled.rules, converted.rules);
+  if (change.disable.length && typeof api.declarativeNetRequest.updateStaticRules !== "function") {
+    throw new Error("This browser cannot switch off single bundled rules, so filter-list updates need a newer browser version.");
+  }
+  const maxDisabled = api.declarativeNetRequest.MAX_NUMBER_OF_DISABLED_STATIC_RULES ?? 5000;
+  if (change.disable.length > maxDisabled) {
+    throw new Error(`The lists changed too much since this release: ${change.disable.length.toLocaleString("en")} bundled rules would be switched off, ` +
+      `and this browser allows ${maxDisabled.toLocaleString("en")}. The bundled lists stay in use until a new release.`);
+  }
+  const previous = await api.storage.local.get([COMMUNITY_UPDATE_KEY, COMMUNITY_COSMETIC_KEY]);
+  const id = checkedAt;
+  const { hide, allow, scoped, procedural, disableGeneric, disableAll } = converted.cosmetic;
+  const lists = versions.map(list => ({ ...list, source: bundled.info.lists.find(item => item.id === list.id)?.source ?? null }));
+  await api.storage.local.set({
+    [COMMUNITY_UPDATE_KEY]: { schemaVersion: 1, id, baseline: communityBaseline(bundled.info), lists, disable: change.disable, add: change.add,
+      info: { networkRules: converted.info.networkRules, cosmeticSelectors: converted.info.cosmeticSelectors } },
+    [COMMUNITY_COSMETIC_KEY]: { id, hide, allow, scoped, procedural, disableGeneric, disableAll }
+  });
+  communityCosmetic = null;
+  const applied = await processRequest({ type: "GET_STATE" });
+  if (applied.ok && applied.communityStatus?.id === id && applied.communityStatus.networkApplied) {
+    await addLog({ kind: "event", message: `Installed ${lists.map(list => `${list.title} ${list.version}`).join(" and ")}: ` +
+      `${change.disable.length} bundled rules switched off, ${change.add.length} rules added` });
+    return { result: "installed", error: "" };
+  }
+  if (previous[COMMUNITY_UPDATE_KEY]) await api.storage.local.set(previous);
+  else await api.storage.local.remove([COMMUNITY_UPDATE_KEY, COMMUNITY_COSMETIC_KEY]);
+  communityCosmetic = null;
+  await processRequest({ type: "GET_STATE" });
+  throw new Error(`The new lists could not be used. ${applied.ok ? applied.communityStatus?.updates.notice || "" : applied.error}`.trim());
+}
+
 function enqueue(operation) {
   const result = operationQueue.then(operation);
   // Failure must not prevent a later request from repairing state.
@@ -847,7 +1034,7 @@ function enqueue(operation) {
 }
 
 function validateSettings(settings) {
-  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects"]) {
+  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects", "communityListUpdates"]) {
     if (typeof settings[key] !== "boolean") throw new Error(`${key} must be true or false.`);
   }
   for (const id of RULESET_IDS) {
@@ -867,6 +1054,7 @@ function validateSettings(settings) {
     customCosmeticFilters: settings.customCosmeticFilters,
     customNetworkFilters: settings.customNetworkFilters,
     flagSuspects: settings.flagSuspects,
+    communityListUpdates: settings.communityListUpdates,
     ...Object.fromEntries(DOMAIN_LIST_KEYS.map(key => [key, normalizeDomains(settings[key])]))
   };
   // A custom block always wins, so allowing a domain it covers would have no effect.
@@ -904,6 +1092,10 @@ async function loadSettings() {
   }
   return { settings: validateSettings(settings), quarantined };
 }
+
+// Chrome allows 30,000 dynamic rules, Firefox 5,000.
+const dynamicRuleLimit = () => api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
+  api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
 
 // `reserved` counts dynamic rules added beside these: an installed threat update.
 function makeDynamicRules(settings, reserved = 0) {
@@ -948,8 +1140,7 @@ function makeDynamicRules(settings, reserved = 0) {
         ...(settings.whitelistedDomains.length ? { excludedRequestDomains: settings.whitelistedDomains } : {}) }
     });
   }
-  const limit = api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
-    api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
+  const limit = dynamicRuleLimit();
   if (rules.length + reserved > limit) {
     throw new Error(`Too many custom network and domain rules for this browser (limit ${limit}${reserved ? `, including ${reserved} reported-threat rules` : ""}).`);
   }
@@ -1086,7 +1277,10 @@ async function readRules() {
     // Firefox returns null for absent optional fields; Chromium omits them.
     // Strip only absent fields, retaining every actual condition for verification.
     dynamic: JSON.parse(JSON.stringify(dynamic, (_key, value) => value === null ? undefined : value)),
-    scripts: (await api.scripting.getRegisteredContentScripts()).map(normalizeScript)
+    scripts: (await api.scripting.getRegisteredContentScripts()).map(normalizeScript),
+    // Bundled community rules a filter-list update switched off.
+    disabled: typeof api.declarativeNetRequest.getDisabledRuleIds === "function"
+      ? [...await api.declarativeNetRequest.getDisabledRuleIds({ rulesetId: "community_ruleset" })].sort((a, b) => a - b) : []
   };
 }
 
@@ -1116,6 +1310,13 @@ async function applyRules(target, threatStatus) {
         ...files(script), ...(excludeMatches.length ? { excludeMatches } : {}), persistAcrossSessions: true
       })));
     }
+  }
+  if (!same(current.disabled, target.disabled)) {
+    // After the dynamic rules, so replacement rules exist before their bundled
+    // originals are switched off. Browsers persist this until an extension update.
+    const before = new Set(current.disabled), after = new Set(target.disabled);
+    await changeNetworkRules(() => api.declarativeNetRequest.updateStaticRules({ rulesetId: "community_ruleset",
+      disableRuleIds: target.disabled.filter(id => !before.has(id)), enableRuleIds: current.disabled.filter(id => !after.has(id)) }));
   }
   target = constrainThreatRules(target, threatStatus);
   if (!same(current.enabled, target.enabled)) {
@@ -1234,14 +1435,29 @@ async function processRequest(message) {
     // An installed update replaces the bundled threats_ruleset with its own
     // dynamic rules; expired ones are removed by applyRules.
     const updatedThreats = desired.enabled && desired.rulesets.threats_ruleset && threats.rules ? threats.rules : [];
+    const own = makeDynamicRules(desired, updatedThreats.length);
+    // An installed filter-list update switches off the bundled community rules it
+    // dropped and adds its own while that layer is on. If its rules no longer fit
+    // beside the person's own, the bundled network rules are used instead.
+    const community = await loadCommunity(desired);
+    let listChange = community.update;
+    const listRules = listChange && desired.enabled && desired.rulesets.community_ruleset ? listChange.add : [];
+    if (listChange && own.length + updatedThreats.length + listRules.length > dynamicRuleLimit()) {
+      community.status.networkApplied = false;
+      community.status.updates.notice = `The installed filter-list update needs ${listRules.length.toLocaleString("en")} dynamic rules, more than this browser ` +
+        `has left beside your own rules. Its network rules are not used; its site hiding still is.`;
+      listChange = null;
+    }
     const target = {
       enabled: RULESET_IDS.filter(id => desired.enabled && desired.rulesets[id] && !(id === "threats_ruleset" && threats.rules)),
-      dynamic: [...makeDynamicRules(desired, updatedThreats.length), ...updatedThreats],
-      scripts: makePageScripts(desired, cosmetic)
+      dynamic: [...own, ...updatedThreats, ...(listChange ? listRules : [])],
+      scripts: makePageScripts(desired, cosmetic),
+      disabled: listChange ? [...listChange.disable].sort((a, b) => a - b) : []
     };
     beforeRules = await readRules();
     await applyRules(target, threatStatus);
-    const commit = { ...desired, quarantinedDomains: loaded.quarantined, protectionError: null, threatStatus };
+    const communityStatus = community.status;
+    const commit = { ...desired, quarantinedDomains: loaded.quarantined, protectionError: null, threatStatus, communityStatus };
     if (!same(await api.storage.local.get(Object.keys(commit)), commit)) {
       saveAttempted = true;
       await api.storage.local.set(commit);
@@ -1252,7 +1468,10 @@ async function processRequest(message) {
     if (threatCheckDue(desired, threatStatus)) {
       void checkThreatUpdate().catch(error => console.warn("[Module Engine] Reported-threat update check failed:", error));
     }
-    return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus };
+    if (communityCheckDue(desired, communityStatus)) {
+      void checkCommunityLists().catch(error => console.warn("[Module Engine] Filter-list update check failed:", error));
+    }
+    return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus, communityStatus };
   } catch (error) {
     let rollbackFailed = false;
     if (beforeRules) {
@@ -1512,6 +1731,15 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
         deceptiveButtons: promptsActive && settings.deceptiveButtonBlocking,
         flag: active && settings.flagSuspects, ...(popupGuard ? { popupGuard: true } : {}) });
     }).catch(() => sendResponse({ ok: false, error: "Could not read cosmetic filtering settings." }));
+    return true;
+  }
+  if (message?.type === "CHECK_LIST_UPDATES") {
+    if (!fromExtensionPage(sender)) {
+      sendResponse({ ok: false, error: "Filter-list updates can only be checked from the extension interface." });
+      return false;
+    }
+    // Answers with the verified state after the check, like GET_STATE.
+    checkCommunityLists().then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
     return true;
   }
   if (message?.type === "CHECK_THREAT_UPDATE") {
