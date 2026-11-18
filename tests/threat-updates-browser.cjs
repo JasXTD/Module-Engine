@@ -5,8 +5,9 @@
    it on downloads, verifies and installs the newer list as dynamic rules,
    including dropping the host the update removed; that site pauses still win;
    that the Lists page shows the installed list and its Check button works;
-   that a tampered list is refused while the installed one stays; and that no
-   request leaves this computer.
+   that a tampered list is refused while the installed one stays; that the
+   expiry switch saves the person's choice; and that no request leaves this
+   computer.
 
    node tests/threat-updates-browser.cjs [chrome|edge|firefox] [--headed]
 
@@ -138,6 +139,38 @@ const NAMES = ['threat-evidence.json', 'threat-evidence.sig', 'threat-policy.jso
       'a valid newer list replaces it');
     await until('the Lists page to show the newer list', () => page("document.querySelectorAll('#threatEvidence tbody tr').length === 22"));
     check(true, 'the Lists page follows the newer list');
+
+    // The expiry switch, clicked for real. What happens at the expiry date is
+    // covered by the unit tests, which control the clock.
+    const expirySwitch = () => page("(() => { const node = document.getElementById('retireExpiredThreats'); node.scrollIntoView({ block: 'center' }); const box = node.getBoundingClientRect(); return { x: box.x + box.width / 2, y: box.y + box.height / 2, checked: node.checked, disabled: node.disabled }; })()");
+    const usableSwitch = () => until('the expiry switch to be usable', async () => { const current = await expirySwitch(); return !current.disabled && current; });
+    // The page disables its switches while a protection check runs, and the
+    // update just installed starts checks of its own. A click that lands fires
+    // `change` at once, so only a click that fired nothing is repeated. The
+    // page's own handler redraws the switch from the saved settings before
+    // later listeners run, so the events are counted, not read.
+    await page("(window.__expiryChanges = 0, document.getElementById('retireExpiredThreats').addEventListener('change', () => window.__expiryChanges++), true)");
+    const setExpirySwitch = async on => {
+      for (let attempt = 1; ; attempt++) {
+        const before = await page('window.__expiryChanges');
+        const box = await usableSwitch();
+        await browser.clickAt(box.x, box.y, lists);
+        if (await until('the click to land', () => page(`window.__expiryChanges > ${before}`), 2000).catch(() => false)) break;
+        if (attempt === 3) throw new Error('Three clicks on the expiry switch did not land');
+      }
+      await until('the choice to save', () => page(`!busy && settings.retireExpiredThreats === ${on} && document.getElementById('retireExpiredThreats').checked === ${on}`));
+    };
+    const initial = await usableSwitch();
+    check(!initial.checked && (await state()).settings.retireExpiredThreats === false, 'the expiry switch is off in a new profile and can be changed');
+    await setExpirySwitch(true);
+    const retiring = await state();
+    check(retiring.settings.retireExpiredThreats === true && retiring.threatStatus.retireAt === retiring.threatStatus.expiresAt && retiring.threatStatus.available,
+      'turning it on saves the choice and sets the list to stop at its expiry date');
+    check(JSON.stringify(await updatedIds()) === JSON.stringify(ids(22)), 'before that date the rules stay in place');
+    await setExpirySwitch(false);
+    const keeping = await state();
+    check(keeping.threatStatus.retireAt === null && keeping.threatStatus.available && JSON.stringify(await updatedIds()) === JSON.stringify(ids(22)),
+      'turning it off keeps the list until a newer one replaces it');
 
     await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: false } } });
     check((await updatedIds()).length === 0 && !(await enabled()).includes('threats_ruleset'), 'switching Reported Threats off removes the updated rules');

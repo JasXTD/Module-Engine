@@ -24,7 +24,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
 - **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, cosmetic hiding, advanced page hiding and a visual element picker.
-- **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. The layer switches itself off when its evidence expires, and a newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
+- **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. When its evidence expires it keeps blocking until a newer list replaces it, unless you ask it to switch itself off then. A newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
 - **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
 - **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
@@ -118,13 +118,13 @@ Module Engine updates EasyList and EasyList China from their publishers and conv
 
 Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
-On **18 November 2026** the current code passed:
+On **19 November 2026** the current code passed:
 
-- **703 Node tests**;
+- **706 Node tests**;
 - **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
-- **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
+- **801 Chrome, 801 Edge and 794 Firefox** blocker checks, plus **61 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered the Reported Threats expiry switch, the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;

@@ -82,6 +82,10 @@ const DEFAULT_SETTINGS = {
   flagSuspects: true,
   // Download newer EasyList snapshots while the community layer is on.
   communityListUpdates: true,
+  // An expired reported-threat list keeps blocking until a newer list replaces
+  // it. On, the layer stops at the expiry date instead. Installs that saved
+  // settings before this choice existed take this default too.
+  retireExpiredThreats: false,
   whitelistedDomains: [],
   customBlockedDomains: [],
   popupBlockedDomains: [],
@@ -720,6 +724,7 @@ function describeChanges(before, after) {
   if (before.customNetworkFilters !== after.customNetworkFilters) changes.push(`Saved ${customNetworkRules(after.customNetworkFilters).length} custom network rules`);
   if (before.flagSuspects !== after.flagSuspects) changes.push(`Flagging suspected ads turned ${onOff(after.flagSuspects)}`);
   if (before.communityListUpdates !== after.communityListUpdates) changes.push(`Automatic filter-list updates turned ${onOff(after.communityListUpdates)}`);
+  if (before.retireExpiredThreats !== after.retireExpiredThreats) changes.push(`Stopping reported threats when their evidence expires turned ${onOff(after.retireExpiredThreats)}`);
   const lists = [["customBlockedDomains", "Custom block added", "Custom block removed"],
     ["cosmeticPausedDomains", "Hiding disabled on", "Hiding enabled on"],
     ["promptAllowedDomains", "Prompts and buttons allowed on", "Prompt and button protection restored on"],
@@ -825,10 +830,12 @@ async function loadThreats() {
     } else {
       await api.alarms.clear(THREAT_EXPIRY_ALARM);
     }
-    return { status: { available: expires > Date.now(), count: policy.ruleCount, expiresAt: policy.expiresAt, reviewedAt: policy.reviewedAt,
-      source: rules ? "update" : "bundled", error: "", updates }, rules };
+    // The list stops at its expiry until applyThreatExpiryChoice applies the
+    // person's choice.
+    return { status: { available: expires > Date.now(), count: policy.ruleCount, expiresAt: policy.expiresAt, retireAt: policy.expiresAt,
+      reviewedAt: policy.reviewedAt, source: rules ? "update" : "bundled", error: "", updates }, rules };
   } catch (error) {
-    return { status: { available: false, count: 0, expiresAt: null, reviewedAt: null, source: null,
+    return { status: { available: false, count: 0, expiresAt: null, retireAt: null, reviewedAt: null, source: null,
       error: `Reported threats are inactive. ${error.message || String(error)}`, updates }, rules: null };
   }
 }
@@ -838,14 +845,27 @@ async function loadThreats() {
 // dynamic rules count up from 1.
 const isThreatRule = rule => rule.id > ModuleEngineThreatUpdates.RULE_ID_BASE && rule.id < ModuleEngineThreatUpdates.RULE_ID_BASE + 1000;
 
+// `retireAt` is when a checked list stops blocking: its expiry if the person
+// asked for that, otherwise null, so it blocks until a newer list replaces it.
+// A slow browser write may cross that moment, so it is checked again on use.
+const threatRetired = status => Boolean(status?.retireAt) && Date.parse(status.retireAt) <= Date.now();
+
+// Applies the saved or requested choice about expired evidence. A list that
+// failed its checks never blocks, whatever the choice.
+function applyThreatExpiryChoice(status, settings) {
+  if (status.error) return;
+  status.retireAt = settings.retireExpiredThreats ? status.expiresAt : null;
+  status.available = !threatRetired(status);
+}
+
 function constrainThreatRules(target, status) {
-  if (status?.available && Date.parse(status.expiresAt) <= Date.now()) status.available = false;
+  if (status?.available && threatRetired(status)) status.available = false;
   return { ...target, enabled: target.enabled.filter(id => id !== "threats_ruleset" || status?.available),
     dynamic: target.dynamic.filter(rule => !isThreatRule(rule) || status?.available) };
 }
 
 async function retireInactiveThreats(status) {
-  if (status.available && Date.parse(status.expiresAt) > Date.now()) return;
+  if (status.available && !threatRetired(status)) return;
   status.available = false;
   if ((await api.declarativeNetRequest.getEnabledRulesets()).includes("threats_ruleset")) {
     await changeNetworkRules(() => api.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: [], disableRulesetIds: ["threats_ruleset"] }));
@@ -1035,7 +1055,7 @@ function enqueue(operation) {
 }
 
 function validateSettings(settings) {
-  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects", "communityListUpdates"]) {
+  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects", "communityListUpdates", "retireExpiredThreats"]) {
     if (typeof settings[key] !== "boolean") throw new Error(`${key} must be true or false.`);
   }
   for (const id of RULESET_IDS) {
@@ -1056,6 +1076,7 @@ function validateSettings(settings) {
     customNetworkFilters: settings.customNetworkFilters,
     flagSuspects: settings.flagSuspects,
     communityListUpdates: settings.communityListUpdates,
+    retireExpiredThreats: settings.retireExpiredThreats,
     ...Object.fromEntries(DOMAIN_LIST_KEYS.map(key => [key, normalizeDomains(settings[key])]))
   };
   // A custom block always wins, so allowing a domain it covers would have no effect.
@@ -1427,9 +1448,13 @@ async function processRequest(message) {
   try {
     const threats = await loadThreats();
     threatStatus = threats.status;
-    await retireInactiveThreats(threatStatus);
     loaded = await loadSettings();
+    // Expired rules leave the browser before anything else can fail, when the
+    // saved choice says so. This request may change that choice.
+    applyThreatExpiryChoice(threatStatus, loaded.settings);
+    await retireInactiveThreats(threatStatus);
     const desired = editSettings(loaded.settings, message);
+    applyThreatExpiryChoice(threatStatus, desired);
     // The generic stylesheets' exclusions come from the bundled exceptions.
     const cosmetic = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset &&
       desired.genericCosmeticFiltering ? await loadCommunityCosmetic() : {};

@@ -1,8 +1,45 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record covers update security on 18 November 2026, following the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record covers the Reported Threats expiry switch on 19 November 2026, following the 18 November update security fixes, the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Reported Threats expiry switch — 19 November 2026
+
+The user asked for reported-threat evidence to keep blocking after it expires, with a setting to stop and warn instead. Until now the layer always switched itself off at the expiry date, currently 28 February 2027, and stayed off until a newer list arrived.
+
+- **The setting.** *Stop blocking and warn when the evidence expires* (`retireExpiredThreats`) is in My lists → Reported-threat evidence. It is off by default, installs that saved settings before it existed take that default, and the activity log records each change.
+- **Off.** An expired list, bundled or installed, keeps blocking until a newer list replaces it. The popup shows "24 exact hosts · expired 2027-02-28 UTC" and its switch stays usable. My lists says the rules stay in use until a newer list replaces them.
+- **On.** The earlier behaviour: the expiry alarm and every check remove the rules, and the popup says "Evidence expired — update required". Turning the setting on after the date removes them at once, and turning it off puts them back. Neither changes the Reported Threats switch.
+- **How.** The threat status gains `retireAt`: the expiry when the setting is on, otherwise null. Each request applies the saved choice before it removes expired rules, then the requested choice. That early removal used to run before the settings were read. If saved settings cannot be read at all, the request now changes nothing, as for the other layers.
+- **Unchanged.** A policy that fails its checks (malformed, outside the 180-day window or reviewed in the future), or an expiry alarm that cannot be set, still turns the layer off with an error. A signed update that has already expired is still refused.
+
+**706 Node tests** passed, 3 of them new:
+
+- by default, an expired list keeps blocking through the expiry alarm, a restart, an upgrade and settings requests, and a request does not switch it off and on again;
+- the setting takes effect at once after expiry, is logged and rejects values other than true or false; before expiry it only sets when the list stops;
+- an installed signed list keeps its rules after its own expiry.
+
+The four earlier expiry tests now turn the setting on first. The three new tests fail on the previous code. Three deliberate faults were each caught: skipping the saved choice before the early removal, which made every request switch the kept list off and on; ignoring the requested choice; and retiring at expiry whatever the choice. In one earlier full run, the backtracking test in `tests/userscripts-matching.test.cjs` hit its 1-second limit under load. It passed alone 3 times in about 95 ms, and in the recorded run. The PowerShell suites passed 35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions.
+
+All browser suites ran offline, in temporary profiles with loopback fixtures, from a frozen copy of the tree. The packaged files match the committed ones.
+
+| Suite | Chrome 158 | Edge 157 | Firefox 160.0.1 |
+| --- | --- | --- | --- |
+| Blocker | 801 | 801 | 794 |
+| Signed threat-list updates | 61 | 61 | 61 |
+| Filter-list updates | 26 | 26 | 26 |
+| Userscript installs and updates | 80 | 80 | 70 |
+| Release packages | 9 | 9 | 10 |
+
+The blocker suite gained one check: My lists' text for expired evidence under each choice. The signed-update suite gained four: real clicks on the switch save each choice and set when the list stops, and the rules stay in place before that date.
+
+- **First runs.** The signed-update suite failed in Edge and Firefox because the test read the switch while a protection check had it disabled. The installed update had started that check.
+- **First fix.** It repeated clicks it thought were lost, but it read the switch after the page had redrawn it, so it clicked the setting back off. Each browser failed once more.
+- **Second fix.** The test now waits for the switch to be usable and counts `change` events. It then passed three times in each browser.
+- **Firefox blocker suite.** It stopped at the element-picker concurrent-exception step in 3 of 6 runs and passed the other 3 with 794 checks. The change does not touch the picker. Main without the change, run alternately with it, failed the same step in 1 of 3 runs and passed the other 2 with 793.
+
+Not verified in a browser: passing the expiry date itself. The suites cannot move the browser's clock, so the unit tests, which control it, cover that.
 
 ## Update security fixes — 18 November 2026
 

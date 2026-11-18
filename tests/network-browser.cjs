@@ -175,8 +175,12 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
       }
     }
   }
-  await evaluate("(() => {const now=Date.now;Date.now=()=>Date.parse(threatEvidence.policy.expiresAt)+1;try {render();} finally {Date.now=now;}return true;})()");
-  check(await evaluate("document.getElementById('threatEvidenceStatus').textContent.includes('expired') && !document.getElementById('threatEvidenceStatus').textContent.includes('enabled')"),'an expired evidence view never claims the threat rules are current');
+  // Renders as if the evidence had expired, with each expiry choice.
+  const expiredView=retire=>evaluate(`(() => {const now=Date.now,saved=settings.retireExpiredThreats;settings.retireExpiredThreats=${retire};Date.now=()=>Date.parse(threatEvidence.policy.expiresAt)+1;try {render();} finally {Date.now=now;settings.retireExpiredThreats=saved;}return document.getElementById('threatEvidenceStatus').textContent;})()`);
+  let expiredText=await expiredView(false);
+  check(expiredText.includes('expired') && expiredText.includes('stay in use') && !expiredText.includes('enabled'),'by default an expired evidence view says the rules stay in use, never that they are current');
+  expiredText=await expiredView(true);
+  check(expiredText.includes('expired') && expiredText.includes('retired') && !expiredText.includes('enabled'),'with the expiry switch on, an expired evidence view says the layer stops');
   await evaluate('(render(),true)');
   await evaluate("(async () => {const original=api.runtime.sendMessage;api.runtime.sendMessage=async()=>{throw new Error('Fixture messaging failure');};try {await run({type:'GET_STATE'});} finally {api.runtime.sendMessage=original;}return true;})()");
   check(await evaluate("!protectionVerified && document.getElementById('threatEvidenceStatus').textContent.includes('not verified') && document.getElementById('notice').textContent.includes('Fixture messaging failure')"),'a failed background connection clears the verified-protection claim');

@@ -78,6 +78,8 @@ function renderThreatEvidence(filter) {
   const section=byId('threatEvidence'), body=section.querySelector('tbody');
   body.replaceChildren();
   renderThreatUpdates();
+  byId('retireExpiredThreats').checked=Boolean(settings?.retireExpiredThreats);
+  byId('retireExpiredThreats').disabled=busy || !settings;
   const status=byId('threatEvidenceStatus');
   if (!threatEvidence) {
     status.textContent=threatEvidenceError || 'Reading bundled evidence…';
@@ -88,7 +90,8 @@ function renderThreatEvidence(filter) {
   const {catalog,policy}=threatEvidence;
   section.querySelector('.count').textContent=`(${catalog.domains.length})`;
   const expired=Date.parse(policy.expiresAt) <= Date.now();
-  if (expired) status.textContent=protectionVerified && threatStatus && !threatStatus.available
+  // Expired evidence stops the layer only when the person asked for that.
+  if (expired && settings?.retireExpiredThreats) status.textContent=protectionVerified && threatStatus && !threatStatus.available
     ? 'Evidence expired. Reported-threat filtering is inactive.'
     : 'Evidence expired. The reported-threat layer is retired at the next protection check.';
   // An update can share the bundled list's expiry, so match the review date too.
@@ -96,8 +99,10 @@ function renderThreatEvidence(filter) {
       threatStatus.reviewedAt !== policy.reviewedAt) status.textContent='Protection status is unavailable or not verified. Evidence remains visible for review.';
   else if (!settings.rulesets.threats_ruleset) status.textContent='Reported Threats is off. Turn it on in the popup to block these hosts; the evidence stays visible for review.';
   else if (!settings.enabled || !threatStatus.available) status.textContent='Reported-threat filtering is inactive. Evidence remains visible for review.';
-  else status.textContent='Reported-threat rules are enabled; individual site pauses still apply.';
-  byId('threatEvidenceDates').textContent=`Reviewed ${catalog.reviewedOn} · expires ${policy.expiresAt.replace('T',' ').replace('Z',' UTC')} · ${threatEvidence.source === 'update' ? 'signed update' : 'bundled with this version'}. Observation dates retain the precision of the reports.`;
+  else status.textContent=expired
+    ? 'Evidence expired. The reported-threat rules stay in use until a newer list replaces them; individual site pauses still apply.'
+    : 'Reported-threat rules are enabled; individual site pauses still apply.';
+  byId('threatEvidenceDates').textContent=`Reviewed ${catalog.reviewedOn} · ${expired ? 'expired' : 'expires'} ${policy.expiresAt.replace('T',' ').replace('Z',' UTC')} · ${threatEvidence.source === 'update' ? 'signed update' : 'bundled with this version'}. Observation dates retain the precision of the reports.`;
   const sources=new Map(catalog.sources.map(source=>[source.id,source]));
   const shown=catalog.domains.filter(item=>matches([item.host,item.host.replaceAll('.','[.]'),item.observedOn,item.role,item.section,sources.get(item.sourceId).publisher],filter));
   for (const item of shown) {
@@ -478,6 +483,9 @@ byId("saveFilters").addEventListener("click", async () => {
 byId("communityListUpdates").addEventListener("change", event => {
   void run({ type: "UPDATE_SETTINGS", patch: { communityListUpdates: event.target.checked } });
 });
+byId("retireExpiredThreats").addEventListener("change", event => {
+  void run({ type: "UPDATE_SETTINGS", patch: { retireExpiredThreats: event.target.checked } });
+});
 byId("checkFilterLists").addEventListener("click", async () => {
   checkingLists = true;
   render();
@@ -498,7 +506,7 @@ api.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if ("adFlags" in changes) void refreshFlags();
   if (changes.protectionError?.newValue) { protectionVerified=false; render(); }
-  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "communityStatus", "communityListUpdates", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
+  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "communityStatus", "communityListUpdates", "retireExpiredThreats", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
 });
 (async () => {
   render();

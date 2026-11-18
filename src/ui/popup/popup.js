@@ -129,9 +129,11 @@ function renderUI() {
   toggleTrackers.checked = settings.rulesets.trackers_ruleset;
   toggleThreats.checked = settings.rulesets.threats_ruleset && Boolean(threatStatus?.available);
   toggleThreats.disabled = busy || !settings.enabled || !threatStatus?.available;
+  // A list past its expiry is unavailable only when the person asked for that;
+  // otherwise it keeps blocking and shows the date it expired.
   threatStatusEl.textContent = threatStatus?.error ? "Unavailable — retry the protection check" : !threatStatus?.available
     ? "Evidence expired — update required"
-    : `${threatStatus.count} exact hosts · expires ${threatStatus.expiresAt.slice(0, 10)} UTC`;
+    : `${threatStatus.count} exact hosts · ${Date.parse(threatStatus.expiresAt) <= Date.now() ? "expired" : "expires"} ${threatStatus.expiresAt.slice(0, 10)} UTC`;
   toggleCosmetic.checked = settings.cosmeticFiltering;
   toggleGenericCosmetic.checked = settings.genericCosmeticFiltering;
   toggleGenericCosmetic.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;

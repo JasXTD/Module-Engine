@@ -761,8 +761,8 @@ test('worker wake checks packaged evidence and restores missing expiry alarms wi
   assert.ok(h.state.fetches.length >= 2);
 });
 
-test('expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors', async () => {
-  const h = harness({ ...threatsOn, customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
+test('with the expiry switch on, the expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors', async () => {
+  const h = harness({ ...threatsOn, retireExpiredThreats: true, customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
   await h.ready;
   assert.ok(h.state.enabled.includes('threats_ruleset'));
   h.state.now = Date.parse('2027-02-28T00:00:00Z');
@@ -774,8 +774,8 @@ test('expiry alarm disables reported threats at the boundary without changing sa
   assert.equal(h.state.alarms['reported-threats-expiry'], undefined);
 });
 
-test('an expired bundle cannot be re-enabled by startup, upgrade or a settings request', async () => {
-  const h = harness({}, 5000, '2027-03-01T00:00:00Z');
+test('with the expiry switch on, an expired bundle cannot be re-enabled by startup, upgrade or a settings request', async () => {
+  const h = harness({ retireExpiredThreats: true }, 5000, '2027-03-01T00:00:00Z');
   h.state.enabled = [...ids];
   await h.ready;
   for (const event of ['startup', 'installed']) await h.listeners[event]();
@@ -783,6 +783,58 @@ test('an expired bundle cannot be re-enabled by startup, upgrade or a settings r
   assert.equal(result.ok, true);
   assert.equal(result.threatStatus.available, false);
   assert.deepEqual(h.state.enabled.sort(), ['ads_ruleset', 'community_ruleset', 'trackers_ruleset']);
+});
+
+test('by default, expired evidence keeps blocking through the expiry alarm, restarts and settings requests', async () => {
+  const h = harness({ ...threatsOn, customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
+  await h.ready;
+  assert.equal(h.state.storage.retireExpiredThreats, false, 'settings saved before the switch existed take its default, off');
+  assert.equal(h.state.storage.threatStatus.retireAt, null);
+  h.state.now = Date.parse('2027-02-28T00:00:00Z');
+  await h.listeners.alarm({ name: 'reported-threats-expiry' });
+  for (const event of ['startup', 'installed']) await h.listeners[event]();
+  const result = await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'new.example' });
+  assert.equal(result.ok, true);
+  assert.deepEqual([result.threatStatus.available, result.threatStatus.error, result.threatStatus.expiresAt],
+    [true, '', '2027-02-28T00:00:00Z']);
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'the expired list keeps blocking');
+  assert.equal(h.state.dynamic.length, 2);
+  assert.equal(h.state.badge, '', 'an expired list is not reported as a failure');
+  const write = h.api.declarativeNetRequest.updateEnabledRulesets, writes = [];
+  h.api.declarativeNetRequest.updateEnabledRulesets = async options => { writes.push(options); return write(options); };
+  await h.send({ type: 'GET_STATE' });
+  assert.deepEqual(writes, [], 'a request does not switch the kept list off and on again');
+  // A list that expired while Reported Threats was off can still be turned on.
+  const later = harness({}, 5000, '2027-03-01T00:00:00Z');
+  await later.ready;
+  assert.equal(later.state.enabled.includes('threats_ruleset'), false, 'Reported Threats still starts off');
+  const on = await later.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
+  assert.deepEqual([on.ok, on.threatStatus.available], [true, true]);
+  assert.ok(later.state.enabled.includes('threats_ruleset'));
+});
+
+test('the expiry switch takes effect at once after expiry and leaves the layer switch alone', async () => {
+  const h = harness(threatsOn, 5000, '2027-03-01T00:00:00Z');
+  await h.ready;
+  assert.ok(h.state.enabled.includes('threats_ruleset'));
+  const on = await h.send({ type: 'UPDATE_SETTINGS', patch: { retireExpiredThreats: true } });
+  assert.deepEqual([on.ok, on.threatStatus.available, on.threatStatus.retireAt], [true, false, '2027-02-28T00:00:00Z']);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false);
+  assert.deepEqual([h.state.storage.retireExpiredThreats, h.state.storage.rulesets.threats_ruleset], [true, true],
+    'Reported Threats stays on, waiting for a newer list');
+  const off = await h.send({ type: 'UPDATE_SETTINGS', patch: { retireExpiredThreats: false } });
+  assert.deepEqual([off.ok, off.threatStatus.available, off.threatStatus.retireAt], [true, true, null]);
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'turning the switch off puts the expired list back');
+  const messages = (await h.send({ type: 'GET_LOG' })).entries.map(entry => entry.message);
+  for (const state of ['on', 'off']) assert.ok(messages.includes(`Stopping reported threats when their evidence expires turned ${state}`), state);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { retireExpiredThreats: 'yes' } })).ok, false);
+  assert.equal(h.state.storage.retireExpiredThreats, false);
+  // Before expiry the switch only sets when the list stops.
+  const current = harness(threatsOn);
+  await current.ready;
+  const early = await current.send({ type: 'UPDATE_SETTINGS', patch: { retireExpiredThreats: true } });
+  assert.deepEqual([early.threatStatus.available, early.threatStatus.retireAt], [true, '2027-02-28T00:00:00Z']);
+  assert.ok(current.state.enabled.includes('threats_ruleset'));
 });
 
 test('explicit threat-layer pause survives a worker restart and later reconciliation', async () => {
@@ -832,8 +884,8 @@ test('failure to schedule expiry prevents threat activation, while a retry recov
   assert.equal(h.state.enabled.includes('threats_ruleset'), true, 'the retry turns the layer back on');
 });
 
-test('crossing expiry during an edit and storage rollback never restores expired threat rules', async () => {
-  const h = harness({ ...threatsOn, customBlockedDomains: ['original.example'] });
+test('with the expiry switch on, crossing expiry during an edit and storage rollback never restores expired threat rules', async () => {
+  const h = harness({ ...threatsOn, retireExpiredThreats: true, customBlockedDomains: ['original.example'] });
   await h.ready;
   assert.ok(h.state.enabled.includes('threats_ruleset'), 'the layer starts active');
   h.state.expireOnDynamic = true;
@@ -1908,8 +1960,20 @@ test('an installed list is re-verified by a new worker, and set aside when its k
   assert.deepEqual(updatedRules(bundled), []);
 });
 
-test('an installed list retires its rules at its own expiry without changing the saved switch', async () => {
+test('by default, an installed list keeps its rules after its own expiry', async () => {
   const h = updateHarness({ now: '2027-02-27T23:00:00Z' });
+  await settled(h);
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  h.state.now = Date.parse('2027-02-28T00:00:00Z');
+  await h.listeners.alarm({ name: 'reported-threats-expiry' });
+  await settled(h);
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false, 'the older bundled list is not added beside it');
+  assert.deepEqual([h.state.storage.threatStatus.available, h.state.storage.threatStatus.source], [true, 'update']);
+});
+
+test('with the expiry switch on, an installed list retires its rules at its own expiry without changing the saved switch', async () => {
+  const h = updateHarness({ initial: { ...threatsOn, retireExpiredThreats: true }, now: '2027-02-27T23:00:00Z' });
   await settled(h);
   assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
   assert.equal(h.state.alarms['reported-threats-expiry'].scheduledTime, Date.parse('2027-02-28T00:00:00Z'));
