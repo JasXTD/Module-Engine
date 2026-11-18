@@ -4,14 +4,14 @@ const fs = require('node:fs/promises'), path = require('node:path'), os = requir
 const http = require('node:http'), assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const { chromium } = require('./browser-smoke.cjs');
+const { files } = require('../scripts/extension-files.cjs');
 const root = path.resolve(__dirname, '..'), name = process.argv[2] || 'chrome';
 if (!['chrome', 'edge'].includes(name)) throw new Error('Choose chrome or edge');
 
 (async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'blockads-frame-media-' + name + '-'));
   const extension = path.join(temp, 'extension'); await fs.mkdir(extension);
-  const files = (await fs.readdir(root)).filter(file => /\.(js|html|css)$/.test(file) || file === 'manifest.json');
-  for (const file of files.concat('rules', 'icons')) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
+  for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const report = { browser: name, temp, checks: [], requests: [], messages: [], denied: [], hashes: {}, started: new Date().toISOString() };
   for (const file of files) report.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
   const check = (ok, label) => { assert.ok(ok, label); report.checks.push(label); };

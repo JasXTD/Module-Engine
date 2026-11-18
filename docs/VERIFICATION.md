@@ -1,8 +1,26 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 static generic hiding change, following the same day's reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 repair of the native pop-up and redirect suites, following the same day's static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Native pop-up and redirect suites — 18 November 2026
+
+Three native suites still packaged the root layout that the 14 November source move replaced: root-level `.js`, `.css` and `.html` files plus `rules` and `icons`. The browsers refused that package before any check ran. Chrome could not load the background script, and Edge could not load `src/shared/shared.js`. The suites now copy and hash the shared inventory in `scripts/extension-files.cjs`, as the blocker and blocked-tab suites do. Their fixtures, assertions, deny proxy and disposable profiles are unchanged, and no extension code changed. This resolves the known limit recorded under static generic hiding below.
+
+| Suite | Chrome 158 | Edge 157 |
+| --- | ---: | ---: |
+| `tests/popup-guard-browser.cjs` | 38 | 38 |
+| `tests/frame-redirects-browser.cjs` | 28 | 28 |
+| `tests/same-tab-redirects-browser.cjs` | 56 | 56 |
+
+- Each suite passed twice in each browser. Every run closed its browser without forcing it.
+- Run from a `git archive` export of `6b37c8e`, the same suites stopped at extension loading in both browsers, with 0 checks.
+- Every tested package held all 89 inventory files, and their hashes match the committed source.
+- The deny proxy saw and refused only the browsers' own background services, such as time, sign-in and update checks. No fixture or requested-host request reached it.
+- `tests/extension-layout.test.cjs` passed 5 of 5.
+
+Tests used installed browsers, disposable profiles, owned loopback pages and deny proxies. Nothing was installed. [Runs and evidence](../verification/2026-11-18/redirect-suites/summary.json).
 
 ## Static generic hiding — 18 November 2026
 

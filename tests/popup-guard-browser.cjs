@@ -3,16 +3,16 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const {createHash}=require('node:crypto');
 const {chromium}=require('./browser-smoke.cjs');
+const {files}=require('../scripts/extension-files.cjs');
 const root=path.resolve(__dirname,'..'),browserName=process.argv[2]||'chrome';
 if (!['chrome','edge'].includes(browserName)) throw new Error('Choose chrome or edge.');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
   const temp=await fs.mkdtemp(path.join(os.tmpdir(),'blockads-popup-guard-'+browserName+'-')),extension=path.join(temp,'extension');
   await fs.mkdir(extension);
-  const files=(await fs.readdir(root)).filter(name=>/\.(js|css|html)$/.test(name)||name==='manifest.json').concat('rules','icons');
   for (const file of files) await fs.cp(path.join(root,file),path.join(extension,file),{recursive:true});
   const evidence={browser:browserName,temp,checks:[],requests:[],denied:[],hashes:{},started:new Date().toISOString()};
-  for (const file of files.filter(name=>!['rules','icons'].includes(name)).concat('rules/ads.json')) evidence.hashes[file]=createHash('sha256').update(await fs.readFile(path.join(extension,file))).digest('hex');
+  for (const file of files) evidence.hashes[file]=createHash('sha256').update(await fs.readFile(path.join(extension,file))).digest('hex');
   const check=(ok,message)=>{assert.ok(ok,message);evidence.checks.push(message);};
   const proxy=http.createServer((req,res)=>{evidence.denied.push(req.url);res.writeHead(403);res.end('Offline fixture');});
   proxy.on('connect',(req,socket)=>{evidence.denied.push(req.url);socket.on('error',()=>{});socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');});

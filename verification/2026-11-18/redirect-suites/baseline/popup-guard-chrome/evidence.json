@@ -1,0 +1,14 @@
+{
+  "browser": "chrome",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-popup-guard-chrome-ctohUq",
+  "checks": [],
+  "requests": [],
+  "denied": [],
+  "hashes": {
+    "manifest.json": "eafd77b8478c61086ee8c7d86eef817c81e7a9307aaeacd6982221e9a97fb370",
+    "rules/ads.json": "9e824086797f284ed53f1149609cb8ca3cbf1ed4dc54f6cd62841adc20ef979f"
+  },
+  "started": "2026-11-18T06:11:21.979Z",
+  "success": false,
+  "error": "Error: {\"id\":3,\"error\":{\"code\":-32600,\"message\":\"Could not load background script ''.\"}}\nBrowser exit null: \n    at Object.receive (C:\\Users\\Tommy\\AppData\\Local\\Temp\\claude\\baa7c3e5d8f004de\\e027771f-1a3a-4cd7-8513-ee0476571a4b\\scratchpad\\baseline\\tests\\browser-smoke.cjs:38:38)\n    at Socket.<anonymous> (C:\\Users\\Tommy\\AppData\\Local\\Temp\\claude\\baa7c3e5d8f004de\\e027771f-1a3a-4cd7-8513-ee0476571a4b\\scratchpad\\baseline\\tests\\browser-smoke.cjs:96:26)\n    at Socket.emit (node:events:514:28)\n    at addChunk (node:internal/streams/readable:569:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:520:3)\n    at Readable.push (node:internal/streams/readable:400:5)\n    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+}
