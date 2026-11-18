@@ -17,6 +17,8 @@
   const bytes = text => new TextEncoder().encode(text).length;
   const fail = message => { throw new Error(message); };
   const unique = values => [...new Set(values)];
+  const granted = (metadata, name) => metadata.grants.includes('GM.' + name) || metadata.grants.includes('GM_' + name) ||
+    name === 'xmlhttpRequest' && metadata.grants.includes('GM.xmlHttpRequest');
   const matching = globalThis.BlockAdsMatching;
   // Unicode Bidi_Control: keep legitimate RTL text, but make invisible direction
   // changes explicit at the source-review boundary. Never rewrite saved code.
@@ -190,6 +192,9 @@
     const grants = added(after.grants.filter(grant => grant !== 'none'), before.grants), connects = added(after.connects, before.connects);
     if (grants.length) reasons.push('it asks for ' + grants.join(', '));
     if (connects.length) reasons.push('it asks to contact ' + connects.join(', '));
+    // HTTP and download grants without @connect can reach any HTTP(S) host.
+    if (before.connects.length && !before.connects.includes('*') && !after.connects.length &&
+        (granted(after, 'xmlhttpRequest') || granted(after, 'download'))) reasons.push('it asks to contact any HTTP(S) destination');
     if (['world', 'injection', 'pageBridge', 'unwrap', 'topLevelAwait', 'runAt'].some(key => after[key] !== before[key])) reasons.push('it changes how or when it runs in the page');
     if (JSON.stringify(assetSpecs(after)) !== JSON.stringify(assetSpecs(before))) reasons.push('it changes its @require or @resource files');
     if (['downloadURL', 'updateURL'].some(key => (after.informational?.[key] ?? null) !== (before.informational?.[key] ?? null))) reasons.push('it changes its update address');
@@ -953,7 +958,7 @@
     return { url: url.href, active: options.active !== false, insert: options.insert !== false, pinned: options.pinned === true,
       ...(options.container !== undefined ? { container: options.container } : {}) };
   }
-  globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, metadataBlock, parse, allows, jsonValue, tabOptions,
+  globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, metadataBlock, parse, allows, granted, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,
     sourceURL, compareVersions, sourceReview, accessChange, tags, bindings, hasBidi, escapeBidi, bidiControls, bidiDigests });
 })();

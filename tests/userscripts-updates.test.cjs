@@ -338,6 +338,63 @@ test('accessChange lists every way an update needs more than the installed scrip
   assert.deepEqual(core.accessChange(installed, script('1.1', extra + '// @grant GM_cookie\n// @connect evil.test\n')), ['it asks for GM_cookie', 'it asks to contact evil.test'], 'every reason is listed');
 });
 
+test('removing the last network restriction requires review for HTTP and download grants', () => {
+  for (const grant of ['GM.xmlHttpRequest', 'GM.xmlhttpRequest', 'GM_xmlhttpRequest', 'GM.download', 'GM_download']) {
+    const permission = '// @grant ' + grant + '\n';
+    const next = script('2', permission);
+    assert.match(core.accessChange(script('1', permission + '// @connect self\n'), next).join(' '), /any HTTP\(S\) destination/, grant);
+    assert.deepEqual(core.accessChange(script('1', permission + '// @connect *\n'), next), [], 'already unrestricted');
+    assert.deepEqual(core.accessChange(script('1', permission + '// @connect self\n'), script('2')), [], 'the grant was removed too');
+  }
+  assert.deepEqual(core.accessChange(script('1', '// @grant GM_cookie\n// @connect self\n'), script('2', '// @grant GM_cookie\n')), []);
+});
+
+test('a late download cannot install after opt-out or after restoring review-only settings', async () => {
+  for (const restore of [false, true]) {
+    const { api, state } = fakeApi({ userscriptManager: libraryOf([record(1, script('1'), 'https://scripts.test/a.user.js')]) });
+    const started = Promise.withResolvers(), response = Promise.withResolvers();
+    let installs = 0;
+    const host = updates.create(api, {
+      network: { fetchSource() { started.resolve(); return response.promise; } },
+      apply() { installs++; return { applied: true }; }
+    });
+    await host.setSettings({ autoApply: true });
+    const checking = host.runChecks({ force: true });
+    await started.promise;
+    if (restore) state.data[updates.KEY].autoApply = false;
+    else {
+      assert.equal((await host.setSettings({ autoApply: false })).autoApply, false);
+      await host.setSettings({ autoApply: true });
+    }
+    response.resolve(script('2'));
+    const result = await checking;
+    assert.equal(result.cancelled, !restore);
+    assert.equal(installs, 0);
+    assert.equal(result.staged, restore ? 1 : 0);
+  }
+});
+
+test('a saved opt-out accounts for an installer that has already started committing', async () => {
+  const { api } = fakeApi({ userscriptManager: libraryOf([record(1, script('1'), 'https://scripts.test/a.user.js')]) });
+  const started = Promise.withResolvers(), finish = Promise.withResolvers(), order = [];
+  const host = updates.create(api, { network: { fetchSource: async () => script('2') },
+    async apply(update, signal) {
+      started.resolve(signal);
+      await finish.promise;
+      order.push('commit finished');
+      return { applied: true, version: '2' };
+    } });
+  await host.setSettings({ autoApply: true });
+  const checking = host.runChecks(), signal = await started.promise;
+  const disabled = host.setSettings({ autoApply: false }).then(() => order.push('opt-out saved'));
+  assert.equal(signal.aborted, true);
+  await new Promise(resolve => setImmediate(resolve));
+  finish.resolve();
+  await Promise.all([checking, disabled]);
+  assert.deepEqual(order, ['commit finished', 'opt-out saved']);
+  assert.equal((await host.view()).autoApply, false);
+});
+
 test('with automatic updates on, a staged update goes to the runtime, is recorded as installed and logged', async t => {
   const { base, state: web } = await server(t);
   const url = base + '/a.user.js', calls = [], logged = [];
@@ -381,7 +438,11 @@ test('an update the runtime leaves for review keeps its bytes and the reason; th
   await h.host.runChecks({ force: true });
   assert.equal(calls, 2, 'with the setting off, the runtime is not asked');
   assert.deepEqual([entry(h, 1).outcome, entry(h, 1).message], ['staged', undefined]);
-  assert.equal(updates.state({ schemaVersion: 1, interceptLinks: true, autoCheck: true, scripts: {} }).autoApply, true, 'a state saved before the setting existed takes the default');
+  for (const [saved, autoApply] of [[{}, true], [{ autoApply: true }, true], [{ autoApply: false }, false]]) {
+    const older = updates.state({ schemaVersion: 1, interceptLinks: false, autoCheck: true, scripts: {}, ...saved });
+    assert.deepEqual([older.autoApply, older.interceptLinks, older.autoCheck], [autoApply, false, true],
+      'a saved choice is kept, and a state saved before the setting existed takes the default');
+  }
   assert.throws(() => updates.state({ schemaVersion: 1, interceptLinks: true, autoCheck: true, autoApply: 1, scripts: {} }), /invalid/);
   const damaged = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), url)]), [updates.KEY]: { schemaVersion: 1, broken: true } }, { apply });
   assert.equal((await damaged.host.view()).autoApply, false, 'damaged settings turn automatic installs off too');

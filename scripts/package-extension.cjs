@@ -15,10 +15,9 @@
    node scripts/package-extension.cjs version <x.y.z>
      Sets manifest.json's version, which must be higher than the current one.
 
-   node scripts/package-extension.cjs firefox-update --xpi <signed.xpi> --link <https url> [--manifest <file>]
-     Adds a Mozilla-signed package to the Firefox update manifest (default
-     updates/firefox/updates.json) with its SHA-256, after checking its ID,
-     version, update address and signature files. */
+   node scripts/package-extension.cjs firefox-update --xpi <signed.xpi> --amo-hash <sha256:hex> --link <https url> [--manifest <file>]
+     Matches the archive against the signed-file hash supplied by the publisher
+     from addons.mozilla.org, then checks its metadata for the update manifest. */
 'use strict';
 const crypto = require('node:crypto'), fs = require('node:fs'), path = require('node:path'), zlib = require('node:zlib');
 
@@ -187,10 +186,14 @@ function firefoxUpdate(args) {
   const file = option(args, '--xpi'), link = httpsUrl(option(args, '--link') || '', '--link');
   const target = path.resolve(option(args, '--manifest') || DEFAULT_UPDATES);
   if (!file) throw new Error('Pass --xpi with the package Mozilla signed.');
-  const archive = fs.readFileSync(file), entries = unzip(archive);
+  const expected = option(args, '--amo-hash') || '';
+  if (!/^sha256:[0-9a-f]{64}$/i.test(expected)) throw new Error('Pass --amo-hash sha256:<64 hex digits> from the signed file in Mozilla Add-ons.');
+  const archive = fs.readFileSync(file);
+  const hash = 'sha256:' + crypto.createHash('sha256').update(archive).digest('hex');
+  if (hash !== expected.toLowerCase()) throw new Error('The package does not match the signed-file hash from Mozilla Add-ons.');
+  const entries = unzip(archive);
   if (!entries.has('manifest.json')) throw new Error('The package has no manifest.json.');
-  // Mozilla's signing adds these; Firefox refuses an unsigned package.
-  if (!entries.has('META-INF/mozilla.rsa') && !entries.has('META-INF/cose.sig')) throw new Error('The package is not signed by Mozilla (no META-INF signature). Sign it at addons.mozilla.org first.');
+  if (!entries.has('META-INF/mozilla.rsa') && !entries.has('META-INF/cose.sig')) throw new Error('The XPI is missing Mozilla signature files.');
   const packaged = JSON.parse(entries.get('manifest.json')().toString('utf8')), gecko = packaged.browser_specific_settings?.gecko || {};
   const id = readManifest().browser_specific_settings?.gecko?.id;
   if (gecko.id !== id) throw new Error(`The package's add-on ID is ${gecko.id}, not ${id}.`);
@@ -199,7 +202,7 @@ function firefoxUpdate(args) {
   const updates = fs.existsSync(target) ? JSON.parse(fs.readFileSync(target, 'utf8')) : { addons: {} };
   if (!updates.addons || typeof updates.addons !== 'object') throw new Error(`${target} is not a Firefox update manifest.`);
   const list = (updates.addons[id] ??= { updates: [] }).updates ??= [];
-  const entry = { version: packaged.version, update_link: link, update_hash: 'sha256:' + crypto.createHash('sha256').update(archive).digest('hex'),
+  const entry = { version: packaged.version, update_link: link, update_hash: hash,
     ...(gecko.strict_min_version ? { applications: { gecko: { strict_min_version: gecko.strict_min_version } } } : {}) };
   const kept = list.filter(item => item.version !== entry.version);
   kept.push(entry);

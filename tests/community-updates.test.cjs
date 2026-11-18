@@ -5,6 +5,7 @@
 const { test } = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
 const root = path.resolve(__dirname, '..');
+require('../src/shared/shared.js');
 require('../src/blocking/cosmetic.js');
 require('../src/blocking/community-lists.js');
 require('../src/background/community-updates.js');
@@ -73,6 +74,10 @@ test('a set is newer only when no list is older and one list changed', () => {
   assert.equal(updates.compareVersions(inUse, set('202610191756', '202610191803')), false);
   assert.equal(updates.compareVersions(inUse, set('202611171200', '202610191803')), true);
   assert.throws(() => updates.compareVersions(inUse, set('202611171200', '202610010000')), /EasyList China \(202610010000\) is older/);
+  assert.throws(() => updates.compareVersions(inUse, set('202611171200', '20200101')), /older/);
+  assert.throws(() => updates.compareVersions(inUse, set('20261019175559', '202610191803')), /older/);
+  assert.equal(updates.compareVersions(inUse, set('20261019175600', '202610191803')), false, 'extra zero seconds do not advance a list');
+  assert.equal(updates.compareVersions(inUse, set('20261020', '202610191803')), true, 'a later day is newer even without a time');
 });
 
 test('lists ask for their check interval, kept between one and fourteen days', () => {
@@ -94,16 +99,32 @@ test('downloads carry no cookies or referrer, stay within limits and follow only
   const seen = [];
   const reply = (body, extra = {}) => ({ ok: true, status: 200, redirected: false, url: 'https://lists.example/easylist.txt',
     headers: { get: name => name === 'content-length' && extra.length !== undefined ? String(extra.length) : null },
-    arrayBuffer: async () => new TextEncoder().encode(body).buffer, ...extra });
+    body: new Response(body).body, ...extra });
   const { text } = await updates.download('https://lists.example/easylist.txt', async (url, options) => { seen.push({ url, options }); return reply('[Adblock Plus 2.0]\n'); });
   assert.equal(text, '[Adblock Plus 2.0]\n');
   assert.deepEqual([seen[0].options.credentials, seen[0].options.referrerPolicy, seen[0].options.cache, seen[0].options.redirect], ['omit', 'no-referrer', 'no-store', 'follow']);
   await assert.rejects(updates.download('https://lists.example/a.txt', async () => reply('x', { length: updates.MAX_BYTES + 1 })), /larger than 8 MiB/);
   await assert.rejects(updates.download('https://lists.example/a.txt', async () => reply('x', { ok: false, status: 503 })), /HTTP 503/);
   await assert.rejects(updates.download('https://lists.example/a.txt', async () => reply('x', { redirected: true, url: 'http://lists.example/a.txt' })), /without HTTPS/);
-  await assert.rejects(updates.download('https://lists.example/a.txt', async () => ({ ...reply(''), arrayBuffer: async () => new Uint8Array([0xff, 0xfe]).buffer })), /not valid UTF-8/);
+  await assert.rejects(updates.download('https://lists.example/a.txt', async () => reply(Uint8Array.of(0xff, 0xfe))), /not valid UTF-8/);
   for (const bad of ['http://lists.example/a.txt', 'https://user:pw@lists.example/a.txt', 'https://lists.example/a.txt#x', 'lists.example']) {
     assert.throws(() => updates.sourceUrl(bad), /https|address|URL/, bad);
   }
   assert.equal(updates.sourceUrl('http://127.0.0.1:9000/easylist.txt'), 'http://127.0.0.1:9000/easylist.txt');
+});
+
+test('community downloads stop reading and cancel a stream when its actual bytes exceed the limit', async () => {
+  let reads = 0, cancelled = false;
+  const body = new ReadableStream({
+    pull(controller) {
+      reads++;
+      if (reads > 2) return controller.close();
+      controller.enqueue(new Uint8Array(reads === 1 ? updates.MAX_BYTES : 1));
+    },
+    cancel() { cancelled = true; }
+  }, { highWaterMark: 0 });
+  await assert.rejects(updates.download('https://lists.example/list', async () => new Response(body, { headers: { 'content-length': '1' } })), /larger than 8 MiB/);
+  assert.equal(reads, 2);
+  assert.equal(cancelled, true);
+  assert.equal(body.locked, false);
 });

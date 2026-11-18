@@ -5,7 +5,7 @@
   const errorText = error => error?.message || String(error);
   const clone = value => JSON.parse(JSON.stringify(value));
   const token = () => (crypto.randomUUID() + crypto.randomUUID()).replaceAll('-', '');
-  const granted = (metadata, name) => metadata.grants.includes('GM.' + name) || metadata.grants.includes('GM_' + name) || name === 'xmlhttpRequest' && metadata.grants.includes('GM.xmlHttpRequest');
+  const { granted } = core;
   const needsStorage = source => core.parse(source).grants.some(grant => /^GM[._]/.test(grant) && !/^GM[._](info|addStyle|addElement|getResourceText|getResourceURL|getResourceUrl)$/.test(grant));
   const VALUE_METHODS = Object.freeze({ get: 'getValue', set: 'setValue', delete: 'deleteValue', list: 'listValues',
     getMany: 'getValues', setMany: 'setValues', deleteMany: 'deleteValues', connect: null, diagnostic: null, menus: 'registerMenuCommand',
@@ -40,7 +40,7 @@
     // Scheduled checks and link interception only produce review data. Library
     // changes go through US_APPLY_SOURCE below, or through autoApply for an
     // update that asks for no new access.
-    const updates = BlockAdsUserScriptUpdates.create(api, { network, apply: update => autoApply(update), log });
+    const updates = BlockAdsUserScriptUpdates.create(api, { network, apply: autoApply, log });
     let running = false, controlPending = 0, valuePending = 0, connectionPending = 0, lastError = '', boundEvent, boundConnect;
     // GM traffic cannot consume control capacity. A single runner still owns
     // all writes: controls take precedence after the active transaction finishes.
@@ -488,9 +488,10 @@
     // and needs no access beyond the installed one (core.accessChange) from the
     // same address. The script keeps its on/off choice, values, tags and cached
     // dependencies; anything else is left for the normal review.
-    function autoApply({ id, revision, source, sourceURL }) {
+    function autoApply({ id, revision, source, sourceURL }, signal) {
       return enqueue(async () => {
         const before = await read(), next = clone(before), script = next.scripts.find(item => item.id === id);
+        signal.throwIfAborted();
         if (!script || script.revision !== revision) return { applied: false, reason: 'the script changed after the check' };
         const review = core.sourceReview(source, sourceURL, script);
         if (review.versionChange !== 1 || review.unchanged) return { applied: false, reason: 'it is not a newer version' };
@@ -500,6 +501,7 @@
         Object.assign(script, { source, revision: script.revision + 1, token: token() });
         // The same integrity check as enabling; the dependencies are unchanged.
         if (script.enabled) await network.verify(script);
+        signal.throwIfAborted();
         await commit(before, next);
         return { applied: true, name: review.metadata.name, version: review.metadata.explicitVersion, enabled: script.enabled };
       });

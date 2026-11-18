@@ -117,9 +117,15 @@
       try { return state(await readRaw()); }
       catch (error) { return { schemaVersion: 1, ...CLOSED, scripts: {}, error: errorText(error) }; }
     }
+    // Preference writes and the final install share a queue. A completed opt-out
+    // therefore also covers an install that had already entered its native commit.
+    function serialize(work) {
+      const task = writes.then(work);
+      writes = task.catch(() => {});
+      return task;
+    }
     function update(mutate, repair = false) {
-      // One writer: settings changes and check results never interleave.
-      const task = writes.then(async () => {
+      return serialize(async () => {
         const raw = await readRaw();
         let current;
         try { current = state(raw); }
@@ -138,8 +144,6 @@
         }
         return normalized;
       });
-      writes = task.catch(() => {});
-      return task;
     }
     async function prune(next, library) {
       const bases = new Map(await Promise.all(library.scripts.map(async script => [script.id, await baseline(script)])));
@@ -254,7 +258,12 @@
           // any other waits for review, with the reason shown.
           if (result.outcome === 'staged' && settings.autoApply && apply) {
             let outcome;
-            try { outcome = await apply({ id: script.id, revision: script.revision, source: result.staged.source, sourceURL: result.staged.sourceURL }); }
+            try {
+              outcome = await serialize(async () => {
+                if (!(await readState()).autoApply || signal.aborted) return null;
+                return apply({ id: script.id, revision: script.revision, ...result.staged }, signal);
+              });
+            }
             catch (error) { outcome = { applied: false, reason: 'it could not be installed automatically (' + errorText(error) + ')' }; }
             if (outcome?.applied) {
               applied++;
@@ -263,7 +272,7 @@
               catch (error) { console.warn('[Module Engine] Could not log an automatic userscript update:', errorText(error)); }
               continue;
             }
-            saved = await explain(script.id, base, outcome?.reason || 'it could not be installed automatically');
+            if (outcome && !signal.aborted) saved = await explain(script.id, base, outcome.reason || 'it could not be installed automatically');
           }
           if (saved.scripts[script.id]?.outcome === 'staged') staged++;
         }
@@ -290,8 +299,8 @@
     async function setSettings(patch) {
       const changes = Object.entries(patch || {}).filter(([key]) => ['interceptLinks', 'autoCheck', 'autoApply'].includes(key));
       if (!changes.length || changes.some(([, value]) => typeof value !== 'boolean')) fail('Choose a valid update setting.');
+      if (patch.autoCheck === false || patch.autoApply === false) cancel('Automatic update checks or installs were turned off.');
       await update(next => { Object.assign(next, Object.fromEntries(changes)); }, true);
-      if (patch.autoCheck === false) cancel('Automatic update checks were turned off.');
       return view();
     }
     async function stagedReview(message) {

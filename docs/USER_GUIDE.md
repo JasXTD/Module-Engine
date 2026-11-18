@@ -169,13 +169,14 @@ Select a saved script and use **Earlier** or **Later** to change its start order
 - it is a newer `@version` of the same script, from the address the script already downloads from;
 - it runs on no new sites: no new `@match` or `@include` entries, no removed exclusions, and no newly allowed frames;
 - it asks for no new `@grant` or `@connect` entries;
+- it does not remove its last `@connect` entry while it keeps `GM.xmlHttpRequest` or `GM_download`: with no `@connect` entries, those requests can go to any HTTP(S) host;
 - it keeps its `@inject-into` world, `@run-at` timing and wrapping;
 - it keeps its `@require` and `@resource` files and its `@downloadURL` and `@updateURL`;
 - it has no hidden direction controls.
 
 Entries are compared as written, so any new pattern counts as new. The script keeps its on/off state, GM values, tags and cached dependencies. Its library entry reads "Updated automatically", and the activity log records the change. Reload open pages to run the new code.
 
-Any other update waits for review, with the reason shown beside it: for example "it asks for GM_cookie". Checks never edit, pause or replace the installed script in any other way. Turning the setting off makes every update wait for review.
+Any other update waits for review, with the reason shown beside it: for example "it asks for GM_cookie". Checks never edit, pause or replace the installed script in any other way. Turning the setting off stops a check that is running and makes every update wait for review.
 
 An automatic update is only as trustworthy as the script's host: whoever can change the file at its address can change what it does on the sites it already reaches. Turn the setting off if you want to read every change.
 

@@ -1,4 +1,4 @@
-/* Shared hostname handling for the popup, background, and cosmetic filter. */
+/* Shared hostname handling and bounded list downloads. */
 (() => {
   "use strict";
 
@@ -67,7 +67,36 @@
     return labels.slice(twoPart ? -3 : -2).join(".");
   }
 
+  async function readListBytes(response, limit, sizeError) {
+    if (Number(response.headers.get("content-length")) > limit) {
+      await response.body?.cancel();
+      throw new Error(sizeError);
+    }
+    let bytes = new Uint8Array(0), length = 0;
+    if (!response.body) return bytes;
+    const reader = response.body.getReader();
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) return bytes.subarray(0, length);
+        const end = length + value.byteLength;
+        if (end > limit) {
+          await reader.cancel();
+          throw new Error(sizeError);
+        }
+        // One growing buffer bounds memory even if the list arrives a byte at a time.
+        if (end > bytes.length) {
+          const next = new Uint8Array(Math.min(limit, Math.max(end, bytes.length * 2, 4096)));
+          next.set(bytes);
+          bytes = next;
+        }
+        bytes.set(value, length);
+        length = end;
+      }
+    } finally { reader.releaseLock(); }
+  }
+
   globalThis.BlockAds = Object.freeze({
-    normalizeDomain, normalizeDomains, domainMatches, whitelistScope, sameSite, siteOf
+    normalizeDomain, normalizeDomains, domainMatches, whitelistScope, sameSite, siteOf, readListBytes
   });
 })();

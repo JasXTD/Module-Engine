@@ -1,8 +1,40 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 automatic userscript updates, following the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record covers update security on 18 November 2026, following the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Update security fixes — 18 November 2026
+
+An OpenAI Codex security audit of the update code found the gaps below. Its fixes were reviewed and kept with one exception. The audit also made automatic userscript installs opt-in, but at the user's choice they stay on by default, so its settings migration was not adopted.
+
+- **Last network restriction.** A script with no `@connect` entries can send `GM.xmlHttpRequest` requests and `GM_download` downloads to any HTTP(S) host. An update that removes the last entry while keeping one of those grants now waits for review with "it asks to contact any HTTP(S) destination". Before, it counted as needing no new access and could install automatically.
+- **Turning installs off.** Turning off *Install updates that need no new access* or *Check installed scripts daily* cancels a running check. Settings writes and the final install share one queue, and the install re-reads the setting there and stops at its abort points. Once the change is saved, no automatic install can follow it.
+- **Bounded downloads.** The new `BlockAds.readListBytes` reads signed threat-list and filter-list downloads as streams. It cancels a stream as soon as its bytes pass the limit, even without a `Content-Length` header, and a failed download aborts its request.
+- **Filter-list versions.** Version timestamps of different precision are padded with zeros before they are compared. An older list can no longer replace a newer one just because its timestamp has a different length, and the same time with extra zero seconds no longer counts as newer.
+- **Firefox update manifest.** `firefox-update` requires `--amo-hash`, the signed file's `sha256:` hash from the Mozilla Add-ons version record, and refuses an XPI that does not match it. The hash it computed from the candidate file itself was no independent check. [Firefox release procedure](RELEASING.md#each-release)
+
+**703 Node tests** passed, 6 of them new:
+
+- the `@connect` rule for every request and download grant spelling;
+- a download that finishes after installs were turned off;
+- an opt-out while an install is committing;
+- a runtime check that stages such an update instead of installing it;
+- oversized streams without a declared length, for both list downloaders.
+
+The version-ordering and Firefox-manifest tests gained cases for mixed timestamp precision and for the Mozilla hash. The downloader tests now use real `Response` streams. The PowerShell suites passed 35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions.
+
+All browser suites ran offline, in temporary profiles with loopback fixtures, from a frozen copy of the tree. The recorded hashes of all 94 packaged files match the committed files.
+
+| Suite | Chrome 158 | Edge 157 | Firefox 160.0.1 |
+| --- | --- | --- | --- |
+| Userscript installs and updates | 80 | 80 | 70 |
+| Filter-list updates | 26 | 26 | 26 |
+| Signed threat-list updates | 57 | 57 | 57 |
+| Blocker | 800 | 800 | 793 |
+| Release packages | 9 | 9 | 10 |
+
+Not verified: Mozilla signing a real package and Firefox installing a signed update from `updates/firefox/updates.json`. The Mozilla-hash checks used fixture archives and digests.
 
 ## Automatic userscript updates — 18 November 2026
 
@@ -36,7 +68,7 @@ The user asked for the extension itself to update, and agreed that packaging sho
   - `--firefox-update-url` adds Firefox's `update_url`.
   - The archives are deterministic ZIPs written without dependencies, and .NET's ZIP reader opens them.
 - `version <x.y.z>` raises the manifest version, refusing a lower or invalid one.
-- `firefox-update` adds a signed package to `updates/firefox/updates.json`, the format Mozilla documents: version, link, `sha256:` hash and minimum Firefox version. It refuses packages without Mozilla's `META-INF` signature, with another add-on ID or without an `update_url`.
+- `firefox-update` adds a signed package to `updates/firefox/updates.json`, the format Mozilla documents: version, link, `sha256:` hash and minimum Firefox version. These tests checked signature filenames, the add-on ID and the update address. The subsequent release-helper change also requires the signed-file digest from Mozilla Add-ons.
 - Chrome and Edge update store installs only, so for them preparing means store-ready archives.
 
 **693 Node tests** passed, 7 of them new; they run the script only on temporary copies. They cover:

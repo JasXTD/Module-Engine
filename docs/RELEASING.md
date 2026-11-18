@@ -43,12 +43,12 @@ These are the publisher's decisions; nothing in the code makes them.
 
    Both archives hold exactly the files the browser tests load, listed in `scripts/extension-files.cjs`. Each manifest drops the other browser's keys. The same source gives byte-identical archives.
 4. **Chrome and Edge.** Upload the Chromium archive in the Chrome Web Store Developer Dashboard and in Microsoft Partner Center. After review, the stores update installed copies.
-5. **Firefox.** Upload the Firefox archive to addons.mozilla.org's Developer Hub, and choose to distribute it on your own. Mozilla validates and signs it, adding `META-INF` signature files; fix anything its validation reports. Download the signed `.xpi` and attach it to the GitHub release for this version. Then record it:
+5. **Firefox.** Submit the Firefox archive to the Mozilla Add-ons Developer Hub for self-distribution. After signing completes, download the signed XPI. Obtain the `file.hash` for that signed version independently from your authenticated Mozilla Add-ons version record. Copy Mozilla's full `sha256:…` value into the command below. A hash computed from the candidate XPI itself provides no independent check. [Mozilla version detail API](https://mozilla.github.io/addons-server/topics/api/addons.html#version-detail)
 
    ```bash
-   node scripts/package-extension.cjs firefox-update --xpi module-engine-1.10.0-firefox.xpi --link https://github.com/<owner>/Module-Engine/releases/download/v1.10.0/module-engine-1.10.0-firefox.xpi
+   node scripts/package-extension.cjs firefox-update --xpi module-engine-1.10.0-firefox.xpi --amo-hash sha256:<digest-from-mozilla> --link https://github.com/<owner>/Module-Engine/releases/download/v1.10.0/module-engine-1.10.0-firefox.xpi
    ```
 
-   This adds the version, link and SHA-256 to `updates/firefox/updates.json`. It refuses a package without Mozilla's signature files, with another add-on ID, or without an `update_url`. Commit and push that file; installed copies pick the version up at their next check.
+   The helper checks the exact archive bytes against Mozilla's digest before reading the package or writing `updates/firefox/updates.json`. It also checks the signature filenames, add-on ID and update address. Firefox performs the cryptographic signature verification at installation. Attach the verified XPI to the release, then publish the updated manifest.
 
 The command-line alternative to the Developer Hub upload is Mozilla's `web-ext sign`, which needs a separate install and the publisher's API keys.

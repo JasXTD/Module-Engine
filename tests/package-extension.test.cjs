@@ -99,7 +99,7 @@ test('version bumps must go up and keep the manifest otherwise unchanged', () =>
   assert.ok(packaging.compareVersions('1.10.0', '1.9.9') > 0 && packaging.compareVersions('2.0', '2.0.0') === 0);
 });
 
-test('the Firefox update manifest takes only signed packages with this ID and an update address', () => {
+test('the Firefox update manifest requires the publisher hash, signature markers, this ID and an update address', () => {
   const { read } = buildOnce(), dir = temp('module-engine-updates-'), updates = path.join(dir, 'updates.json');
   const firefox = packaging.unzip(read(names.firefox));
   const repack = (changes = {}, signed = true) => {
@@ -115,15 +115,26 @@ test('the Firefox update manifest takes only signed packages with this ID and an
     return file;
   };
   const link = version => `https://github.com/owner/Module-Engine/releases/download/v${version}/module-engine-${version}-firefox.xpi`;
-  const add = (file, version) => run(script, 'firefox-update', '--xpi', file, '--link', link(version), '--manifest', updates);
-  assert.match(fails(script, 'firefox-update', '--xpi', repack({}, false), '--link', link('1'), '--manifest', updates), /not signed by Mozilla/);
-  assert.match(fails(script, 'firefox-update', '--xpi', repack({ gecko: { id: 'other@example.com' } }), '--link', link('1'), '--manifest', updates), /add-on ID is other@example.com/);
-  assert.match(fails(script, 'firefox-update', '--xpi', repack({ gecko: { update_url: undefined } }), '--link', link('1'), '--manifest', updates), /no update_url/);
+  // These are fixture digests. A release uses the independent signed-file hash from AMO.
+  const hash = file => 'sha256:' + sha(fs.readFileSync(file));
+  const args = (file, version) => ['firefox-update', '--xpi', file, '--link', link(version), '--manifest', updates];
+  const add = (file, version) => run(script, ...args(file, version), '--amo-hash', hash(file));
+  const rejected = file => fails(script, ...args(file, '1'), '--amo-hash', hash(file));
+  const markers = repack();
+  assert.match(fails(script, ...args(markers, '1')), /--amo-hash/);
+  assert.match(fails(script, ...args(markers, '1'), '--amo-hash', 'sha256:invalid'), /--amo-hash/);
+  assert.match(fails(script, ...args(markers, '1'), '--amo-hash', hash(repack({ manifest: { version: '1.10.0' } }))), /does not match/);
+  assert.match(rejected(repack({}, false)), /signature files/);
+  assert.match(rejected(repack({ gecko: { id: 'other@example.com' } })), /add-on ID is other@example.com/);
+  assert.match(rejected(repack({ gecko: { update_url: undefined } })), /no update_url/);
   assert.match(fails(script, 'firefox-update', '--xpi', repack(), '--link', 'http://example.com/a.xpi', '--manifest', updates), /https/);
   assert.equal(fs.existsSync(updates), false, 'refused packages write nothing');
   const later = repack({ manifest: { version: '1.10.0' } }), current = repack();
   add(later, '1.10.0');
   add(current, manifest.version);
+  const beforeRejection = fs.readFileSync(updates);
+  assert.match(fails(script, ...args(later, '1.10.0'), '--amo-hash', hash(current)), /does not match/);
+  assert.deepEqual(fs.readFileSync(updates), beforeRejection);
   add(current, manifest.version);
   const written = JSON.parse(fs.readFileSync(updates, 'utf8'));
   const id = manifest.browser_specific_settings.gecko.id;

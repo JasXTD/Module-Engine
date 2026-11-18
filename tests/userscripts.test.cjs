@@ -2248,6 +2248,19 @@ test('a module failure stays local and cannot invoke an unregistered adapter', a
   await registry.set('blocking', false); assert.equal(protection, false);
 });
 
+test('a check stages, rather than installs, an update that would lose its last network restriction', async t => {
+  const grant = '// @grant GM.xmlHttpRequest\n';
+  const installed = updateSource('1', grant + '// @connect self\n'), candidate = updateSource('2', grant);
+  const f = await installFixture(t, installed);
+  f.state.sources['/usnet/script.user.js'] = { body: candidate };
+  const checked = await f.h.command({ type: 'US_CHECK_ALL' });
+  const script = f.current();
+  assert.deepEqual([checked.result.applied, checked.result.staged, script.source], [0, 1, installed]);
+  assert.match(checked.scripts[script.id].message, /any HTTP\(S\) destination/);
+  const staged = await f.h.command({ type: 'US_STAGED_REVIEW', id: script.id, revision: script.revision });
+  assert.equal(staged.review.source, candidate);
+});
+
 test('a scheduled check installs an update that needs no new access, keeping the script on with its values and tags; wider updates wait', async t => {
   const logged = [];
   const f = await installFixture(t, updateSource(), { log: entry => logged.push(entry) });

@@ -16,7 +16,7 @@ function load(configText) {
   context.globalThis = context;
   vm.createContext(context);
   if (configText) vm.runInContext(configText, context, { filename: 'update-config.js' });
-  for (const file of ['src/blocking/evidence.js', 'src/background/threat-updates.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of ['src/shared/shared.js', 'src/blocking/evidence.js', 'src/background/threat-updates.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   return context;
 }
 const updates = load().ModuleEngineThreatUpdates;
@@ -86,7 +86,7 @@ test('downloads carry no cookies, referrer or redirects, and stop at the size li
   const seen = [];
   const reply = (body, { status = 200, length } = {}) => ({ ok: status >= 200 && status < 300, status,
     headers: { get: name => name === 'content-length' && length !== undefined ? String(length) : null },
-    arrayBuffer: async () => new TextEncoder().encode(body).buffer });
+    body: new Response(body).body });
   const fetcher = async (url, options) => { seen.push({ url, options }); return reply('{"ok":true}'); };
   const bytes = await updates.download('https://example.com/u/', 'threats.json', 100, fetcher);
   assert.equal(new TextDecoder().decode(bytes), '{"ok":true}');
@@ -100,12 +100,27 @@ test('downloads carry no cookies, referrer or redirects, and stop at the size li
   await assert.rejects(updates.download('https://example.com/u/', 'a.json', 5, async () => reply('', { status: 404 })), /HTTP 404/);
 });
 
+test('signed-list downloads cancel oversized streams without a declared length', async () => {
+  let reads = 0, cancelled = false;
+  const body = new ReadableStream({
+    pull(controller) {
+      if (++reads > 2) return controller.close();
+      controller.enqueue(Uint8Array.of(1, 2, 3));
+    },
+    cancel() { cancelled = true; }
+  }, { highWaterMark: 0 });
+  await assert.rejects(updates.download('https://example.test/', 'policy.json', 5, async () => new Response(body)), /larger than 5 bytes/);
+  assert.equal(reads, 2);
+  assert.equal(cancelled, true);
+  assert.equal(body.locked, false);
+});
+
 test('fetchUpdate reads the signature first and all four files from one folder', async () => {
   const { privateKey } = keyPair();
   const files = signedFiles(privateKey), order = [];
   const bodies = { 'threat-evidence.sig': new TextEncoder().encode(files.signature), 'threats.json': files.rules, 'threat-policy.json': files.policy, 'threat-evidence.json': files.evidence };
   const fetcher = async url => { const name = url.split('/').pop(); order.push(name);
-    return { ok: true, status: 200, headers: { get: () => null }, arrayBuffer: async () => bodies[name].buffer.slice(bodies[name].byteOffset, bodies[name].byteOffset + bodies[name].byteLength) }; };
+    return new Response(bodies[name]); };
   const fetched = await updates.fetchUpdate('https://example.com/updates/threats', fetcher);
   assert.equal(order[0], 'threat-evidence.sig');
   assert.deepEqual([...order].sort(), ['threat-evidence.json', 'threat-evidence.sig', 'threat-policy.json', 'threats.json']);
@@ -153,7 +168,7 @@ test('the signing script makes a key outside the repository, sets the source and
   // A temporary copy of only the files the script uses; the real config is never written.
   const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'module-engine-signing-')), keys = fs.mkdtempSync(path.join(os.tmpdir(), 'module-engine-key-'));
   try {
-    for (const file of ['scripts/update-signing.cjs', 'src/shared/update-config.js', 'src/blocking/evidence.js', 'src/background/threat-updates.js',
+    for (const file of ['scripts/update-signing.cjs', 'src/shared/update-config.js', 'src/shared/shared.js', 'src/blocking/evidence.js', 'src/background/threat-updates.js',
       'rules/threats.json', 'rules/threat-policy.json', 'rules/threat-evidence.json']) {
       fs.mkdirSync(path.dirname(path.join(copy, file)), { recursive: true });
       fs.copyFileSync(path.join(root, file), path.join(copy, file));

@@ -51,12 +51,9 @@
     try {
       const response = await fetcher(new URL(name, base).href, { cache: 'no-store', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer', signal: controller.signal });
       if (!response.ok) throw new Error(`${name} could not be downloaded (HTTP ${response.status}).`);
-      const declared = Number(response.headers?.get?.('content-length'));
-      if (Number.isFinite(declared) && declared > limit) throw new Error(`${name} is larger than ${limit} bytes.`);
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.byteLength > limit) throw new Error(`${name} is larger than ${limit} bytes.`);
-      return bytes;
+      return await BlockAds.readListBytes(response, limit, `${name} is larger than ${limit} bytes.`);
     } catch (error) {
+      controller.abort();
       if (error?.name === 'AbortError') throw new Error(`${name} took too long to download.`);
       throw error;
     } finally { clearTimeout(timer); }

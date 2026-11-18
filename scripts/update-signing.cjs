@@ -41,7 +41,7 @@ function loadModules(configText = fs.readFileSync(CONFIG_FILE, 'utf8')) {
   context.globalThis = context;
   vm.createContext(context);
   vm.runInContext(configText, context, { filename: 'update-config.js' });
-  for (const file of ['src/blocking/evidence.js', 'src/background/threat-updates.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of ['src/shared/shared.js', 'src/blocking/evidence.js', 'src/background/threat-updates.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   return context;
 }
 const readConfig = () => { const { threatSource, keys } = loadModules().ModuleEngineUpdateConfig; return { threatSource, keys: [...keys] }; };

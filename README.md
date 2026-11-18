@@ -120,11 +120,11 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **18 November 2026** the current code passed:
 
-- **697 Node tests**;
+- **703 Node tests**;
 - **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
 - **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;

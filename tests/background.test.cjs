@@ -1781,9 +1781,8 @@ function updateHarness({ initial = threatsOn, key = keyPair(), now = AFTER_REVIE
   const server = { files: updateFolder({ privateKey: key.privateKey, reviewedOn: '2026-11-17', hosts: 23 }), status: 200 };
   const reply = name => {
     const body = server.status === 200 ? server.files[name] : undefined;
-    if (!body) return { ok: false, status: server.status === 200 ? 404 : server.status, headers: { get: () => null }, arrayBuffer: async () => new ArrayBuffer(0) };
-    return { ok: true, status: 200, headers: { get: header => header === 'content-length' ? String(body.length) : null },
-      arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) };
+    if (!body) return new Response(null, { status: server.status === 200 ? 404 : server.status });
+    return new Response(body, { headers: { 'content-length': String(body.length) } });
   };
   return { ...harness(initial, limit, now, {}, { updateConfig: { threatSource: UPDATE_SOURCE, keys: [key.jwk] }, updateServer: reply }), server, key };
 }
@@ -1981,9 +1980,7 @@ function listHarness({ initial = {}, limit = 5000, now = AFTER_REVIEW, texts = {
   const server = { texts: { easylist: listFixture.upstream('easylist', { version: NEWER }), 'easylist-china': listFixture.upstream('easylist-china'), ...texts }, status: 200 };
   const listServer = url => {
     const body = server.status === 200 ? server.texts[LIST_SOURCES[url]] : undefined;
-    const bytes = new TextEncoder().encode(body ?? '');
-    return { ok: body !== undefined, status: body !== undefined ? 200 : server.status === 200 ? 404 : server.status, redirected: false, url,
-      headers: { get: () => null }, arrayBuffer: async () => bytes.buffer };
+    return new Response(body, { status: body !== undefined ? 200 : server.status === 200 ? 404 : server.status });
   };
   return { ...harness({ communityListUpdates: true, ...initial }, limit, now, {}, { listServer }), server };
 }

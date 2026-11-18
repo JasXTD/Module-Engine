@@ -62,14 +62,12 @@
       const response = await fetcher(url, { cache: 'no-store', credentials: 'omit', redirect: 'follow', referrerPolicy: 'no-referrer', signal: controller.signal });
       if (!response.ok) throw new Error(`HTTP ${response.status} from ${new URL(url).host}.`);
       if (response.redirected && !/^https:/i.test(response.url || '')) throw new Error(`${new URL(url).host} redirected to an address without HTTPS.`);
-      const declared = Number(response.headers?.get?.('content-length'));
-      if (Number.isFinite(declared) && declared > MAX_BYTES) throw new Error(`The list from ${new URL(url).host} is larger than 8 MiB.`);
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.byteLength > MAX_BYTES) throw new Error(`The list from ${new URL(url).host} is larger than 8 MiB.`);
+      const bytes = await BlockAds.readListBytes(response, MAX_BYTES, `The list from ${new URL(url).host} is larger than 8 MiB.`);
       let text;
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { throw new Error(`The list from ${new URL(url).host} is not valid UTF-8.`); }
       return { text, bytes };
     } catch (error) {
+      controller.abort();
       if (error?.name === 'AbortError') throw new Error(`The list from ${new URL(url).host} took too long to download.`);
       throw error;
     } finally { clearTimeout(timer); }
@@ -93,10 +91,13 @@
     let newer = false;
     for (const list of downloaded) {
       const current = inUse.find(item => item.id === list.id)?.version || '';
-      if (current && list.version.length === current.length && list.version < current) {
+      // Missing time digits denote the start of that interval. Midnight and
+      // the same date without a time therefore compare equal.
+      const previous = current.padEnd(14, '0'), incoming = list.version.padEnd(14, '0');
+      if (current && incoming < previous) {
         throw new Error(`The downloaded ${list.title} (${list.version}) is older than the one in use (${current}).`);
       }
-      if (!current || list.version !== current) newer = true;
+      if (!current || incoming > previous) newer = true;
     }
     return newer;
   }
