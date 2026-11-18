@@ -34,7 +34,7 @@
   },
   "background": {
     "service_worker": "src/background/background.js",
-    "scripts": ["src/shared/shared.js", "src/blocking/flags.js", "src/blocking/cosmetic.js", "src/blocking/network.js", "src/background/modules.js", "vendor/publicsuffix/suffixes.js", "src/userscripts/userscripts-matching.js", "src/userscripts/userscripts-page.js", "src/userscripts/userscripts-core.js", "src/userscripts/userscripts-network.js", "src/userscripts/userscripts-updates.js", "src/userscripts/userscripts-offscreen.js", "src/userscripts/userscripts-xhr.js", "src/userscripts/clipboard.js", "src/userscripts/userscripts-actions.js", "src/userscripts/userscripts-runtime.js", "src/shared/debug-protocol.js", "src/background/debug-runtime.js", "src/background/network-log.js", "src/background/background.js"]
+    "scripts": ["src/shared/shared.js", "src/blocking/flags.js", "src/blocking/cosmetic.js", "src/blocking/network.js", "src/background/modules.js", "vendor/publicsuffix/suffixes.js", "src/userscripts/userscripts-matching.js", "src/userscripts/userscripts-page.js", "src/userscripts/userscripts-core.js", "src/userscripts/userscripts-network.js", "src/userscripts/userscripts-updates.js", "src/userscripts/userscripts-offscreen.js", "src/userscripts/userscripts-xhr.js", "src/userscripts/clipboard.js", "src/userscripts/userscripts-actions.js", "src/userscripts/userscripts-runtime.js", "src/shared/debug-protocol.js", "src/background/debug-runtime.js", "src/background/network-log.js", "src/shared/update-config.js", "src/blocking/evidence.js", "src/background/threat-updates.js", "src/background/background.js"]
   },
   "declarative_net_request": {
     "rule_resources": [

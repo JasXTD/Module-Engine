@@ -26,12 +26,35 @@ let networkDraftBase = "";
 let networkDraftValid = true;
 let threatEvidence = null;
 let threatEvidenceError = '';
+// Which list the evidence on screen came from: 'bundled', or 'update:<review date>'.
+let threatEvidenceKey = '';
+let threatExpiryTimer = null;
 let threatStatus = null;
 let protectionVerified = false;
+let checkingThreats = false;
+
+// Automatic updates: where they come from, the last check and the Check button.
+function renderThreatUpdates() {
+  const updates=threatStatus?.updates, text=byId('threatUpdateStatus');
+  byId('threatUpdateTools').hidden=!updates?.configured;
+  byId('checkThreatUpdate').disabled=busy || checkingThreats;
+  if (!updates) { text.textContent=''; return; }
+  if (!updates.configured) {
+    text.textContent=updates.error || 'This version has no update address, so it uses the list bundled with it.';
+    return;
+  }
+  const when=updates.checkedAt ? new Date(updates.checkedAt).toLocaleString() : '';
+  const last=checkingThreats ? 'Checking now…' : !updates.checkedAt ? 'Not checked yet.'
+    : updates.result === 'error' ? `The last check, ${when}, failed: ${updates.error}`
+    : updates.result === 'installed' ? `The last check, ${when}, installed a newer list.`
+    : `Last checked ${when}: up to date.`;
+  text.textContent=`Signed updates from ${updates.host}, checked daily while Reported Threats is on. ${last}${updates.notice ? ' '+updates.notice : ''}`;
+}
 
 function renderThreatEvidence(filter) {
   const section=byId('threatEvidence'), body=section.querySelector('tbody');
   body.replaceChildren();
+  renderThreatUpdates();
   const status=byId('threatEvidenceStatus');
   if (!threatEvidence) {
     status.textContent=threatEvidenceError || 'Reading bundled evidence…';
@@ -45,10 +68,13 @@ function renderThreatEvidence(filter) {
   if (expired) status.textContent=protectionVerified && threatStatus && !threatStatus.available
     ? 'Evidence expired. Reported-threat filtering is inactive.'
     : 'Evidence expired. The reported-threat layer is retired at the next protection check.';
-  else if (!protectionVerified || !threatStatus || threatStatus.error || threatStatus.expiresAt !== policy.expiresAt) status.textContent='Protection status is unavailable or not verified. Evidence remains visible for review.';
-  else if (!settings.enabled || !settings.rulesets.threats_ruleset || !threatStatus.available) status.textContent='Reported-threat filtering is inactive. Evidence remains visible for review.';
+  // An update can share the bundled list's expiry, so match the review date too.
+  else if (!protectionVerified || !threatStatus || threatStatus.error || threatStatus.expiresAt !== policy.expiresAt ||
+      threatStatus.reviewedAt !== policy.reviewedAt) status.textContent='Protection status is unavailable or not verified. Evidence remains visible for review.';
+  else if (!settings.rulesets.threats_ruleset) status.textContent='Reported Threats is off. Turn it on in the popup to block these hosts; the evidence stays visible for review.';
+  else if (!settings.enabled || !threatStatus.available) status.textContent='Reported-threat filtering is inactive. Evidence remains visible for review.';
   else status.textContent='Reported-threat rules are enabled; individual site pauses still apply.';
-  byId('threatEvidenceDates').textContent=`Reviewed ${catalog.reviewedOn} · expires ${policy.expiresAt.replace('T',' ').replace('Z',' UTC')}. Observation dates retain the precision of the reports.`;
+  byId('threatEvidenceDates').textContent=`Reviewed ${catalog.reviewedOn} · expires ${policy.expiresAt.replace('T',' ').replace('Z',' UTC')} · ${threatEvidence.source === 'update' ? 'signed update' : 'bundled with this version'}. Observation dates retain the precision of the reports.`;
   const sources=new Map(catalog.sources.map(source=>[source.id,source]));
   const shown=catalog.domains.filter(item=>matches([item.host,item.host.replaceAll('.','[.]'),item.observedOn,item.role,item.section,sources.get(item.sourceId).publisher],filter));
   for (const item of shown) {
@@ -61,6 +87,45 @@ function renderThreatEvidence(filter) {
     addCell(row,item.section); body.append(row);
   }
   section.querySelector('.empty').hidden=shown.length > 0;
+}
+
+// Evidence for the list in use: the bundled files, or the installed signed update
+// the background chose. Either is checked here again before it is shown.
+async function loadThreatEvidence() {
+  const key=threatStatus?.source === 'update' ? 'update:'+threatStatus.reviewedAt : 'bundled';
+  if (key === threatEvidenceKey) return;
+  threatEvidenceKey=key;
+  let evidence=null, error='';
+  try {
+    let files;
+    if (key === 'bundled') {
+      files=await Promise.all(['threat-evidence.json','threats.json','threat-policy.json'].map(async file=>{
+        const response=await fetch(api.runtime.getURL('rules/'+file));
+        if (!response.ok) throw new Error(`Could not read ${file}.`);
+        return new Uint8Array(await response.arrayBuffer());
+      }));
+    } else {
+      const saved=(await api.storage.local.get('threatUpdate')).threatUpdate;
+      if (!saved) throw new Error('The installed update could not be read.');
+      files=[saved.evidence,saved.rules,saved.policy].map(text=>new TextEncoder().encode(text));
+    }
+    evidence={...(await BlockAdsEvidence.verify(...files)),source:key === 'bundled' ? 'bundled' : 'update'};
+  } catch (problem) { error='Evidence details unavailable: '+problem.message; }
+  // Another list may have been chosen while this one loaded.
+  if (key !== threatEvidenceKey) return;
+  threatEvidence=evidence; threatEvidenceError=error;
+  render();
+  // Refresh the display at the evidence deadline, even while this page is idle.
+  clearTimeout(threatExpiryTimer);
+  const expiry=Date.parse(evidence?.policy.expiresAt);
+  if (Number.isFinite(expiry) && expiry > Date.now()) {
+    const refreshExpiry=()=>{
+      const delay=expiry-Date.now();
+      if (delay <= 0) { render(); void run({type:'GET_STATE'}); }
+      else threatExpiryTimer=setTimeout(refreshExpiry,Math.min(delay,2147483647));
+    };
+    refreshExpiry();
+  }
 }
 
 function validateNetworkDraft() {
@@ -288,7 +353,10 @@ async function execute(message) {
   try {
     const response = await api.runtime.sendMessage(message);
     if (response?.settings) settings = response.settings;
-    if (response?.threatStatus) threatStatus = response.threatStatus;
+    if (response?.threatStatus) {
+      threatStatus = response.threatStatus;
+      void loadThreatEvidence();
+    }
     if (response?.threatStatus || !response?.ok) protectionVerified = Boolean(response?.ok);
     if (response?.flags) {
       flags = response.flags;
@@ -382,6 +450,12 @@ byId("saveFilters").addEventListener("click", async () => {
     } else byId("filterStatus").textContent = byId("notice").textContent;
   } catch (error) { byId("filterStatus").textContent = error.message; }
 });
+byId("checkThreatUpdate").addEventListener("click", async () => {
+  checkingThreats = true;
+  render();
+  try { await run({ type: "CHECK_THREAT_UPDATE" }); }
+  finally { checkingThreats = false; render(); }
+});
 byId("clearFlags").addEventListener("click", () => {
   if (confirm("Clear every flag, including ignored servers? Nothing is blocked or allowed by this.")) void run({ type: "FLAG_ACTION", action: "clear" });
 });
@@ -394,25 +468,7 @@ api.storage.onChanged.addListener((changes, area) => {
 });
 (async () => {
   render();
-  try {
-    const files=await Promise.all(['threat-evidence.json','threats.json','threat-policy.json'].map(async file=>{
-      const response=await fetch(api.runtime.getURL('rules/'+file));
-      if (!response.ok) throw new Error(`Could not read ${file}.`);
-      return new Uint8Array(await response.arrayBuffer());
-    }));
-    threatEvidence=await BlockAdsEvidence.verify(...files);
-  } catch (error) { threatEvidenceError='Evidence details unavailable: '+error.message; }
-  render();
-  // Refresh the display at the evidence deadline, even while this page is idle.
-  const expiry=Date.parse(threatEvidence?.policy.expiresAt);
-  if (Number.isFinite(expiry) && expiry > Date.now()) {
-    const refreshExpiry=()=>{
-      const delay=expiry-Date.now();
-      if (delay <= 0) { render(); void run({type:'GET_STATE'}); }
-      else setTimeout(refreshExpiry,Math.min(delay,2147483647));
-    };
-    refreshExpiry();
-  }
+  await loadThreatEvidence();
   try {
     const response = await fetch(api.runtime.getURL("rules/community-info.json"));
     if (!response.ok) throw new Error(`HTTP ${response.status}`);

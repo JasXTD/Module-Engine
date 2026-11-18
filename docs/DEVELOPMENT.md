@@ -272,6 +272,24 @@ The builder validates bounded UTF-8/JSON input, duplicate fields/domains/IDs, DN
 
 `-FetchOnlineLists` and `-UrlhausCsvPath` now fail explicitly without downloading or replacing files. Unreviewed remote data is not automatically promoted into this catalog. No authenticated feed or malware samples are needed for this build.
 
-Successful builds write `rules/ads.json`, `rules/trackers.json`, an empty compatibility `rules/malware.json`, the validated `rules/reviewed-domains.json` catalog, and the separate `rules/threats.json` / `rules/threat-policy.json` pair. Ad, tracker and reported-threat sets are declared as browser rulesets. The catalogs and policy are inert JSON metadata. The runtime reads the policy from the packaged extension, never from a remote server. Rebuilding an old evidence file does not renew its dates or expiry.
+Successful builds write `rules/ads.json`, `rules/trackers.json`, an empty compatibility `rules/malware.json`, the validated `rules/reviewed-domains.json` catalog, and the separate `rules/threats.json` / `rules/threat-policy.json` pair. Ad, tracker and reported-threat sets are declared as browser rulesets. The catalogs and policy are inert JSON metadata. The runtime reads the bundled policy from the packaged extension; the only remote copy it accepts is a signed update (below). Rebuilding an old evidence file does not renew its dates or expiry.
 
 Every output is staged before replacement. A failed write triggers restoration of already replaced files; a lock prevents concurrent builds. Sudden power loss during multi-file publication is not an atomic transaction, so retain backups and rerun a successful build before reloading if publication is interrupted.
+
+### Publishing a reported-threat update
+
+Installs can take a newer reported-threat list without a new release. The list is published as four files in a public folder, and the extension trusts only public keys built into it. `src/shared/update-config.js` holds the folder address (`threatSource`) and those keys. While `threatSource` is empty, a build never checks for updates. `scripts/update-signing.cjs` writes that file and signs the folder; it is offline.
+
+```bash
+node scripts/update-signing.cjs create-key
+node scripts/update-signing.cjs set-source https://raw.githubusercontent.com/<owner>/Module-Engine/main/updates/threats/
+node scripts/update-signing.cjs publish-threats
+```
+
+- **create-key** makes an ECDSA P-256 key pair once. The private key goes to `~/.module-engine/update-signing-key.pem` (or `--key <file>`), and the script refuses a location inside the repository. Back it up, and never commit or share it. Anyone with it can sign lists that every install accepts. Losing it means a new key must ship in a release before updates work again. The public key is added to the config; commit that file. To rotate, run `create-key --key <new file>` (which adds a second key), release, publish with the new key, then remove the old key in a later release. `--replace` drops the old keys at once.
+- **set-source** sets the folder the next build checks. Only `https://` is accepted; plain `http://` is allowed only for `127.0.0.1`, `localhost` and `[::1]`, for tests.
+- **publish-threats** copies `rules/threats.json`, `rules/threat-policy.json` and `rules/threat-evidence.json` to `updates/threats/` and signs the evidence file into `threat-evidence.sig` (base64, 64-byte P1363 signature). It then checks the folder as the extension will and refuses an expired list. Push the folder to the public repository.
+
+Renew the list itself as before, with `scripts/threat-report-tools.ps1` and a build; publishing never changes dates. The evidence file records the SHA-256 of the rules and policy, so the one signature covers all three files. An install accepts a folder only when its signature verifies against a built-in key and the evidence passes `BlockAdsEvidence.verify`. Its review date must not be in the future and must be later than the list in use, and the list must not have expired. Replaying an older signed list therefore changes nothing. Downloads are capped at 128 KiB per file and 15 seconds, and use no cookies, referrer, redirects or cache. They happen only while Reported Threats is on: at most once a day from the hourly recheck, or from **My lists → Check for updates** (`CHECK_THREAT_UPDATE`, extension pages only).
+
+The installed list is stored as the exact verified text (`threatUpdate` in local storage) and re-verified once per background start. Its rules become dynamic rules with IDs 900001 and up, priority 5, in place of the static `threats_ruleset`. They count toward the dynamic-rule limit. If the browser refuses them, the previous list is restored. An installed list is set aside when it no longer verifies, for example after its key is removed, or when the release's bundled list is newer. `tests/threat-updates.test.cjs` covers the signing script and checks. `tests/background.test.cjs` covers scheduling, installation and rollback. `node tests/threat-updates-browser.cjs chrome|edge|firefox` serves a signed loopback folder to a copy of the extension that trusts a throwaway key.

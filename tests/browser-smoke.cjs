@@ -683,6 +683,11 @@ if (require.main === module) (async () => {
     const threatHosts = JSON.parse(await fs.readFile(path.join(root, 'lists/reported-threats.json'), 'utf8')).domains.map(entry => entry.host);
     const threatState = await state();
     check(threatState.threatStatus.available && threatState.threatStatus.count === threatHosts.length, 'dated threat policy is current and active');
+    // Reported Threats is opt-in. The probes below run with it switched on.
+    check(threatState.settings.rulesets.threats_ruleset === false &&
+      !(await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).includes('threats_ruleset'), 'Reported Threats is off on a new profile');
+    check((await send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } })).ok &&
+      (await browser.evaluate('api.declarativeNetRequest.getEnabledRulesets()')).includes('threats_ruleset'), 'turning Reported Threats on enables its rules');
     const probes = threatHosts.flatMap(host => [
       ['https://' + host + '/fixture.js', 'script', true],
       ['http://' + host + ':8080/fixture', 'main_frame', true],

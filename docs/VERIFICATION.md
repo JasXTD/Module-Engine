@@ -1,8 +1,40 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 repair of the native pop-up and redirect suites, following the same day's static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 change that turns Reported Threats off by default and adds signed list updates, following the same day's repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Reported Threats off by default, signed list updates — 18 November 2026
+
+The user decided that Reported Threats should be opt-in. They also want its list to update itself from the project's public repository, which they will create as Module-Engine. Nothing was pushed, and no repository or signing key exists yet.
+
+- **Off by default.** `DEFAULT_SETTINGS` now leaves `threats_ruleset` off. Every profile saves its full settings on its first start, so this reaches new installs only; an existing install keeps the choice it saved. A profile saved before the threat layer existed also gets the new default.
+- **Signed updates.** `src/background/threat-updates.js` downloads `threat-evidence.sig` first, then the three list files. Each file is capped at 128 KiB and 15 seconds and fetched without cookies, a referrer, redirects or the cache. A list is accepted only when all of these hold:
+  - its ECDSA P-256 signature over `threat-evidence.json` verifies against a key in `src/shared/update-config.js`;
+  - `BlockAdsEvidence.verify` passes;
+  - its review date is not in the future and is later than the list in use;
+  - it has not expired.
+- **Installation.** The background installs an accepted list as dynamic rules from ID 900001, in place of the static ruleset, and re-verifies it once per worker start. If the browser refuses the new rules, the previous list is restored. A list whose key is no longer trusted, or that is older than the bundled list, is set aside. Checks run at most daily from the hourly recheck while the layer is on, or from **My lists → Check for updates**. My lists shows the list in use, re-verified in the page, with the folder and the last result. The activity log labels blocks by updated rules as Reported threat.
+- **This build checks nothing.** `update-config.js` names no folder and no key. `scripts/update-signing.cjs` creates the key outside the repository, sets the folder and signs an `updates/threats/` folder; see [Development](DEVELOPMENT.md#publishing-a-reported-threat-update).
+
+**667 Node tests** passed, with no failures or skips; 19 are new. Against the base commit `6deba43`, 11 of the updated background tests fail: the 8 update tests and the 3 that expect the new default. Three deliberate faults were each caught: checking while the layer is off, keeping expired updated rules, and skipping the rollback after a refused list. **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host** assertions passed.
+
+The full offline blocker suites passed **800 Chrome 158**, **800 Edge 157** and **793 Firefox 160** checks. That includes two new ones, that Reported Threats is off on a new profile and that turning it on enables its rules. Their recorded runtime hashes match the workspace files.
+
+The new `tests/threat-updates-browser.cjs` passed **57 checks** in each browser. A loopback folder signed with a throwaway key served a 23-host list to a copy of the extension that trusts only that key. In each browser:
+
+- nothing was requested while the layer was off;
+- turning it on downloaded the four files without cookies or a referrer;
+- 23 dynamic rules replaced the bundled ruleset, and the dropped host was no longer blocked;
+- site pauses still took precedence, and My lists showed the installed list;
+- a tampered newer list was refused while the installed one stayed;
+- a valid 22-host list then replaced it.
+
+The deny proxy refused only the browsers' own background traffic.
+
+After the suite repair below landed, the three repaired suites also passed on this change, in Chrome 158 and Edge 157 alike: pop-up guard 38, frame redirects 28 and same-tab redirects 56 checks. Their tested packages hold the 91 inventory files, including the new updater files, with hashes matching this change.
+
+The update flow was tested over loopback HTTP only. The fixture sends the headers raw.githubusercontent.com uses, but no GitHub folder was contacted, and its caching of up to five minutes was not exercised. The other runs used commit `6deba43` plus this change. That is the static generic hiding commit before its verification record was added; its code is identical to `6b37c8e`. This change is based on `0a757a9`, which changes only those three test suites on top of it. See [the evidence summary](../verification/2026-11-18/threat-updates/summary.json).
 
 ## Native pop-up and redirect suites — 18 November 2026
 

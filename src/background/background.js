@@ -16,6 +16,7 @@ if (!globalThis.BlockAdsUserScriptActions && typeof importScripts === "function"
 if (!globalThis.BlockAdsUserScripts && typeof importScripts === "function") importScripts("../userscripts/userscripts-runtime.js");
 if (!globalThis.BlockAdsDebug && typeof importScripts === "function") importScripts("../shared/debug-protocol.js", "debug-runtime.js");
 if (!globalThis.ModuleEngineNetworkLog && typeof importScripts === "function") importScripts("network-log.js");
+if (!globalThis.ModuleEngineThreatUpdates && typeof importScripts === "function") importScripts("../shared/update-config.js", "../blocking/evidence.js", "threat-updates.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const networkLog = ModuleEngineNetworkLog.create(api);
 const userscriptHost = BlockAdsUserScripts.create(api);
@@ -47,9 +48,17 @@ const THREAT_EXPIRY_ALARM = "reported-threats-expiry";
 // Must match $ThreatEvidenceMaxAgeDays in scripts/threat-report-tools.ps1 and
 // maxAgeDays in src/blocking/evidence.js.
 const THREAT_MAX_AGE_DAYS = 180;
+// Signed reported-threat updates (threat-updates.js). The installed list is kept
+// as the exact text that was verified, and the last check's result beside it.
+const THREAT_UPDATE_KEY = "threatUpdate";
+const THREAT_UPDATE_STATUS_KEY = "threatUpdateStatus";
+const THREAT_UPDATE_INTERVAL = 24 * 3600000;
 const DEFAULT_SETTINGS = {
   enabled: true,
-  rulesets: Object.fromEntries(RULESET_IDS.map(id => [id, true])),
+  // Reported Threats is opt-in. Every profile saves its full settings on its
+  // first start, so this reaches new installs only; existing installs keep the
+  // choice they saved.
+  rulesets: Object.fromEntries(RULESET_IDS.map(id => [id, id !== "threats_ruleset"])),
   cosmeticFiltering: true,
   genericCosmeticFiltering: true,
   proceduralFiltering: true,
@@ -337,8 +346,10 @@ async function logRuleMatch({ rule, request }) {
     if (!(await matchedBlock(rule))) return;
     const { host, path } = urlParts(request.url);
     const source = request.initiator || request.documentUrl || request.originUrl || "";
+    // An installed reported-threat update runs as dynamic rules in its own ID range.
+    const layer = rule.rulesetId === "_dynamic" && isThreatRule({ id: rule.ruleId }) ? "threats_ruleset" : rule.rulesetId;
     await addLog({
-      kind: "blocked", layer: LAYER_NAMES[rule.rulesetId] || rule.rulesetId, ruleId: rule.ruleId,
+      kind: "blocked", layer: LAYER_NAMES[layer] || rule.rulesetId, ruleId: rule.ruleId,
       host, path, type: request.type, site: urlParts(source).host, tabId: request.tabId
     });
   } catch (error) {
@@ -646,29 +657,86 @@ function describeChanges(before, after) {
   return changes;
 }
 
-async function loadThreatStatus() {
+// Reported-threat policies, bundled or updated, have exactly these fields and
+// dates that fit the evidence window. `label` names the list in errors.
+function threatPolicyDates(policy, label) {
+  const keys = ["schemaVersion", "ruleCount", "evidenceFrom", "reviewedAt", "expiresAt"];
+  if (!policy || typeof policy !== "object" || Object.keys(policy).length !== keys.length || keys.some(key => !(key in policy)) ||
+      policy.schemaVersion !== 1 || !Number.isInteger(policy.ruleCount) || policy.ruleCount < 1 || policy.ruleCount > 100) {
+    throw new Error(`The ${label} evidence policy is invalid.`);
+  }
+  const [observed, reviewed, expires] = [policy.evidenceFrom, policy.reviewedAt, policy.expiresAt].map(value => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value) ||
+        !Number.isFinite(Date.parse(value)) || new Date(value).toISOString() !== value.replace("Z", ".000Z")) {
+      throw new Error(`The ${label} evidence dates are invalid.`);
+    }
+    return Date.parse(value);
+  });
+  if (observed > reviewed || reviewed > Date.now() || expires <= reviewed || expires - observed > THREAT_MAX_AGE_DAYS * 86400000) {
+    throw new Error(`The ${label} evidence dates violate the ${THREAT_MAX_AGE_DAYS}-day review policy.`);
+  }
+  return { reviewed, expires };
+}
+
+// The update folder this build names, checked like any download address; ""
+// when it names none.
+function threatUpdateSource() {
+  const configured = globalThis.ModuleEngineUpdateConfig?.threatSource;
+  return configured ? ModuleEngineThreatUpdates.sourceUrl(configured) : "";
+}
+
+// What the interface shows about updates: where they come from and how the
+// last check went. An invalid address in the build is reported, not used.
+async function threatUpdateState() {
+  let source = "", error = "";
+  try { source = threatUpdateSource(); } catch (problem) { error = `This build's update address is invalid. ${problem.message}`; }
+  const saved = (await api.storage.local.get([THREAT_UPDATE_STATUS_KEY]))[THREAT_UPDATE_STATUS_KEY] || {};
+  return { configured: Boolean(source), host: source ? new URL(source).host : "",
+    checkedAt: typeof saved.checkedAt === "string" ? saved.checkedAt : null,
+    result: ["installed", "current", "error"].includes(saved.result) ? saved.result : null,
+    error: error || (typeof saved.error === "string" ? saved.error : ""), notice: "" };
+}
+
+// The installed signed update, verified once per worker and list: the signature
+// covers the evidence file, which binds the rules and policy by SHA-256. A list
+// that no longer verifies, for example after a release stops trusting the key
+// that signed it, is set aside and the bundled list is used.
+let installedThreats = { text: null, value: null };
+async function loadInstalledThreats() {
+  const saved = (await api.storage.local.get([THREAT_UPDATE_KEY]))[THREAT_UPDATE_KEY];
+  if (!saved) return { list: null, error: "" };
+  const text = JSON.stringify(saved);
+  if (installedThreats.text !== text) {
+    let value;
+    try {
+      const { policy, rules } = await ModuleEngineThreatUpdates.verify(ModuleEngineThreatUpdates.restore(saved));
+      value = { list: { policy, rules: ModuleEngineThreatUpdates.dynamicRules(rules) }, error: "" };
+    } catch (error) {
+      value = { list: null, error: `The installed update was set aside. ${error.message || String(error)}` };
+    }
+    installedThreats = { text, value };
+  }
+  return installedThreats.value;
+}
+
+// The reported-threat list in use: the bundled list, or an installed signed
+// update reviewed later than it. The bundled list is the static threats_ruleset;
+// an update's rules are returned as dynamic rules in `rules`.
+async function loadThreats() {
+  const updates = await threatUpdateState();
   try {
     // This is a packaged extension file, never a network feed or candidate host.
     const response = await fetch(api.runtime.getURL("rules/threat-policy.json"), { redirect: "error" });
     if (!response.ok) throw new Error("The bundled evidence policy could not be read.");
     const text = await response.text();
     if (text.length > 4096) throw new Error("The bundled evidence policy is oversized.");
-    const policy = JSON.parse(text);
-    const keys = ["schemaVersion", "ruleCount", "evidenceFrom", "reviewedAt", "expiresAt"];
-    if (!policy || Object.keys(policy).length !== keys.length || keys.some(key => !(key in policy)) ||
-        policy.schemaVersion !== 1 || !Number.isInteger(policy.ruleCount) || policy.ruleCount < 1 || policy.ruleCount > 100) {
-      throw new Error("The bundled evidence policy is invalid.");
-    }
-    const dates = [policy.evidenceFrom, policy.reviewedAt, policy.expiresAt].map(value => {
-      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value) ||
-          !Number.isFinite(Date.parse(value)) || new Date(value).toISOString() !== value.replace("Z", ".000Z")) {
-        throw new Error("The bundled evidence dates are invalid.");
-      }
-      return Date.parse(value);
-    });
-    const [observed, reviewed, expires] = dates;
-    if (observed > reviewed || reviewed > Date.now() || expires <= reviewed || expires - observed > THREAT_MAX_AGE_DAYS * 86400000) {
-      throw new Error(`The bundled evidence dates violate the ${THREAT_MAX_AGE_DAYS}-day review policy.`);
+    let policy = JSON.parse(text), rules = null;
+    let { reviewed, expires } = threatPolicyDates(policy, "bundled");
+    const installed = await loadInstalledThreats();
+    updates.notice = installed.error;
+    if (installed.list && Date.parse(installed.list.policy.reviewedAt) > reviewed) {
+      ({ policy, rules } = installed.list);
+      ({ expires } = threatPolicyDates(policy, "updated"));
     }
     // Alarms may be lost across browser restarts. Recheck on every worker start
     // and command; the repeating guard also handles wall-clock changes.
@@ -681,15 +749,22 @@ async function loadThreatStatus() {
     } else {
       await api.alarms.clear(THREAT_EXPIRY_ALARM);
     }
-    return { available: expires > Date.now(), count: policy.ruleCount, expiresAt: policy.expiresAt, error: "" };
+    return { status: { available: expires > Date.now(), count: policy.ruleCount, expiresAt: policy.expiresAt, reviewedAt: policy.reviewedAt,
+      source: rules ? "update" : "bundled", error: "", updates }, rules };
   } catch (error) {
-    return { available: false, count: 0, expiresAt: null, error: `Reported threats are inactive. ${error.message || String(error)}` };
+    return { status: { available: false, count: 0, expiresAt: null, reviewedAt: null, source: null,
+      error: `Reported threats are inactive. ${error.message || String(error)}`, updates }, rules: null };
   }
 }
 
+// An installed update's dynamic rules use IDs above RULE_ID_BASE; the person's
+// own dynamic rules count up from 1.
+const isThreatRule = rule => rule.id > ModuleEngineThreatUpdates.RULE_ID_BASE;
+
 function constrainThreatRules(target, status) {
   if (status?.available && Date.parse(status.expiresAt) <= Date.now()) status.available = false;
-  return { ...target, enabled: target.enabled.filter(id => id !== "threats_ruleset" || status?.available) };
+  return { ...target, enabled: target.enabled.filter(id => id !== "threats_ruleset" || status?.available),
+    dynamic: target.dynamic.filter(rule => !isThreatRule(rule) || status?.available) };
 }
 
 async function retireInactiveThreats(status) {
@@ -701,6 +776,67 @@ async function retireInactiveThreats(status) {
       throw new Error("The browser did not disable inactive reported-threat rules.");
     }
   }
+  const updated = (await api.declarativeNetRequest.getDynamicRules()).filter(isThreatRule);
+  if (updated.length) {
+    dynamicBlockIds = null;
+    await changeNetworkRules(() => api.declarativeNetRequest.updateDynamicRules({ removeRuleIds: updated.map(rule => rule.id), addRules: [] }));
+    if ((await api.declarativeNetRequest.getDynamicRules()).some(isThreatRule)) {
+      throw new Error("The browser did not remove inactive reported-threat rules.");
+    }
+  }
+}
+
+// One update check at a time. Downloads run outside the settings queue; the
+// decision and installation run inside it, against the list in use then.
+let threatCheck = null;
+function checkThreatUpdate() {
+  threatCheck ??= runThreatCheck().finally(() => { threatCheck = null; });
+  return threatCheck;
+}
+
+// Due a day after the last check, while Reported Threats is on and this build
+// names an update folder. Nothing is requested otherwise.
+function threatCheckDue(settings, status) {
+  if (threatCheck || !settings.enabled || !settings.rulesets.threats_ruleset || !status.updates?.configured) return false;
+  const last = Date.parse(status.updates.checkedAt);
+  // A clock that moved backwards makes the last check look future-dated.
+  return !Number.isFinite(last) || last > Date.now() || Date.now() - last >= THREAT_UPDATE_INTERVAL;
+}
+
+async function runThreatCheck() {
+  const checkedAt = new Date(Date.now()).toISOString();
+  let outcome;
+  try {
+    const source = threatUpdateSource();
+    if (!source) throw new Error("This build has no update address.");
+    const files = await ModuleEngineThreatUpdates.fetchUpdate(source);
+    outcome = await enqueue(() => installThreatUpdate(files, source));
+  } catch (error) {
+    outcome = { result: "error", error: error.message || String(error) };
+    await addLog({ kind: "event", message: `Reported-threat update check failed: ${outcome.error}` });
+  }
+  await api.storage.local.set({ [THREAT_UPDATE_STATUS_KEY]: { checkedAt, ...outcome } });
+  return reconcile();
+}
+
+// Installs a downloaded list that is signed, current and newer than the list in
+// use, then applies it. If the browser does not take it, the previous list is
+// put back, so a bad update never costs the layer its last good list.
+async function installThreatUpdate(files, source) {
+  const current = (await loadThreats()).status;
+  const result = await ModuleEngineThreatUpdates.check(files, { currentReviewedAt: current.reviewedAt });
+  if (!result.newer) return { result: "current", error: "" };
+  const previous = (await api.storage.local.get([THREAT_UPDATE_KEY]))[THREAT_UPDATE_KEY];
+  await api.storage.local.set({ [THREAT_UPDATE_KEY]: { ...ModuleEngineThreatUpdates.store(files), source, installedAt: new Date(Date.now()).toISOString() } });
+  const applied = await processRequest({ type: "GET_STATE" });
+  if (applied.ok && applied.threatStatus.source === "update" && applied.threatStatus.reviewedAt === result.policy.reviewedAt) {
+    await addLog({ kind: "event", message: `Installed the reported-threat list reviewed ${result.policy.reviewedAt.slice(0, 10)}: ${result.catalog.domains.length} exact hosts` });
+    return { result: "installed", error: "" };
+  }
+  if (previous) await api.storage.local.set({ [THREAT_UPDATE_KEY]: previous });
+  else await api.storage.local.remove(THREAT_UPDATE_KEY);
+  await processRequest({ type: "GET_STATE" });
+  throw new Error(`The new list could not be used. ${applied.ok ? applied.threatStatus.error : applied.error}`.trim());
 }
 
 function enqueue(operation) {
@@ -769,7 +905,8 @@ async function loadSettings() {
   return { settings: validateSettings(settings), quarantined };
 }
 
-function makeDynamicRules(settings) {
+// `reserved` counts dynamic rules added beside these: an installed threat update.
+function makeDynamicRules(settings, reserved = 0) {
   if (!settings.enabled) return [];
   const rules = [];
   const add = rule => rules.push({ id: rules.length + 1, ...rule });
@@ -813,7 +950,9 @@ function makeDynamicRules(settings) {
   }
   const limit = api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES ??
     api.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES ?? 5000;
-  if (rules.length > limit) throw new Error(`Too many custom network and domain rules for this browser (limit ${limit}).`);
+  if (rules.length + reserved > limit) {
+    throw new Error(`Too many custom network and domain rules for this browser (limit ${limit}${reserved ? `, including ${reserved} reported-threat rules` : ""}).`);
+  }
   return rules;
 }
 
@@ -1084,16 +1223,20 @@ async function processRequest(message) {
   let saveAttempted = false;
   let threatStatus = { available: false, count: 0, expiresAt: null, error: "Evidence has not been checked." };
   try {
-    threatStatus = await loadThreatStatus();
+    const threats = await loadThreats();
+    threatStatus = threats.status;
     await retireInactiveThreats(threatStatus);
     loaded = await loadSettings();
     const desired = editSettings(loaded.settings, message);
     // The generic stylesheets' exclusions come from the bundled exceptions.
     const cosmetic = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset &&
       desired.genericCosmeticFiltering ? await loadCommunityCosmetic() : {};
+    // An installed update replaces the bundled threats_ruleset with its own
+    // dynamic rules; expired ones are removed by applyRules.
+    const updatedThreats = desired.enabled && desired.rulesets.threats_ruleset && threats.rules ? threats.rules : [];
     const target = {
-      enabled: RULESET_IDS.filter(id => desired.enabled && desired.rulesets[id]),
-      dynamic: makeDynamicRules(desired),
+      enabled: RULESET_IDS.filter(id => desired.enabled && desired.rulesets[id] && !(id === "threats_ruleset" && threats.rules)),
+      dynamic: [...makeDynamicRules(desired, updatedThreats.length), ...updatedThreats],
       scripts: makePageScripts(desired, cosmetic)
     };
     beforeRules = await readRules();
@@ -1105,6 +1248,10 @@ async function processRequest(message) {
     }
     await updateBadge(desired, Boolean(threatStatus.error));
     for (const change of describeChanges(loaded.settings, desired)) await addLog({ kind: "event", message: change });
+    // Not awaited: the check queues its own installation after this request.
+    if (threatCheckDue(desired, threatStatus)) {
+      void checkThreatUpdate().catch(error => console.warn("[Module Engine] Reported-threat update check failed:", error));
+    }
     return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus };
   } catch (error) {
     let rollbackFailed = false;
@@ -1365,6 +1512,15 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
         deceptiveButtons: promptsActive && settings.deceptiveButtonBlocking,
         flag: active && settings.flagSuspects, ...(popupGuard ? { popupGuard: true } : {}) });
     }).catch(() => sendResponse({ ok: false, error: "Could not read cosmetic filtering settings." }));
+    return true;
+  }
+  if (message?.type === "CHECK_THREAT_UPDATE") {
+    if (!fromExtensionPage(sender)) {
+      sendResponse({ ok: false, error: "Updates can only be checked from the extension interface." });
+      return false;
+    }
+    // Answers with the verified state after the check, like GET_STATE.
+    checkThreatUpdate().then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
     return true;
   }
   if (!message || !["GET_STATE", "UPDATE_SETTINGS", "ADD_CUSTOM_DOMAIN", "REMOVE_CUSTOM_DOMAIN",

@@ -8,11 +8,13 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 const ids = manifest.declarative_net_request.rule_resources.map(rule => rule.id);
 const policyText = fs.readFileSync(path.join(root, 'rules/threat-policy.json'), 'utf8');
+// Reported Threats is off on a new install; threat tests start as a person who turned it on.
+const threatsOn = { rulesets: { threats_ruleset: true } };
 
 function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', session = {}, options = {}) {
   const listeners = {};
   const state = { session, storage: clone(initial), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
-  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
+  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], updateRequests: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
     cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
       allow: { 'shop.example.com': ['.ad-box'] } }) });
   class Clock extends Date { static now() { return state.now; } }
@@ -39,7 +41,8 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     },
     storage: { onChanged: event('storageChanged'), local: {
       async get(keys) { await tick(); return clone(Object.fromEntries(keys.filter(k => k in state.storage).map(k => [k, state.storage[k]]))); },
-      async set(value) { await fault('save'); Object.assign(state.storage, clone(value)); }
+      async set(value) { await fault('save'); Object.assign(state.storage, clone(value)); },
+      async remove(keys) { await tick(); for (const key of [keys].flat()) delete state.storage[key]; }
     }, session: {
       async get(key) { await tick(); return key in state.session ? clone({ [key]: state.session[key] }) : {}; },
       async set(value) { await fault('session'); Object.assign(state.session, clone(value)); },
@@ -115,7 +118,13 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     delete api.declarativeNetRequest.onRuleMatchedDebug;
     api.declarativeNetRequest.testMatchOutcome = () => { throw new Error('Firefox feedback is disabled'); };
   }
-  const context = vm.createContext({ chrome: api, URL, TextEncoder, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), clearTimeout: clearImmediate, fetch: async url => {
+  // Uint8Array is shared with this realm, as in the browser's single realm: evidence.js checks instanceof.
+  const context = vm.createContext({ chrome: api, URL, TextEncoder, TextDecoder, Uint8Array, atob, AbortController, crypto:require('node:crypto').webcrypto, console, Date: Clock, setTimeout: fn => setImmediate(fn), clearTimeout: clearImmediate, fetch: async (url, init) => {
+    // A test update folder; the release config names it (options.updateConfig).
+    if (options.updateServer && options.updateConfig?.threatSource && url.startsWith(options.updateConfig.threatSource)) {
+      state.updateRequests.push({ url, init: { ...init, signal: undefined } });
+      return options.updateServer(url.slice(options.updateConfig.threatSource.length));
+    }
     if (url === 'chrome-extension://test/rules/community-cosmetic.json') {
       state.fetches.push(url);
       await fault('cosmetic');
@@ -131,13 +140,19 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     await fault('policy');
     return { ok: true, text: async () => state.policyText };
   } });
-  for (const file of manifest.background.scripts) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
+  for (const file of manifest.background.scripts) {
+    // options.updateConfig stands in for this release's update settings.
+    const code = file === 'src/shared/update-config.js' && options.updateConfig
+      ? `globalThis.ModuleEngineUpdateConfig = Object.freeze(${JSON.stringify(options.updateConfig)});`
+      : fs.readFileSync(path.join(root, file), 'utf8');
+    vm.runInContext(code, context, { filename: file });
+  }
   const ready = vm.runInContext('operationQueue', context);
   const send = async (message, sender = { id: 'test', url: 'chrome-extension://test/src/ui/popup/popup.html' }) => { await ready; return new Promise(resolve => {
     const retained = listeners.message(clone(message), sender, response => resolve(clone(response)));
     if (!retained) resolve(undefined);
   }); };
-  return { state, send, ready, shared: context.BlockAds, listeners, api };
+  return { state, send, ready, shared: context.BlockAds, listeners, api, context };
 }
 
 test('modules preserve ad blocking and saved settings when userscript access is missing', async () => {
@@ -401,7 +416,7 @@ test('custom cosmetic saves are transactional and conflicting editors cannot ove
 });
 
 test('custom rules reject content-script writers, injection and unrestricted setting patches', async () => {
-  const h = harness();
+  const h = harness(threatsOn);
   await h.send({ type: 'GET_STATE' });
   const sender = { id: 'test', url: 'https://example.com/', tab: { id: 1, url: 'https://example.com/' } };
   assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: '', text: 'example.com##.ad' }, sender)).ok, false);
@@ -529,11 +544,13 @@ test('domain canonicalization accepts URLs and IDN while rejecting filter inject
   assert.equal(shared.whitelistScope('badexample.test', ['example.test']), '');
 });
 
-test('first run applies all settings and verifies actual browser rule state', async () => {
+test('first run applies all settings, with Reported Threats off, and verifies actual browser rule state', async () => {
   const h = harness();
   const response = await h.send({ type: 'GET_STATE' });
   assert.equal(response.ok, true);
-  assert.deepEqual(h.state.enabled.sort(), ids.slice().sort());
+  assert.deepEqual(h.state.enabled.sort(), ids.filter(id => id !== 'threats_ruleset').sort());
+  assert.equal(h.state.storage.rulesets.threats_ruleset, false, 'a new install saves Reported Threats as off');
+  assert.equal(response.threatStatus.available, true, 'its evidence is still current, so the switch can be turned on');
   assert.equal(h.state.storage.protectionError, null);
   assert.deepEqual(response.settings.customBlockedDomains, []);
 });
@@ -547,7 +564,7 @@ test('overlapping independent switches and domain additions are not lost', async
     h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'two.example' })
   ]);
   assert.ok(responses.every(r => r.ok));
-  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'threats_ruleset']);
+  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset']);
   assert.deepEqual(h.state.storage.customBlockedDomains, ['one.example', 'two.example']);
   assert.equal(h.state.dynamic.length, 2);
 });
@@ -630,7 +647,7 @@ test('failure of rollback itself explicitly reports unverified protection', asyn
 });
 
 test('master pause clears network rules, restart reconciliation restores saved selection', async () => {
-  const h = harness();
+  const h = harness(threatsOn);
   await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'one.example' });
   await h.send({ type: 'UPDATE_SETTINGS', patch: { enabled: false, rulesets: { ads_ruleset: false } } });
   assert.deepEqual(h.state.dynamic, []);
@@ -678,8 +695,9 @@ test('upgrading to the reviewed catalog retires the old malware toggle and prese
   const h = harness({ rulesets: { ads_ruleset: false, trackers_ruleset: true, malware_ruleset: true } });
   const result = await h.send({ type: 'GET_STATE' });
   assert.equal(result.ok, true);
-  assert.deepEqual(result.settings.rulesets, { ads_ruleset: false, trackers_ruleset: true, threats_ruleset: true, community_ruleset: true });
-  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'threats_ruleset', 'trackers_ruleset']);
+  // A profile saved before the threat layer existed never chose it, so it gets the default.
+  assert.deepEqual(result.settings.rulesets, { ads_ruleset: false, trackers_ruleset: true, threats_ruleset: false, community_ruleset: true });
+  assert.deepEqual(h.state.enabled.sort(), ['community_ruleset', 'trackers_ruleset']);
   assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { malware_ruleset: true } } })).ok, false);
 });
 
@@ -724,7 +742,7 @@ test('worker wake checks packaged evidence and restores missing expiry alarms wi
 });
 
 test('expiry alarm disables reported threats at the boundary without changing saved preferences or neighbors', async () => {
-  const h = harness({ customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
+  const h = harness({ ...threatsOn, customBlockedDomains: ['custom.example'] }, 5000, '2027-02-27T23:59:59Z');
   await h.ready;
   assert.ok(h.state.enabled.includes('threats_ruleset'));
   h.state.now = Date.parse('2027-02-28T00:00:00Z');
@@ -758,7 +776,9 @@ test('explicit threat-layer pause survives a worker restart and later reconcilia
 });
 
 test('malformed, missing and future evidence disables only the threat layer and exposes a retryable error', async () => {
-  const h = harness({ customBlockedDomains: ['custom.example'] });
+  const h = harness({ ...threatsOn, customBlockedDomains: ['custom.example'] });
+  await h.ready;
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'the layer starts active');
   await h.ready;
   const baseline = JSON.parse(policyText);
   for (const text of ['{}', '{', 'x'.repeat(4097), JSON.stringify({ ...baseline, extra: true }),
@@ -781,7 +801,7 @@ test('malformed, missing and future evidence disables only the threat layer and 
 });
 
 test('failure to schedule expiry prevents threat activation, while a retry recovers', async () => {
-  const h = harness();
+  const h = harness(threatsOn);
   await h.ready;
   h.state.alarms = {};
   h.state.faults.alarm = 1;
@@ -789,11 +809,13 @@ test('failure to schedule expiry prevents threat activation, while a retry recov
   assert.match(result.threatStatus.error, /alarm failure/);
   assert.equal(h.state.enabled.includes('threats_ruleset'), false);
   assert.equal((await h.send({ type: 'GET_STATE' })).threatStatus.available, true);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), true, 'the retry turns the layer back on');
 });
 
 test('crossing expiry during an edit and storage rollback never restores expired threat rules', async () => {
-  const h = harness({ customBlockedDomains: ['original.example'] });
+  const h = harness({ ...threatsOn, customBlockedDomains: ['original.example'] });
   await h.ready;
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'the layer starts active');
   h.state.expireOnDynamic = true;
   h.state.faults.save = 1;
   const result = await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'new.example' });
@@ -1726,4 +1748,206 @@ test('a failed read of saved flags is reported and retried, never saved over as 
   await settle();
   assert.deepEqual(Object.keys(h.state.storage.adFlags), ['kept.example'], 'saved flags were not overwritten');
   assert.equal((await flagsOf(h))['kept.example'].count, 3, 'the next read succeeds');
+});
+
+// Signed reported-threat updates. A throwaway key stands in for the release
+// key; the fake folder serves the files the publish script would.
+const { keyPair, updateFolder, tamper } = require('./threat-update-fixture.cjs');
+const UPDATE_SOURCE = 'https://updates.example/threats/';
+const AFTER_REVIEW = '2026-11-18T04:00:00Z';
+const UPDATED_IDS = Array.from({ length: 23 }, (_, index) => 900001 + index);
+const updatedRules = h => h.state.dynamic.filter(rule => rule.id > 900000);
+function updateHarness({ initial = threatsOn, key = keyPair(), now = AFTER_REVIEW, limit = 5000 } = {}) {
+  const server = { files: updateFolder({ privateKey: key.privateKey, reviewedOn: '2026-11-17', hosts: 23 }), status: 200 };
+  const reply = name => {
+    const body = server.status === 200 ? server.files[name] : undefined;
+    if (!body) return { ok: false, status: server.status === 200 ? 404 : server.status, headers: { get: () => null }, arrayBuffer: async () => new ArrayBuffer(0) };
+    return { ok: true, status: 200, headers: { get: header => header === 'content-length' ? String(body.length) : null },
+      arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) };
+  };
+  return { ...harness(initial, limit, now, {}, { updateConfig: { threatSource: UPDATE_SOURCE, keys: [key.jwk] }, updateServer: reply }), server, key };
+}
+// Waits for a running update check and the reconciliation it ends with.
+async function settled(h) {
+  await h.ready;
+  for (let pending; (pending = vm.runInContext('threatCheck', h.context));) await pending;
+  await vm.runInContext('operationQueue', h.context);
+}
+const requested = h => h.state.updateRequests.map(request => request.url.slice(UPDATE_SOURCE.length));
+
+test('a build without an update address never requests updates', async () => {
+  const h = harness(threatsOn, 5000, AFTER_REVIEW);
+  await h.ready;
+  const state = await h.send({ type: 'GET_STATE' });
+  assert.equal(state.threatStatus.updates.configured, false);
+  assert.equal(state.threatStatus.source, 'bundled');
+  const checked = await h.send({ type: 'CHECK_THREAT_UPDATE' });
+  assert.equal(checked.ok, true);
+  assert.equal(checked.threatStatus.updates.result, 'error');
+  assert.match(checked.threatStatus.updates.error, /no update address/);
+  assert.deepEqual(h.state.updateRequests, []);
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'the bundled list stays in use');
+});
+
+test('a configured build checks while Reported Threats is on, at most daily, and never while it is off', async () => {
+  const h = updateHarness({ initial: {} });
+  await settled(h);
+  assert.equal(h.state.storage.rulesets.threats_ruleset, false);
+  assert.deepEqual(h.state.updateRequests, [], 'nothing is requested while the layer is off');
+  assert.equal((await h.send({ type: 'GET_STATE' })).threatStatus.updates.host, 'updates.example');
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
+  await settled(h);
+  assert.equal(requested(h)[0], 'threat-evidence.sig', 'the signature is read first');
+  assert.deepEqual(requested(h).sort(), ['threat-evidence.json', 'threat-evidence.sig', 'threat-policy.json', 'threats.json']);
+  for (const { init } of h.state.updateRequests) {
+    assert.deepEqual([init.credentials, init.redirect, init.referrerPolicy, init.cache], ['omit', 'error', 'no-referrer', 'no-store']);
+  }
+  const state = await h.send({ type: 'GET_STATE' });
+  assert.deepEqual([state.threatStatus.source, state.threatStatus.reviewedAt, state.threatStatus.count, state.threatStatus.updates.result],
+    ['update', '2026-11-17T00:00:00Z', 23, 'installed']);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false, 'the update replaces the bundled ruleset');
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  assert.deepEqual(updatedRules(h).map(rule => rule.condition), JSON.parse(h.server.files['threats.json']).map(rule => rule.condition));
+  const log = await h.send({ type: 'GET_LOG' });
+  assert.ok(log.entries.some(entry => entry.message === 'Installed the reported-threat list reviewed 2026-11-17: 23 exact hosts'));
+  await h.send({ type: 'GET_STATE' });
+  await settled(h);
+  assert.equal(h.state.updateRequests.length, 4, 'not checked again on the same day');
+  h.state.now += 24 * 3600000;
+  await h.listeners.alarm({ name: 'reported-threats-check' });
+  await settled(h);
+  assert.equal(h.state.updateRequests.length, 8, 'the hourly guard checks again a day later');
+  assert.equal(h.state.storage.threatUpdateStatus.result, 'current', 'the same list is not installed again');
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: false } } });
+  assert.deepEqual(updatedRules(h), [], 'switching the layer off removes the updated rules');
+  h.state.now += 48 * 3600000;
+  await h.listeners.alarm({ name: 'reported-threats-check' });
+  await settled(h);
+  assert.equal(h.state.updateRequests.length, 8, 'no checks while the layer is off');
+});
+
+test('tampered, wrongly signed, replayed or unreachable lists are refused and the list in use is kept', async () => {
+  const h = updateHarness();
+  await settled(h);
+  assert.equal(h.state.storage.threatStatus.source, 'update');
+  const installed = clone(h.state.storage.threatUpdate), rules = clone(h.state.dynamic);
+  const newer = updateFolder({ privateKey: h.key.privateKey, reviewedOn: '2026-11-18', hosts: 22 });
+  const refused = [
+    [tamper(newer, 'threats.json'), /does not match/, 'changed rules'],
+    // Byte 32 is a digit of ruleCount, so the policy stays valid JSON and only its hash differs.
+    [tamper(newer, 'threat-policy.json', 32), /does not match/, 'changed policy'],
+    [tamper(newer, 'threat-evidence.json'), /not signed by a key/, 'changed evidence'],
+    [updateFolder({ privateKey: keyPair().privateKey, reviewedOn: '2026-11-18', hosts: 22 }), /not signed by a key/, 'another key'],
+    [{ ...newer, 'threat-evidence.sig': undefined }, /threat-evidence\.sig could not be downloaded \(HTTP 404\)/, 'missing signature'],
+    [updateFolder({ privateKey: h.key.privateKey, reviewedOn: '2026-11-19', hosts: 22 }), /dated in the future/, 'future review']
+  ];
+  for (const [files, error, label] of refused) {
+    h.server.files = files;
+    const result = await h.send({ type: 'CHECK_THREAT_UPDATE' });
+    assert.equal(result.ok, true, label);
+    assert.equal(result.threatStatus.updates.result, 'error', label);
+    assert.match(result.threatStatus.updates.error, error, label);
+    assert.equal(result.threatStatus.reviewedAt, '2026-11-17T00:00:00Z', label);
+    assert.deepEqual(h.state.storage.threatUpdate, installed, label);
+    assert.deepEqual(h.state.dynamic, rules, label);
+  }
+  h.server.files = newer;
+  h.server.status = 500;
+  assert.match((await h.send({ type: 'CHECK_THREAT_UPDATE' })).threatStatus.updates.error, /HTTP 500/);
+  h.server.status = 200;
+  h.server.files = updateFolder({ privateKey: h.key.privateKey });
+  assert.equal((await h.send({ type: 'CHECK_THREAT_UPDATE' })).threatStatus.updates.result, 'current', 'a replay of the older bundled list changes nothing');
+  assert.deepEqual(h.state.storage.threatUpdate, installed);
+  h.server.files = newer;
+  const next = await h.send({ type: 'CHECK_THREAT_UPDATE' });
+  assert.deepEqual([next.threatStatus.updates.result, next.threatStatus.reviewedAt, next.threatStatus.updates.error], ['installed', '2026-11-18T00:00:00Z', '']);
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS.slice(0, 22));
+});
+
+test('an installed list is re-verified by a new worker, and set aside when its key is dropped or the bundled list is newer', async () => {
+  const h = updateHarness();
+  await settled(h);
+  const saved = clone(h.state.storage);
+  const next = updateHarness({ initial: saved, key: h.key });
+  await settled(next);
+  assert.equal(next.state.storage.threatStatus.source, 'update');
+  assert.deepEqual(updatedRules(next).map(rule => rule.id), UPDATED_IDS, 'a new worker restores the updated rules');
+  assert.deepEqual(next.state.updateRequests, [], 'a check from the same day is not repeated');
+  const rotated = updateHarness({ initial: saved });
+  await settled(rotated);
+  const state = await rotated.send({ type: 'GET_STATE' });
+  assert.equal(state.threatStatus.source, 'bundled');
+  assert.match(state.threatStatus.updates.notice, /installed update was set aside\. The update is not signed by a key/);
+  assert.ok(rotated.state.enabled.includes('threats_ruleset'), 'the bundled list is used instead');
+  assert.deepEqual(updatedRules(rotated), []);
+  const bundled = updateHarness({ initial: saved, key: h.key });
+  await settled(bundled);
+  bundled.state.policyText = JSON.stringify({ ...JSON.parse(policyText), reviewedAt: '2026-11-18T00:00:00Z' });
+  const newerBundle = await bundled.send({ type: 'GET_STATE' });
+  assert.deepEqual([newerBundle.threatStatus.source, newerBundle.threatStatus.reviewedAt], ['bundled', '2026-11-18T00:00:00Z']);
+  assert.ok(bundled.state.enabled.includes('threats_ruleset'));
+  assert.deepEqual(updatedRules(bundled), []);
+});
+
+test('an installed list retires its rules at its own expiry without changing the saved switch', async () => {
+  const h = updateHarness({ now: '2027-02-27T23:00:00Z' });
+  await settled(h);
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  assert.equal(h.state.alarms['reported-threats-expiry'].scheduledTime, Date.parse('2027-02-28T00:00:00Z'));
+  h.state.now = Date.parse('2027-02-28T00:00:00Z');
+  await h.listeners.alarm({ name: 'reported-threats-expiry' });
+  await settled(h);
+  assert.deepEqual(updatedRules(h), []);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false, 'the older bundled list is not used in its place');
+  assert.equal(h.state.storage.threatStatus.available, false);
+  assert.equal(h.state.storage.rulesets.threats_ruleset, true);
+  const retry = await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
+  assert.equal(retry.ok, true);
+  assert.deepEqual(updatedRules(h), [], 'a settings request cannot bring back expired rules');
+});
+
+test('a list the browser refuses is removed again and the previous list stays in use', async () => {
+  const h = updateHarness();
+  await settled(h);
+  const installed = clone(h.state.storage.threatUpdate);
+  h.server.files = updateFolder({ privateKey: h.key.privateKey, reviewedOn: '2026-11-18', hosts: 22 });
+  h.state.faults.dynamic = 1;
+  const result = await h.send({ type: 'CHECK_THREAT_UPDATE' });
+  assert.equal(result.ok, true);
+  assert.equal(result.threatStatus.updates.result, 'error');
+  // The harness's injected errors come from another realm, so they print with their name.
+  assert.match(result.threatStatus.updates.error, /^The new list could not be used\. Changes were not applied\. (Error: )?Injected dynamic failure/);
+  assert.deepEqual(h.state.storage.threatUpdate, installed);
+  assert.equal(result.threatStatus.reviewedAt, '2026-11-17T00:00:00Z');
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  assert.equal(h.state.storage.protectionError, null, 'the restored list is verified again');
+});
+
+test('updated threat rules count toward the dynamic rule limit, and a first list that does not fit is removed', async () => {
+  const h = updateHarness({ initial: { ...threatsOn, customBlockedDomains: ['a.example', 'b.example'] }, limit: 24 });
+  await settled(h);
+  assert.equal(h.state.storage.threatUpdateStatus.result, 'error');
+  assert.match(h.state.storage.threatUpdateStatus.error, /limit 24, including 23 reported-threat rules/);
+  assert.equal(h.state.storage.threatUpdate, undefined);
+  assert.ok(h.state.enabled.includes('threats_ruleset'), 'the bundled list stays in use');
+  assert.equal(h.state.dynamic.length, 2);
+});
+
+test('update checks start only from the extension interface, share one run, and a list installed while off waits for the switch', async () => {
+  const h = updateHarness({ initial: {} });
+  await settled(h);
+  const page = { id: 'test', url: 'https://example.com/', tab: { id: 1, url: 'https://example.com/' } };
+  for (const sender of [page, { id: 'other', url: 'chrome-extension://other/page.html' }]) {
+    assert.equal((await h.send({ type: 'CHECK_THREAT_UPDATE' }, sender)).ok, false);
+  }
+  assert.deepEqual(h.state.updateRequests, []);
+  const both = await Promise.all([h.send({ type: 'CHECK_THREAT_UPDATE' }), h.send({ type: 'CHECK_THREAT_UPDATE' })]);
+  assert.ok(both.every(result => result.ok && result.threatStatus.updates.result === 'installed'));
+  assert.equal(h.state.updateRequests.length, 4, 'concurrent requests share one check');
+  assert.equal(both[0].threatStatus.source, 'update');
+  assert.deepEqual(updatedRules(h), [], 'no rules while the layer is off');
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false);
+  await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { threats_ruleset: true } } });
+  assert.deepEqual(updatedRules(h).map(rule => rule.id), UPDATED_IDS);
+  assert.equal(h.state.enabled.includes('threats_ruleset'), false);
 });

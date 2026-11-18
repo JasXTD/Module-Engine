@@ -24,6 +24,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
 - **Ad and tracker filtering:** bundled network rules, EasyList snapshots, cosmetic hiding, advanced page hiding and a visual element picker.
+- **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. The layer switches itself off when its evidence expires, and a newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
 - **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
 - **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
@@ -119,12 +120,13 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **18 November 2026** the current code passed:
 
-- **624 Node tests**;
-- **30 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
-- **789 Chrome, 789 Edge and 782 Firefox** browser checks, run offline with disposable profiles and local test pages.
+- **667 Node tests**;
+- **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
+- **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update checks** in each browser, run offline with disposable profiles and local test pages.
 
-That run covered the website-theme detection fix, hiding rules kept beside `name.*` wildcard sites, the 180-day reported-threat window and the Firefox userscript layout fixes. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
+- the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;
 - same-tab MCP navigation;
 - network capture and localhost MCP;
@@ -135,9 +137,9 @@ That run covered the website-theme detection fix, hiding rules kept beside `name
 
 ## Privacy and limits
 
-Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
+Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. While Reported Threats is on, a release that names an update folder downloads its signed list once a day, without cookies or a referrer. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
 
-The bundled lists are manually maintained and do not update automatically; the current EasyList and EasyList China snapshots are from 19 October 2026. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer uses dated evidence and disables itself 180 days after the earliest reported observation; its current policy expires on **28 February 2027 at 00:00 UTC**. It is not comprehensive malware protection.
+The bundled filter lists are manually maintained and do not update automatically; the current EasyList and EasyList China snapshots are from 19 October 2026. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
 
 Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
 
