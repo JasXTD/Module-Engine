@@ -20,7 +20,8 @@ if (!globalThis.ModuleEngineThreatUpdates && typeof importScripts === "function"
 if (!globalThis.ModuleEngineCommunityUpdates && typeof importScripts === "function") importScripts("../blocking/community-lists.js", "community-updates.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const networkLog = ModuleEngineNetworkLog.create(api);
-const userscriptHost = BlockAdsUserScripts.create(api);
+// Automatic userscript updates are recorded in the activity log.
+const userscriptHost = BlockAdsUserScripts.create(api, { log: entry => addLog(entry) });
 const moduleHost = BlockAdsModules.create({
   async state() {
     const result = await enqueue(() => processRequest({ type: 'GET_STATE' }));

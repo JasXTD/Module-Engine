@@ -51,7 +51,7 @@ function fakeApi(initial = {}) {
 function setup(t, initial, options = {}) {
   let time = options.time ?? Date.UTC(2026, 10, 14);
   const { api, state } = fakeApi(initial);
-  const host = updates.create(api, { network, now: () => time });
+  const host = updates.create(api, { network, now: () => time, apply: options.apply, log: options.log });
   return { api, state, host, advance: ms => { time += ms; }, now: () => time };
 }
 const entry = (h, n) => h.state.data[updates.KEY]?.scripts[id(n)];
@@ -96,7 +96,7 @@ test('only committed top-level GET navigations to direct userscript URLs are int
 });
 
 test('saved state fails closed, drops damaged cache entries and bounds staged source', () => {
-  assert.deepEqual(updates.state(undefined), { schemaVersion: 1, interceptLinks: true, autoCheck: true, scripts: {} });
+  assert.deepEqual(updates.state(undefined), { schemaVersion: 1, interceptLinks: true, autoCheck: true, autoApply: true, scripts: {} });
   for (const raw of [null, {}, { schemaVersion: 2, interceptLinks: true, autoCheck: true, scripts: {} },
     { schemaVersion: 1, interceptLinks: 'yes', autoCheck: true, scripts: {} }, { schemaVersion: 1, interceptLinks: true, autoCheck: true, scripts: [] }])
     assert.throws(() => updates.state(raw), /invalid/);
@@ -105,7 +105,7 @@ test('saved state fails closed, drops damaged cache entries and bounds staged so
   const scripts = { [id(1)]: good, 'not-an-id': good, [id(2)]: { ...good, outcome: 'staged' }, [id(3)]: { ...good, staged: { source: script(), sourceURL: 'https://a.test/a.user.js' } },
     [id(4)]: { ...good, outcome: 'staged', staged: { source: 'no metadata', sourceURL: 'https://a.test/a.user.js' } },
     [id(5)]: { ...good, outcome: 'staged', staged: { source: script(), sourceURL: 'http://a.test/a.user.js' } },
-    [id(6)]: { ...good, base: 'short' }, [id(7)]: { ...good, outcome: 'applied' }, [id(8)]: { ...good, message: 'x'.repeat(513) } };
+    [id(6)]: { ...good, base: 'short' }, [id(7)]: { ...good, outcome: 'approved' }, [id(8)]: { ...good, message: 'x'.repeat(513) } };
   for (let n = 10; n < 19; n++) scripts[id(n)] = { ...good, outcome: 'staged', staged: { source: big, sourceURL: 'https://a.test/' + n + '.user.js' } };
   const result = updates.state({ schemaVersion: 1, interceptLinks: false, autoCheck: true, scripts });
   assert.deepEqual(result.scripts[id(1)], good);
@@ -124,16 +124,16 @@ test('scheduled checks compare @updateURL versions first, then stage the exact n
   assert.deepEqual(h.state.alarms.get(updates.ALARM), { name: updates.ALARM, delayInMinutes: 5, periodInMinutes: 60 });
   await h.host.start(); assert.equal(h.state.alarms.size, 1);
   web.routes['/a.meta.js'] = { body: '// ==UserScript==\n// @name Updater\n// @version 1.0\n// @antifeature tracking\n// ==/UserScript==\n' };
-  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 0, cancelled: false });
+  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 0, applied: 0, cancelled: false });
   assert.deepEqual(web.hits.map(hit => hit.url), ['/a.meta.js']);
   assert.equal(entry(h, 1).outcome, 'current'); assert.equal(entry(h, 1).version, '1.0');
   // Within a day the unchanged script is not contacted again.
-  assert.deepEqual(await h.host.runChecks(), { checked: 0, staged: 0, cancelled: false }); assert.equal(web.hits.length, 1);
+  assert.deepEqual(await h.host.runChecks(), { checked: 0, staged: 0, applied: 0, cancelled: false }); assert.equal(web.hits.length, 1);
   h.advance(DAY);
   const next = script('1.1', '// @downloadURL ' + base + '/a.user.js\n// @updateURL ' + base + '/a.meta.js\n', 'Updater', 'void 1;');
   web.routes['/a.meta.js'].body = '// ==UserScript==\n// @version 1.1\n// ==/UserScript==\n';
   web.routes['/a.user.js'] = { body: next };
-  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 1, cancelled: false });
+  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 1, applied: 0, cancelled: false });
   assert.deepEqual(web.hits.map(hit => hit.url), ['/a.meta.js', '/a.meta.js', '/a.user.js']);
   assert.ok(web.hits.every(hit => !hit.cookie && !hit.referer));
   assert.deepEqual(h.state.data.userscriptManager, library, 'checks never write the script library');
@@ -182,17 +182,17 @@ test('module, setting and force controls decide whether a run contacts any host'
   const { base, state: web } = await server(t);
   web.routes['/a.user.js'] = { body: script('1.0') };
   const off = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), base + '/a.user.js')], false) });
-  assert.deepEqual(await off.host.runChecks(), { checked: 0, staged: 0 }); assert.equal(web.hits.length, 0);
+  assert.deepEqual(await off.host.runChecks(), { checked: 0, staged: 0, applied: 0 }); assert.equal(web.hits.length, 0);
   const disabled = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), base + '/a.user.js')]),
     [updates.KEY]: { schemaVersion: 1, interceptLinks: true, autoCheck: false, scripts: {} } });
-  assert.deepEqual(await disabled.host.runChecks(), { checked: 0, staged: 0 }); assert.equal(web.hits.length, 0);
+  assert.deepEqual(await disabled.host.runChecks(), { checked: 0, staged: 0, applied: 0 }); assert.equal(web.hits.length, 0);
   assert.equal((await disabled.host.runChecks({ force: true })).checked, 1); assert.equal(web.hits.length, 1);
   // Forced checks repeat even when the last result is fresh.
   assert.equal((await disabled.host.runChecks({ force: true })).checked, 1); assert.equal(web.hits.length, 2);
   const corrupt = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), base + '/a.user.js')]), [updates.KEY]: { broken: true } });
   const view = await corrupt.host.view();
   assert.equal(view.autoCheck, false); assert.equal(view.interceptLinks, false); assert.match(view.error, /invalid/);
-  assert.deepEqual(await corrupt.host.runChecks(), { checked: 0, staged: 0 }); assert.equal(web.hits.length, 2);
+  assert.deepEqual(await corrupt.host.runChecks(), { checked: 0, staged: 0, applied: 0 }); assert.equal(web.hits.length, 2);
   await assert.rejects(corrupt.host.runChecks({ force: true }), /invalid/, 'damaged settings are never silently replaced by a check');
   assert.deepEqual(corrupt.state.data[updates.KEY], { broken: true });
   const repaired = await corrupt.host.setSettings({ interceptLinks: true });
@@ -213,7 +213,7 @@ test('alarms only start their own scheduled run, which a second trigger joins', 
   assert.equal(web.hits.length, 1); assert.equal((await h.host.view()).checking, true);
   const joined = h.host.runChecks({ force: true });
   release();
-  assert.deepEqual(await joined, { checked: 1, staged: 1, cancelled: false });
+  assert.deepEqual(await joined, { checked: 1, staged: 1, applied: 0, cancelled: false });
   assert.equal(web.hits.length, 1); assert.equal((await h.host.view()).checking, false);
 });
 
@@ -225,13 +225,13 @@ test('a result is discarded when the script changes or the run is cancelled duri
   for (let i = 0; i < 200 && !web.hits.length; i++) await new Promise(resolve => setTimeout(resolve, 5));
   h.state.data.userscriptManager.scripts[0].source = script('1.0', '', 'Updater', 'edited();');
   release();
-  assert.deepEqual(await pending, { checked: 1, staged: 0, cancelled: false });
+  assert.deepEqual(await pending, { checked: 1, staged: 0, applied: 0, cancelled: false });
   assert.equal(entry(h, 1), undefined, 'the stale download was not kept');
   let releaseSecond; web.routes['/a.user.js'].gate = new Promise(resolve => { releaseSecond = resolve; });
   const cancelled = h.host.runChecks();
   for (let i = 0; i < 200 && web.hits.length < 2; i++) await new Promise(resolve => setTimeout(resolve, 5));
   h.host.cancel('Userscripts were paused.');
-  assert.deepEqual(await cancelled, { checked: 0, staged: 0, cancelled: true });
+  assert.deepEqual(await cancelled, { checked: 0, staged: 0, applied: 0, cancelled: true });
   releaseSecond(); assert.equal(entry(h, 1), undefined);
   // Turning automatic checks off cancels an active run too.
   let releaseThird; web.routes['/a.user.js'].gate = new Promise(resolve => { releaseThird = resolve; });
@@ -250,7 +250,7 @@ test('staged downloads share a 1 MiB budget; later updates stay available for a 
     web.routes['/' + n + '.user.js'] = { body: script('2.0', '', name, '//' + 'x'.repeat(core.LIMITS.source - 300)) };
   }
   const h = setup(t, { userscriptManager: libraryOf(scripts) });
-  assert.deepEqual(await h.host.runChecks(), { checked: 9, staged: 8, cancelled: false });
+  assert.deepEqual(await h.host.runChecks(), { checked: 9, staged: 8, applied: 0, cancelled: false });
   assert.equal(entry(h, 9).outcome, 'available'); assert.equal(entry(h, 9).version, '2.0'); assert.equal(entry(h, 9).staged, undefined);
   await assert.rejects(h.host.stagedReview({ id: id(9), revision: 1 }), /no longer current/);
   // Deleting a script frees its staged bytes on the next recorded result.
@@ -308,4 +308,81 @@ test('link interception opens the review page only while enabled, with rate limi
   h.state.hooks.request(request(url, { tabId: 44 }));
   for (let i = 0; i < 200 && h.state.tabUpdates.length === before; i++) await new Promise(resolve => setTimeout(resolve, 5));
   assert.equal(h.state.tabUpdates.at(-1).tabId, 44, 'the registered listener routes to interception');
+});
+
+// Automatic installation of updates that need no new access.
+const baselineOf = (url, source) => require('node:crypto').createHash('sha256').update(url + '\n' + source).digest('hex');
+
+test('accessChange lists every way an update needs more than the installed script', () => {
+  const extra = '// @grant GM.getValue\n// @connect api.example.test\n// @exclude-match https://example.test/private/*\n// @noframes\n';
+  const installed = script('1.0', extra);
+  assert.deepEqual(core.accessChange(installed, script('1.1', extra, 'Updater', 'void "new code";')), [], 'new code with the same access needs nothing');
+  assert.deepEqual(core.accessChange(installed, script('1.1', '// @connect api.example.test\n// @exclude-match https://example.test/private/*\n// @exclude-match https://example.test/admin/*\n// @noframes\n')), [],
+    'dropping a grant or adding an exclusion asks for less');
+  const cases = [
+    [extra + '// @match https://other.test/*\n', 'it changes the sites it runs on'],
+    [extra + '// @include https://*.example.test/*\n', 'it changes the sites it runs on'],
+    [extra.replace('// @exclude-match https://example.test/private/*\n', ''), 'it changes the sites it runs on'],
+    [extra.replace('// @noframes\n', ''), 'it now runs in frames'],
+    [extra + '// @grant GM_cookie\n', 'it asks for GM_cookie'],
+    [extra + '// @connect evil.test\n', 'it asks to contact evil.test'],
+    [extra + '// @inject-into page\n', 'it changes how or when it runs in the page'],
+    [extra + '// @run-at document-start\n', 'it changes how or when it runs in the page'],
+    [extra + '// @require https://cdn.example.test/lib.js\n', 'it changes its @require or @resource files'],
+    [extra + '// @downloadURL https://elsewhere.test/a.user.js\n', 'it changes its update address'],
+    [extra + '// @updateURL https://elsewhere.test/a.meta.js\n', 'it changes its update address']
+  ];
+  for (const [metadata, reason] of cases) assert.deepEqual(core.accessChange(installed, script('1.1', metadata)), [reason], reason + ': ' + metadata);
+  assert.deepEqual(core.accessChange(installed, script('1.1', extra, 'Renamed')), ['it changes its @name or @namespace']);
+  assert.deepEqual(core.accessChange(installed, script('1.1', extra, 'Updater', 'const label = "a‮b";')), ['it contains hidden direction controls']);
+  assert.deepEqual(core.accessChange(installed, script('1.1', extra + '// @grant GM_cookie\n// @connect evil.test\n')), ['it asks for GM_cookie', 'it asks to contact evil.test'], 'every reason is listed');
+});
+
+test('with automatic updates on, a staged update goes to the runtime, is recorded as installed and logged', async t => {
+  const { base, state: web } = await server(t);
+  const url = base + '/a.user.js', calls = [], logged = [];
+  web.routes['/a.user.js'] = { body: script('2.0') };
+  let h;
+  // Stands in for the runtime: the library now holds the update.
+  const apply = async update => {
+    calls.push(update);
+    const library = h.state.data.userscriptManager;
+    library.scripts[0] = { ...library.scripts[0], source: update.source, revision: library.scripts[0].revision + 1 };
+    return { applied: true, name: 'Updater', version: '2.0', enabled: false };
+  };
+  h = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), url)]) }, { apply, log: entry => logged.push(entry) });
+  assert.equal((await h.host.view()).autoApply, true, 'on by default');
+  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 0, applied: 1, cancelled: false });
+  assert.deepEqual(calls, [{ id: id(1), revision: 1, source: script('2.0'), sourceURL: url }], 'the runtime receives exactly the checked bytes');
+  assert.deepEqual({ ...entry(h, 1) }, { base: baselineOf(url, script('2.0')), checkedAt: h.now(), outcome: 'applied', version: '2.0' });
+  assert.deepEqual(logged, [{ kind: 'event', message: 'Updated userscript "Updater" to 2.0 automatically; it asks for no new access' }]);
+  const view = await h.host.view();
+  assert.deepEqual([view.scripts[id(1)].outcome, view.scripts[id(1)].available], ['applied', '2.0']);
+  h.advance(DAY - 1);
+  assert.equal((await h.host.runChecks()).checked, 0, 'the next check waits a day from the install');
+  assert.equal(web.hits.length, 1);
+});
+
+test('an update the runtime leaves for review keeps its bytes and the reason; the setting turns installing off', async t => {
+  const { base, state: web } = await server(t);
+  const url = base + '/a.user.js';
+  web.routes['/a.user.js'] = { body: script('2.0') };
+  let reply = { applied: false, reason: 'it asks for GM_cookie' }, calls = 0;
+  const apply = async () => { calls++; if (reply instanceof Error) throw reply; return reply; };
+  const h = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), url)]) }, { apply });
+  assert.deepEqual(await h.host.runChecks(), { checked: 1, staged: 1, applied: 0, cancelled: false });
+  assert.deepEqual([entry(h, 1).outcome, entry(h, 1).message, entry(h, 1).staged.source], ['staged', 'Waiting for your review: it asks for GM_cookie.', script('2.0')]);
+  assert.equal(h.state.data.userscriptManager.scripts[0].source, script('1.0'), 'the installed script is untouched');
+  reply = new Error('Injected runtime failure');
+  await h.host.runChecks({ force: true });
+  assert.equal(entry(h, 1).message, 'Waiting for your review: it could not be installed automatically (Injected runtime failure).');
+  await assert.rejects(h.host.setSettings({ autoApply: 'yes' }), /valid update setting/);
+  assert.equal((await h.host.setSettings({ autoApply: false })).autoApply, false);
+  await h.host.runChecks({ force: true });
+  assert.equal(calls, 2, 'with the setting off, the runtime is not asked');
+  assert.deepEqual([entry(h, 1).outcome, entry(h, 1).message], ['staged', undefined]);
+  assert.equal(updates.state({ schemaVersion: 1, interceptLinks: true, autoCheck: true, scripts: {} }).autoApply, true, 'a state saved before the setting existed takes the default');
+  assert.throws(() => updates.state({ schemaVersion: 1, interceptLinks: true, autoCheck: true, autoApply: 1, scripts: {} }), /invalid/);
+  const damaged = setup(t, { userscriptManager: libraryOf([record(1, script('1.0'), url)]), [updates.KEY]: { schemaVersion: 1, broken: true } }, { apply });
+  assert.equal((await damaged.host.view()).autoApply, false, 'damaged settings turn automatic installs off too');
 });

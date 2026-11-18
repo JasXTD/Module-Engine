@@ -94,10 +94,10 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     fixtureState.sources['/usnet/view.user.js'] = { body: '<!doctype html><title>File view</title><p id="fileView">Rendered file view</p>', mime: 'text/html; charset=utf-8' };
     check('Userscripts are on for link interception', (await send({ type: 'US_LIST' })).enabled);
     const defaults = await send({ type: 'US_UPDATE_STATE' });
-    check('Link review and daily checks default to on', defaults.interceptLinks && defaults.autoCheck && !defaults.error);
+    check('Link review, daily checks and installing updates that need no new access default to on', defaults.interceptLinks && defaults.autoCheck && defaults.autoApply && !defaults.error);
     const alarm = await b.evaluate('(globalThis.browser||chrome).alarms.get("userscriptUpdateCheck")', manager);
     check('Daily checks are scheduled by an hourly alarm', alarm?.periodInMinutes === 60);
-    check('Manager shows both update switches on', await b.evaluate('document.getElementById("interceptLinks").checked&&document.getElementById("autoCheck").checked', manager));
+    check('Manager shows the three update switches on', await b.evaluate('document.getElementById("interceptLinks").checked&&document.getElementById("autoCheck").checked&&document.getElementById("autoApply").checked', manager));
 
     const tab = await visit(linkURL);
     await settle('location.href.startsWith(' + JSON.stringify(extensionOrigin) + ')&&document.getElementById("installDialog")?.open&&!document.getElementById("applySource")?.disabled', tab, 'intercepted review');
@@ -167,6 +167,21 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     script = (await send({ type: 'US_LIST' })).scripts.find(item => item.id === script.id);
     check('Applying the staged update uses those bytes, pauses the script and links @downloadURL', script.source === next && !script.enabled && script.sourceURL === nextURL && fixtureState.hits.length === hits);
     check('Applying clears the pending marker', await b.evaluate('!document.querySelector(\'.script-item[data-id="' + script.id + '"] .script-state.update\')&&document.getElementById("reviewUpdate").hidden', manager));
+    // A later version from the same address that needs no new access installs on its own.
+    const third = linked('3.0', 'void "third";');
+    fixtureState.sources['/usnet/link.meta.js'] = { body: '// ==UserScript==\n// @name Offline linked updates\n// @version 3.0\n// ==/UserScript==\n' };
+    fixtureState.sources['/usnet/link-next.user.js'] = { body: third };
+    const automaticHits = fixtureState.hits.length;
+    await click('checkAll');
+    await until('!document.getElementById("checkAll").disabled&&document.getElementById("status").textContent.includes("1 update was installed automatically")');
+    script = (await send({ type: 'US_LIST' })).scripts.find(item => item.id === script.id);
+    check('A check installs an update that needs no new access and keeps the script paused as it was', script.source === third && !script.enabled && script.sourceURL === nextURL);
+    check('The automatic update downloads without cookies or referrer', fixtureState.hits.slice(automaticHits).every(hit => !hit.cookie && !hit.referer));
+    await clickRow(script.id);
+    await until('document.getElementById("updateResult").textContent.startsWith("Updated automatically to 3.0")&&document.getElementById("reviewUpdate").hidden');
+    check('The library says the update was installed automatically', true);
+    check('The activity log records the automatic update', (await send({ type: 'GET_LOG' })).entries
+      .some(entry => entry.kind === 'event' && entry.message === 'Updated userscript "Offline linked updates" to 3.0 automatically; it asks for no new access'));
     evidence.linkedUpdates = { traffic, alarm };
   }
   try {
@@ -307,7 +322,7 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
   } finally {
     for (const id of ids) { const script = (await send({ type: 'US_LIST' })).scripts.find(item => item.id === id); if (script) await send({ type: 'US_DELETE', id, revision: script.revision }); }
     for (const page of pages) await b.closePage(page);
-    await send({ type: 'US_UPDATE_SETTINGS', settings: { interceptLinks: true, autoCheck: true } }).catch(() => {});
+    await send({ type: 'US_UPDATE_SETTINGS', settings: { interceptLinks: true, autoCheck: true, autoApply: true } }).catch(() => {});
     for (const name of ['install', 'link', 'link-next', 'view', 'bidi']) delete fixtureState.sources['/usnet/' + name + '.user.js'];
     delete fixtureState.sources['/usnet/link.meta.js'];
     delete fixtureState.sources['/usnet/bidi-dependency.js'];

@@ -1,8 +1,30 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 release packaging, following the same day's filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 automatic userscript updates, following the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Automatic userscript updates — 18 November 2026
+
+The user asked for script updates to install themselves. Before this change, every update waited for approval, and applying one paused the script.
+
+- **The rule.** `BlockAdsUserScriptCore.accessChange` lists what an update needs beyond the installed script. That covers new sites or frames, `@grant` and `@connect` entries, the page context and `@run-at`, dependencies, update addresses, `@name` or `@namespace`, and hidden direction controls. Entries are compared as written. `@grant none` grants nothing, so it is never new.
+- **Installing.** When a check stages a strictly newer version, the update module hands it to a new runtime operation, `autoApply`. It runs in the userscript control queue against the revision that was checked. It installs the update only if the rule finds nothing and the download address is the script's own. The script keeps its on/off state, GM values, tags and cached dependencies, and enabled scripts pass the usual dependency integrity check. The library commit then re-registers the new code.
+- **Waiting for review.** An update that needs more stays staged, with "Waiting for your review: …" naming the reasons.
+- **Interface.** *Install updates that need no new access* is on by default. A saved state without it takes the default, and damaged settings turn it off. Installed updates read "Updated automatically", the activity log records them, and *Check all now* reports how many installed.
+
+**697 Node tests** passed, 4 of them new:
+
+- each rule;
+- the update module handing over exact bytes and recording the install;
+- reasons, failures and the setting;
+- a runtime run where an enabled script updates with its values and tags, the registration carries the new code, and a `GM_cookie` update waits.
+
+Six earlier tests' exact-shape assertions now expect the new `autoApply` and `applied` fields. One of them used `applied` as its example of an invalid outcome and now uses `approved`. Writing the tests found that removing a script's only grant produced a spurious "asks for none" reason; it was fixed. Three deliberate faults were each caught: ignoring the access check, ignoring the setting, and not counting new servers.
+
+The userscript install suites passed **80 Chrome 158**, **80 Edge 157** and **70 Firefox 160** checks, and the Chromium layout suite passed **730**. In those runs, a version from the same address installed itself without cookies or a referrer and kept the script paused as it was. The library showed it and the activity log recorded it. The earlier update, which moves to a new download address, still waited for review.
+
+Not run again: the full userscript execution and desktop-helper suites, which this change does not touch.
 
 ## Release packaging — 18 November 2026
 

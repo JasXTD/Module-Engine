@@ -28,7 +28,8 @@
   const sortedScripts = scripts => scripts.map(normalized).sort((a, b) => a.id.localeCompare(b.id));
   const sortedWorlds = worlds => worlds.map(world => ({ worldId: world.worldId, messaging: Boolean(world.messaging),
     csp: world.csp || '' })).sort((a, b) => a.worldId.localeCompare(b.worldId));
-  function create(api) {
+  // log: records extension events, such as an update installed automatically.
+  function create(api, { log } = {}) {
     network.configure(api);
     const controls = [], values = [], byScript = new Map(), byTab = new Map(), connections = new Map(), pendingMenus = new Set();
     const assetJobs = new Map(), requests = new Map(), tabs = new Map(), openingTabs = new Set(), tabRates = new Map();
@@ -36,9 +37,10 @@
     const diagnosticRates = new Map();
     let diagnosticSink = null, diagnosticPending = 0;
     const actions = BlockAdsUserScriptActions.create(api, connection => connections.get(connection.id) === connection);
-    // Scheduled checks and link interception only produce review data; every
-    // library change still goes through US_APPLY_SOURCE below.
-    const updates = BlockAdsUserScriptUpdates.create(api, { network });
+    // Scheduled checks and link interception only produce review data. Library
+    // changes go through US_APPLY_SOURCE below, or through autoApply for an
+    // update that asks for no new access.
+    const updates = BlockAdsUserScriptUpdates.create(api, { network, apply: update => autoApply(update), log });
     let running = false, controlPending = 0, valuePending = 0, connectionPending = 0, lastError = '', boundEvent, boundConnect;
     // GM traffic cannot consume control capacity. A single runner still owns
     // all writes: controls take precedence after the active transaction finishes.
@@ -480,6 +482,27 @@
       } else throw new Error('Unknown userscript command.');
       const response = await commit(before, next, next.enabled && message.type === 'US_ENABLE' && message.enabled);
       return { ...response, selectedId: message.type === 'US_DELETE' ? null : script.id };
+    }
+    // Installs an update a scheduled check downloaded, without a review, only
+    // while the script is the revision that was checked and the update is newer
+    // and needs no access beyond the installed one (core.accessChange) from the
+    // same address. The script keeps its on/off choice, values, tags and cached
+    // dependencies; anything else is left for the normal review.
+    function autoApply({ id, revision, source, sourceURL }) {
+      return enqueue(async () => {
+        const before = await read(), next = clone(before), script = next.scripts.find(item => item.id === id);
+        if (!script || script.revision !== revision) return { applied: false, reason: 'the script changed after the check' };
+        const review = core.sourceReview(source, sourceURL, script);
+        if (review.versionChange !== 1 || review.unchanged) return { applied: false, reason: 'it is not a newer version' };
+        const reasons = core.accessChange(script.source, source);
+        if (review.sourceURL !== script.sourceURL) reasons.push('it downloads from a new address');
+        if (reasons.length) return { applied: false, reason: reasons.join('; ') };
+        Object.assign(script, { source, revision: script.revision + 1, token: token() });
+        // The same integrity check as enabling; the dependencies are unchanged.
+        if (script.enabled) await network.verify(script);
+        await commit(before, next);
+        return { applied: true, name: review.metadata.name, version: review.metadata.explicitVersion, enabled: script.enabled };
+      });
     }
     async function fetchSource(message) {
       // Source bytes stay in the manager's read-only review until approval. They

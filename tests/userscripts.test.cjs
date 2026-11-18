@@ -86,7 +86,7 @@ function harness(initial, options = {}) {
       }
     }
   };
-  const host = BlockAdsUserScripts.create(api), ready = host.start();
+  const host = BlockAdsUserScripts.create(api, { log: options.log }), ready = host.start();
   const command = async message => { await ready; return host.request(message); };
   const save = async (name, metadata = '', body) => {
     const response = await command({ type: 'US_SAVE', source: source(name, metadata, body) });
@@ -489,8 +489,8 @@ test('install URLs and version comparisons handle ambiguous input without fetchi
 });
 
 const updateSource = (version = '1.0', extra = '', body = '') => source('URL fixture', '// @version ' + version + '\n// @grant GM.getValue\n// @grant GM.setValue\n' + extra, body);
-async function installFixture(t, text = updateSource()) {
-  const { base, state } = await loopback(t), h = harness();
+async function installFixture(t, text = updateSource(), options = {}) {
+  const { base, state } = await loopback(t), h = harness(undefined, options);
   state.sources = { '/usnet/script.user.js': { body: text } };
   const url = base + '/usnet/script.user.js';
   const fetch = () => h.command({ type: 'US_FETCH_SOURCE', url, requestId: crypto.randomUUID() });
@@ -2246,4 +2246,35 @@ test('a module failure stays local and cannot invoke an unregistered adapter', a
   await assert.rejects(registry.set('userscripts', true)); assert.equal(protection, true);
   await assert.rejects(registry.set('__proto__', false), /Unknown/);
   await registry.set('blocking', false); assert.equal(protection, false);
+});
+
+test('a scheduled check installs an update that needs no new access, keeping the script on with its values and tags; wider updates wait', async t => {
+  const logged = [];
+  const f = await installFixture(t, updateSource(), { log: entry => logged.push(entry) });
+  let script = await f.h.enable(f.current());
+  assert.equal((await f.h.value(script.id, 'set', { key: 'kept', value: 7 })).ok, true);
+  await f.h.command({ type: 'US_TAGS', id: script.id, revision: f.current().revision, tags: ['mine'] });
+  const next = updateSource('1.1', '', 'void "next version";');
+  f.state.sources['/usnet/script.user.js'] = { body: next };
+  const checked = await f.h.command({ type: 'US_CHECK_ALL' });
+  assert.deepEqual([checked.result.applied, checked.result.staged, checked.scripts[f.current().id].outcome], [1, 0, 'applied']);
+  script = f.current();
+  assert.deepEqual([script.source, script.enabled, script.sourceURL, script.values.kept, script.tags], [next, true, f.url, 7, ['mine']]);
+  assert.ok(f.h.state.scripts.some(registered => JSON.stringify(registered).includes('next version')), 'the browser registration runs the new code');
+  assert.deepEqual(logged.map(entry => entry.message), ['Updated userscript "URL fixture" to 1.1 automatically; it asks for no new access']);
+
+  const wider = updateSource('1.2', '// @grant GM_cookie\n', 'void "wider";');
+  f.state.sources['/usnet/script.user.js'] = { body: wider };
+  const again = await f.h.command({ type: 'US_CHECK_ALL' });
+  assert.deepEqual([again.result.applied, again.result.staged, again.scripts[script.id].outcome], [0, 1, 'staged']);
+  assert.equal(again.scripts[script.id].message, 'Waiting for your review: it asks for GM_cookie.');
+  assert.deepEqual([f.current().source, f.current().enabled], [next, true], 'the running script is unchanged');
+  const staged = await f.h.command({ type: 'US_STAGED_REVIEW', id: script.id, revision: f.current().revision });
+  assert.equal(staged.review.source, wider, 'the wider update still waits for the normal review');
+
+  await f.h.command({ type: 'US_UPDATE_SETTINGS', settings: { autoApply: false } });
+  f.state.sources['/usnet/script.user.js'] = { body: updateSource('1.3', '', 'void "manual";') };
+  const off = await f.h.command({ type: 'US_CHECK_ALL' });
+  assert.deepEqual([off.result.applied, off.scripts[script.id].outcome, f.current().source], [0, 'staged', next], 'with the setting off every update waits');
+  assert.equal(logged.length, 1);
 });

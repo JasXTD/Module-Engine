@@ -173,7 +173,8 @@
     el('newScript').disabled = el('importScript').disabled = locked || !library;
     el('installURL').disabled = locked || !library || Boolean(assetJob);
     el('interceptLinks').checked = Boolean(updateState?.interceptLinks); el('autoCheck').checked = Boolean(updateState?.autoCheck);
-    el('interceptLinks').disabled = el('autoCheck').disabled = locked || !updateState;
+    el('autoApply').checked = Boolean(updateState?.autoApply);
+    el('interceptLinks').disabled = el('autoCheck').disabled = el('autoApply').disabled = locked || !updateState;
     const checking = checkingAll || Boolean(updateState?.checking), waiting = (library?.scripts || []).filter(item => updateReady(item) !== null).length;
     el('checkAll').disabled = locked || checking || !library?.scripts.some(item => item.sourceURL);
     el('checkAll').textContent = checking ? 'Checking…' : 'Check all now';
@@ -281,7 +282,8 @@
     route.replaceChildren(...parts); route.hidden = !parts.length;
     const version = script?.metadata.explicitVersion || 'unversioned';
     result.textContent = !linked || !info ? ''
-      : info.outcome === 'staged' ? 'Update ready: ' + version + ' → ' + info.available + '. Downloaded ' + when(info.checkedAt) + '; nothing changes until you apply it.'
+      : info.outcome === 'applied' ? 'Updated automatically to ' + info.available + ' ' + when(info.checkedAt) + '; it asked for no new access. Reload open pages to run it.'
+      : info.outcome === 'staged' ? 'Update ready: ' + version + ' → ' + info.available + '. Downloaded ' + when(info.checkedAt) + '; nothing changes until you apply it.' + (info.message ? ' ' + info.message : '')
       : info.outcome === 'available' ? 'Version ' + info.available + ' is available (found ' + when(info.checkedAt) + '). Reviewing it downloads the source again.'
       : info.outcome === 'current' ? 'Up to date' + (info.available ? ' (offered version ' + info.available + ')' : '') + ' · checked ' + when(info.checkedAt) + '.'
       : info.outcome === 'error' ? 'Last check failed ' + when(info.checkedAt) + ': ' + info.message
@@ -478,10 +480,11 @@
     const url = updateInfo(selected())?.suggested; if (url && !el('linkDownload').disabled) void openInstallation(null, { url });
   });
   el('openRaw').addEventListener('click', () => { if (installation && !el('openRaw').disabled) void openInBrowser(installation); });
-  for (const id of ['interceptLinks', 'autoCheck']) el(id).addEventListener('change', () => {
+  for (const id of ['interceptLinks', 'autoCheck', 'autoApply']) el(id).addEventListener('change', () => {
     const value = el(id).checked;
     void run(async () => { updateState = await send({ type: 'US_UPDATE_SETTINGS', settings: { [id]: value } }); },
       id === 'interceptLinks' ? (value ? 'Opening a .user.js link now shows its review here first.' : '.user.js links now open normally in the browser.')
+        : id === 'autoApply' ? (value ? 'Checks now install updates that need no new access; others still wait for your review.' : 'Every update now waits for your review.')
         : value ? 'Installed scripts are checked daily while Userscripts is on.' : 'Daily update checks are off. Check for updates at any time.');
   });
   el('checkAll').addEventListener('click', async () => {
@@ -489,10 +492,11 @@
     checkingAll = true; render();
     try {
       updateState = await send({ type: 'US_CHECK_ALL' });
-      const { checked, cancelled } = updateState.result, scripts = library?.scripts || [];
+      const { checked, cancelled, applied = 0 } = updateState.result, scripts = library?.scripts || [];
       const ready = scripts.filter(item => updateReady(item) !== null).length;
       const failed = scripts.filter(item => updateInfo(item)?.outcome === 'error').length;
       notice(cancelled ? 'Update checks were cancelled.' : 'Checked ' + checked + (checked === 1 ? ' script. ' : ' scripts. ')
+        + (applied ? applied + (applied === 1 ? ' update was' : ' updates were') + ' installed automatically. ' : '')
         + (ready ? ready + (ready === 1 ? ' update is' : ' updates are') + ' ready to review.' : 'No updates are waiting.')
         + (failed ? ' ' + failed + (failed === 1 ? ' check' : ' checks') + ' failed; select a script for details.' : ''), cancelled || failed > 0 && !ready);
     } catch (error) { notice(error.message, true); }

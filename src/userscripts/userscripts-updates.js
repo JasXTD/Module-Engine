@@ -1,5 +1,7 @@
 /* Scheduled userscript update checks and .user.js link interception.
-   Downloads stay inert review data: nothing here saves, applies or runs script code. */
+   Downloads stay inert review data: nothing here saves, applies or runs script
+   code. With autoApply on, a staged update is passed to the runtime's `apply`,
+   which installs it only if it needs no new access (core.accessChange). */
 (() => {
   'use strict';
   const core = globalThis.BlockAdsUserScriptCore;
@@ -8,9 +10,9 @@
   const LIMITS = Object.freeze({ interval: 24 * 60 * 60 * 1000, alarmMinutes: 60, firstDelayMinutes: 5, meta: 64 * 1024,
     staged: 1024 * 1024, timeout: 30000, message: 512, intercepts: 8, interceptWindow: 60000, tabWindow: 2000,
     bypass: 15000, bypasses: 64 });
-  const OUTCOMES = new Set(['current', 'staged', 'available', 'error', 'skipped']);
-  // Saved settings that fail validation turn both automatic behaviors off.
-  const CLOSED = Object.freeze({ interceptLinks: false, autoCheck: false });
+  const OUTCOMES = new Set(['current', 'staged', 'available', 'error', 'skipped', 'applied']);
+  // Saved settings that fail validation turn every automatic behavior off.
+  const CLOSED = Object.freeze({ interceptLinks: false, autoCheck: false, autoApply: false });
   const ID = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
   const FILTER = Object.freeze({ types: ['main_frame'], urls: ['http://*/*.user.js', 'https://*/*.user.js', 'http://*/*.user.js?*', 'https://*/*.user.js?*'] });
   const fail = message => { throw new Error(message); };
@@ -19,7 +21,7 @@
   // Chromium storage returns object keys sorted; verification compares content only.
   const canonical = value => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item)
     ? Object.fromEntries(Object.keys(item).sort().map(name => [name, item[name]])) : item);
-  const defaults = () => ({ schemaVersion: 1, interceptLinks: true, autoCheck: true, scripts: {} });
+  const defaults = () => ({ schemaVersion: 1, interceptLinks: true, autoCheck: true, autoApply: true, scripts: {} });
   const hex = bytes => [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, '0')).join('');
   // A check result belongs to the exact installed source and URL it compared
   // against, not to the record revision: toggling or tagging keeps it current.
@@ -55,8 +57,11 @@
   }
   function state(raw) {
     if (raw === undefined) return defaults();
+    // autoApply is newer than the other settings: a saved state without it
+    // takes the default.
     if (!raw || typeof raw !== 'object' || raw.schemaVersion !== 1 || typeof raw.interceptLinks !== 'boolean' ||
-        typeof raw.autoCheck !== 'boolean' || !raw.scripts || typeof raw.scripts !== 'object' || Array.isArray(raw.scripts)) fail('Saved update settings are invalid. Automatic checks and link interception are off until you change a setting.');
+        typeof raw.autoCheck !== 'boolean' || raw.autoApply !== undefined && typeof raw.autoApply !== 'boolean' ||
+        !raw.scripts || typeof raw.scripts !== 'object' || Array.isArray(raw.scripts)) fail('Saved update settings are invalid. Automatic checks, updates and link interception are off until you change a setting.');
     // Entries are a cache of check results. A damaged entry is dropped and
     // simply checked again; it can never become an approval.
     const scripts = {}; let staged = 0;
@@ -80,7 +85,7 @@
       }
       scripts[id] = result;
     }
-    return { schemaVersion: 1, interceptLinks: raw.interceptLinks, autoCheck: raw.autoCheck, scripts };
+    return { schemaVersion: 1, interceptLinks: raw.interceptLinks, autoCheck: raw.autoCheck, autoApply: raw.autoApply ?? true, scripts };
   }
   function interceptURL(details) {
     // Prerendered and other non-active documents are never navigated: only a
@@ -100,7 +105,9 @@
     try { return core.sourceURL(decodeURIComponent(match[1])); } catch { return null; }
   }
 
-  function create(api, { network, now = () => Date.now() } = {}) {
+  // apply({ id, revision, source, sourceURL }) resolves to { applied, reason } or
+  // { applied, name, version }; log records an extension event.
+  function create(api, { network, now = () => Date.now(), apply, log } = {}) {
     if (!network?.fetchSource) fail('Update checks need the bounded source downloader.');
     let writes = Promise.resolve(), run = null;
     const recent = [], tabTimes = new Map(), bypasses = new Map();
@@ -204,13 +211,33 @@
         next.scripts[script.id] = entry;
       });
     }
+    // After an automatic install the script's source is the update, so its
+    // record moves to the new baseline and the next check waits a full day.
+    async function markApplied(id, version) {
+      const script = (await readLibrary()).scripts.find(item => item.id === id);
+      if (!script) return;
+      const base = await baseline(script);
+      await update(async next => {
+        const bases = await prune(next, await readLibrary());
+        if (bases.get(id) !== base) return false;
+        next.scripts[id] = { base, checkedAt: now(), outcome: 'applied', ...(version ? { version } : {}) };
+      });
+    }
+    // Why a downloaded update was left for review, shown beside it.
+    function explain(id, base, reason) {
+      return update(next => {
+        const entry = next.scripts[id];
+        if (!entry || entry.base !== base || !['staged', 'available'].includes(entry.outcome)) return false;
+        entry.message = errorText('Waiting for your review: ' + reason + '.');
+      });
+    }
     function runChecks({ force = false } = {}) {
       if (run) return run.promise;
       const controller = new AbortController(), signal = controller.signal;
       const promise = (async () => {
         const [settings, library] = await Promise.all([readState(), readLibrary()]);
-        if (!force && (!settings.autoCheck || !library.enabled)) return { checked: 0, staged: 0 };
-        let checked = 0, staged = 0;
+        if (!force && (!settings.autoCheck || !library.enabled)) return { checked: 0, staged: 0, applied: 0 };
+        let checked = 0, staged = 0, applied = 0;
         // Sequential and bounded: at most one update download at a time.
         for (const script of library.scripts) {
           if (signal.aborted) break;
@@ -221,10 +248,26 @@
           try { result = await check(script, signal); }
           catch (error) { if (signal.aborted) break; result = { outcome: 'error', message: errorText(error) }; }
           if (signal.aborted) break;
-          const saved = await record(script, base, result);
-          checked++; if (saved.scripts[script.id]?.outcome === 'staged') staged++;
+          let saved = await record(script, base, result);
+          checked++;
+          // An update that needs no new access is installed now when allowed;
+          // any other waits for review, with the reason shown.
+          if (result.outcome === 'staged' && settings.autoApply && apply) {
+            let outcome;
+            try { outcome = await apply({ id: script.id, revision: script.revision, source: result.staged.source, sourceURL: result.staged.sourceURL }); }
+            catch (error) { outcome = { applied: false, reason: 'it could not be installed automatically (' + errorText(error) + ')' }; }
+            if (outcome?.applied) {
+              applied++;
+              await markApplied(script.id, outcome.version);
+              try { await log?.({ kind: 'event', message: `Updated userscript "${outcome.name}" to ${outcome.version} automatically; it asks for no new access` }); }
+              catch (error) { console.warn('[Module Engine] Could not log an automatic userscript update:', errorText(error)); }
+              continue;
+            }
+            saved = await explain(script.id, base, outcome?.reason || 'it could not be installed automatically');
+          }
+          if (saved.scripts[script.id]?.outcome === 'staged') staged++;
         }
-        return { checked, staged, cancelled: signal.aborted };
+        return { checked, staged, applied, cancelled: signal.aborted };
       })();
       run = { controller, promise };
       const release = () => { if (run?.promise === promise) run = null; };
@@ -241,11 +284,11 @@
         scripts[script.id] = { ...targets(script), ...(current ? { checkedAt: entry.checkedAt, outcome: entry.outcome,
           ...(entry.message ? { message: entry.message } : {}), ...(entry.version ? { available: entry.version } : {}) } : {}) };
       }
-      return { ok: true, interceptLinks: settings.interceptLinks, autoCheck: settings.autoCheck, error: settings.error || '',
+      return { ok: true, interceptLinks: settings.interceptLinks, autoCheck: settings.autoCheck, autoApply: settings.autoApply, error: settings.error || '',
         checking: Boolean(run), scripts };
     }
     async function setSettings(patch) {
-      const changes = Object.entries(patch || {}).filter(([key]) => ['interceptLinks', 'autoCheck'].includes(key));
+      const changes = Object.entries(patch || {}).filter(([key]) => ['interceptLinks', 'autoCheck', 'autoApply'].includes(key));
       if (!changes.length || changes.some(([, value]) => typeof value !== 'boolean')) fail('Choose a valid update setting.');
       await update(next => { Object.assign(next, Object.fromEntries(changes)); }, true);
       if (patch.autoCheck === false) cancel('Automatic update checks were turned off.');

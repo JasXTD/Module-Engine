@@ -174,6 +174,28 @@
   }
   const assetSpecs = metadata => [...metadata.requires.map(url => ({ kind: 'require', url })),
     ...metadata.resources.map(({ name, url }) => ({ kind: 'resource', name, url }))];
+  // What an update needs beyond the installed script, as short reasons. None
+  // means it runs on no new sites or frames, asks for no new grants or servers,
+  // keeps its identity, page context, timing, dependencies and update addresses,
+  // and has no hidden direction controls: it may be installed without a review.
+  // Entries are compared as written, so any new pattern counts as new.
+  function accessChange(previousSource, nextSource) {
+    const before = parse(previousSource), after = parse(nextSource), reasons = [];
+    const added = (next, previous) => next.filter(item => !previous.includes(item));
+    if (after.name !== before.name || after.namespace !== before.namespace) reasons.push('it changes its @name or @namespace');
+    if (added(after.matches, before.matches).length || added(after.includes, before.includes).length ||
+        added(before.excludeMatches, after.excludeMatches).length || added(before.excludes, after.excludes).length) reasons.push('it changes the sites it runs on');
+    if (after.allFrames && !before.allFrames) reasons.push('it now runs in frames');
+    // `@grant none` grants nothing; the page context is compared separately below.
+    const grants = added(after.grants.filter(grant => grant !== 'none'), before.grants), connects = added(after.connects, before.connects);
+    if (grants.length) reasons.push('it asks for ' + grants.join(', '));
+    if (connects.length) reasons.push('it asks to contact ' + connects.join(', '));
+    if (['world', 'injection', 'pageBridge', 'unwrap', 'topLevelAwait', 'runAt'].some(key => after[key] !== before[key])) reasons.push('it changes how or when it runs in the page');
+    if (JSON.stringify(assetSpecs(after)) !== JSON.stringify(assetSpecs(before))) reasons.push('it changes its @require or @resource files');
+    if (['downloadURL', 'updateURL'].some(key => (after.informational?.[key] ?? null) !== (before.informational?.[key] ?? null))) reasons.push('it changes its update address');
+    if (hasBidi(nextSource)) reasons.push('it contains hidden direction controls');
+    return reasons;
+  }
   function decodeAsset(value) {
     if (typeof value !== 'string' || value.length > Math.ceil(LIMITS.asset / 3) * 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) fail('Invalid or oversized cached asset.');
     return Uint8Array.from(atob(value), character => character.charCodeAt(0));
@@ -933,5 +955,5 @@
   }
   globalThis.BlockAdsUserScriptCore = Object.freeze({ LIMITS, GRANTS, METADATA, bytes, metadataBlock, parse, allows, jsonValue, tabOptions,
     validateValues, library, nativeId, nativeWorld, registration, registrations, assetSpecs, validateAssets, decodeAsset, safeMenuIcon,
-    sourceURL, compareVersions, sourceReview, tags, bindings, hasBidi, escapeBidi, bidiControls, bidiDigests });
+    sourceURL, compareVersions, sourceReview, accessChange, tags, bindings, hasBidi, escapeBidi, bidiControls, bidiDigests });
 })();
