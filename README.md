@@ -99,7 +99,7 @@ Module Engine is the only one of these extensions that both blocks ads and runs 
 
 | Extension | Blocks ads | Runs userscripts | Chrome and Edge | Firefox | Licence |
 | --- | --- | --- | --- | --- | --- |
-| **Module Engine** | Yes | Yes | Yes, Manifest V3 | Yes | None chosen yet |
+| **Module Engine** | Yes | Yes | Yes, Manifest V3 | Yes | MIT |
 | Violentmonkey | No | Yes | Yes; Chrome build is Manifest V3 | Yes | MIT |
 | Tampermonkey | No | Yes | Yes, Manifest V3 | Yes | Closed source |
 | Greasemonkey | No | Yes | No | Yes | MIT |
@@ -171,6 +171,10 @@ Browser test commands and offline isolation details are in [Verification](docs/V
 
 ## Attribution and licensing
 
-The bundled [EasyList](https://easylist.to/) and [EasyList China](https://github.com/easylist/easylistchina/) snapshots are by the EasyList authors. Their source headers and [snapshot catalog](lists/community-lists.json) identify the upstream sources, hashes and [EasyList licence](https://easylist.to/pages/licence.html). The generated community rules are derived from those lists.
+Module Engine's own source is released under the [MIT License](LICENSE). The bundled third-party parts keep their own licences:
 
-No project-wide license has been selected for Module Engine's original source. Third-party list attribution and licensing are separate from that decision. The preserved [project overview](docs/history/PROJECT-NOTES-2026-11-08.md#previous-project-overview) records the earlier references and attribution notes.
+- **EasyList and EasyList China**, by the EasyList authors: the snapshots in `lists/community/`, the community rules, site hiding data and generic stylesheets generated from them, and the copies downloaded at runtime. These are under the [EasyList licence](https://easylist.to/pages/licence.html), GPL-3.0-or-later or CC BY-SA 3.0. Their source headers and [snapshot catalog](lists/community-lists.json) identify the upstream sources and hashes.
+- **Public Suffix List data**, in `vendor/publicsuffix/`: MPL-2.0, with its [licence](vendor/publicsuffix/LICENSE) and provenance beside it.
+- **Acorn**, in `vendor/acorn/`: MIT, with its [licence](vendor/acorn/LICENSE).
+
+The preserved [project overview](docs/history/PROJECT-NOTES-2026-11-08.md#previous-project-overview) records the earlier references and attribution notes.

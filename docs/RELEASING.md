@@ -21,7 +21,7 @@ Inside every install, the filter lists (EasyList and EasyList China) update them
 
 These are the publisher's decisions; nothing in the code makes them.
 
-- **Licence.** No project-wide licence has been chosen ([README](../README.md#attribution-and-licensing)), and stores and a public repository need one.
+- **Licence.** Module Engine's own source is MIT ([LICENSE](../LICENSE)). Bundled lists and vendored code keep their own licences, listed in the [README](../README.md#attribution-and-licensing); store listings that ask for a licence take MIT for the extension.
 - **Firefox add-on ID.** The manifest's `browser_specific_settings.gecko.id` is `blockads-shield@local.extension`, from the old name. Mozilla ties every signed version to this ID, and an installed copy only takes updates with the same ID. Choose the permanent ID before the first signed package, for example one based on the project's domain or repository.
 - **Store accounts and listing details.** These are a Chrome Web Store developer account, a Microsoft Partner Center account for Edge and an addons.mozilla.org account for Firefox signing. Stores ask for a privacy disclosure and a reason for each permission: `<all_urls>`, `scripting`, `webRequest`, `declarativeNetRequestFeedback` and the optional `userScripts`. [Permissions](USER_GUIDE.md#permissions) describes what each is for.
 - **Update addresses.** Once the repository exists, the Firefox update manifest is served from it, for example `https://raw.githubusercontent.com/<owner>/Module-Engine/main/updates/firefox/updates.json`. The reported-threat folder is served from the same place.

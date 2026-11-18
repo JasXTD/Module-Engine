@@ -323,7 +323,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
           <tr><th scope="row">Script updates</th><td class="me">Checked daily, applied only after you review them</td><td>Automatic, from each script's metadata</td><td>Automatic</td><td>Automatic since version 4.7</td></tr>
           <tr><th scope="row">Cloud sync</th><td class="me">None; scripts stay in this browser</td><td>Dropbox, OneDrive, Google Drive, WebDAV</td><td>Google Drive, Dropbox, OneDrive, WebDAV, browser sync</td><td>Not listed</td></tr>
           <tr><th scope="row">Built-in ad blocking</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
-          <tr><th scope="row">Licence</th><td class="me">None chosen yet</td><td>MIT</td><td>Closed source</td><td>MIT</td></tr>
+          <tr><th scope="row">Licence</th><td class="me">MIT</td><td>MIT</td><td>Closed source</td><td>MIT</td></tr>
         </tbody>
       </table>
     </div>
@@ -341,19 +341,18 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
           <tr><th scope="row">Filter lists</th><td class="me">EasyList and EasyList China snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
           <tr><th scope="row">List updates</th><td class="me">Downloaded from their publishers as often as they ask and converted on your computer; generic hiding with each release</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
           <tr><th scope="row">Element hiding</th><td class="me"><span class="yes">Yes</span>Including a supported subset of advanced (procedural) rules</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
-          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="no">No</span>Only one built-in filter, for YouTube player data</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="no">No</span>Not from lists. Built-in page scripts handle YouTube player data, pop-ups and notification prompts</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Element picker</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Userscripts</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
-          <tr><th scope="row">Licence</th><td class="me">None chosen yet</td><td>GPLv3</td><td>GPLv3</td></tr>
+          <tr><th scope="row">Licence</th><td class="me">MIT</td><td>GPLv3</td><td>GPLv3</td></tr>
         </tbody>
       </table>
     </div>
 
     <ul class="fits" aria-label="When another extension fits better">
       <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, scriptlets and lists that keep themselves current.</span></li>
-      <li><strong>You want current lists on Chrome without rebuilding anything.</strong><span>uBlock Origin Lite refreshes its rules with every store release.</span></li>
       <li><strong>You run many scripts, rare GM APIs or several computers.</strong><span>Tampermonkey and Violentmonkey cover more of the userscript API and sync through cloud storage. Module Engine holds up to 32 scripts.</span></li>
-      <li><strong>You need an open-source licence or a store install.</strong><span>Violentmonkey and Greasemonkey are MIT, both uBlock Origins are GPLv3, and all of them install from browser stores. Module Engine has no licence yet and loads from its source folder.</span></li>
+      <li><strong>You need a store install.</strong><span>Violentmonkey, Tampermonkey, Greasemonkey and both uBlock Origins install from browser stores. Module Engine is MIT-licensed but still loads from its source folder.</span></li>
     </ul>
   </div>
 </section>

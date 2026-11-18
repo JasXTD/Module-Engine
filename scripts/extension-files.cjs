@@ -2,7 +2,8 @@
 'use strict';
 const fs = require('node:fs'), path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const entries = ['manifest.json', 'src', 'icons', 'rules', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE',
+// LICENSE travels with every package, as the MIT licence requires.
+const entries = ['manifest.json', 'LICENSE', 'src', 'icons', 'rules', 'vendor/acorn/acorn.js', 'vendor/acorn/LICENSE',
   'vendor/publicsuffix/LICENSE', 'vendor/publicsuffix/provenance.json', 'vendor/publicsuffix/suffixes.js', 'docs/MCP.md'];
 function collect(relative) {
   const absolute = path.join(root, relative), stat = fs.lstatSync(absolute);
