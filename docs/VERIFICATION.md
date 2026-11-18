@@ -1,8 +1,42 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 filter-list updates change, following the same day's change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record is the 18 November 2026 release packaging, following the same day's filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Release packaging — 18 November 2026
+
+The user asked for the extension itself to update, and agreed that packaging should be prepared first. Uploading and Mozilla signing need the publisher's own accounts, so nothing was uploaded, signed or pushed. [Releasing](RELEASING.md) describes the process.
+
+- `scripts/package-extension.cjs build` writes a Chromium archive for the Chrome Web Store and Edge Add-ons, a Firefox archive for Mozilla signing, and `SHA256SUMS`.
+  - Both archives hold exactly the 93 files of the test inventory.
+  - Each manifest drops the other browser's keys; the runtime reads neither.
+  - `--firefox-update-url` adds Firefox's `update_url`.
+  - The archives are deterministic ZIPs written without dependencies, and .NET's ZIP reader opens them.
+- `version <x.y.z>` raises the manifest version, refusing a lower or invalid one.
+- `firefox-update` adds a signed package to `updates/firefox/updates.json`, the format Mozilla documents: version, link, `sha256:` hash and minimum Firefox version. It refuses packages without Mozilla's `META-INF` signature, with another add-on ID or without an `update_url`.
+- Chrome and Edge update store installs only, so for them preparing means store-ready archives.
+
+**693 Node tests** passed, 7 of them new; they run the script only on temporary copies. They cover:
+
+- byte-for-byte contents;
+- manifests per browser;
+- reproducible archives and checksums;
+- a CRC-32 check value and path refusal;
+- missing referenced files;
+- version bumps;
+- update-manifest refusals, ordering and hashes.
+
+The new `tests/package-browser.cjs` unpacked each built archive and loaded it in a disposable profile, offline. The Chromium archive passed **9** checks in Chrome 158 and Edge 157, and the Firefox archive passed **10** in Firefox 160. Each check confirms:
+
+- the installed version, and only its browser's keys;
+- for Firefox, the add-on ID and the update address;
+- verified protection, with Reported Threats off;
+- a bundled ad host blocked;
+- My lists and Modules & scripts loading;
+- no uncaught errors.
+
+Not verified: Mozilla signing and validation, store review, and a Firefox install actually updating from `update_url`. These need the publisher's accounts and a public repository. The Firefox add-on ID `blockads-shield@local.extension` becomes permanent with the first signed release, so it should be chosen before then.
 
 ## Filter-list updates — 18 November 2026
 

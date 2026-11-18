@@ -120,11 +120,11 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **18 November 2026** the current code passed:
 
-- **686 Node tests**;
+- **693 Node tests**;
 - **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
 - **800 Chrome, 800 Edge and 793 Firefox** blocker checks, plus **57 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered release packages, which were also loaded in each browser, filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;
@@ -148,6 +148,7 @@ Permission purposes and the distinction between site pauses, allowed domains and
 - [Project site](site/index.html): a one-page overview, install steps and the comparison with other extensions.
 - [User guide](docs/USER_GUIDE.md): modules, controls, custom filters, permissions and the element picker.
 - [Development](docs/DEVELOPMENT.md): source organization, rule builds and local working files.
+- [Releasing](docs/RELEASING.md): store and Firefox packages, and how installed copies update.
 - [Verification](docs/VERIFICATION.md): dated results, offline test commands and explicit live-test opt-ins.
 - [List contracts and provenance](lists/README.md): reviewed inputs, bundled snapshots and generated rules.
 - [Project history](docs/history/README.md): dated reviews and preserved version notes.
