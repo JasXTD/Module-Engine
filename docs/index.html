@@ -30,10 +30,6 @@
   --switch-off: #333943;
   --knob: #d7dce2;
   --code: #0a0c0f;
-  --syn-comment: #98b68d;
-  --syn-keyword: #c6a0ed;
-  --syn-string: #92c8aa;
-  --syn-literal: #e4b084;
   --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: "Cascadia Mono", "Cascadia Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -46,7 +42,6 @@
     --line: #dcdfd5; --line-strong: #b6bbad; --text: #15181b; --muted: #545c65;
     --accent: #c8f23a; --accent-ink: #456300; --accent-soft: rgba(120, 160, 0, 0.14); --on-accent: #161a08;
     --switch-off: #c9cdc1; --knob: #ffffff; --code: #f7f8f4;
-    --syn-comment: #52684d; --syn-keyword: #7040a0; --syn-string: #1e6f58; --syn-literal: #9b4b16;
   }
 }
 :root[data-theme="light"] {
@@ -55,7 +50,6 @@
   --line: #dcdfd5; --line-strong: #b6bbad; --text: #15181b; --muted: #545c65;
   --accent: #c8f23a; --accent-ink: #456300; --accent-soft: rgba(120, 160, 0, 0.14); --on-accent: #161a08;
   --switch-off: #c9cdc1; --knob: #ffffff; --code: #f7f8f4;
-  --syn-comment: #52684d; --syn-keyword: #7040a0; --syn-string: #1e6f58; --syn-literal: #9b4b16;
 }
 
 * { box-sizing: border-box; }
@@ -140,9 +134,6 @@ input[type="checkbox"].switch:disabled { cursor: not-allowed; }
 .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
 .feature { display: flex; flex-direction: column; gap: 10px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
 .feature p { color: var(--muted); }
-.code { margin: 6px 0 0; padding: 12px 14px; background: var(--code); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto;
-  font-size: 0.8rem; line-height: 1.55; color: var(--text); }
-.c-comment { color: var(--syn-comment); } .c-key { color: var(--syn-keyword); } .c-string { color: var(--syn-string); } .c-literal { color: var(--syn-literal); }
 
 /* Comparison */
 .compare-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 48px; align-items: end; }
@@ -263,41 +254,34 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
 <section class="band" id="features" aria-labelledby="features-title">
   <div class="wrap">
     <h2 id="features-title">What it does</h2>
-    <p class="section-lede">Two modules with separate switches, plus the protections and tools around them. Everything runs inside the extension.</p>
+    <p class="section-lede">Ad blocking and userscripts, with separate controls and optional tools.</p>
     <div class="feature-grid">
       <article class="feature">
-        <h3>Ad and tracker filtering</h3>
-        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList, EasyList China and uBlock filters snapshots add element hiding, advanced hiding and scriptlet rules. Add blocked or always-allowed domains, request filters, your own hiding rules and scriptlet filters, or pick an element on the page.</p>
-        <pre class="code"><code><span class="c-literal">||ads.example^</span><span class="c-key">$third-party</span>
-news.example<span class="c-key">##</span><span class="c-string">.ad-slot</span>
-news.example<span class="c-key">##</span><span class="c-string">div:has-text(Sponsored)</span></code></pre>
+        <h3>Ad and tracker blocking</h3>
+        <p>Block ads and trackers with bundled filters. Add custom rules, allow trusted sites or hide unwanted elements.</p>
       </article>
       <article class="feature">
-        <h3>Protection beyond filters</h3>
-        <p>An optional per-site guard stops pop-ups, embedded-frame takeovers and redirect chains before their first request. Separate switches block new notification requests, install-to-play overlays and fake Play or Download buttons placed by ads. Ordinary downloads keep working.</p>
+        <h3>Page protection</h3>
+        <p>Reduce unwanted pop-ups, redirects and notification prompts. Add protection against deceptive play and download buttons.</p>
       </article>
       <article class="feature">
-        <h3>Userscripts you review first</h3>
-        <p>Import, write or install <code>.user.js</code> files from a URL. You see the source and the access a script asks for before it runs, and new scripts start switched off. Daily checks install an update on their own only when it needs no new access; anything wider waits for your review.</p>
-        <pre class="code"><code><span class="c-comment">// ==UserScript==</span>
-<span class="c-comment">// </span><span class="c-key">@name</span>      Reader tweaks
-<span class="c-comment">// </span><span class="c-key">@match</span>     <span class="c-string">https://news.example/*</span>
-<span class="c-comment">// </span><span class="c-key">@grant</span>     <span class="c-literal">GM.getValue</span>
-<span class="c-comment">// ==/UserScript==</span></code></pre>
+        <h3>Userscript manager</h3>
+        <p>Create or import scripts and review their code and permissions before enabling them. Updates that need more access wait for approval.</p>
       </article>
       <article class="feature">
-        <h3>GM APIs, both spellings</h3>
-        <p>Storage and change listeners, menu commands, cross-origin requests, element and tab helpers, clipboard, notifications, downloads and scoped cookie access, as <code>GM_*</code> and <code>GM.*</code>. Files from <code>@require</code> and <code>@resource</code> download only when you choose Prepare dependencies.</p>
+        <h3>Script tools</h3>
+        <p>Use saved values, downloads, notifications and other script helpers. Review permissions and choose when to download dependencies.</p>
       </article>
       <article class="feature">
         <h3>Appearance</h3>
-        <p>A system, light or dark theme for the popup and every Module Engine page, with seven accent colours or any colour you pick. Optionally, light websites get a dark version while the theme is dark, with per-site exceptions.</p>
+        <p>Choose light, dark or system themes and your own accent colour. Optionally give websites a dark appearance.</p>
       </article>
       <article class="feature">
-        <h3>Logs and agent debugging</h3>
-        <p>A local activity log, and optional network capture that records request details without headers or bodies. An opt-in local MCP server lets an AI agent read status, scripts and errors after you approve it. With a second approval it can propose script changes that wait for your review.</p>
+        <h3>Logs and optional AI help</h3>
+        <p>View local logs and network details. Optionally share approved information with an AI client through MCP; proposed script changes need your review.</p>
       </article>
     </div>
+    <p class="section-lede"><a href="https://github.com/JasXTD/Module-Engine/blob/main/docs/USER_GUIDE.md">Read the user guide</a> for setup, permissions and compatibility.</p>
   </div>
 </section>
 
