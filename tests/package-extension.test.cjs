@@ -38,7 +38,7 @@ test('packages hold exactly the files the browser tests load, byte for byte exce
   }
 });
 
-test('each manifest keeps only its browser\'s keys, and the Firefox one names its update address', () => {
+test('each manifest keeps only its browser\'s keys and permissions, and Firefox names its update address', () => {
   const { read } = buildOnce();
   const chromium = JSON.parse(packaging.unzip(read(names.chromium)).get('manifest.json')());
   const firefox = JSON.parse(packaging.unzip(read(names.firefox)).get('manifest.json')());
@@ -46,18 +46,20 @@ test('each manifest keeps only its browser\'s keys, and the Firefox one names it
   assert.equal(chromium.background.scripts, undefined);
   assert.equal(chromium.background.service_worker, manifest.background.service_worker);
   assert.equal(chromium.minimum_chrome_version, manifest.minimum_chrome_version);
-  assert.deepEqual(chromium.optional_permissions, manifest.optional_permissions);
+  assert.deepEqual(chromium.permissions, manifest.permissions.filter(permission => permission !== 'declarativeNetRequestFeedback'));
+  assert.deepEqual(chromium.optional_permissions, manifest.optional_permissions.filter(permission => permission !== 'webRequestBlocking'));
   assert.equal(firefox.minimum_chrome_version, undefined);
   assert.equal(firefox.background.service_worker, undefined);
   assert.deepEqual(firefox.background.scripts, manifest.background.scripts);
+  assert.deepEqual(firefox.permissions, manifest.permissions);
   assert.deepEqual(firefox.optional_permissions, manifest.optional_permissions.filter(permission => permission !== 'offscreen'));
   assert.deepEqual(firefox.browser_specific_settings.gecko, { ...manifest.browser_specific_settings.gecko, update_url: UPDATE_URL });
-  const { background, browser_specific_settings, minimum_chrome_version, optional_permissions, ...shared } = manifest;
+  const { background, browser_specific_settings, minimum_chrome_version, permissions, optional_permissions, ...shared } = manifest;
   for (const copy of [chromium, firefox]) {
-    const { background: b, browser_specific_settings: s, minimum_chrome_version: m, optional_permissions: p, ...rest } = copy;
+    const { background: b, browser_specific_settings: s, minimum_chrome_version: m, permissions: p, optional_permissions: o, ...rest } = copy;
     assert.deepEqual(rest, shared, 'every other key is unchanged');
   }
-  void background; void browser_specific_settings; void minimum_chrome_version; void optional_permissions;
+  void background; void browser_specific_settings; void minimum_chrome_version; void permissions; void optional_permissions;
   assert.throws(() => packaging.manifestFor('firefox', manifest, 'http://example.com/updates.json'), /https/);
 });
 

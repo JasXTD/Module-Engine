@@ -7,8 +7,9 @@
      Microsoft Edge Add-ons), module-engine-<version>-firefox.zip (to be signed
      by Mozilla) and SHA256SUMS to dist/. Both hold exactly the files the browser
      tests load (scripts/extension-files.cjs). Each manifest drops the other
-     browser's keys; Firefox also omits Chromium's offscreen permission. With
-     --firefox-update-url, the Firefox package also gets
+     browser's keys. Chromium also omits unpacked-only rule feedback and
+     Firefox-only blocking access; Firefox omits Chromium's offscreen permission.
+     With --firefox-update-url, the Firefox package also gets
      browser_specific_settings.gecko.update_url, so a signed copy updates itself
      from that address. The archives are deterministic: the same source gives
      the same bytes.
@@ -131,12 +132,16 @@ function checkReferences(manifest, files) {
   if (missing.length) throw new Error(`The manifest names files that are not packaged: ${[...new Set(missing)].join(', ')}`);
 }
 
-// Store manifests keep only their browser's keys; the runtime reads neither.
+// Store manifests keep only their browser's keys and supported permissions.
 function manifestFor(target, manifest, firefoxUpdateUrl) {
   const copy = JSON.parse(JSON.stringify(manifest));
   if (target === 'chromium') {
     delete copy.browser_specific_settings;
     delete copy.background.scripts;
+    // Our feedback consumer is onRuleMatchedDebug, available only unpacked.
+    copy.permissions = copy.permissions.filter(permission => permission !== 'declarativeNetRequestFeedback');
+    // Blocking webRequest listeners are used only by the Firefox helpers.
+    if (copy.optional_permissions) copy.optional_permissions = copy.optional_permissions.filter(permission => permission !== 'webRequestBlocking');
   } else {
     delete copy.minimum_chrome_version;
     delete copy.background.service_worker;

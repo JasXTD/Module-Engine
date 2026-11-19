@@ -65,6 +65,9 @@ const listed = process.argv.includes('--listed');
       check(installed.browser_specific_settings === undefined && installed.background.scripts === undefined, 'the Chromium package carries no Firefox keys');
       check(installed.optional_permissions.includes('offscreen') && installed.minimum_chrome_version === manifest.minimum_chrome_version,
         'the Chromium package preserves offscreen access and its existing minimum version');
+      check(![...installed.permissions, ...installed.optional_permissions].some(permission =>
+        ['declarativeNetRequestFeedback', 'webRequestBlocking'].includes(permission)),
+        'the Chromium store package excludes unpacked-only feedback and Firefox-only blocking permissions');
     } else {
       // Firefox reports every manifest field it knows, with null for absent ones.
       check(installed.background.service_worker == null && installed.minimum_chrome_version == null, 'the Firefox package carries no Chrome keys');
