@@ -2,6 +2,11 @@
 /.artifacts/
 *.log
 
+# Local backup downloads can contain private script values
+module-engine-backup-*.json
+module-engine-backup-*.json.crdownload
+module-engine-backup-*.json*.part
+
 # Browser-generated data and transient rule-build files
 /_metadata/
 /rules/.build.lock
