@@ -41,7 +41,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 
 ## Getting started
 
-The extension is currently installed from source. The blocker declares Chrome/Edge **121+** and Firefox **128+** as minimum versions; the optional userscript module also needs the browser's native `userScripts` API and permission controls.
+The extension is currently installed from source. It requires Chrome/Edge **121+** or Firefox **142+**; the optional userscript module also needs the browser's native `userScripts` API and permission controls.
 
 ### Chrome and Edge
 
@@ -117,7 +117,7 @@ Module Engine updates EasyList and EasyList China from their publishers and conv
 
 ## Browser support and verification
 
-Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
+Module Engine supports Chrome and Edge 121 and later, and Firefox 142 and later.
 
 On **19 November 2026** the current code passed:
 

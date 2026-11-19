@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-20",
+  "change": "Firefox requires 142.0; Firefox archive omits offscreen; Chromium permission list and 121 minimum are preserved.",
+  "reportedAMO": {
+    "source": "User-provided screenshot",
+    "errors": 0,
+    "warnings": 3,
+    "notices": 1
+  },
+  "localTests": {
+    "beforeFixFailures": 2,
+    "passed": 184,
+    "failed": 0,
+    "skipped": 0
+  },
+  "native": [
+    {
+      "browser": "firefox",
+      "checks": 13,
+      "evidence": "firefox.json",
+      "version": {
+        "acceptInsecureCerts": false,
+        "browserName": "firefox",
+        "browserVersion": "160.0.1",
+        "platformName": "windows",
+        "setWindowRect": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+        "moz:buildID": "20261116130455",
+        "moz:headless": true,
+        "moz:platformVersion": "10.0",
+        "moz:processID": 28904,
+        "moz:profile": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-package-firefox-N8WjXN\\profile",
+        "moz:shutdownTimeout": 73000
+      }
+    },
+    {
+      "browser": "chrome",
+      "checks": 11,
+      "evidence": "chrome.json",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/158.0.8127.37",
+        "revision": "@b8c2be851f62f6a394ec57955d7f31335d7cb6d4",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+        "jsVersion": "15.8.62.31"
+      }
+    },
+    {
+      "browser": "edge",
+      "checks": 11,
+      "evidence": "edge.json",
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Edg/157.0.4341.60",
+        "revision": "@fbcb2989a6c61b72a4919fe1028e58e70131cd46",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+        "jsVersion": "15.7.11.7"
+      }
+    }
+  ],
+  "packages": [
+    {
+      "name": "module-engine-1.9.0-firefox.zip",
+      "bytes": 2544532,
+      "sha256": "41adbe4ad3579fcf77bbd2d8f02e6a71eaf29b0cd0c0c671a247f12249d739a2"
+    },
+    {
+      "name": "module-engine-1.9.0-chromium.zip",
+      "bytes": 2544228,
+      "sha256": "8d885f317672f3404dfd613976170fd1bb7aca06205d26cfde921ed165e7bbcd"
+    }
+  ],
+  "limitations": [
+    "AMO validation has not been rerun by the assistant; publisher must replace the uploaded ZIP.",
+    "Firefox 160.0.1 was tested; the declared minimum 142 was checked in the manifest, not on a Firefox 142 installation.",
+    "Android remains unvalidated and is not opted into distribution.",
+    "No source runtime JavaScript changed."
+  ]
+}

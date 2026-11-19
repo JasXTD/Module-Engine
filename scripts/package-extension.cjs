@@ -7,7 +7,8 @@
      Microsoft Edge Add-ons), module-engine-<version>-firefox.zip (to be signed
      by Mozilla) and SHA256SUMS to dist/. Both hold exactly the files the browser
      tests load (scripts/extension-files.cjs). Each manifest drops the other
-     browser's keys. With --firefox-update-url, the Firefox package also gets
+     browser's keys; Firefox also omits Chromium's offscreen permission. With
+     --firefox-update-url, the Firefox package also gets
      browser_specific_settings.gecko.update_url, so a signed copy updates itself
      from that address. The archives are deterministic: the same source gives
      the same bytes.
@@ -139,6 +140,8 @@ function manifestFor(target, manifest, firefoxUpdateUrl) {
   } else {
     delete copy.minimum_chrome_version;
     delete copy.background.service_worker;
+    // Firefox uses its background document for these helpers, not offscreen.
+    if (copy.optional_permissions) copy.optional_permissions = copy.optional_permissions.filter(permission => permission !== 'offscreen');
     if (!copy.browser_specific_settings?.gecko?.id) throw new Error('The Firefox package needs browser_specific_settings.gecko.id.');
     if (firefoxUpdateUrl) copy.browser_specific_settings.gecko.update_url = httpsUrl(firefoxUpdateUrl, '--firefox-update-url');
   }

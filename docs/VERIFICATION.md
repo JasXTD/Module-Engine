@@ -4,6 +4,14 @@ These are dated results, not a promise that every live site is blocked. The late
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
 
+## Firefox manifest validation follow-up — 20 November 2026
+
+The publisher's AMO report showed no errors, three warnings and one notice: Chromium-only `offscreen` appeared in the Firefox optional permissions, and Firefox 128 was below the introduction versions of built-in data consent and optional `userScripts`. At the publisher's request, the Firefox minimum is now **142.0**. The Firefox packager removes only `offscreen`; Chromium keeps it and its existing 121 minimum. Android remains outside the intended release platforms. Current requirements and copy-ready version/reviewer notes are in [Releasing](RELEASING.md#amo-version-notes-for-190).
+
+Two updated packaging regressions failed before the fix. Afterward, **184** package/layout/consent/userscript tests passed, with no failures, cancellations or skips. The actual built packages passed **13** checks in Firefox 160.0.1 and **11** each in Chrome and Edge, including browser-specific permission/minimum checks, native blocking, page loading and backup export. The delivered ZIP bytes match those native test runs. No application runtime JavaScript changed; the shared packaged MCP guide now reflects Firefox 142+. [Package hashes and native evidence](../verification/2026-11-20/firefox-manifest/summary.json)
+
+Two focused review rounds checked permission consumers and the smallest per-browser manifest change, then current requirement text, reviewer instructions and reproducible archives. No new tools were installed. The existing AMO report URL was not accessible to the web reader; its supplied screenshot is the report evidence. These are local verification results, not a new AMO validator result. Re-upload the rebuilt ZIP for Mozilla to rerun validation. The prior section below records the earlier 128-minimum archive, whose hash has now been superseded.
+
 ## Firefox public submission package — 20 November 2026
 
 Prepared the unsigned 1.9.0 Firefox ZIP for a public AMO listing, without a custom update URL. The existing runtime inventory excludes worktrees, scratch output and development tools. The reviewer source includes the offline rule inputs, compilers, licences and required site-host evidence. [Submission and reproduction instructions](RELEASING.md) · [results and source hashes](../verification/2026-11-20/firefox-submission/summary.json)

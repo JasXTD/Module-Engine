@@ -26,7 +26,7 @@ These are the publisher's decisions; nothing in the code makes them.
 - **Firefox add-on ID.** The manifest's `browser_specific_settings.gecko.id` is `blockads-shield@local.extension`, from the old name. Mozilla ties every signed version to this ID, and an installed copy only takes updates with the same ID. Choose the permanent ID before the first signed package, for example one based on the project's domain or repository.
 - **Store accounts and listing details.** These are a Chrome Web Store developer account, a Microsoft Partner Center account for Edge and an addons.mozilla.org account for Firefox signing. Stores ask for a privacy disclosure and a reason for each permission: `<all_urls>`, `scripting`, `webRequest`, `declarativeNetRequestFeedback` and the optional `userScripts`. [Permissions](USER_GUIDE.md#permissions) describes what each is for.
 - **Update addresses.** A public Firefox listing needs no custom extension update address. For self-distribution, serve the Firefox update manifest from the project, for example `https://raw.githubusercontent.com/<owner>/Module-Engine/main/updates/firefox/updates.json`. Reported-threat updates have their own independently configured address.
-- **Firefox data disclosure.** The manifest declares no required data collection. The optional MCP connection can send browsing activity, script/request information and technical diagnostics to the user's selected local client, which may forward them to its AI service. Firefox 140+ asks for the three optional data permissions before connecting; denial, Disconnect, page unload or permission revocation prevents further sharing. Earlier Firefox versions retain the explicit in-page scope approval. This is not project telemetry. Installed userscripts have their own reviewed grants and can transmit data according to their code. See [Mozilla's data-consent requirements](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) and [MCP](MCP.md).
+- **Firefox data disclosure.** The manifest declares no required data collection. The optional MCP connection can send browsing activity, script/request information and technical diagnostics to the user's selected local client, which may forward them to its AI service. The Firefox package requires Firefox 142+ and asks for the three optional data permissions before connecting; denial, Disconnect, page unload or permission revocation prevents further sharing. This is not project telemetry. Installed userscripts have their own reviewed grants and can transmit data according to their code. See [Mozilla's data-consent requirements](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) and [MCP](MCP.md).
 
 ## Each release
 
@@ -43,7 +43,7 @@ These are the publisher's decisions; nothing in the code makes them.
    - `module-engine-<version>-firefox.zip`;
    - `SHA256SUMS`.
 
-   Both archives hold exactly the files the browser tests load, listed in `scripts/extension-files.cjs`. Each manifest drops the other browser's keys. The same source gives byte-identical archives. Local worktrees, `.artifacts`, tests and verification history are excluded. `manifest.json` is at the archive root, as [Mozilla requires](https://extensionworkshop.com/documentation/publish/package-your-extension/).
+   Both archives hold exactly the files the browser tests load, listed in `scripts/extension-files.cjs`. Each manifest drops the other browser's keys; the Firefox manifest also removes Chromium's `offscreen` permission. The same source gives byte-identical archives. Local worktrees, `.artifacts`, tests and verification history are excluded. `manifest.json` is at the archive root, as [Mozilla requires](https://extensionworkshop.com/documentation/publish/package-your-extension/).
 4. **Chrome and Edge.** Upload the Chromium archive in the Chrome Web Store Developer Dashboard and in Microsoft Partner Center. After review, the stores update installed copies.
 5. **Firefox public listing.** In the [Mozilla Add-ons Developer Hub](https://addons.mozilla.org/developers/addon/submit/distribution), choose **On this site** and upload `module-engine-<version>-firefox.zip`. Select desktop platforms; Android has not been validated. Mozilla performs server validation, review and signing. The local ZIP is unsigned, and local tests are not an AMO approval. Upload the corresponding reviewer source archive when asked; generated rules and styles can be rebuilt from its bundled inputs. Accepted public versions use Mozilla's update service.
 6. **Firefox self-distribution (alternative).** Build into a separate output directory with `--firefox-update-url https://raw.githubusercontent.com/<owner>/Module-Engine/main/updates/firefox/updates.json`. Choose **On your own** at the Developer Hub. After signing completes, download the signed XPI. Obtain the `file.hash` for that signed version independently from your authenticated Mozilla Add-ons version record. Copy Mozilla's full `sha256:…` value into the command below. A hash computed from the candidate XPI itself provides no independent check. [Mozilla version detail API](https://mozilla.github.io/addons-server/topics/api/addons.html#version-detail)
@@ -66,3 +66,33 @@ git archive --format=zip --output=dist/module-engine-1.9.0-source.zip HEAD LICEN
 ```
 
 Extract the source, then run `node scripts/package-extension.cjs build` from its root to reproduce the upload. No npm packages, downloads or bundler are required; Node 22+ is used. JavaScript is shipped readable. Included prebuilt rule files are also reproducible offline with PowerShell 7+: `pwsh -NoProfile -File scripts/build-rules.ps1`, followed by the same packaging command. The list inputs, catalogs, compiler scripts and third-party provenance/licences are included. See [Development](DEVELOPMENT.md#reviewed-catalog-and-rule-builds) and [Mozilla's source-submission guide](https://extensionworkshop.com/documentation/publish/source-code-submission/).
+
+## AMO version notes for 1.9.0
+
+Copy the following into the version notes:
+
+```text
+Module Engine 1.9.0 provides local ad and tracker blocking, custom network and page-hiding filters, and an optional userscript manager with explicit site scopes and permissions.
+
+- Bundled EasyList, EasyList China and uBlock filters provide the starting filter data. EasyList and EasyList China can update from their publishers; uBlock filters update with extension releases.
+- Userscripts can be created, imported and reviewed before enabling. The manager supports local script values, cached dependencies, tags, ordering and reviewed access changes during updates.
+- Backup & restore exports settings, custom filters, appearance, scripts, values and prepared dependencies to a local JSON file. Restore previews the replacement and leaves restored scripts disabled until reviewed and enabled again.
+- Optional local MCP debugging shares only approved scopes with the selected client. Firefox data-sharing permission is requested before connecting and revocation disconnects the session.
+- The Firefox release requires Firefox 142 or later and omits Chromium-only offscreen permission. Chrome and Edge requirements remain unchanged.
+```
+
+## AMO notes to reviewer for 1.9.0
+
+Copy the following into Notes to Reviewer. Upload the matching source ZIP in the source-code step.
+
+```text
+No website account, subscription, test username or password is required. Please test on desktop Firefox 142 or later; Android has not been validated and is not included in the intended release platforms.
+
+Open the toolbar popup or the add-on's options page. Ad blocking and userscripts have separate switches. The userscript module starts disabled. To test it, open Modules & scripts, choose Allow userscript access and approve Firefox's prompt, enable the module, then create or import a script with an explicit site match. Review and save it, enable Run this script, and reload a matching ordinary HTTP(S) page. Browser-restricted pages are not script targets. Saving an edit pauses that script again. Optional clipboard, notification, download, cookie and network helper access depends on the script's declared grants and separate browser approval.
+
+To test Backup & restore, download a backup, change a saved setting, select the backup and inspect the preview, then acknowledge and choose Replace and restore. This replaces saved settings and the script library. Restored scripts and their module remain disabled. Backups are local, unencrypted JSON; they are not sent to a server and do not include browser permissions or MCP connection approvals.
+
+The extension has no project telemetry or required data collection. Filter updates download lists from their publishers. User-installed scripts may access their matched pages and transmit data according to their source and granted access. Optional MCP debugging connects only after in-page approval and Firefox's optional data-consent prompt. It sends the selected status, script information and diagnostic/request metadata to the user's local MCP client, which may forward it to its configured AI service. No AI account is required for the blocker or userscript manager. MCP is off unless explicitly paired; source ZIP docs/MCP.md explains the optional Node-based server and client setup.
+
+The matching source ZIP contains readable JavaScript, bundled rule inputs, compiler scripts and third-party licences/provenance. From its extracted root, run node scripts/package-extension.cjs build using Node 22+; no npm install or network download is needed. To regenerate the bundled rules first, run pwsh -NoProfile -File scripts/build-rules.ps1 with PowerShell 7+, then the packaging command. The Firefox upload is dist/module-engine-1.9.0-firefox.zip. Build and testing details are in docs/RELEASING.md, docs/DEVELOPMENT.md and docs/VERIFICATION.md.
+```

@@ -63,9 +63,13 @@ const listed = process.argv.includes('--listed');
     check(installed.version === manifest.version, `the installed package reports version ${manifest.version}`);
     if (target === 'chromium') {
       check(installed.browser_specific_settings === undefined && installed.background.scripts === undefined, 'the Chromium package carries no Firefox keys');
+      check(installed.optional_permissions.includes('offscreen') && installed.minimum_chrome_version === manifest.minimum_chrome_version,
+        'the Chromium package preserves offscreen access and its existing minimum version');
     } else {
       // Firefox reports every manifest field it knows, with null for absent ones.
       check(installed.background.service_worker == null && installed.minimum_chrome_version == null, 'the Firefox package carries no Chrome keys');
+      check(!installed.optional_permissions.includes('offscreen') && installed.browser_specific_settings.gecko.strict_min_version === '142.0',
+        'the Firefox package excludes Chromium-only offscreen access and requires Firefox 142');
       check((listed ? installed.browser_specific_settings.gecko.update_url == null : installed.browser_specific_settings.gecko.update_url === UPDATE_URL) &&
         installed.browser_specific_settings.gecko.id === manifest.browser_specific_settings.gecko.id,
         'the Firefox package keeps its add-on ID and uses the selected update channel');
