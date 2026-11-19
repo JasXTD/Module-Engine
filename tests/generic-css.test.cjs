@@ -78,18 +78,26 @@ test('the committed stylesheets and bundle metadata equal a rebuild from the com
   const exceptions = [...Object.entries(data.allow).filter(([site]) => site !== '*').flatMap(([site, selectors]) => selectors.map(selector => [site, selector])),
     ...rules.filter(rule => rule.exception).flatMap(rule => rule.include.map(site => [site, rule.selector]))];
   const generic = new Set(data.generic);
-  for (const [site, selector] of exceptions.filter(([, selector]) => generic.has(selector))) {
+  // Selectors excepted everywhere (allow["*"]) are in neither sheet; checked below.
+  const everywhere = new Set(data.allow['*'] || []);
+  for (const [site, selector] of exceptions.filter(([, selector]) => generic.has(selector) && !everywhere.has(selector))) {
     assert.ok(inState.has(selector), `${selector} stays out of the main sheet`);
     if (data.genericStatic.excepted.includes(selector)) assert.ok(sites.has(site), `${site} skips the excepted sheet`);
   }
   // Every rule stays below Blink's per-rule selector limit and one bad selector voids at most 256.
+  const inSheets = new Set();
   for (const sheet of [base, excepted]) {
     const body = sheet.slice(sheet.indexOf('*/') + 3);
     for (const rule of body.split(`${DECLARATION}\n`).filter(Boolean)) {
       const selectors = rule.split(',\n');
       assert.ok(selectors.length <= 256 && (selectors.length === 1 || selectors.join('').length <= 8000), `rule starting ${selectors[0]}`);
       assert.ok(selectors.every(selector => selector.endsWith(condition)), 'every selector can be revoked');
+      for (const selector of selectors) inSheets.add(selector.trim());
     }
   }
-  assert.equal(result.counts.base + result.counts.excepted + result.counts.perFrame, data.generic.length - (data.allow['*'] || []).length);
+  for (const selector of everywhere) {
+    assert.ok(!inSheets.has(selector + condition) && !inState.has(selector), `${selector}, excepted everywhere, is in neither sheet nor frame state`);
+  }
+  // Global exceptions may name selectors that are not generic; only the generic ones leave the sheets.
+  assert.equal(result.counts.base + result.counts.excepted + result.counts.perFrame, data.generic.filter(selector => !everywhere.has(selector)).length);
 });

@@ -23,7 +23,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 ## Features
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
-- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, cosmetic hiding, advanced page hiding, scriptlet filters and a visual element picker.
+- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, uBlock filters bundled with each release, cosmetic hiding, advanced page hiding, scriptlet filters and a visual element picker.
 - **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. When its evidence expires it keeps blocking until a newer list replaces it, unless you ask it to switch itself off then. A newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
 - **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
@@ -108,11 +108,11 @@ Module Engine is the only one of these extensions that both blocks ads and runs 
 
 The others go further in their own areas:
 
-- uBlock Origin adds dynamic filtering, many more scriptlets and its own lists that use them.
+- uBlock Origin adds dynamic filtering, many more scriptlets, HTML filtering and its other lists, such as Privacy, Badware risks and Quick fixes. Module Engine bundles only uBlock filters, the main list, and converts what it can of it.
 - uBlock Origin Lite refreshes its rules with every store release.
 - Tampermonkey and Violentmonkey cover more of the userscript API and sync scripts through cloud storage.
 
-Module Engine updates EasyList and EasyList China from their publishers and converts them on your computer; its generic hiding changes only with a new release. It holds up to 32 scripts and installs from source.
+Module Engine updates EasyList and EasyList China from their publishers and converts them on your computer; its generic hiding and uBlock filters change only with a new release. It holds up to 32 scripts and installs from source.
 
 ## Browser support and verification
 
@@ -120,11 +120,11 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **19 November 2026** the current code passed:
 
-- **733 Node tests**;
-- **41 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
-- **826 Chrome, 826 Edge and 819 Firefox** blocker checks, plus **61 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
+- **737 Node tests**;
+- **68 cosmetic, 241 rule/import, 342 threat and 41 requested-host assertions**;
+- **827 Chrome, 827 Edge and 820 Firefox** blocker checks, plus **61 signed-update** and **27 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered scriptlet filters, started both before and after a page's own scripts, the Reported Threats expiry switch, the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered the bundled uBlock filters and its scriptlet rules, which start as each page loads, scriptlet filters, started both before and after a page's own scripts, the Reported Threats expiry switch, the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;
@@ -139,7 +139,7 @@ That run covered scriptlet filters, started both before and after a page's own s
 
 Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. While Community lists is on, EasyList and EasyList China are downloaded from their publishers as often as they ask (EasyList China asks daily). While Reported Threats is on, a release that names an update folder downloads its signed list once a day. Neither download carries cookies or a referrer. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
 
-The bundled EasyList and EasyList China snapshots are from 19 October 2026. While the Community lists layer is on, Module Engine downloads newer copies as often as their publishers ask and converts them on your computer. Network rules and site hiding follow the new copies; generic hiding changes only with a new release. You can turn these updates off in My lists. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
+The bundled EasyList and EasyList China snapshots are from 19 October 2026, and the uBlock filters snapshot from 19 November 2026. While the Community lists layer is on, Module Engine downloads newer copies of EasyList and EasyList China as often as their publishers ask and converts them on your computer. Network rules and site hiding follow the new copies; generic hiding changes only with a new release. uBlock filters is never downloaded: it changes only with a new release, and its scriptlet rules run by default as each page loads. You can turn these updates off in My lists. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
 
 Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
 
@@ -173,7 +173,8 @@ Browser test commands and offline isolation details are in [Verification](docs/V
 
 Module Engine's own source is released under the [MIT License](LICENSE). The bundled third-party parts keep their own licences:
 
-- **EasyList and EasyList China**, by the EasyList authors: the snapshots in `lists/community/`, the community rules, site hiding data and generic stylesheets generated from them, and the copies downloaded at runtime. These are under the [EasyList licence](https://easylist.to/pages/licence.html), GPL-3.0-or-later or CC BY-SA 3.0. Their source headers and [snapshot catalog](lists/community-lists.json) identify the upstream sources and hashes.
+- **EasyList and EasyList China**, by the EasyList authors: their snapshots in `lists/community/`, the copies downloaded at runtime, and their part of the community rules, site hiding data and generic stylesheets generated from the snapshots. These are under the [EasyList licence](https://easylist.to/pages/licence.html), GPL-3.0-or-later or CC BY-SA 3.0. Their source headers and [snapshot catalog](lists/community-lists.json) identify the upstream sources and hashes.
+- **uBlock filters**, by the uBlock Origin authors ([uBlockOrigin/uAssets](https://github.com/uBlockOrigin/uAssets)): the snapshot `lists/community/ublock-filters.txt`, which the package includes, and its part of the generated rules, site hiding data, scriptlet rules and generic stylesheets. It is under the [GNU GPL version 3](https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE). The snapshot catalog records the commit it came from and its hash.
 - **Public Suffix List data**, in `vendor/publicsuffix/`: MPL-2.0, with its [licence](vendor/publicsuffix/LICENSE) and provenance beside it.
 - **Acorn**, in `vendor/acorn/`: MIT, with its [licence](vendor/acorn/LICENSE).
 

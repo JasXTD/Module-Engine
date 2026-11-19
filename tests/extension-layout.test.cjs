@@ -23,6 +23,11 @@ test('all manifest entry points and bundled rules resolve inside the package', (
   for(const icon of Object.values(manifest.icons))resource(icon);
   for(const entry of manifest.content_scripts)for(const file of [...entry.js,...(entry.css||[])])resource(file);
   for(const rule of manifest.declarative_net_request.rule_resources)resource(rule.path);
+  // List updates convert release-only lists again from their packaged text.
+  const lists=JSON.parse(fs.readFileSync(path.join(root,'rules/community-info.json'),'utf8')).lists.filter(list=>list.updates==='release');
+  assert.ok(lists.length>=1);
+  for(const list of lists)resource('lists/'+list.file);
+  assert.ok(!files.some(file=>file.startsWith('lists/')&&!lists.some(list=>'lists/'+list.file===file)),'downloaded lists are not packaged');
 });
 test('scripts and stylesheets the background registers resolve inside the package', () => {
   const source = fs.readFileSync(path.join(root, 'src/background/background.js'), 'utf8');

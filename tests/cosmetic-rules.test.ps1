@@ -114,4 +114,69 @@ Check ((ConvertTo-Json $scriptletResult.Info.skipped -Compress) -ceq (ConvertTo-
 Check (!$scriptletResult.Rules.Count -and !$scriptletResult.Cosmetic.hide.Count -and !@($scriptletResult.Cosmetic.procedural).Count) 'No scriptlet becomes a network or hiding rule.'
 $scriptletJson = ConvertTo-CosmeticJson $scriptletResult.Cosmetic | ConvertFrom-Json -AsHashtable
 Check ($scriptletJson.scriptlets.Count -eq 5 -and $scriptletJson.scriptlets[3].name -ceq '' -and $scriptletJson.scriptlets[3].args.Count -eq 0) 'Scriptlet rules survive JSON serialization.'
+
+# uBlock Origin's own syntax; tests/community-convert.test.cjs expects the same results.
+$conditions = @(@('', $null), @('false', $false), @('!false', $true), @('cap_html_filtering', $false), @('!cap_html_filtering', $true),
+    @('env_firefox', $null), @('!env_firefox', $null), @('env_firefox && false', $false), @('env_firefox || !false', $true), @('env_firefox || false', $null),
+    @('(env_firefox)', $null), @('!(env_safari || env_mobile)', $true), @('!!env_safari', $false), @('(false || !env_safari) && !ext_ubol', $true),
+    @('a && b || c', $null), @('(a', $null), @('a)', $null), @('&& a', $null), @('a &&', $null), @('Env_Safari', $null), @('env_safari env_mobile', $null),
+    @((@('false') * 26) -join ' && ', $null))
+foreach ($pair in $conditions) {
+    $value = Get-CommunityCondition $pair[0]
+    Check (($null -eq $value -and $null -eq $pair[1]) -or ($null -ne $value -and $null -ne $pair[1] -and $value -eq $pair[1])) "Condition '$($pair[0])' evaluates as in the extension."
+}
+$ublockText = @'
+!#if !cap_html_filtering
+kept-if.example##.kept-if
+!#else
+dropped-else.example##.dropped-else
+!#endif
+!#if env_firefox
+firefox.example##.firefox-only
+! a comment is not counted
+!#else
+chromium.example##.not-firefox
+!#endif
+!#if cap_html_filtering
+html.example##^script:has-text(ad)
+!#else
+kept-else.example##.kept-else
+!#endif
+!#if env_mobile
+!#if !env_safari
+nested.example##.nested
+!#endif
+!#endif
+!#if (false || !env_safari) && !ext_ubol
+compound.example##.compound
+!#endif
+!#if env_chromium && false
+false-and.example##.false-and
+!#else
+false-and-else.example##.false-and-else
+!#endif
+!#if env_chromium || env_firefox && false
+mixed.example##.mixed
+!#endif
+!#if !
+broken.example##.broken
+!#endif
+!#endif
+!#else
+example.test##^script:has-text(ads)
+example.test#@#^script:has-text(ads)
+@@||ghide.example^$ghide
+@@||ehide.example^$ehide
+@@||long.example^$generichide
+!#if env_safari
+unclosed.example##.unclosed
+'@
+$ublockList = @{ id='ublock'; title='uBlock syntax'; text=$ublockText; source='https://example.test/list'; updates='release'; license='fixture'; downloadedAtUtc='2026-10-29T00:00:00Z'; sha256=('0' * 64) }
+$ublockResult = ConvertFrom-CommunityLists @($ublockList)
+Check ((ConvertTo-Json $ublockResult.Cosmetic.hide -Compress) -ceq '{"compound.example":[".compound"],"false-and-else.example":[".false-and-else"],"kept-else.example":[".kept-else"],"kept-if.example":[".kept-if"]}') 'Only blocks whose condition holds in every supported browser are converted.'
+Check ((@($ublockResult.Cosmetic.disableGeneric) -join ',') -ceq 'ghide.example,long.example' -and (@($ublockResult.Cosmetic.disableAll) -join ',') -ceq 'ehide.example') 'ghide and ehide are the generichide and elemhide exceptions.'
+$expectedUblockSkips = [ordered]@{ 'conditional: block for some browsers only, or an unknown condition' = 4; 'conditional: block that does not apply to Module Engine' = 5; 'cosmetic: snippet or HTML filter' = 2 }
+Check ((ConvertTo-Json $ublockResult.Info.skipped -Compress) -ceq (ConvertTo-Json $expectedUblockSkips -Compress)) 'Left-out blocks and HTML filters are counted as in the extension.'
+Check (!$ublockResult.Rules.Count -and !$ublockResult.Cosmetic.allow.Count -and !@($ublockResult.Cosmetic.procedural).Count) 'No left-out line becomes a rule.'
+Check ($ublockResult.Info.lists[0].updates -ceq 'release' -and $null -eq $ublockResult.Info.lists[0].version) 'The list record keeps how it updates, and a list without a version has none.'
 Write-Host "PASS: $checks cosmetic compilation assertions (local strings only)."

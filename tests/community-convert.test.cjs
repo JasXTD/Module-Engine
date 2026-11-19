@@ -35,7 +35,7 @@ test('network rules match rules/community.json byte for byte', () => {
     const line = ours.findIndex((value, index) => value !== theirs[index]);
     assert.fail(`First difference at line ${line + 1}:\n  converter: ${ours[line]?.slice(0, 400)}\n  committed: ${theirs[line]?.slice(0, 400)}`);
   }
-  assert.equal(converted.rules.length, 9223);
+  assert.equal(converted.rules.length, 11910);
 });
 
 test('site hiding data matches rules/community-cosmetic.json', () => {
@@ -92,4 +92,33 @@ test('list scriptlet filters become scriptlet rules; generic, wildcard-only, unk
     'scriptlet: filter without a site': 2, 'scriptlet: no scriptlet named': 1, 'scriptlet: unsupported scriptlet or arguments': 2 });
   assert.deepEqual([result.rules, result.cosmetic.hide, result.cosmetic.procedural], [[], {}, []], 'no scriptlet becomes a network or hiding rule');
   assert.throws(() => lists.convert([], { compileSelector: cosmetic.compileSelector }), /Invalid community list input/);
+});
+
+// uBlock Origin's own syntax, checked in both converters: tests/cosmetic-rules.test.ps1
+// expects the same results. A block is used only when its condition is true in
+// every supported browser, and its !#else part only when it is false there.
+const CONDITIONS = [['', null], ['false', false], ['!false', true], ['cap_html_filtering', false], ['!cap_html_filtering', true],
+  ['env_firefox', null], ['!env_firefox', null], ['env_firefox && false', false], ['env_firefox || !false', true], ['env_firefox || false', null],
+  ['(env_firefox)', null], ['!(env_safari || env_mobile)', true], ['!!env_safari', false], ['(false || !env_safari) && !ext_ubol', true],
+  ['a && b || c', null], ['(a', null], ['a)', null], ['&& a', null], ['a &&', null], ['Env_Safari', null], ['env_safari env_mobile', null],
+  [Array(26).fill('false').join(' && '), null]];
+const UBLOCK_LINES = ['!#if !cap_html_filtering', 'kept-if.example##.kept-if', '!#else', 'dropped-else.example##.dropped-else', '!#endif',
+  '!#if env_firefox', 'firefox.example##.firefox-only', '! a comment is not counted', '!#else', 'chromium.example##.not-firefox', '!#endif',
+  '!#if cap_html_filtering', 'html.example##^script:has-text(ad)', '!#else', 'kept-else.example##.kept-else', '!#endif',
+  '!#if env_mobile', '!#if !env_safari', 'nested.example##.nested', '!#endif', '!#endif',
+  '!#if (false || !env_safari) && !ext_ubol', 'compound.example##.compound', '!#endif',
+  '!#if env_chromium && false', 'false-and.example##.false-and', '!#else', 'false-and-else.example##.false-and-else', '!#endif',
+  '!#if env_chromium || env_firefox && false', 'mixed.example##.mixed', '!#endif', '!#if !', 'broken.example##.broken', '!#endif',
+  '!#endif', '!#else', 'example.test##^script:has-text(ads)', 'example.test#@#^script:has-text(ads)',
+  '@@||ghide.example^$ghide', '@@||ehide.example^$ehide', '@@||long.example^$generichide', '!#if env_safari', 'unclosed.example##.unclosed'];
+test('uBlock Origin conditions, HTML filters and short exception names convert as in the build', () => {
+  for (const [condition, value] of CONDITIONS) assert.equal(lists.evaluateCondition(condition), value, JSON.stringify(condition));
+  const result = lists.convert([{ id: 'fixture', title: 'Fixture', text: UBLOCK_LINES.join('\n') }],
+    { compileSelector: cosmetic.compileSelector, parseScriptlet: scriptlets.parseBody });
+  assert.deepEqual(result.cosmetic.hide, { 'compound.example': ['.compound'], 'false-and-else.example': ['.false-and-else'],
+    'kept-else.example': ['.kept-else'], 'kept-if.example': ['.kept-if'] });
+  assert.deepEqual([result.cosmetic.disableGeneric, result.cosmetic.disableAll], [['ghide.example', 'long.example'], ['ehide.example']]);
+  assert.deepEqual(result.info.skipped, { 'conditional: block for some browsers only, or an unknown condition': 4,
+    'conditional: block that does not apply to Module Engine': 5, 'cosmetic: snippet or HTML filter': 2 });
+  assert.deepEqual([result.rules, result.cosmetic.allow, result.cosmetic.procedural], [[], {}, []]);
 });

@@ -22,9 +22,10 @@
   // Module Engine's own ad, tracker and threat rulesets.
   const MAX_RULES = 29000;
   const DOMAIN_CHUNK = 1000;
-  // At most this many advanced (procedural) hiding and scriptlet candidates, as in the build.
+  // At most this many advanced (procedural) hiding and scriptlet candidates, as in
+  // the build. The bundled lists give about 1,500 and 8,200 (November 2026).
   const MAX_PROCEDURAL = 5000;
-  const MAX_SCRIPTLETS = 5000;
+  const MAX_SCRIPTLETS = 20000;
   // .NET whitespace: Char.IsWhiteSpace for Trim(), and the same set for \s.
   const WS = '\\t-\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000';
   const TRIM = new RegExp(`^[${WS}]+|[${WS}]+$`, 'g');
@@ -36,6 +37,17 @@
   const OPTIONS = /^[A-Za-z0-9~_,=|.*:/\-]+$/;
   const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
   const HEADER_NAMES = { version: 'Version', 'last modified': 'Last modified', title: 'Title' };
+  // uBlock Origin's !#if, !#else and !#endif lines, which no other list syntax uses.
+  const CONDITIONAL = /^!#(if|else|endif)(?![A-Za-z0-9_])(.*)$/s;
+  // What uBlock Origin's condition names mean for Module Engine. These are false
+  // in every browser it supports: uBlock Origin's HTML filtering and IP-address
+  // matching, Safari, mobile browsers and uBlock Origin Lite. Every other name,
+  // such as env_firefox or env_chromium, is true in some supported browsers and
+  // false in others, so it is unknown.
+  const FALSE_CONDITIONS = new Set(['false', 'cap_html_filtering', 'cap_ipaddress', 'env_safari', 'env_mobile', 'ext_ubol']);
+  const CONDITION_SPACE = new RegExp(`[${WS}]+`);
+  const NOT_APPLYING = 'conditional: block that does not apply to Module Engine';
+  const UNKNOWN_CONDITION = 'conditional: block for some browsers only, or an unknown condition';
   // Ordinal order, as .NET's SortedSet with StringComparer.Ordinal.
   const sorted = values => [...values].sort();
 
@@ -69,6 +81,40 @@
       for (const domain of set) if (domain.endsWith('.' + host)) return true;
       return false;
     };
+  }
+
+  // An !#if condition: true, false, or null when unknown. Names may be negated
+  // with ! and joined with && or || in parentheses, with three-valued logic:
+  // unknown && false is false and unknown || true is true. Mixing && and ||
+  // without parentheses, or any other syntax, is unknown.
+  function evaluateCondition(text) {
+    const tokens = text.replace(/&&|\|\||[()!]/g, ' $& ').split(CONDITION_SPACE).filter(Boolean);
+    if (tokens.length > 50) return null;
+    const negate = (value, count) => value === null || count % 2 === 0 ? value : !value;
+    const combine = group => group.operator === '||'
+      ? (group.values.includes(true) ? true : group.values.includes(null) ? null : false)
+      : (group.values.includes(false) ? false : group.values.includes(null) ? null : true);
+    const groups = [{ values: [], operator: null, negations: 0 }];
+    let operand = true, negations = 0;
+    for (const token of tokens) {
+      const group = groups[groups.length - 1];
+      if (operand) {
+        if (token === '!') { negations++; continue; }
+        if (token === '(') { groups.push({ values: [], operator: null, negations }); negations = 0; continue; }
+        if (!/^[a-z0-9_]+$/.test(token)) return null;
+        group.values.push(negate(FALSE_CONDITIONS.has(token) ? false : null, negations));
+        negations = 0;
+        operand = false;
+      } else if (token === '&&' || token === '||') {
+        if (group.operator && group.operator !== token) return null;
+        group.operator = token;
+        operand = true;
+      } else if (token === ')' && groups.length > 1) {
+        groups.pop();
+        groups[groups.length - 1].values.push(negate(combine(group), group.negations));
+      } else return null;
+    }
+    return operand || groups.length > 1 ? null : combine(groups[0]);
   }
 
   // A grouping key: equivalent filters with options in any order share it.
@@ -114,20 +160,47 @@
     for (const list of lists) {
       if (!list || typeof list.text !== 'string') throw new Error('Invalid community list text.');
       const header = {};
+      // Open !#if blocks, innermost last. `leftOut` is the reason the current
+      // lines are left out, or null while they are used. A block without an
+      // !#endif ends with its list; a stray !#else or !#endif is ignored.
+      const blocks = [];
+      let leftOut = null;
+      const reasonFor = value => value === true ? null : value === false ? NOT_APPLYING : UNKNOWN_CONDITION;
       for (const raw of list.text.split(/\r?\n/)) {
         const line = trim(raw);
         if (!line) continue;
+        const directive = CONDITIONAL.exec(line);
+        if (directive) {
+          if (directive[1] === 'if') {
+            const value = evaluateCondition(trim(directive[2]));
+            blocks.push({ value, outer: leftOut, inElse: false });
+            if (leftOut === null) leftOut = reasonFor(value);
+          } else if (blocks.length && directive[1] === 'endif') {
+            leftOut = blocks.pop().outer;
+          } else if (blocks.length) {
+            const block = blocks[blocks.length - 1];
+            // A second !#else leaves the rest of its block out.
+            if (block.inElse) block.value = null;
+            block.inElse = true;
+            leftOut = block.outer ?? reasonFor(block.value === null ? null : !block.value);
+          }
+          continue;
+        }
         if (line[0] === '!' || line[0] === '[') {
+          if (leftOut) continue;
           const match = HEADER.exec(line);
           const name = match && HEADER_NAMES[match[1].toLowerCase()];
           if (name && !Object.hasOwn(header, name)) header[name] = trim(match[2]);
           continue;
         }
+        if (leftOut) { skip(leftOut); continue; }
         const cosmetic = COSMETIC.exec(line);
         if (cosmetic) {
           const [, domainText, sep] = cosmetic;
           if (!['##', '#@#', '#?#', '#@?#'].includes(sep)) { skip('cosmetic: snippet or HTML filter'); continue; }
           const selector = trim(cosmetic[3]);
+          // uBlock Origin's HTML filters (##^...) edit a page's source before it is parsed.
+          if (selector.startsWith('^')) { skip('cosmetic: snippet or HTML filter'); continue; }
           // ##+js(...) and #@#+js(...) are scriptlet filters, checked after the lists are read.
           const isScriptlet = (sep === '##' || sep === '#@#') && selector.startsWith('+js(');
           if (!isScriptlet && (selector.length > 1000 || /[{}\x00-\x1f]|\/\*|\*\//.test(selector) || selector.startsWith('+js('))) {
@@ -174,13 +247,14 @@
         const text = exception ? line.slice(2) : line;
         // Only exact host-wide exceptions have a lossless mapping here.
         // Path/option-specific exceptions stay counted as unsupported.
-        const cosmeticException = exception && /\$(generichide|elemhide)$/i.exec(text);
+        // ghide and ehide are uBlock Origin's short names for generichide and elemhide.
+        const cosmeticException = exception && /\$(generichide|ghide|elemhide|ehide)$/i.exec(text);
         if (cosmeticException) {
           const kind = cosmeticException[1].toLowerCase();
-          const hostMatch = /^\|\|([^/^*|:?=&]+)\^\$(generichide|elemhide)$/i.exec(text);
+          const hostMatch = /^\|\|([^/^*|:?=&]+)\^\$(?:generichide|ghide|elemhide|ehide)$/i.exec(text);
           const host = hostMatch ? communityHost(hostMatch[1]) : null;
           if (!host) { skip('network: unsupported cosmetic exception'); continue; }
-          (kind === 'generichide' ? disableGeneric : disableAll).add(host);
+          (kind === 'generichide' || kind === 'ghide' ? disableGeneric : disableAll).add(host);
           continue;
         }
         // /.../ is a regular expression, with or without $options; its body may contain $.
@@ -266,7 +340,7 @@
         }
         singles.set(`${key}|${pattern}`, { priority, action: { type: action }, condition });
       }
-      headers.push({ id: list.id, title: header.Title ?? list.title, version: header.Version, lastModified: header['Last modified'] });
+      headers.push({ id: list.id, title: header.Title ?? list.title, version: header.Version ?? null, lastModified: header['Last modified'] ?? null });
     }
 
     // Rules: merged domain groups in chunks, then single patterns, in the
@@ -308,5 +382,6 @@
     };
   }
 
-  globalThis.BlockAdsCommunityLists = Object.freeze({ convert, compileScriptlets, communityHost, conditionKey, MAX_RULES, DOMAIN_CHUNK });
+  globalThis.BlockAdsCommunityLists = Object.freeze({ convert, compileScriptlets, communityHost, conditionKey, evaluateCondition, MAX_RULES, DOMAIN_CHUNK,
+    MAX_PROCEDURAL, MAX_SCRIPTLETS });
 })();

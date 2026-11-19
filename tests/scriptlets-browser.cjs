@@ -75,6 +75,8 @@ async function verify({ open, evaluate, wait, close, send, check, origin, frameO
   const state = await send({ type: 'GET_STATE' });
   if (!state.ok) throw new Error(state.error);
   const previous = state.settings.customCosmeticFilters;
+  // The bundled uBlock filters bring scriptlet rules of their own.
+  const listRules = state.scriptletStatus?.rules ?? 0;
   const save = async text => {
     const result = await send({ type: 'SAVE_COSMETIC_FILTERS', previous: (await send({ type: 'GET_STATE' })).settings.customCosmeticFilters, text });
     if (!result.ok) throw new Error(result.error);
@@ -187,7 +189,10 @@ async function verify({ open, evaluate, wait, close, send, check, origin, frameO
     await close(lists);
   }
   await save(previous);
-  check((await send({ type: 'GET_STATE' })).scriptletStatus?.mode === 'off', 'removing the rules leaves no scriptlet registration');
+  // The lists' rules are never registered; they start as each page loads.
+  const after = (await send({ type: 'GET_STATE' })).scriptletStatus;
+  check(after?.rules === listRules && after.own === 0 && after.mode === (listRules ? 'late' : 'off'),
+    `removing the rules leaves the lists' ${listRules.toLocaleString('en')} scriptlet rules, which start as each page loads`);
 }
 
 module.exports = { serve, verify, RULES, served };

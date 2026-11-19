@@ -1,8 +1,83 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record covers scriptlet filters on 19 November 2026, following that day's Reported Threats expiry switch, the 18 November update security fixes, the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record covers the bundled uBlock filters on 19 November 2026, following that day's scriptlet filters, Reported Threats expiry switch, the 18 November update security fixes, the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## uBlock filters — 19 November 2026
+
+The user asked to bundle uBlock filters, the main list of uBlock Origin, after a measurement showed it needed four changes: a higher scriptlet limit, a document-start registration split by site, respect for `!#if` blocks and HTML filters, and bundling without downloads. [Filter-list snapshots](../lists/README.md#community-list-snapshots-browser-only-layer)
+
+- **Source.** uBlockOrigin/uAssets at commit `14c32aba13089811163690c95d66377c0424f013` (19 November 2026, 02:49 UTC), from the archive the user downloaded that day. The 25 files of its `filters/` folder matched the archive's CRC-32 records. `scripts/make-ublock-snapshot.cjs` copied `filters.txt` and the ten files its `!#include` lines name into `lists/community/ublock-filters.txt`: 2,527,332 bytes, 43,441 lines, SHA-256 `0d649d0b…68882`. A separate `awk` rebuild gave the same lines.
+- **Converters.** Both now:
+  - read `!#if`, `!#else` and `!#endif`, using a block only when its condition holds in every supported browser;
+  - skip HTML filters (`##^`);
+  - read `$ghide` and `$ehide`;
+  - accept up to 20,000 scriptlet candidates; this bundle has about 8,200.
+
+  On all three lists they agree byte for byte.
+
+  | | Before (two lists) | Now (three lists) |
+  | --- | --- | --- |
+  | Network rules (limit 29,000) | 9,223 | 11,910 |
+  | Site hiding selectors | 22,966 | 30,076 |
+  | Scriptlet rules | 0 | 7,178 |
+  | Host-wide hiding exceptions | 348 | 1,062 |
+
+  Lines left out: 628 in blocks that do not apply, 62 in blocks for some browsers only, 138 snippet and HTML filters, 1,052 scriptlet filters that need a trusted scriptlet, one the extension lacks or unsupported arguments.
+- **Updates.** The catalog marks EasyList and EasyList China `download` and uBlock filters `release`. A check downloads only the first two. It then converts the packaged uBlock copy beside them, after checking its SHA-256, and compares the versions of the downloaded lists only.
+- **Scriptlets start as each page loads.** With userscript access, only the person's own rules, with the lists' exceptions, are registered, in up to 32 groups by site. These measurements, in headless Chrome 158 with userscript access, decided it:
+
+  | Plain loopback page, five loads each | Load time |
+  | --- | --- |
+  | No registrations | 139–141 ms |
+  | uBlock's rules in 32 groups (2.8 MB, about 16,000 site patterns) | 164–204 ms |
+  | Their site patterns only | 142–341 ms |
+  | Their code only, under one unmatched pattern | 128–139 ms, with one load at 1,513 ms |
+  | Both, the first load after registering | 3,532 ms, then 157–222 ms |
+
+  With those registrations, an unfiltered `userScripts.getScripts()` took about 57 ms instead of 1, the userscript manager's status about 100 ms instead of 3, and a state request about 130 ms instead of 15. The Chrome layout suite took 459 s and stopped at check 482; the previous code passed 759 checks in 69 s.
+- **After the change**, with default settings, two runs against the previous code gave state requests a median of 22 ms against 26 ms (18–128 against 14–63), and plain page loads a median of 174 ms against 187 ms (153–270 against 122–374). With userscript access and no rules of the person's own, nothing is registered, and the userscript manager's status took 2–3 ms.
+- **Comparison helper.** `same()` sorted arrays with a comparator that serialised both items on every comparison, which made each settings request slower as registrations grew. It now sorts each item's text, computed once. 200,000 random pairs, a fifth of them equal, gave the same answers as the old version.
+- **Behaviour changes.**
+  - uBlock filters excepts `.ad-slot` and `[id^="div-gpt-ad"]` everywhere and hides narrower versions that spare anti-adblock bait. As list exceptions always have, those exceptions also cover the two matching built-in selectors. The blocker suite's safeguard check now uses `.ad-leaderboard`, and a new check confirms that `.ad-slot.adsbox` bait stays visible.
+  - `$badfilter` is not supported. `@@||succeedscene.com^$script` from EasyList and `@@||zefoy.com/assets/$script,1p` from uBlock filters therefore stay, although uBlock Origin cancels them.
+  - A registered rule or pause on a one-label name such as `localhost` now also covers its subdomains, as it already did for scriptlets started late.
+
+**737 Node tests** passed, 4 of them new:
+
+- uBlock Origin's syntax converted as in the build: 22 conditions, blocks, HTML filters and short exception names;
+- a packaged snapshot that differs from its recorded hash is refused;
+- the registration split by site, with exceptions, one-label names and pauses;
+- with userscript access, only the person's rules are registered and frames start the rest.
+
+Existing tests gained checks for the release-only list in updates and for how often the browser's registrations are read. Five deliberate faults were each caught:
+
+- no hash check on the packaged snapshot;
+- `localhost` subdomains filed under their own sites;
+- reading the registrations back after an unchanged synchronization;
+- registering the lists' rules;
+- no subdomain pattern for a one-label name.
+
+The PowerShell suites passed 68 cosmetic (27 new), 241 rule/import (4 new), 342 threat and 41 requested-host assertions. One unchanged userscript matching test, which runs generated code under a one-second `vm` timeout, failed in 2 of 17 separate runs.
+
+All browser suites ran offline, in temporary profiles with loopback fixtures, after the Windows restart below.
+
+| Suite | Chrome 158 | Edge 157 | Firefox 160.0.1 |
+| --- | --- | --- | --- |
+| Blocker, with scriptlets started late | 827 | 827 | 820 |
+| Userscript layout, with your scriptlets started early | 759 | 759 | 721 |
+| Signed threat-list updates | 61 | 61 | 61 |
+| Filter-list updates | 27 | 27 | 27 |
+| Release packages | 9 | 9 | 10 |
+
+- **New checks.** Each blocker suite gained the bait check. Each filter-list update suite gained a check that My lists dates the bundled uBlock filters, and the package suites now expect three lists.
+- **Same timing as before.** The Chrome layout suite took 78 s, against 69 s for the previous code and 459 s before list scriptlets were taken out of the registration.
+- **Firefox blocker suite.** Its first run stopped at the known flaky element-picker concurrent-exception step, after 573 checks; the retry passed.
+- **Same files.** The blocker and layout runs recorded the 96 packaged files they tested, and those match the committed files.
+- **Machine hang.** Partway through, no new process could start on the computer, not even `echo`; a Windows restart cleared it. No browser result from before the restart is counted here.
+
+Not verified: live sites and real anti-adblock scripts; which uBlock filters scriptlets miss for starting late; Edge and Firefox registration costs, which were measured in Chrome only.
 
 ## Scriptlet filters — 19 November 2026
 

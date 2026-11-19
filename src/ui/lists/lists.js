@@ -44,21 +44,26 @@ async function checkUserScriptAccess() {
   try { userScriptsGranted = await api.permissions.contains({ permissions: ["userScripts"] }); } catch { userScriptsGranted = false; }
   render();
 }
+// Your own scriptlet rules can start before a page's scripts with userscript
+// access; the lists' rules always start as each page loads.
 function renderScriptlets() {
-  const status = scriptletStatus, count = status?.rules ?? 0;
-  const rules = `${count.toLocaleString()} scriptlet ${count === 1 ? "rule starts" : "rules start"}`;
+  const status = scriptletStatus, own = status?.own ?? 0, listed = Math.max(0, (status?.rules ?? 0) - own);
+  const yours = `Your ${own.toLocaleString()} scriptlet ${own === 1 ? "rule starts" : "rules start"}`;
+  const lists = listed ? ` The lists' ${listed.toLocaleString()} scriptlet ${listed === 1 ? "rule starts" : "rules start"} as each page loads.` : "";
   let text, access = false, details = false;
   if (!settings || !status) text = "Reading scriptlet status…";
   else if (!settings.enabled || !settings.cosmeticFiltering) text = "Scriptlet filters are paused with page hiding.";
   else if (!settings.scriptletFiltering) text = "Off: no scriptlet filter runs.";
   else if (status.mode === "off") text = "No scriptlet filters are in use. Add one to your custom hiding rules below.";
-  else if (status.mode === "early") text = `${rules} before each page's own scripts.`;
+  else if (!own) text = `${lists.trim()} Your own scriptlet rules, from your custom hiding rules below, can start before a page's scripts.`;
+  else if (status.mode === "early") text = `${yours} before each page's own scripts.${lists}`;
   else {
-    text = `${rules} as each page loads, which can be after the page's first scripts. `;
+    text = `${yours} as each page loads, which can be after the page's first scripts. `;
     if (!userScriptsGranted) { text += "Allow userscript access so they start first."; access = true; }
     else if (isFirefox) text += "This version of Firefox cannot start them first.";
     else { text += "To start them first, turn on Allow User Scripts in this extension's details, then come back to this page."; details = true; }
     if (status.error) text += ` The browser refused the early start: ${status.error}`;
+    text += lists;
   }
   byId("scriptletStatus").textContent = text;
   byId("scriptletAccess").hidden = !access;
@@ -74,7 +79,11 @@ function renderFilterLists() {
   byId('communityListUpdates').disabled=busy || !settings;
   byId('checkFilterLists').disabled=busy || checkingLists || !status?.lists.length;
   if (!status) { byId('filterListsStatus').textContent='Reading list details…'; byId('filterListsCheck').textContent=''; return; }
-  const lists=status.lists.map(list => `${list.title} ${list.version || ''}`.trim()).join(' and ');
+  // Downloaded lists show their version; a list bundled until the next release shows its date.
+  const names=status.lists.map(list => list.updates === 'release'
+    ? `${list.title} of ${(list.lastModified || '').replace(/ \d\d:\d\d.*$/, '') || 'this version'}`
+    : `${list.title} ${list.version || ''}`.trim());
+  const lists=names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join('');
   byId('filterListsStatus').textContent=!status.lists.length ? `List details are unavailable. ${updates.notice}`.trim()
     : `${lists} · ${(status.networkRules ?? 0).toLocaleString()} network rules · ${status.source === 'update'
       ? `updated: ${status.changed.disabled.toLocaleString()} bundled rules switched off, ${status.changed.added.toLocaleString()} added`
@@ -505,7 +514,7 @@ byId("scriptletDetails").addEventListener("click", () => {
 });
 // Access changes in the browser's own pages; check again on return.
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden || scriptletStatus?.mode !== "late") return;
+  if (document.hidden || scriptletStatus?.mode !== "late" || !scriptletStatus.own) return;
   void checkUserScriptAccess();
   void run({ type: "GET_STATE" });
 });

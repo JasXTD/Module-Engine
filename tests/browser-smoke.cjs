@@ -552,7 +552,7 @@ if (require.main === module) (async () => {
              event.source.postMessage({kind:'popup-attempted'}, event.origin);
            }
          });</script>`;
-    res.end(`<!doctype html><html><head><title>BlockAds local fixture</title></head><body><div id="ad" class="ad-slot">Ad fixture</div><div id="normal">Normal content</div><div id="fandom-lookalike" class="fandom-ad-wrapper">Unrelated site content</div><ytd-ad-slot-renderer id="youtube-lookalike">Unrelated site content</ytd-ad-slot-renderer>${frame}</body></html>`);
+    res.end(`<!doctype html><html><head><title>BlockAds local fixture</title></head><body><div id="ad" class="ad-slot ad-leaderboard">Ad fixture</div><div id="normal">Normal content</div><div id="fandom-lookalike" class="fandom-ad-wrapper">Unrelated site content</div><ytd-ad-slot-renderer id="youtube-lookalike">Unrelated site content</ytd-ad-slot-renderer>${frame}</body></html>`);
   });
   const socketUpgrades = [];
   server.on('upgrade', (req, socket) => {
@@ -823,10 +823,15 @@ if (require.main === module) (async () => {
     const page = await browser.open(fixtureUrl);
     await until(browser, 'document.getElementById("ad") && getComputedStyle(document.getElementById("ad")).display === "none"', page);
     check(await browser.evaluate('getComputedStyle(document.getElementById("normal")).display !== "none"', page), 'cosmetic filter hides ad fixture and preserves ordinary content');
-    // .ad-slot is also a bundled generic selector, so the registered stylesheet can
-    // hide the fixture before the built-in rule and its extra safeguards arrive.
+    // The registered stylesheet can hide .ad-slot before the built-in rules and their
+    // extra safeguards arrive. uBlock filters excepts .ad-slot everywhere and hides
+    // .ad-slot:not(.adsbox) instead, so anti-adblock bait stays visible; the
+    // exception also covers the built-in .ad-slot. .ad-leaderboard keeps a built-in rule.
     await until(browser, 'getComputedStyle(document.getElementById("ad")).visibility === "hidden" && getComputedStyle(document.getElementById("ad")).pointerEvents === "none"', page);
     check(true, 'built-in hiding retains its visibility and pointer safeguards');
+    check(await browser.evaluate(`new Promise(resolve => { const bait = document.createElement('div'); bait.className = 'ad-slot adsbox'; bait.textContent = 'Bait';
+      document.body.append(bait); setTimeout(() => { const shown = getComputedStyle(bait).display !== 'none'; bait.remove(); resolve(shown); }, 500); })`, page),
+      'a global list exception replaces a built-in selector: anti-adblock bait (.ad-slot.adsbox) stays visible');
     check(await browser.evaluate('getComputedStyle(document.getElementById("fandom-lookalike")).display !== "none"', page),
       'Fandom-specific cosmetic rule preserves similarly named content on other sites');
     check(await browser.evaluate('getComputedStyle(document.getElementById("youtube-lookalike")).display !== "none"', page),

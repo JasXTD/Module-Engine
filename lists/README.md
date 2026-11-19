@@ -69,15 +69,56 @@ catalog hostname and do not establish live browser enforcement or reputation.
 
 ## Community list snapshots, browser-only layer
 
-`community-lists.json` (`reviewKind: community-filter-snapshots`) records each EasyList-format
-snapshot stored under `community/`: `id`, `title`, `file`, HTTPS `source`, `license`,
+`community-lists.json` (`reviewKind: community-filter-snapshots`) records each filter-list
+snapshot stored under `community/`: `id`, `title`, `file`, HTTPS `source`, `updates`, `license`,
 `downloadedAtUtc` and `sha256`. The builder refuses unknown or missing fields, duplicate ids,
-files outside `community/`, non-HTTPS sources, future download times, files over 8 MiB, and
-any file whose SHA-256 differs from its record. It never downloads anything: a new snapshot is
-placed there by a person, and its record is updated deliberately. The `source` addresses also
-reach `rules/community-info.json`, from which the extension downloads newer copies at runtime and
-converts them with `src/blocking/community-lists.js`, a port of this converter that must give the
-same rules from these snapshots (see [Development](../docs/DEVELOPMENT.md#filter-list-updates-in-the-extension)).
+files outside `community/`, non-HTTPS sources, an `updates` other than `download` or `release`,
+future download times, files over 8 MiB, and any file whose SHA-256 differs from its record. It
+never downloads anything: a new snapshot is placed there by a person, and its record is updated
+deliberately. The records also reach `rules/community-info.json`. For a `download` list, the
+extension downloads newer copies from `source` at runtime and converts them with
+`src/blocking/community-lists.js`, a port of this converter that must give the same rules from
+these snapshots (see [Development](../docs/DEVELOPMENT.md#filter-list-updates-in-the-extension)).
+A `release` list changes only with a new version of Module Engine; its `source` records where the
+snapshot came from and is never requested.
+
+`ublock-filters.txt` is uBlock filters, the main list of uBlock Origin, from the `filters/`
+folder of [uBlockOrigin/uAssets](https://github.com/uBlockOrigin/uAssets) at commit
+`14c32aba13089811163690c95d66377c0424f013` (19 November 2026, 02:49 UTC). The archive was
+downloaded that day, and the 25 files of its `filters/` folder matched the archive's CRC-32
+records. `scripts/make-ublock-snapshot.cjs` made the snapshot offline from that folder:
+`filters.txt`, with each file its `!#include` lines name copied in after the line, between
+`! >>>>>>>> name` and `! <<<<<<<< name` comments. The `%timestamp%` in `! Last modified:` is
+replaced with the commit time, as the publisher does when it publishes. Nothing else changes,
+and the same files give the same bytes. Its `updates` is `release`. It is packaged as text
+(`scripts/extension-files.cjs`), because an update of the downloaded lists converts it again
+beside them, after checking it against its recorded SHA-256. Converting the new copies without
+it would switch its rules off.
+
+The converters read uBlock Origin's own syntax as follows:
+
+- **`!#if`, `!#else` and `!#endif` blocks.** A block is used only when its condition holds in
+  every browser Module Engine supports, and its `!#else` part only when the condition fails in
+  all of them. `false`, `cap_html_filtering`, `cap_ipaddress`, `env_safari`, `env_mobile` and
+  `ext_ubol` are false: Module Engine has no HTML filtering or IP-address matching, supports
+  desktop Chrome, Edge and Firefox, and is not uBlock Origin Lite. Every other name, such as
+  `env_firefox` or `env_chromium`, is unknown. One bundle serves every browser, so a block
+  that depends on an unknown name is left out, with its `!#else` part. `!`, `&&`, `||` and
+  parentheses combine names with three-valued logic, so `env_firefox && false` is false.
+  Mixing `&&` and `||` without parentheses is unknown. Nested blocks are supported; a block
+  without `!#endif` ends with its list. Lines left out are counted under two `conditional:`
+  reasons.
+- **HTML filters** (`##^…`), which edit a page's source before it is parsed, are skipped and
+  counted with snippet filters.
+- **`$ghide` and `$ehide`** are read as `$generichide` and `$elemhide`.
+
+uBlock filters also uses syntax the converters skip and count: `$redirect`, `$removeparam`,
+`$csp`, `$denyallow`, `$badfilter`, `name.*` sites, regular expressions and trusted scriptlets,
+among others. `$badfilter` cancels another filter in uBlock Origin. Here it is skipped, so the
+filter it names stays. In this snapshot that keeps two exceptions uBlock Origin would cancel:
+`@@||succeedscene.com^$script` from EasyList (in effect before this list was added) and
+`@@||zefoy.com/assets/$script,1p` from uBlock filters itself. The other cancelled filters use
+options the converters skip anyway.
 
 `scripts/community-list-tools.ps1` converts the snapshots into `rules/community.json` (the
 switchable `community_ruleset`), `rules/community-cosmetic.json` (generic and site-specific hiding rules
@@ -86,8 +127,9 @@ and their exceptions), the registered generic stylesheets `rules/community-gener
 reason). Blocks get priority 1, exceptions 2 and `$important` blocks 3; the allow list is 4, reported threats 5, custom blocks 50 and site pauses 10000.
 Exceptions for domains on Module Engine's own ad, tracker or site-check lists are dropped, and path
 exceptions exclude those domains. The build fails if the snapshots would exceed 29,000
-rules, which keeps room in Chrome's guaranteed 30,000-rule budget. The lists are third-party
-data under the EasyList licence; see the main README for attribution.
+rules, which keeps room in Chrome's guaranteed 30,000-rule budget; the three lists give 11,910.
+The lists are third-party data: EasyList and EasyList China under the EasyList licence, and
+uBlock filters under the GNU GPL version 3. See the main README for attribution.
 
 The cosmetic bundle now uses `schemaVersion: 3`: `hide` and `allow` retain the
 domain-to-selector maps (`allow["*"]` holds global selector exceptions), `generic`
@@ -115,10 +157,13 @@ turns every scriptlet off on its sites. `scripts/compile-scriptlets.cjs` checks 
 offline with the extension's own parser in `src/blocking/scriptlets.js`, so a
 filter whose scriptlet or arguments the extension does not support is counted and
 skipped, as are scriptlet filters without a site. Names and arguments are data:
-the extension runs only its own packaged scriptlets with them. The bundled
-snapshots contain no scriptlet filters, so the bundle has an empty list and
-`scriptletRules` in `community-info.json` is 0. A bundle without the key has no
-scriptlets.
+the extension runs only its own packaged scriptlets with them. EasyList and EasyList
+China contain no scriptlet filters. uBlock filters gives 7,178 rules (`scriptletRules`
+in `community-info.json`); 1,052 of its scriptlet filters name a trusted scriptlet, one
+the extension does not have, or arguments it does not support, and are skipped. Sites
+written as `name.*` are dropped as for site hiding. A bundle without the key has no
+scriptlets. The converters accept at most 20,000 scriptlet candidates; this bundle has
+about 8,200.
 
 Generic selectors are also compiled into two stylesheets that the extension
 registers for http(s) frames, instead of sending the list to every frame.

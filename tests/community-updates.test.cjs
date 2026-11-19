@@ -15,8 +15,10 @@ const fixture = require('./community-update-fixture.cjs');
 const json = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const protectedDomains = [...json('rules/reviewed-domains.json').domains.filter(item => item.category !== 'unverified').map(item => item.domain),
   ...json('rules/site-ad-hosts-info.json').map(item => item.domain)];
-const convert = texts => lists.convert(fixture.catalog.lists.map(list => ({ id: list.id, title: list.title, text: texts[list.id] })),
-  { protectedDomains, compileSelector: cosmetic.compileSelector, parseScriptlet: scriptlets.parseBody });
+// As the extension converts: downloaded texts, and the packaged snapshot of lists that change only with releases.
+const convert = texts => lists.convert(fixture.catalog.lists.map(list => ({ id: list.id, title: list.title,
+  text: list.updates === 'release' ? fixture.snapshot(list.id) : texts[list.id] })),
+{ protectedDomains, compileSelector: cosmetic.compileSelector, parseScriptlet: scriptlets.parseBody });
 
 // What a set of rules does: one fact per merged domain, one per other rule.
 function facts(rules) {

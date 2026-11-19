@@ -7,10 +7,16 @@ const catalog = JSON.parse(fs.readFileSync(path.join(root, 'lists/community-list
 const bundledRules = JSON.parse(fs.readFileSync(path.join(root, 'rules/community.json'), 'utf8'));
 const snapshot = id => fs.readFileSync(path.join(root, 'lists', catalog.lists.find(list => list.id === id).file), 'utf8');
 
-// The first plain block pattern in the bundled rules, so its line can be removed.
+// A line only EasyList has, so removing it there removes its rule. The other
+// lists, uBlock filters among them, may carry the same filter.
+const lines = id => new Set(snapshot(id).split('\n').map(line => line.trim()));
+const easylist = lines('easylist'), others = catalog.lists.filter(list => list.id !== 'easylist').map(list => lines(list.id));
+const onlyInEasyList = line => easylist.has(line) && !others.some(set => set.has(line));
+// The first such plain block pattern in the bundled rules, and the first such
+// domain in the first domain chunk.
 const removedSingle = bundledRules.find(rule => !rule.condition.requestDomains && Object.keys(rule.condition).join() === 'urlFilter' &&
-  rule.action.type === 'block' && rule.priority === 1);
-const REMOVED_HOST = bundledRules[0].condition.requestDomains[0];
+  rule.action.type === 'block' && rule.priority === 1 && onlyInEasyList(rule.condition.urlFilter));
+const REMOVED_HOST = bundledRules[0].condition.requestDomains.find(host => onlyInEasyList(`||${host}^`));
 const ADDED_HOST = 'fresh-ad-server.example';
 // Not /.../, which EasyList syntax reads as a regular expression.
 const ADDED_PATTERN = '/fresh-ad-banner.';
@@ -32,4 +38,4 @@ function upstream(id, { version, title, shrink = false, changes = true } = {}) {
   return text;
 }
 
-module.exports = { catalog, bundledRules, upstream, removedSingle, REMOVED_HOST, ADDED_HOST, ADDED_PATTERN, ADDED_SITE_RULE, ADDED_SCRIPTLET_RULE };
+module.exports = { catalog, bundledRules, snapshot, upstream, removedSingle, REMOVED_HOST, ADDED_HOST, ADDED_PATTERN, ADDED_SITE_RULE, ADDED_SCRIPTLET_RULE };

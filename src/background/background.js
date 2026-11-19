@@ -333,18 +333,34 @@ function siteHidingShape(saved) {
 }
 
 // The bundled lists' description (versions, sources, counts), read once per worker.
+// Packaged snapshots live under lists/community/, which the package includes.
+const PACKAGED_LIST = /^community\/[A-Za-z0-9._-]+\.txt$/;
 let communityInfoLoad = null;
 function loadBundledCommunityInfo() {
   communityInfoLoad ??= fetch(api.runtime.getURL("rules/community-info.json")).then(response => {
     if (!response.ok) throw new Error("The bundled filter-list description could not be read.");
     return response.json();
   }).then(info => {
-    if (!Array.isArray(info?.lists) || !info.lists.length || !info.lists.every(list => typeof list?.id === "string" && typeof list.sha256 === "string")) {
+    // updates: "download" lists are downloaded from their source; "release" lists
+    // change only with a new version and are converted from their packaged file.
+    if (!Array.isArray(info?.lists) || !info.lists.length || !info.lists.every(list => typeof list?.id === "string" && typeof list.sha256 === "string" &&
+        (list.updates === "download" || (list.updates === "release" && PACKAGED_LIST.test(list.file || ""))))) {
       throw new Error("The bundled filter-list description is invalid.");
     }
     return info;
   }).catch(error => { communityInfoLoad = null; throw error; });
   return communityInfoLoad;
+}
+
+// The packaged snapshot of a list that changes only with releases, checked
+// against the hash the build recorded, so an update converts the same text.
+async function readPackagedList(list) {
+  const response = await fetch(api.runtime.getURL(`lists/${list.file}`));
+  if (!response.ok) throw new Error(`The bundled ${list.title} snapshot could not be read.`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  if (digest !== list.sha256) throw new Error(`The bundled ${list.title} snapshot does not match this version's record.`);
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 // The bundled snapshots an installed update was made against.
 const communityBaseline = info => info.lists.map(list => `${list.id}:${list.sha256}`).join(",");
@@ -410,37 +426,124 @@ async function injectPopupFrame(sender, settings, active) {
 }
 
 // Scriptlet filters (scriptlets.js): the person's own ##+js() rules and the
-// community lists'. With the browser's userscript access they are registered
-// to run at document start, before the page's own scripts. Without it, each
-// frame gets them when its content script first asks for its hiding rules,
-// which can be after the page's first scripts have run.
+// community lists'. Each frame gets them when its content script first asks for
+// its hiding rules, which can be after the page's first scripts have run. With
+// the browser's userscript access, the person's own rules are also registered
+// to run at document start, before the page's own scripts.
+//
+// The lists' rules are not registered. Registering uBlock filters' 7,178 rules
+// on about 16,000 sites made every page load about 50 ms slower in Chrome, and
+// the first page after each change of the registrations (a site pause, a rule
+// edit, a list update) took 1.5 to 3.5 seconds while Chrome passed the new
+// scripts to its page processes (measured 19 November 2026).
 const SCRIPTLET_SCRIPT_ID = "blockads-scriptlets";
-// The last synchronization: "early" (registered), "late" (started per frame)
-// or "off" (no scriptlet applies), with the number of rules and any error.
-let scriptletStatus = { mode: "off", rules: 0, error: "" };
+// The registration is split by site into up to 32 scripts, blockads-scriptlets-0
+// to -31, so a page loads its own group's rules. The ID without a number is the
+// single registration of earlier versions.
+const SCRIPTLET_GROUPS = 32;
+const SCRIPTLET_SCRIPT_IDS = [SCRIPTLET_SCRIPT_ID, ...Array.from({ length: SCRIPTLET_GROUPS }, (_, index) => `${SCRIPTLET_SCRIPT_ID}-${index}`)];
+// The last synchronization: "early" (the person's rules registered), "late"
+// (all started per frame) or "off" (no scriptlet applies), with the number of
+// rules, how many are the person's own, and any error.
+let scriptletStatus = { mode: "off", rules: 0, own: 0, error: "" };
 
-function scriptletRules(settings, data) {
-  if (!settings.enabled || !settings.cosmeticFiltering || !settings.scriptletFiltering) return [];
+// The lists' rules and the person's own, for these settings.
+function scriptletSources(settings, data) {
+  if (!settings.enabled || !settings.cosmeticFiltering || !settings.scriptletFiltering) return { listed: [], own: [] };
   const listed = settings.rulesets.community_ruleset && Array.isArray(data?.scriptlets) ? data.scriptlets : [];
   const own = customCosmeticRules(settings.customCosmeticFilters).filter(rule => rule.scriptlet)
     .map(({ include, exclude, exception, scriptlet }) => ({ include, exclude, exception, name: scriptlet.name, args: scriptlet.args }));
-  return [...listed, ...own];
+  return { listed, own };
 }
 
-// The document-start registration for these rules, or null when none would
-// run. Each frame picks its rules by its own hostname. Paused sites and sites
-// whose lists turn all hiding off are excluded, as for site hiding.
-function scriptletRegistration(settings, data, rules) {
-  const hosts = [...new Set(rules.filter(rule => !rule.exception && rule.name).flatMap(rule => rule.include))];
-  if (!hosts.length) return null;
+// Each domain belongs to a site: its last two labels, so www.example.com and
+// example.com share example.com, or a one-label name such as localhost that a
+// rule names, for everything under it. Sites go to groups by a fixed hash
+// (FNV-1a), stable across workers and versions, so a change on one site
+// re-registers one group.
+function scriptletSite(domain, singles) {
+  const end = domain.lastIndexOf(".");
+  if (end < 0 || singles.has(domain.slice(end + 1))) return domain.slice(end + 1);
+  return domain.slice(domain.lastIndexOf(".", end - 1) + 1);
+}
+function scriptletGroup(site) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < site.length; i++) hash = Math.imul(hash ^ site.charCodeAt(i), 0x01000193);
+  return (hash >>> 0) % SCRIPTLET_GROUPS;
+}
+
+// The rules for these settings, kept while the inputs stay the same: the list
+// hiding data is one object per worker, and every settings transaction ends
+// with a synchronization. The lists bring thousands of rules.
+//   rules: every rule, which frames start as they load.
+//   early: what the registration starts, the person's own rules with the lists'
+//     exceptions, so a list exception still cancels the person's rule there.
+let scriptletPlan = null;
+function scriptletPlanFor(settings, data) {
   const paused = [...new Set([...settings.whitelistedDomains, ...settings.cosmeticPausedDomains])];
   const excluded = [...paused, ...(settings.rulesets.community_ruleset ? data?.disableAll || [] : [])];
-  return { id: SCRIPTLET_SCRIPT_ID, matches: sitesPatterns(hosts), excludeMatches: sitesPatterns(excluded),
-    runAt: "document_start", allFrames: true, world: "MAIN", js: [{ code: BlockAdsScriptlets.code(rules, paused) }] };
+  const key = [data, settings.customCosmeticFilters, settings.enabled, settings.cosmeticFiltering, settings.scriptletFiltering,
+    settings.rulesets.community_ruleset, paused.join("\n"), excluded.join("\n")];
+  if (scriptletPlan?.key.every((part, index) => part === key[index])) return scriptletPlan;
+  const { listed, own } = scriptletSources(settings, data);
+  const rules = [...listed, ...own], early = [...listed.filter(rule => rule.exception), ...own];
+  const named = rule => !rule.exception && rule.name;
+  scriptletPlan = { key, rules, early, paused, excluded, registrations: null,
+    singles: new Set(early.flatMap(rule => [...rule.include, ...rule.exclude]).filter(domain => !domain.includes("."))),
+    count: rules.filter(rule => !rule.exception).length, own: own.filter(rule => !rule.exception).length,
+    active: rules.some(named), earlyActive: own.some(named) };
+  return scriptletPlan;
+}
+
+// The document-start registrations for a plan's early rules, none when no rule
+// of the person's would run. Each frame picks its rules by its own hostname,
+// from its group's. A frame can match a rule only on a domain of the frame's
+// own site, so a frame needs only its site's group, and matches no other
+// group's sites. A rule with domains in several groups is split into one part
+// per group, with its domains and exclusions on that group's sites. Every group
+// excludes all paused sites and sites whose lists turn all hiding off, as for
+// site hiding.
+function scriptletRegistrations(plan) {
+  if (plan.registrations) return plan.registrations;
+  const known = new Map();
+  const groupOf = domain => {
+    let index = known.get(domain);
+    if (index === undefined) known.set(domain, index = scriptletGroup(scriptletSite(domain, plan.singles)));
+    return index;
+  };
+  const groups = new Map();
+  for (const rule of plan.early) {
+    const parts = new Map();
+    for (const domain of rule.include) {
+      const index = groupOf(domain);
+      if (!parts.has(index)) parts.set(index, []);
+      parts.get(index).push(domain);
+    }
+    for (const [index, include] of parts) {
+      if (!groups.has(index)) groups.set(index, []);
+      groups.get(index).push({ ...rule, include, exclude: rule.exclude.filter(domain => groupOf(domain) === index) });
+    }
+  }
+  // Rules and pauses on a one-label name such as localhost also cover its
+  // subdomains, which the shared site patterns cover only exactly.
+  const patterns = domains => [...new Set([...sitesPatterns(domains),
+    ...domains.filter(domain => !domain.includes(".")).map(domain => `*://*.${domain}/*`)])].sort();
+  const excludeMatches = patterns(plan.excluded);
+  plan.registrations = [];
+  for (const [index, grouped] of [...groups].sort((a, b) => a[0] - b[0])) {
+    const hosts = [...new Set(grouped.filter(rule => !rule.exception && rule.name).flatMap(rule => rule.include))];
+    if (!hosts.length) continue;
+    const script = { id: `${SCRIPTLET_SCRIPT_ID}-${index}`, matches: patterns(hosts), excludeMatches,
+      runAt: "document_start", allFrames: true, world: "MAIN", js: [{ code: BlockAdsScriptlets.code(grouped, plan.paused) }] };
+    plan.registrations.push({ script, text: userScriptText(script) });
+  }
+  return plan.registrations;
 }
 const userScriptShape = script => ({ id: script.id, matches: [...(script.matches || [])].sort(), excludeMatches: [...(script.excludeMatches || [])].sort(),
   runAt: script.runAt || "document_idle", allFrames: Boolean(script.allFrames), world: script.world || "USER_SCRIPT",
   js: (script.js || []).map(source => source.code ?? source.file ?? "") });
+// What a registration does, as text, for comparing the browser's copy with ours.
+const userScriptText = script => canonicalText(userScriptShape(script));
 const nativeUserScript = ({ excludeMatches, ...script }) => ({ ...script, ...(excludeMatches.length ? { excludeMatches } : {}) });
 
 // The browser's userscript API while the person allows it, else null. Chrome
@@ -457,45 +560,59 @@ async function scriptletAccess() {
   }
 }
 
-// Brings the registration in line with these settings. The userscript manager
+// Brings the registrations in line with these settings. The userscript manager
 // owns only its own registrations (blockads-user-*). A failure leaves none, so
 // frames get their scriptlets late rather than twice or from stale rules.
 // `loaded` is the list hiding data the settings transaction already read.
 async function syncScriptlets(settings, loaded = null) {
   const data = settings.enabled && settings.cosmeticFiltering && settings.scriptletFiltering && settings.rulesets.community_ruleset
     ? loaded ?? await loadCommunityCosmetic() : {};
-  const rules = scriptletRules(settings, data);
-  const desired = scriptletRegistration(settings, data, rules);
-  const count = rules.filter(rule => !rule.exception).length;
+  const plan = scriptletPlanFor(settings, data);
   const native = await scriptletAccess();
   let error = "";
   if (native) {
     try {
-      const [current] = await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] });
-      if (!desired) { if (current) await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); }
-      else if (!current) await native.register([nativeUserScript(desired)]);
-      else if (!same(userScriptShape(current), userScriptShape(desired))) {
-        // Updating in place keeps document-start coverage while the rules change.
-        if (typeof native.update === "function") await native.update([{ ...nativeUserScript(desired), excludeMatches: desired.excludeMatches }]);
-        else { await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); await native.register([nativeUserScript(desired)]); }
+      const desired = scriptletRegistrations(plan);
+      const current = new Map((await native.getScripts({ ids: SCRIPTLET_SCRIPT_IDS })).map(script => [script.id, script]));
+      const stale = [...current.keys()].filter(id => !desired.some(({ script }) => script.id === id));
+      const added = desired.filter(({ script }) => !current.has(script.id)).map(({ script }) => script);
+      const changed = desired.filter(({ script, text }) => current.has(script.id) && userScriptText(current.get(script.id)) !== text).map(({ script }) => script);
+      if (stale.length || added.length || changed.length) {
+        if (stale.length) await native.unregister({ ids: stale });
+        if (added.length) await native.register(added.map(nativeUserScript));
+        if (changed.length) {
+          // Updating in place keeps document-start coverage while the rules change.
+          if (typeof native.update === "function") await native.update(changed.map(script => ({ ...nativeUserScript(script), excludeMatches: script.excludeMatches })));
+          else { await native.unregister({ ids: changed.map(script => script.id) }); await native.register(changed.map(nativeUserScript)); }
+        }
+        // Read back only after a change: otherwise the browser's copy was just compared.
+        const after = new Map((await native.getScripts({ ids: SCRIPTLET_SCRIPT_IDS })).map(script => [script.id, script]));
+        if (after.size !== desired.length || !desired.every(({ script, text }) => after.has(script.id) && userScriptText(after.get(script.id)) === text)) {
+          throw new Error("The browser did not apply the scriptlet registration.");
+        }
       }
-      const [after] = await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] });
-      if (desired ? !after || !same(userScriptShape(after), userScriptShape(desired)) : after) throw new Error("The browser did not apply the scriptlet registration.");
     } catch (failure) {
       error = failure?.message || String(failure);
-      try { await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); } catch { /* Nothing is registered. */ }
+      // Only IDs the browser reports, so one unknown ID cannot make it refuse the whole call.
+      try {
+        const ids = (await native.getScripts({ ids: SCRIPTLET_SCRIPT_IDS })).map(script => script.id);
+        if (ids.length) await native.unregister({ ids });
+      } catch { /* The browser keeps what it has; the next synchronization retries. */ }
       if (error !== scriptletStatus.error) await addLog({ kind: "error", message: `Scriptlet filters could not be registered to start before page scripts; they start as pages load instead. ${error}` });
     }
   }
-  scriptletStatus = { mode: !desired ? "off" : native && !error ? "early" : "late", rules: count, error };
+  scriptletStatus = { mode: !plan.active ? "off" : plan.earlyActive && native && !error ? "early" : "late", rules: plan.count, own: plan.own, error };
 }
 
-// Whether the document-start registration is in place. The browser is asked
-// each time: Allow User Scripts can be switched off without telling the worker.
-async function scriptletsRegistered() {
+// Whether the document-start registration for a frame's host is in place. The
+// browser is asked each time: Allow User Scripts can be switched off without
+// telling the worker. Only the frame's own group is read, not every group's code.
+async function scriptletsRegistered(hostname) {
   const native = await scriptletAccess();
   if (!native) return false;
-  try { return (await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] })).length > 0; } catch { return false; }
+  const host = String(hostname || "").toLowerCase().replace(/\.$/, "");
+  const ids = scriptletPlan && host ? [`${SCRIPTLET_SCRIPT_ID}-${scriptletGroup(scriptletSite(host, scriptletPlan.singles))}`] : SCRIPTLET_SCRIPT_IDS;
+  try { return (await native.getScripts({ ids })).length > 0; } catch { return false; }
 }
 
 // Starts a frame's scriptlets without the registration, in the frame's own
@@ -1058,7 +1175,8 @@ async function loadCommunity(settings) {
   try {
     const info = await loadBundledCommunityInfo();
     const update = await loadCommunityUpdate();
-    const lists = (update?.lists || info.lists).map(({ id, title, version, lastModified }) => ({ id, title, version: version ?? null, lastModified: lastModified ?? null }));
+    const lists = (update?.lists || info.lists).map(({ id, title, version, lastModified }) => ({ id, title, version: version ?? null, lastModified: lastModified ?? null,
+      updates: info.lists.find(list => list.id === id)?.updates ?? "download" }));
     return { update, status: { source: update ? "update" : "bundled", id: update?.id ?? null, lists,
       networkRules: update?.info?.networkRules ?? info.networkRules ?? null, cosmeticSelectors: update?.info?.cosmeticSelectors ?? info.cosmeticSelectors ?? null,
       changed: update ? { disabled: update.disable.length, added: update.add.length } : null, networkApplied: Boolean(update), updates } };
@@ -1080,7 +1198,8 @@ function checkCommunityLists() {
 // or 12 hours after a failed one, while the community layer and automatic
 // updates are on. Nothing is requested otherwise.
 function communityCheckDue(settings, status) {
-  if (communityCheck || !settings.enabled || !settings.rulesets.community_ruleset || !settings.communityListUpdates || !status.lists.length) return false;
+  if (communityCheck || !settings.enabled || !settings.rulesets.community_ruleset || !settings.communityListUpdates ||
+      !status.lists.some(list => list.updates === "download")) return false;
   const { checkedAt, result, interval } = status.updates;
   const last = Date.parse(checkedAt);
   // A clock that moved backwards makes the last check look future-dated.
@@ -1094,18 +1213,24 @@ async function runCommunityCheck() {
   try {
     const { download, checkList, checkInterval, compareVersions } = ModuleEngineCommunityUpdates;
     const info = await loadBundledCommunityInfo();
-    const lists = [];
-    for (const list of info.lists) {
+    const downloaded = [];
+    for (const list of info.lists.filter(item => item.updates === "download")) {
       const { text } = await download(list.source);
-      lists.push({ id: list.id, title: list.title, text, header: checkList(text, list) });
+      downloaded.push({ id: list.id, title: list.title, text, header: checkList(text, list) });
     }
-    const interval = Math.min(...lists.map(list => checkInterval(list.header.expires)));
+    if (!downloaded.length) throw new Error("This version has no filter list to download.");
+    const interval = Math.min(...downloaded.map(list => checkInterval(list.header.expires)));
     const inUse = (await loadCommunityUpdate())?.lists || info.lists;
-    if (!compareVersions(inUse, lists.map(list => ({ id: list.id, title: list.title, version: list.header.version })))) {
+    if (!compareVersions(inUse, downloaded.map(list => ({ id: list.id, title: list.title, version: list.header.version })))) {
       outcome = { result: "current", error: "", interval };
     } else {
-      // The 2.6 MiB bundled rules are read only once newer lists have arrived.
+      // The bundled rules and release-only snapshots are read only once newer lists
+      // have arrived. All lists are converted together, in the build's order.
       const bundled = await loadBundledCommunity();
+      const lists = [];
+      for (const list of info.lists) {
+        lists.push(downloaded.find(item => item.id === list.id) || { id: list.id, title: list.title, text: await readPackagedList(list) });
+      }
       const converted = BlockAdsCommunityLists.convert(lists, { protectedDomains: bundled.protectedDomains, compileSelector: BlockAdsCosmetic.compileSelector,
         parseScriptlet: BlockAdsScriptlets.parseBody });
       outcome = { ...(await enqueue(() => installCommunityUpdate(bundled, converted, checkedAt))), interval };
@@ -1125,7 +1250,9 @@ async function installCommunityUpdate(bundled, converted, checkedAt) {
   const { compareVersions, checkSize, difference } = ModuleEngineCommunityUpdates;
   const current = await loadCommunityUpdate();
   const versions = converted.info.lists.map(list => ({ ...list, version: list.version ?? null, lastModified: list.lastModified ?? null }));
-  if (!compareVersions(current?.lists || bundled.info.lists, versions)) return { result: "current", error: "" };
+  // Release-only lists are the packaged ones, so only downloaded lists have versions to compare.
+  const downloaded = versions.filter(list => bundled.info.lists.find(item => item.id === list.id)?.updates === "download");
+  if (!compareVersions(current?.lists || bundled.info.lists, downloaded)) return { result: "current", error: "" };
   checkSize(converted.info, bundled.info);
   const change = difference(bundled.rules, converted.rules);
   if (change.disable.length && typeof api.declarativeNetRequest.updateStaticRules !== "function") {
@@ -1148,7 +1275,7 @@ async function installCommunityUpdate(bundled, converted, checkedAt) {
   communityCosmetic = null;
   const applied = await processRequest({ type: "GET_STATE" });
   if (applied.ok && applied.communityStatus?.id === id && applied.communityStatus.networkApplied) {
-    await addLog({ kind: "event", message: `Installed ${lists.map(list => `${list.title} ${list.version}`).join(" and ")}: ` +
+    await addLog({ kind: "event", message: `Installed ${downloaded.map(list => `${list.title} ${list.version}`).join(" and ")}: ` +
       `${change.disable.length} bundled rules switched off, ${change.add.length} rules added` });
     return { result: "installed", error: "" };
   }
@@ -1394,16 +1521,17 @@ function normalizeScript(script) {
   };
 }
 
-function canonical(value) {
-  if (Array.isArray(value)) {
-    return value.map(canonical).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  }
+// A value as JSON text with object keys sorted and arrays compared as unordered:
+// each array's items are sorted by their own text, computed once. As JSON does,
+// an undefined property is left out and an undefined item reads as null.
+function canonicalText(value) {
+  if (Array.isArray(value)) return `[${value.map(item => item === undefined ? "null" : canonicalText(item)).sort().join(",")}]`;
   if (value && typeof value === "object") {
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
+    return `{${Object.keys(value).filter(key => value[key] !== undefined).sort().map(key => `${JSON.stringify(key)}:${canonicalText(value[key])}`).join(",")}}`;
   }
-  return value;
+  return JSON.stringify(value);
 }
-const same = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+const same = (a, b) => canonicalText(a) === canonicalText(b);
 
 async function readRules() {
   const dynamic = await api.declarativeNetRequest.getDynamicRules();
@@ -1861,13 +1989,19 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Site rules follow this frame's own host, including a leading "www.".
       const frameHost = /^https?:\/\//i.test(sender.url || "") ? urlParts(sender.url).host : "";
       const data = enabled && frameHost && settings.rulesets.community_ruleset ? await loadCommunityCosmetic() : {};
-      // A frame's first request starts its scriptlets, unless the document-start
-      // registration already ran them. They follow the frame's own host, and
-      // its top page's pauses as hiding does.
-      const scriptletCalls = message.installScriptlets === true && enabled && frameHost &&
+      // A frame's first request starts its scriptlets, leaving out the calls the
+      // document-start registration already ran. They follow the frame's own
+      // host, and its top page's pauses as hiding does.
+      const plan = message.installScriptlets === true && enabled && frameHost &&
         !(settings.rulesets.community_ruleset ? data.disableAll || [] : []).some(domain => domainMatches(frameHost, domain))
-        ? BlockAdsScriptlets.select(scriptletRules(settings, data), frameHost) : [];
-      const scriptlets = scriptletCalls.length > 0 && !(await scriptletsRegistered()) && await injectScriptlets(sender, scriptletCalls);
+        ? scriptletPlanFor(settings, data) : null;
+      let scriptletCalls = plan ? BlockAdsScriptlets.select(plan.rules, frameHost) : [];
+      const earlyCalls = scriptletCalls.length ? BlockAdsScriptlets.select(plan.early, frameHost) : [];
+      if (earlyCalls.length && await scriptletsRegistered(frameHost)) {
+        const ran = new Set(earlyCalls.map(call => JSON.stringify([call.name, ...call.args])));
+        scriptletCalls = scriptletCalls.filter(call => !ran.has(JSON.stringify([call.name, ...call.args])));
+      }
+      const scriptlets = scriptletCalls.length > 0 && await injectScriptlets(sender, scriptletCalls);
       // The frame reports whether the bundled generic stylesheets reached it once
       // their companion script has run. Until then, judge from the registration.
       const staticSheets = typeof message.staticGeneric === "boolean" ? message.staticGeneric

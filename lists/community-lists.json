@@ -7,6 +7,7 @@
       "title": "EasyList",
       "file": "community/easylist.txt",
       "source": "https://easylist.to/easylist/easylist.txt",
+      "updates": "download",
       "license": "EasyList licence, https://easylist.to/pages/licence.html (GPL-3.0-or-later or CC BY-SA 3.0)",
       "downloadedAtUtc": "2026-10-19T18:08:35Z",
       "sha256": "9d9ea0a3417ea98f84db067a8a41586b0e01ecb96349ef61200608dd50b611ff"
@@ -16,9 +17,20 @@
       "title": "EasyList China",
       "file": "community/easylistchina.txt",
       "source": "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+      "updates": "download",
       "license": "EasyList licence, https://easylist.to/pages/licence.html (GPL-3.0-or-later or CC BY-SA 3.0)",
       "downloadedAtUtc": "2026-10-19T18:08:35Z",
       "sha256": "55a2258d61a88f70c2bdad7cb8b365e722a563100f96d5f748e8abd7371f6d17"
+    },
+    {
+      "id": "ublock-filters",
+      "title": "uBlock filters",
+      "file": "community/ublock-filters.txt",
+      "source": "https://github.com/uBlockOrigin/uAssets/tree/14c32aba13089811163690c95d66377c0424f013/filters",
+      "updates": "release",
+      "license": "GNU GPL version 3, https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE",
+      "downloadedAtUtc": "2026-11-19T07:36:49Z",
+      "sha256": "0d649d0bb58d3c7fc16aee7d408288723bcf6f813a2191e9b69aa4a768968882"
     }
   ]
 }

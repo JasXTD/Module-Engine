@@ -17,6 +17,65 @@ $CommunityProcedural = [regex]'(?i):(-abp-|has-text|contains|xpath|matches-|upwa
 $CommunityCosmetic = [regex]'^(?<domains>[^\s/|^$@#]*)(?<sep>#@?[?$%]?#|\$@?\$)(?<body>.+)$'
 $CommunityDomainOnly = [regex]'^\|\|(?<host>[^/^*|:?=&]+)\^\|?$'
 $CommunityOptions = [regex]'^[A-Za-z0-9~_,=|.*:/\-]+$'
+# uBlock Origin's !#if condition names that are false in every browser Module Engine
+# supports; every other name is unknown. See evaluateCondition in community-lists.js.
+$CommunityFalseConditions = [Collections.Generic.HashSet[string]]::new([string[]]@('false','cap_html_filtering','cap_ipaddress','env_safari','env_mobile','ext_ubol'), [StringComparer]::Ordinal)
+$CommunityNotApplying = 'conditional: block that does not apply to Module Engine'
+$CommunityUnknownCondition = 'conditional: block for some browsers only, or an unknown condition'
+
+function Invoke-CommunityNegation($Value, [int]$Count) {
+    if ($null -eq $Value -or $Count % 2 -eq 0) { return $Value }
+    return !$Value
+}
+function Join-CommunityCondition($Group) {
+    $values = $Group.values
+    if ($Group.operator -ceq '||') {
+        if ($values.Contains($true)) { return $true }
+        if ($values.Contains($null)) { return $null }
+        return $false
+    }
+    if ($values.Contains($false)) { return $false }
+    if ($values.Contains($null)) { return $null }
+    return $true
+}
+# An !#if condition: $true, $false, or $null when unknown, with three-valued logic.
+function Get-CommunityCondition([string]$Text) {
+    $tokens = @(($Text -creplace '&&|\|\||[()!]', ' $0 ') -split '\s+' | Where-Object { $_ })
+    if ($tokens.Count -gt 50) { return $null }
+    $groups = [Collections.Generic.List[object]]::new()
+    $groups.Add(@{ values = [Collections.Generic.List[object]]::new(); operator = $null; negations = 0 })
+    $operand = $true
+    $negations = 0
+    foreach ($token in $tokens) {
+        $group = $groups[$groups.Count - 1]
+        if ($operand) {
+            if ($token -ceq '!') { $negations++; continue }
+            if ($token -ceq '(') {
+                $groups.Add(@{ values = [Collections.Generic.List[object]]::new(); operator = $null; negations = $negations })
+                $negations = 0
+                continue
+            }
+            if ($token -cnotmatch '^[a-z0-9_]+$') { return $null }
+            $group.values.Add((Invoke-CommunityNegation ($CommunityFalseConditions.Contains($token) ? $false : $null) $negations))
+            $negations = 0
+            $operand = $false
+        } elseif ($token -ceq '&&' -or $token -ceq '||') {
+            if ($group.operator -and $group.operator -cne $token) { return $null }
+            $group.operator = $token
+            $operand = $true
+        } elseif ($token -ceq ')' -and $groups.Count -gt 1) {
+            $groups.RemoveAt($groups.Count - 1)
+            $groups[$groups.Count - 1].values.Add((Invoke-CommunityNegation (Join-CommunityCondition $group) $group.negations))
+        } else { return $null }
+    }
+    if ($operand -or $groups.Count -gt 1) { return $null }
+    return Join-CommunityCondition $groups[0]
+}
+function Get-CommunityConditionReason($Value) {
+    if ($null -eq $Value) { return $CommunityUnknownCondition }
+    if ($Value) { return $null }
+    return $CommunityNotApplying
+}
 
 function Invoke-CosmeticCompiler([string]$Script, [string]$Json, [string]$Name) {
     # No shell, packages or network: the installed Node runtime reads bounded
@@ -98,12 +157,15 @@ function Read-CommunityListCatalog([string]$Path) {
         }
         $base = Split-Path ([IO.Path]::GetFullPath($Path)) -Parent
         $ids = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        # updates: "download" when the extension downloads newer copies from the source;
+        # "release" when the snapshot changes only with a new version of Module Engine.
+        $keys = @('id','title','file','source','updates','license','downloadedAtUtc','sha256')
         $lists = foreach ($item in $root.GetProperty('lists').EnumerateArray()) {
-            Assert-JsonKeys $item @('id','title','file','source','license','downloadedAtUtc','sha256')
+            Assert-JsonKeys $item $keys
             $entry = [ordered]@{}
-            foreach ($key in @('id','title','file','source','license','downloadedAtUtc','sha256')) { $entry[$key] = Get-JsonString $item.GetProperty($key) 300 }
+            foreach ($key in $keys) { $entry[$key] = Get-JsonString $item.GetProperty($key) 300 }
             $downloaded = [DateTimeOffset]::MinValue
-            if ($entry.id -cnotmatch '^[a-z0-9-]{1,40}$' -or !$ids.Add($entry.id) -or
+            if ($entry.id -cnotmatch '^[a-z0-9-]{1,40}$' -or !$ids.Add($entry.id) -or $entry.updates -cnotin @('download','release') -or
                 $entry.file -cnotmatch '^community/[A-Za-z0-9._-]+\.txt$' -or $entry.source -cnotmatch '^https://[^\s]+$' -or
                 $entry.sha256 -cnotmatch '^[0-9a-f]{64}$' -or $entry.downloadedAtUtc -cnotmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$' -or
                 ![DateTimeOffset]::TryParse($entry.downloadedAtUtc, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$downloaded) -or
@@ -150,19 +212,45 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     $infoLists = @()
     foreach ($list in $Lists) {
         $header = @{}
+        # Open !#if blocks, innermost last, and why the current lines are left out
+        # ($null while they are used); see convert() in community-lists.js.
+        $blocks = [Collections.Generic.List[object]]::new()
+        $leftOut = $null
         foreach ($line in $list.text -split "`r?`n") {
             $line = $line.Trim()
             if (!$line) { continue }
+            if ($line -cmatch '^!#(if|else|endif)(?![A-Za-z0-9_])(.*)$') {
+                $kind = $Matches[1]
+                if ($kind -ceq 'if') {
+                    $value = Get-CommunityCondition $Matches[2].Trim()
+                    $blocks.Add(@{ value = $value; outer = $leftOut; inElse = $false })
+                    if ($null -eq $leftOut) { $leftOut = Get-CommunityConditionReason $value }
+                } elseif ($blocks.Count -and $kind -ceq 'endif') {
+                    $leftOut = $blocks[$blocks.Count - 1].outer
+                    $blocks.RemoveAt($blocks.Count - 1)
+                } elseif ($blocks.Count) {
+                    $block = $blocks[$blocks.Count - 1]
+                    # A second !#else leaves the rest of its block out.
+                    if ($block.inElse) { $block.value = $null }
+                    $block.inElse = $true
+                    $leftOut = $block.outer ?? (Get-CommunityConditionReason ($null -eq $block.value ? $null : !$block.value))
+                }
+                continue
+            }
             if ($line[0] -eq '!' -or $line[0] -eq '[') {
+                if ($leftOut) { continue }
                 if ($line -match '^!\s*(Version|Last modified|Title):\s*(.+)$' -and !$header.ContainsKey($Matches[1])) { $header[$Matches[1]] = $Matches[2].Trim() }
                 continue
             }
+            if ($leftOut) { & $skip $leftOut; continue }
             $cosmetic = $CommunityCosmetic.Match($line)
             if ($cosmetic.Success) {
                 $sep = $cosmetic.Groups['sep'].Value
                 if ($sep -cnotin @('##','#@#','#?#','#@?#')) { & $skip 'cosmetic: snippet or HTML filter'; continue }
                 $domainText = $cosmetic.Groups['domains'].Value
                 $selector = $cosmetic.Groups['body'].Value.Trim()
+                # uBlock Origin's HTML filters (##^...) edit a page's source before it is parsed.
+                if ($selector.StartsWith('^', [StringComparison]::Ordinal)) { & $skip 'cosmetic: snippet or HTML filter'; continue }
                 # ##+js(...) and #@#+js(...) are scriptlet filters, checked after the lists are read.
                 $scriptletBody = $selector.StartsWith('+js(', [StringComparison]::Ordinal)
                 $isScriptlet = ($sep -ceq '##' -or $sep -ceq '#@#') -and $scriptletBody
@@ -228,11 +316,12 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             $text = $exception ? $line.Substring(2) : $line
             # Only exact host-wide exceptions have a lossless mapping here.
             # Path/option-specific exceptions stay counted as unsupported.
-            if ($exception -and $text -match '\$(generichide|elemhide)$') {
+            # ghide and ehide are uBlock Origin's short names for generichide and elemhide.
+            if ($exception -and $text -match '\$(generichide|ghide|elemhide|ehide)$') {
                 $kind = $Matches[1].ToLowerInvariant()
-                $hostName = $text -match '^\|\|([^/^*|:?=&]+)\^\$(generichide|elemhide)$' ? (ConvertTo-CommunityHost $Matches[1]) : $null
+                $hostName = $text -match '^\|\|([^/^*|:?=&]+)\^\$(?:generichide|ghide|elemhide|ehide)$' ? (ConvertTo-CommunityHost $Matches[1]) : $null
                 if (!$hostName) { & $skip 'network: unsupported cosmetic exception'; continue }
-                if ($kind -ceq 'generichide') { $null = $disableGeneric.Add($hostName) } else { $null = $disableAll.Add($hostName) }
+                if ($kind -cin @('generichide','ghide')) { $null = $disableGeneric.Add($hostName) } else { $null = $disableAll.Add($hostName) }
                 continue
             }
             # /.../ is a regular expression, with or without $options; its body may contain $.
@@ -322,7 +411,7 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             $single["$key|$pattern"] = [ordered]@{ priority = $priority; action = @{ type = $action }; condition = $condition }
         }
         $infoLists += [ordered]@{ id = $list.id; title = $header['Title'] ?? $list.title; version = $header['Version']; lastModified = $header['Last modified']
-            source = $list.source; license = $list.license; downloadedAtUtc = $list.downloadedAtUtc; sha256 = $list.sha256 }
+            source = $list.source; updates = $list.updates; file = $list.file; license = $list.license; downloadedAtUtc = $list.downloadedAtUtc; sha256 = $list.sha256 }
     }
 
     $rules = [Collections.Generic.List[object]]::new()

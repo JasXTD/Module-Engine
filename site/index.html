@@ -226,11 +226,12 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
         <a class="button" href="#compare">See how it compares</a>
       </div>
       <dl class="facts">
-        <div><dt>bundled network rules</dt><dd>9,436</dd></div>
-        <div><dt>site hiding rules</dt><dd>22,966</dd></div>
+        <div><dt>bundled network rules</dt><dd>12,123</dd></div>
+        <div><dt>site hiding rules</dt><dd>30,076</dd></div>
+        <div><dt>scriptlet rules</dt><dd>7,178</dd></div>
         <div><dt>filter lists kept up to date</dt><dd>2</dd></div>
       </dl>
-      <p class="facts-note">Counts from the 18 November 2026 build.</p>
+      <p class="facts-note">Counts from the 19 November 2026 build.</p>
     </div>
 
     <figure class="demo">
@@ -245,7 +246,7 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
           <label class="row" for="demoAds"><span><strong>Block ads on every site</strong><small>Pause it without touching your scripts</small></span><input class="switch" type="checkbox" id="demoAds" checked></label>
           <label class="row layer" for="demoLayerAds"><span><strong>Ad networks &amp; pop-unders</strong><small>Banner ads, video ads and pop-up scripts</small></span><input class="switch" type="checkbox" id="demoLayerAds" checked></label>
           <label class="row layer" for="demoLayerTrackers"><span><strong>Trackers &amp; fingerprinting</strong><small>Cross-site analytics and session recorders</small></span><input class="switch" type="checkbox" id="demoLayerTrackers" checked></label>
-          <label class="row layer" for="demoLayerCommunity"><span><strong>Community lists</strong><small>EasyList and EasyList China</small></span><input class="switch" type="checkbox" id="demoLayerCommunity" checked></label>
+          <label class="row layer" for="demoLayerCommunity"><span><strong>Community lists</strong><small>EasyList, EasyList China and uBlock filters</small></span><input class="switch" type="checkbox" id="demoLayerCommunity" checked></label>
         </div>
         <div class="popup-group">
           <p class="group-label">Userscripts</p>
@@ -265,7 +266,7 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
     <div class="feature-grid">
       <article class="feature">
         <h3>Ad and tracker filtering</h3>
-        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList and EasyList China snapshots add element hiding and advanced hiding rules. Add blocked or always-allowed domains, request filters, your own hiding rules and scriptlet filters, or pick an element on the page.</p>
+        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList, EasyList China and uBlock filters snapshots add element hiding, advanced hiding and scriptlet rules. Add blocked or always-allowed domains, request filters, your own hiding rules and scriptlet filters, or pick an element on the page.</p>
         <pre class="code"><code><span class="c-literal">||ads.example^</span><span class="c-key">$third-party</span>
 news.example<span class="c-key">##</span><span class="c-string">.ad-slot</span>
 news.example<span class="c-key">##</span><span class="c-string">div:has-text(Sponsored)</span></code></pre>
@@ -338,10 +339,10 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
         <tbody>
           <tr><th scope="row">Chrome and Edge</th><td class="me"><span class="yes">Yes</span>Manifest V3</td><td><span class="no">No</span>Chrome removed Manifest V2 extensions, and Edge is switching them off</td><td><span class="yes">Yes</span>Manifest V3</td></tr>
           <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span>The full version</td><td><span class="yes">Yes</span></td></tr>
-          <tr><th scope="row">Filter lists</th><td class="me">EasyList and EasyList China snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
-          <tr><th scope="row">List updates</th><td class="me">Downloaded from their publishers as often as they ask and converted on your computer; generic hiding with each release</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
+          <tr><th scope="row">Filter lists</th><td class="me">EasyList, EasyList China and uBlock filters snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
+          <tr><th scope="row">List updates</th><td class="me">EasyList and EasyList China downloaded from their publishers as often as they ask and converted on your computer; uBlock filters and generic hiding with each release</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
           <tr><th scope="row">Element hiding</th><td class="me"><span class="yes">Yes</span>Including a supported subset of advanced (procedural) rules</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
-          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="yes">Yes</span>23 common scriptlets with uBlock Origin's names, from your own rules or a list that uses them; the bundled EasyList snapshots have none. They start before a page's scripts once userscript access is allowed</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="yes">Yes</span>23 common scriptlets with uBlock Origin's names, from your own rules and the bundled uBlock filters: 7,178 rules on about 16,000 sites. Filters that need a trusted scriptlet, one Module Engine lacks or arguments it does not support are skipped. The lists' rules start as each page loads; your own start before a page's scripts once userscript access is allowed</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Element picker</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Userscripts</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
           <tr><th scope="row">Licence</th><td class="me">MIT</td><td>GPLv3</td><td>GPLv3</td></tr>
@@ -350,7 +351,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
     </div>
 
     <ul class="fits" aria-label="When another extension fits better">
-      <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, many more scriptlets and its own lists that use them.</span></li>
+      <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, many more scriptlets, HTML filtering and its other lists, such as Privacy, Badware risks and Quick fixes. Module Engine bundles only uBlock filters, the main list, and converts what it can of it.</span></li>
       <li><strong>You run many scripts, rare GM APIs or several computers.</strong><span>Tampermonkey and Violentmonkey cover more of the userscript API and sync through cloud storage. Module Engine holds up to 32 scripts.</span></li>
       <li><strong>You need a store install.</strong><span>Violentmonkey, Tampermonkey, Greasemonkey and both uBlock Origins install from browser stores. Module Engine is MIT-licensed but still loads from its source folder.</span></li>
     </ul>
@@ -391,7 +392,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
     <h2 id="privacy-title">Privacy and limits</h2>
     <ul class="limits">
       <li><strong>No telemetry</strong><span>Settings, scripts, cached dependencies and logs stay in the browser's extension storage. Nothing is sent to the project.</span></li>
-      <li><strong>Lists update from their publishers</strong><span>While Community lists is on, EasyList and EasyList China are downloaded as often as they ask, without cookies or a referrer, and converted on your computer. Generic hiding changes only with a new release. You can turn updates off in My lists.</span></li>
+      <li><strong>Lists update from their publishers</strong><span>While Community lists is on, EasyList and EasyList China are downloaded as often as they ask, without cookies or a referrer, and converted on your computer. uBlock filters and generic hiding change only with a new release. You can turn updates off in My lists.</span></li>
       <li><strong>Reported threats are opt-in and dated</strong><span>Off until you turn it on, the threat layer blocks 24 hosts from dated public reports. Their evidence expires on 28 February 2027; the hosts then stay blocked until a newer list arrives, unless you ask the layer to switch itself off at that date. It is not full malware protection.</span></li>
       <li><strong>Filtering is never complete</strong><span>Lists can miss ads or affect legitimate pages, and sites change. Video sites can show ads that rules cannot separate from the video.</span></li>
       <li><strong>Scripts can see what they match</strong><span>An enabled script can read its pages, and a network grant lets it send data. Review the code and access before you turn one on.</span></li>
@@ -400,10 +401,10 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
 
     <h3 class="tests-title">Latest test run</h3>
     <dl class="tests">
-      <div><dt>unit tests</dt><dd>733</dd></div>
-      <div><dt>Chrome checks</dt><dd>826</dd></div>
-      <div><dt>Edge checks</dt><dd>826</dd></div>
-      <div><dt>Firefox checks</dt><dd>819</dd></div>
+      <div><dt>unit tests</dt><dd>737</dd></div>
+      <div><dt>Chrome checks</dt><dd>827</dd></div>
+      <div><dt>Edge checks</dt><dd>827</dd></div>
+      <div><dt>Firefox checks</dt><dd>820</dd></div>
     </dl>
     <p class="section-lede">19 November 2026. Browser checks run offline, with throwaway profiles and local test pages only. Dated records are in <code>docs/VERIFICATION.md</code> in the source folder.</p>
   </div>
@@ -414,7 +415,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
   <div class="wrap">
     <div>
       <h2>Module Engine</h2>
-      <p>Formerly BlockAds Shield. The bundled EasyList and EasyList China filters are by the EasyList authors, under the <a href="https://easylist.to/pages/licence.html" rel="noopener">EasyList licence</a>. Module Engine's own source is MIT-licensed; other bundled data and code keep their own licences.</p>
+      <p>Formerly BlockAds Shield. The bundled EasyList and EasyList China filters are by the EasyList authors, under the <a href="https://easylist.to/pages/licence.html" rel="noopener">EasyList licence</a>. The bundled uBlock filters are by the uBlock Origin authors, under the <a href="https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE" rel="noopener">GNU GPL version 3</a>. Module Engine's own source is MIT-licensed; other bundled data and code keep their own licences.</p>
       <p>This page loads nothing from other sites.</p>
     </div>
     <div>

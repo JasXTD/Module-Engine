@@ -182,7 +182,7 @@ news.fixture-unit.net#`$#abort-on-property-read ads
     function Write-CommunityList([string]$Name, [string]$Text) {
         $path = Join-Path $communityRoot "community/$Name"
         [IO.File]::WriteAllText($path, $Text, [Text.UTF8Encoding]::new($false))
-        return [ordered]@{ id = 'fixture'; title = 'Fixture list'; file = "community/$Name"; source = 'https://lists.fixture-unit.net/fixture.txt'
+        return [ordered]@{ id = 'fixture'; title = 'Fixture list'; file = "community/$Name"; source = 'https://lists.fixture-unit.net/fixture.txt'; updates = 'download'
             license = 'Test fixture'; downloadedAtUtc = '2026-10-19T00:00:00Z'; sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() }
     }
     function Write-CommunityCatalog($Lists, [string]$Kind = 'community-filter-snapshots') {
@@ -227,7 +227,7 @@ news.fixture-unit.net#`$#abort-on-property-read ads
     Assert-True ($cosmetic.procedural.Count -eq 1 -and $cosmetic.procedural[0].procedure.ops[0].value -ceq 'Sponsored') 'supported procedures are compiled separately without broadening the CSS map'
     Assert-True ($cosmetic.generic -contains '.generic-ad' -and $cosmetic.scoped[0].exclude -contains 'skip.fixture-unit.net') 'generic and negated filters retain their proper scopes'
     Assert-True ($info.lists[0].version -ceq '7' -and $info.networkRules -eq $community.Count -and $info.cosmeticSelectors -eq 3) 'snapshot version and counts are recorded'
-    foreach ($fault in @('hash','unknown-field','path','source','future','duplicate-id','kind')) {
+    foreach ($fault in @('hash','unknown-field','path','source','future','duplicate-id','kind','updates','no-updates')) {
         $bad = $fixtureList | ConvertTo-Json | ConvertFrom-Json -AsHashtable
         $lists = @($bad)
         $kind = 'community-filter-snapshots'
@@ -239,6 +239,8 @@ news.fixture-unit.net#`$#abort-on-property-read ads
             'future' { $bad.downloadedAtUtc = '2099-01-01T00:00:00Z' }
             'duplicate-id' { $lists = @($bad, $bad) }
             'kind' { $kind = 'remote-feed' }
+            'updates' { $bad.updates = 'sometimes' }
+            'no-updates' { $bad.Remove('updates') }
         }
         Write-CommunityCatalog $lists $kind
         Assert-FailedUnchanged { & $builder -OutputDirectory $output -CommunityListsPath $communityPath } "community list $fault"

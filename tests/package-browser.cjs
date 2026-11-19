@@ -73,7 +73,7 @@ const UPDATE_URL = 'https://raw.githubusercontent.com/owner/Module-Engine/main/u
     check(JSON.stringify(enabled) === JSON.stringify(['ads_ruleset', 'community_ruleset', 'trackers_ruleset']), 'a new profile enables the ad, tracker and community rulesets, with Reported Threats off');
     const match = await browser.evaluate(`api.declarativeNetRequest.testMatchOutcome(${JSON.stringify({ url: 'https://doubleclick.net/test.js', type: 'script', initiator: 'https://fixture.example' })})`);
     check(match.matchedRules.length > 0, 'packaged rules block a bundled ad host');
-    check(state.communityStatus.lists.length === 2 && state.communityStatus.source === 'bundled', 'the packaged list description is readable');
+    check(state.communityStatus.lists.length === 3 && state.communityStatus.source === 'bundled', 'the packaged list description is readable');
     const lists = await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/lists/lists.html')"));
     await until('My lists', () => browser.evaluate("Boolean(settings) && document.getElementById('filterListsStatus').textContent.includes('bundled with this version')", lists));
     check(true, 'My lists loads from the package and shows the bundled filter lists');
