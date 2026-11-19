@@ -1,11 +1,11 @@
-/* Keep the six packaged sections in one tab. Their documents own their own
+/* Keep the packaged sections in one tab. Their documents own their own
    state and ports; hiding a section never unloads it or transfers approval. */
 (() => {
   'use strict';
   if (window !== top) return; // Only the tab owns navigation; no nested shells.
   const api = globalThis.browser || chrome;
   const paths = { manager: 'src/ui/manager/manager.html', lists: 'src/ui/lists/lists.html', log: 'src/ui/log/log.html',
-    network: 'src/ui/network/network.html', mcp: 'src/ui/mcp/debug.html', appearance: 'src/ui/appearance/appearance.html' };
+    network: 'src/ui/network/network.html', mcp: 'src/ui/mcp/debug.html', appearance: 'src/ui/appearance/appearance.html', backup: 'src/ui/backup/backup.html' };
   const urls = new Map(Object.entries(paths).map(([key, path]) => [api.runtime.getURL(path), key]));
   const rootKey = urls.get(location.href.split('#')[0]);
   if (!rootKey) return;
@@ -75,7 +75,7 @@
   function load(key) {
     const existing = views.get(key); if (existing) return existing.ready || Promise.resolve(existing);
     const frame = document.createElement('iframe'), view = { key, frame, document: null };
-    frame.className = 'me-section-frame'; frame.dataset.meSection = key; frame.title = { manager: 'Modules & scripts', lists: 'My lists', log: 'Activity log', network: 'Network', mcp: 'MCP', appearance: 'Appearance' }[key];
+    frame.className = 'me-section-frame'; frame.dataset.meSection = key; frame.title = { manager: 'Modules & scripts', lists: 'My lists', log: 'Activity log', network: 'Network', mcp: 'MCP', appearance: 'Appearance', backup: 'Backup & restore' }[key];
     frame.hidden = true; frame.inert = true; views.set(key, view);
     view.ready = new Promise((resolve, reject) => {
       let settled = false;

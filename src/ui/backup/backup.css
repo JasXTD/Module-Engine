@@ -1,0 +1,18 @@
+.backup-card { padding: 22px; display: grid; gap: 12px; min-width: 0; overflow-wrap: anywhere; }
+.backup-card > * { min-width: 0; }
+.backup-card > p { max-width: 76ch; }
+.file-choice { display: grid; gap: 8px; }
+.file-choice input { max-width: 100%; min-width: 0; }
+.review-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.review-table th { white-space: normal; }
+.review-table th, .review-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.review-table th:first-child { width: 42%; }
+.backup-scripts { margin: 0; padding-left: 22px; max-height: 260px; overflow: auto; overflow-wrap: anywhere; }
+.backup-scripts li { padding: 5px 0; }
+.confirm-restore { display: flex; align-items: flex-start; gap: 10px; }
+.confirm-restore input { flex: 0 0 auto; margin-top: 3px; }
+#review { scroll-margin-top: 16px; }
+@media (max-width: 520px) {
+  .backup-card { padding: 16px; }
+  .review-table th, .review-table td { padding: 9px 4px; font-size: 13px; }
+}

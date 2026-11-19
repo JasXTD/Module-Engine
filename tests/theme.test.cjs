@@ -101,9 +101,10 @@ test('ui.css defines one light theme for both the system and the Appearance choi
   for (const name of Theme.VARIABLES) assert.ok(css.includes('var(' + name + ')'), name + ' is used');
 });
 
-test('every page applies the theme from <head> and lists the same six sections', () => {
+test('every page applies the theme from <head> and lists the same seven sections', () => {
   const navigation = read('src/ui/shared/navigation.js'), sections = [...navigation.match(/const paths = \{[^}]+\}/)[0].matchAll(/'(src\/ui\/[^']+\.html)'/g)].map(match => match[1]);
-  assert.equal(sections.length, 6);
+  assert.equal(sections.length, 7);
+  assert.ok(sections.includes('src/ui/backup/backup.html'));
   assert.ok(sections.includes('src/ui/appearance/appearance.html'));
   const pages = files.filter(file => file.endsWith('.html') && read(file).includes('shared/ui.css'));
   assert.ok(pages.length >= 7);
@@ -136,7 +137,7 @@ function page({ cache, stored, cacheThrows = false } = {}) {
     setItem: (key, value) => { if (cacheThrows) throw new Error('SecurityError'); cacheStore.set(key, String(value)); },
     removeItem: key => { if (cacheThrows) throw new Error('SecurityError'); cacheStore.delete(key); }
   };
-  let resolveGet, rejectGet, failWrite = null;
+  let resolveGet, rejectGet, failWrite = null, beforeReply = async () => {};
   const storage = { appearance: stored };
   const chrome = { storage: {
     onChanged: { addListener: listener => changeListeners.push(listener) },
@@ -145,6 +146,16 @@ function page({ cache, stored, cacheThrows = false } = {}) {
       set: async value => { calls.push(['set', plain(value)]); if (failWrite) throw failWrite; Object.assign(storage, plain(value)); },
       remove: async key => { calls.push(['remove', key]); if (failWrite) throw failWrite; delete storage[key]; }
     }
+  } };
+  chrome.runtime = { async sendMessage(message) {
+    assert.equal(message.type, 'SAVE_APPEARANCE');
+    assert.deepEqual(plain(message.previous), plain(Theme.normalize(storage.appearance)));
+    try {
+      if (JSON.stringify(message.value) === JSON.stringify(Theme.DEFAULT)) await chrome.storage.local.remove('appearance');
+      else await chrome.storage.local.set({ appearance: message.value });
+      await beforeReply();
+      return { ok: true };
+    } catch (error) { return { ok: false, error: error.message }; }
   } };
   const context = vm.createContext({ document: { documentElement }, localStorage, chrome, console });
   vm.runInContext(settingsSource, context, { filename: 'appearance-settings.js' });
@@ -155,6 +166,7 @@ function page({ cache, stored, cacheThrows = false } = {}) {
     refuse: error => rejectGet(error),
     change: (changes, area = 'local') => changeListeners.forEach(listener => listener(changes, area)),
     failWrites: error => { failWrite = error; },
+    beforeReply: handler => { beforeReply = handler; },
     cached: () => cacheStore.has('moduleEngineAppearance') ? JSON.parse(cacheStore.get('moduleEngineAppearance')) : null
   };
 }
@@ -226,4 +238,15 @@ test('save stores a normalized choice, removes the default and leaves state alon
   assert.equal(view.attributes.get('data-theme'), 'light');
   assert.deepEqual(plain(view.theme.current()), plain(Theme.DEFAULT), 'a preview is not saved');
   assert.equal(view.cached(), null);
+});
+
+test('a newer restore event wins over an older appearance save reply', async () => {
+  const view = page(); view.answer(undefined); await view.theme.ready;
+  view.beforeReply(async () => {
+    view.change({ appearance: { newValue: { mode: 'dark', accent: '#60a5fa' } } });
+  });
+  await view.theme.save({ mode: 'light' });
+  assert.equal(view.theme.current().mode, 'dark');
+  assert.equal(view.attributes.get('data-theme'), 'dark');
+  assert.equal(view.cached().accent, '#60a5fa');
 });

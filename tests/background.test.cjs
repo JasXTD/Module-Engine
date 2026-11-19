@@ -42,7 +42,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
       async clear(name) { delete state.alarms[name]; }
     },
     storage: { onChanged: event('storageChanged'), local: {
-      async get(keys) { await tick(); return clone(Object.fromEntries(keys.filter(k => k in state.storage).map(k => [k, state.storage[k]]))); },
+      async get(keys) { await tick(); return clone(Object.fromEntries([keys].flat().filter(k => k in state.storage).map(k => [k, state.storage[k]]))); },
       async set(value) { await fault('save'); Object.assign(state.storage, clone(value)); },
       async remove(keys) { await tick(); for (const key of [keys].flat()) delete state.storage[key]; }
     }, session: {
@@ -2462,4 +2462,126 @@ test('the scriptlet switch defaults to on, accepts only true or false and is log
   assert.equal(refused.ok, false);
   assert.match(refused.error, /Line 2: "trusted-set-constant" takes arbitrary values/);
   assert.equal(h.state.storage.customCosmeticFilters, 'example.com##.kept');
+});
+
+const backupSender = { id: 'test', url: 'chrome-extension://test/src/ui/backup/backup.html' };
+const backupSend = (h, message) => h.send(message, backupSender);
+const backupExport = async h => {
+  const result = await backupSend(h, { type: 'BACKUP_EXPORT' });
+  assert.equal(result.ok, true, result.error); return result.text;
+};
+const backupPreview = async (h, text) => {
+  const result = await backupSend(h, { type: 'BACKUP_PREVIEW', text });
+  assert.equal(result.ok, true, result.error); return result;
+};
+const backupRestore = (h, text, preview) => backupSend(h, { type: 'BACKUP_RESTORE', text, baseline: preview.baseline, checksum: preview.checksum });
+const backupScript = '// ==UserScript==\n// @name Backup fixture\n// @namespace tests\n// @match https://example.test/*\n// ==/UserScript==\nthrow new Error("not executed during restore");';
+const savedSetup = h => clone(Object.fromEntries(Object.entries(h.state.storage).filter(([key]) => !['protectionError', 'threatStatus', 'communityStatus'].includes(key))));
+
+test('full backup exports only portable settings and script data, and restores them in one verified write', async () => {
+  const h = harness({ customBlockedDomains: ['saved.example'], customNetworkFilters: '||ads.example^', customCosmeticFilters: 'example.test##.ad',
+    appearance: { mode: 'dark', accent: '#60a5fa', websites: true, websiteExceptions: ['example.test'] },
+    userscriptUpdates: { schemaVersion: 1, autoApply: false, autoCheck: false, interceptLinks: false, scripts: {} },
+    unrelatedSecret: 'not-in-a-backup', threatUpdateStatus: { marker: 'not-in-a-backup' } });
+  await h.ready;
+  const library = h.context.ModuleEngineBackup.restoredLibrary({ scripts: [{ source: backupScript, values: { greeting: '你好', count: 7 }, assets: null, sourceURL: null, tags: ['saved'] }] }, 3);
+  library.enabled = true; library.scripts[0].enabled = true;
+  h.state.storage.userscriptManager = clone(library);
+  const text = await backupExport(h), file = JSON.parse(text);
+  assert.ok(!text.includes('not-in-a-backup')); assert.ok(!text.includes(library.scripts[0].token));
+  assert.ok(!text.includes(library.scripts[0].id)); assert.equal(file.data.userscripts.scripts[0].enabled, true);
+  assert.equal(file.data.settings.customBlockedDomains[0], 'saved.example');
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { customBlockedDomains: ['later.example'], enabled: false } })).ok, true);
+  h.state.storage.appearance = { mode: 'light', accent: '#c8f23a', websites: false, websiteExceptions: [] };
+  h.state.storage.userscriptManager.scripts[0].values.count = 99;
+  const beforeReview = savedSetup(h), preview = await backupPreview(h, text);
+  assert.deepEqual(savedSetup(h), beforeReview, 'review writes nothing');
+  assert.equal(preview.incoming.scripts[0].values, 2);
+  const writes = [], set = h.api.storage.local.set;
+  h.api.storage.local.set = async data => { writes.push(clone(data)); await set(data); };
+  const result = await backupRestore(h, text, preview); assert.equal(result.ok, true, result.error);
+  const restored = h.state.storage.userscriptManager;
+  assert.equal(restored.enabled, false); assert.equal(restored.scripts[0].enabled, false);
+  assert.equal(restored.scripts[0].values.count, 7); assert.equal(restored.scripts[0].source, backupScript);
+  assert.notEqual(restored.scripts[0].id, library.scripts[0].id); assert.notEqual(restored.scripts[0].token, library.scripts[0].token);
+  assert.deepEqual(h.state.storage.appearance, file.data.appearance);
+  assert.deepEqual(h.state.storage.customBlockedDomains, ['saved.example']);
+  assert.equal(h.state.storage.unrelatedSecret, 'not-in-a-backup');
+  assert.ok(h.state.dynamic.some(rule => rule.condition.requestDomains?.includes('saved.example')));
+  const combined = writes.filter(write => Object.hasOwn(write, 'userscriptManager'));
+  assert.equal(combined.length, 1); assert.ok(combined[0].appearance && combined[0].userscriptUpdates && combined[0].customBlockedDomains);
+  const reexport = JSON.parse(await backupExport(h));
+  const expected = clone(file.data); expected.userscripts.enabled = false; expected.userscripts.scripts[0].enabled = false;
+  assert.deepEqual(reexport.data, expected);
+});
+
+test('backup rejects other senders, malformed files, invalid settings and corrupted dependencies without a write', async () => {
+  const h = harness(); await h.ready;
+  for (const sender of [{ id: 'test', url: 'https://example.test/' }, { ...backupSender, id: 'foreign' },
+    { ...backupSender, url: backupSender.url + '?other=1' }, { id: 'test', url: 'chrome-extension://test/src/ui/manager/manager.html' }]) {
+    const result = await h.send({ type: 'BACKUP_EXPORT' }, sender); assert.equal(result.ok, false); assert.match(result.error, /Backup/);
+  }
+  const text = await backupExport(h), file = JSON.parse(text);
+  const conflict = clone(file); conflict.data.settings.customBlockedDomains = ['example.test']; conflict.data.settings.allowedDomains = ['example.test'];
+  const badLayer = clone(file); badLayer.data.settings.rulesets.ads_ruleset = 'true';
+  const badAsset = clone(file);
+  badAsset.data.userscripts.scripts = [{ source: backupScript.replace('// ==/UserScript==', '// @require https://example.test/lib.js\n// ==/UserScript=='),
+    enabled: true, tags: [], sourceURL: null, values: {}, assets: [{ kind: 'require', url: 'https://example.test/lib.js', sha256: 'a'.repeat(64), mime: 'text/javascript', body: 'dm9pZCAwOw==' }] }];
+  const before = savedSetup(h);
+  for (const candidate of ['{}', '{', JSON.stringify({ ...file, version: 2 }), JSON.stringify(conflict), JSON.stringify(badLayer), JSON.stringify(badAsset)]) {
+    const result = await backupSend(h, { type: 'BACKUP_PREVIEW', text: candidate }); assert.equal(result.ok, false, candidate);
+    assert.deepEqual(savedSetup(h), before);
+  }
+});
+
+test('restore refuses changed settings, values, appearance, update preferences or reviewed bytes', async () => {
+  const h = harness(); await h.ready; const text = await backupExport(h);
+  for (const change of [() => { h.state.storage.enabled = !h.state.storage.enabled; },
+    () => { h.state.storage.appearance = { mode: 'dark' }; },
+    () => { h.state.storage.userscriptUpdates = { schemaVersion: 1, autoCheck: false, interceptLinks: false, autoApply: false, scripts: {} }; },
+    () => { h.state.storage.userscriptManager = { schemaVersion: 1, revision: 1, enabled: false, scripts: [] }; }]) {
+    const preview = await backupPreview(h, text); change(); const before = savedSetup(h);
+    const result = await backupRestore(h, text, preview); assert.equal(result.ok, false); assert.match(result.error, /after the review/);
+    assert.deepEqual(savedSetup(h), before);
+  }
+  const preview = await backupPreview(h, text), file = JSON.parse(text); file.data.settings.enabled = !file.data.settings.enabled;
+  const result = await backupRestore(h, JSON.stringify(file), preview); assert.equal(result.ok, false); assert.match(result.error, /after the review/);
+});
+
+for (const failure of ['reject', 'partial', 'ignored', 'native']) test('backup restore rolls back a ' + failure + ' failure and can retry', async () => {
+  const h = harness({ customBlockedDomains: ['old.example'] }); await h.ready;
+  const file = JSON.parse(await backupExport(h)); file.data.settings.customBlockedDomains = ['new.example']; file.data.appearance.mode = 'dark';
+  const text = JSON.stringify(file), preview = await backupPreview(h, text), before = savedSetup(h), rules = clone(h.state.dynamic);
+  const set = h.api.storage.local.set;
+  let once = true;
+  h.api.storage.local.set = async value => {
+    if (Object.hasOwn(value, 'userscriptManager') && once) {
+      once = false;
+      if (failure === 'reject') throw new Error('Injected backup quota failure');
+      if (failure === 'partial') { Object.assign(h.state.storage, clone(value)); throw new Error('Injected post-write failure'); }
+      if (failure === 'ignored') { h.state.storage.appearance = clone(value.appearance); return; }
+    }
+    return set(value);
+  };
+  if (failure === 'native') h.state.faults.dynamic = 1;
+  const result = await backupRestore(h, text, preview);
+  assert.equal(result.ok, false); assert.deepEqual(savedSetup(h), before); assert.deepEqual(h.state.dynamic, rules);
+  h.api.storage.local.set = set;
+  const retry = await backupRestore(h, text, await backupPreview(h, text)); assert.equal(retry.ok, true, retry.error);
+});
+
+test('queued appearance edits cannot overwrite a restored appearance from a stale page', async () => {
+  const h = harness(); await h.ready;
+  const file = JSON.parse(await backupExport(h)); file.data.appearance.mode = 'dark';
+  const text = JSON.stringify(file), preview = await backupPreview(h, text);
+  let entered, finish;
+  const waiting = new Promise(resolve => { entered = resolve; }), gate = new Promise(resolve => { finish = resolve; });
+  const set = h.api.storage.local.set;
+  h.api.storage.local.set = async value => { if (Object.hasOwn(value, 'userscriptManager')) { entered(); await gate; } return set(value); };
+  const restoring = backupRestore(h, text, preview); await waiting;
+  const oldAppearance = clone(h.context.ModuleEngineAppearance.DEFAULT);
+  const editing = h.send({ type: 'SAVE_APPEARANCE', previous: oldAppearance, value: { ...oldAppearance, mode: 'light' } });
+  finish(); assert.equal((await restoring).ok, true);
+  const result = await editing; assert.equal(result.ok, false); assert.match(result.error, /another page/);
+  assert.equal(h.state.storage.appearance.mode, 'dark');
 });

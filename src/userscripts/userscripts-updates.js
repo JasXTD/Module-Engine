@@ -355,7 +355,9 @@
     api.webRequest?.onBeforeRequest?.addListener(details => {
       void intercept(details).catch(error => console.warn('[Module Engine] Userscript link:', errorText(error)));
     }, { types: [...FILTER.types], urls: [...FILTER.urls] });
-    return Object.freeze({ start, runChecks, cancel, view, setSettings, stagedReview, allowNavigation, intercept });
+    // Backup takes this writer before the manager queue, matching auto-apply's
+    // lock order. Never acquire it from an already running manager operation.
+    return Object.freeze({ start, runChecks, cancel, view, setSettings, stagedReview, allowNavigation, intercept, exclusive: serialize });
   }
   globalThis.BlockAdsUserScriptUpdates = Object.freeze({ KEY, ALARM, MANAGER, LIMITS, FILTER, targets, metaVersion, state,
     interceptURL, installHash, installFromHash, create });

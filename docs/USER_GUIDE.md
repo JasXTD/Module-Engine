@@ -2,6 +2,25 @@
 
 For installation, see the [project README](../README.md#getting-started). This guide covers the current controls, userscript subset, filtering behavior and permissions.
 
+## Backup & restore
+
+Open **Backup & restore** in the side menu and choose **Download backup**. Keep the downloaded JSON file to restore this profile or move your setup to another supported browser.
+
+The backup includes protection switches and filter-layer choices, custom request/hiding filters, every configured domain list, appearance and website-theme exceptions, script update preferences, and the saved script library with source, order, tags, source URLs, GM values and prepared dependency bytes. The file is unencrypted; script values can contain private information. Nothing is uploaded.
+
+To restore:
+
+1. Download a backup of the current browser first if you want to keep its setup.
+2. Choose a Module Engine JSON backup (up to 8 MiB). The page validates it and shows the current and incoming counts and script names without saving or executing anything.
+3. Review the replacement, acknowledge it, then choose **Replace and restore**. **Cancel** leaves saved data unchanged.
+4. Review the restored scripts in **Modules & scripts**, enable the module and the scripts you want, and reload affected website tabs.
+
+Restore **replaces** the saved settings and library, including scripts and values absent from the file. It does not merge libraries. The userscript module and every restored script start **off**, even when they were on in the backup. Execution permissions and hidden-direction-control acknowledgments must be granted separately. Dependencies are checked against their cached SHA-256 digests and declared pins; missing caches can be prepared later through the normal manager. Restore does not download dependencies. Already executed page code cannot be undone; reload open pages.
+
+If settings, scripts, saved values, appearance or script update preferences change after the review, restore refuses to overwrite them; choose the file again to review the latest state. A failed restore reports the error and attempts verified storage and native-rule rollback. If rollback cannot be verified, the error says so; reopen the extension and check its status before retrying. A browser or computer interruption during restore may leave its outcome unknown: reopen and check before repeating it.
+
+Backups exclude browser permissions, execution capabilities, MCP approvals/connections, editor drafts, activity/network logs, suspected-ad flags, invalid quarantined entries, pending script updates, and downloaded community/threat list updates. Existing downloaded filter lists and diagnostic data in the destination browser are retained; bundled lists belong to the installed extension version. Browser cookies and general browser data are not part of a script's GM values. Only Module Engine's version-1 JSON backup format is supported; ZIP archives, other managers' backups and cloud sync are unavailable.
+
 ## Modules and userscripts
 
 Use **New script** to start from an explicit example site scope, or **Import** to read a local UTF-8 `.user.js` file. Review the code, sites, timing and APIs in the editor. **Save** stores a script turned off, without running it; after review, turn on **Run this script** beside its name, then reload a matching page. Saving an edit pauses that script again. Duplicate name/namespace identities and stale saves from another editor are rejected. Drafts are preserved when another window changes the library; **Discard draft** explicitly loads the latest saved source.

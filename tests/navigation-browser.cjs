@@ -10,7 +10,7 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
   const transport = process.argv.includes('--mcp-http') ? 'http' : 'stdio';
   const client = await processClient({ transport, allowChanges: true }), pages = [], owned = new Set();
   evidence.navigationHarnessHash = createHash('sha256').update(await fs.readFile(__filename)).digest('hex');
-  const paths = { manager: 'manager/manager.html', lists: 'lists/lists.html', log: 'log/log.html', network: 'network/network.html', mcp: 'mcp/debug.html' };
+  const paths = { manager: 'manager/manager.html', lists: 'lists/lists.html', log: 'log/log.html', network: 'network/network.html', mcp: 'mcp/debug.html', backup: 'backup/backup.html' };
   const getURL = key => b.evaluate('(globalThis.browser||chrome).runtime.getURL(' + JSON.stringify('src/ui/' + paths[key]) + ')', manager);
   let owner;
   const active = "(document.querySelector('.me-section-frame:not([hidden])')?.contentDocument||document)";
@@ -74,10 +74,13 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
     await b.front(owner); await b.pressKey('Enter', owner);
     await wait('d.location.pathname.endsWith("/manager/manager.html")');
     check('Keyboard navigation focuses the new section heading', await get('return d.activeElement===d.querySelector("h1")'));
-    for (const key of ['manager', 'lists', 'log', 'network', 'mcp', 'lists', 'manager']) {
+    for (const key of ['manager', 'lists', 'log', 'network', 'mcp', 'backup', 'lists', 'manager']) {
       await section(key);
       check('MCP stays readable in ' + key, (await client.tool('status')).ok);
       check('Connected indicator appears in ' + key, await get('return !d.querySelector(".me-nav-status").hidden&&d.querySelector(".me-nav-status").textContent==="Connected"'));
+      if (key === 'backup') {
+        check('Backup messages work from the retained section frame', (await get('return (d.defaultView.browser||d.defaultView.chrome).runtime.sendMessage({type:"BACKUP_EXPORT"})')).ok);
+      }
     }
     check('The unsaved editor draft survives all section switches', await get('return d.getElementById("scriptSource").value===' + JSON.stringify(draft)));
     await click('#discardDraft'); await wait('d.getElementById("confirmDialog").open');
@@ -124,7 +127,8 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
     await b.evaluate('history.back()', owner); await wait('d.location.pathname.endsWith("/lists/lists.html")');
     await b.evaluate('history.forward()', owner); await wait('d.location.pathname.endsWith("/log/log.html")');
     check('Back and Forward preserve native MCP approval', (await client.tool('status')).ok);
-    check('All sections reuse at most four child documents', await get('return document.querySelectorAll("iframe.me-section-frame").length===4&&document.querySelectorAll("iframe.me-section-frame:not([hidden])").length===1'));
+    check('Visited sections reuse one child document each, with only one visible', await get('const frames=[...document.querySelectorAll("iframe.me-section-frame")];return frames.length===' +
+      (Object.keys(paths).length - 1) + '&&new Set(frames.map(frame=>frame.dataset.meSection)).size===frames.length&&frames.filter(frame=>!frame.hidden).length===1'));
     await section('mcp');
     const widths = evidence.browser === 'firefox' ? [await b.evaluate('innerWidth', owner)] : [1280, 390];
     for (const width of widths) {

@@ -142,7 +142,7 @@
 
   const api = globalThis.browser || globalThis.chrome;
   const listeners = new Set();
-  let stored = DEFAULT, changed = false;
+  let stored = DEFAULT, changed = false, changeVersion = 0;
   // The cache holds only what the first paint needs. A failed cache read or
   // write only costs that first paint; storage stays authoritative.
   function readCache() {
@@ -167,7 +167,7 @@
     if (api?.storage?.local) {
       api.storage.onChanged.addListener((changes, area) => {
         if (area !== 'local' || !(KEY in changes)) return;
-        changed = true; update(changes[KEY].newValue);
+        changeVersion++; changed = true; update(changes[KEY].newValue);
       });
       // A change that arrives first is newer than this read.
       ready = api.storage.local.get(KEY).then(saved => { if (!changed) update(saved[KEY]); return { ok: true }; },
@@ -179,8 +179,12 @@
   async function save(value) {
     if (!api?.storage?.local) throw new Error('Extension storage is unavailable.');
     const next = normalize(value);
-    if (same(next, DEFAULT)) await api.storage.local.remove(KEY); else await api.storage.local.set({ [KEY]: next });
-    changed = true; update(next);
+    const version = changeVersion;
+    // Serialize with full restores; a stale page must not overwrite a restored choice.
+    const result = await api.runtime.sendMessage({ type: 'SAVE_APPEARANCE', value: next, previous: stored });
+    if (!result?.ok) throw new Error(result?.error || 'Appearance could not be saved.');
+    // A later restore can arrive before this reply. Its storage event wins.
+    changed = true; if (version === changeVersion) update(next);
     return next;
   }
 

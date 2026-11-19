@@ -2291,3 +2291,47 @@ test('a scheduled check installs an update that needs no new access, keeping the
   assert.deepEqual([off.result.applied, off.scripts[script.id].outcome, f.current().source], [0, 'staged', next], 'with the setting off every update waits');
   assert.equal(logged.length, 1);
 });
+
+require('../src/shared/appearance-settings.js');
+require('../src/shared/backup.js');
+test('backup holds the script and update writers, rotates capabilities and revokes live connections', async () => {
+  const h = harness(); const script = await h.enable(await h.save('Backup queue', '// @grant GM.setValue\n'));
+  await h.value(script.id, 'set', { key: 'answer', value: 42 });
+  const before = clone(h.state.data.userscriptManager);
+  let entered, release;
+  const waiting = new Promise(resolve => { entered = resolve; }), gate = new Promise(resolve => { release = resolve; });
+  const restoring = h.host.withBackup(async transaction => {
+    entered(); await gate;
+    const next = await transaction.prepare(ModuleEngineBackup.portableLibrary(transaction.library));
+    await h.api.storage.local.set({ userscriptManager: next }); return next;
+  });
+  await waiting;
+  const queued = h.value(script.id, 'set', { key: 'answer', value: 99 });
+  let updated = false;
+  const preferences = h.command({ type: 'US_UPDATE_SETTINGS', settings: { autoApply: false } }).then(() => { updated = true; });
+  assert.equal(updated, false); release();
+  const next = await restoring;
+  const stale = await queued; assert.equal(stale.ok, false); assert.match(stale.error, /inactive|expired/);
+  await preferences; assert.equal(updated, true);
+  assert.equal(next.scripts[0].values.answer, 42); assert.equal(next.scripts[0].enabled, false); assert.equal(next.enabled, false);
+  assert.notEqual(next.scripts[0].token, before.scripts[0].token); assert.equal(h.state.scripts.length, 0); assert.equal(h.state.worlds.length, 0);
+});
+
+test('backup native preparation restores running scripts when the combined storage transaction fails', async () => {
+  const h = harness(); await h.enable(await h.save('Keep running'));
+  const before = clone(h.state.data), registrations = clone(h.state.scripts), worlds = clone(h.state.worlds);
+  await assert.rejects(h.host.withBackup(async transaction => {
+    await transaction.prepare(ModuleEngineBackup.portableLibrary(transaction.library));
+    throw new Error('Combined storage transaction failed');
+  }), /Combined storage/);
+  assert.deepEqual(h.state.data, before); assert.deepEqual(h.state.scripts, registrations); assert.deepEqual(h.state.worlds, worlds);
+  assert.equal((await h.command({ type: 'US_LIST' })).active, true);
+});
+
+test('backup reports failed native rollback without claiming a successful restore', async () => {
+  const h = harness(); await h.enable(await h.save('Rollback failure'));
+  await assert.rejects(h.host.withBackup(async transaction => {
+    await transaction.prepare(ModuleEngineBackup.portableLibrary(transaction.library));
+    h.state.faults.register = 1; throw new Error('Combined write failed');
+  }), /Userscript rollback could not be verified/);
+});

@@ -775,6 +775,35 @@
     });
     return Object.freeze({
       start,
+      withBackup: work => updates.exclusive(() => enqueue(async () => {
+        const library = await read();
+        let current, replacement;
+        try {
+          const result = await work({ library, prepare: async portable => {
+            replacement = ModuleEngineBackup.restoredLibrary(portable, library.revision + 1);
+            current = await access();
+            if (!current.available && !current.denied && library.enabled) throw new Error(current.error);
+            if (current.available) await apply(await target(replacement), current);
+            return replacement;
+          } });
+          if (replacement) {
+            updates.cancel('A backup was restored. Update checks were cancelled.');
+            reconcileConnections(replacement, current.available);
+            lastError = '';
+          }
+          return result;
+        } catch (error) {
+          if (current?.available) {
+            try { await restore(current); }
+            catch (rollback) {
+              for (const connection of connections.values()) closeConnection(connection);
+              lastError = errorText(error) + ' Userscript rollback could not be verified: ' + errorText(rollback);
+              throw new Error(lastError);
+            }
+          }
+          throw error;
+        }
+      })),
       inspect: () => enqueue(inspect),
       setDiagnosticSink: sink => { diagnosticSink = typeof sink === 'function' ? sink : null; diagnosticRates.clear(); },
       request: message => message.type === 'US_PREPARE_ASSETS' ? prepareAssets(message)

@@ -50,7 +50,7 @@ function gmFloodFixture() {
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
   for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
-  if (!['--navigation-only', '--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only', '--scriptlets-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
+  if (!['--backup-only', '--navigation-only', '--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only', '--scriptlets-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
   const aliasState = {};
   const { forwardMatching, runMatching } = require('./userscripts-matching-browser.cjs');
   const proxy = http.createServer((request, response) => { if (forwardMatching(request, response, aliasState, evidence)) return; evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
@@ -203,6 +203,10 @@ function gmFloodFixture() {
       await scriptlets();
       check('No uncaught errors during scriptlet checks, including the scripts they abort', !b.events.some(event => event.method === 'Runtime.exceptionThrown'));
       evidence.success = true; evidence.focus = 'scriptlets-only'; return;
+    }
+    if (process.argv.includes('--backup-only')) {
+      await require('./backup-browser.cjs').runBackup({ b, manager, send, check, until, browse, scriptSource, evidence, temp, port });
+      evidence.success = true; evidence.focus = 'backup-only'; return;
     }
     if (process.argv.includes('--navigation-only')) {
       await require('./navigation-browser.cjs').runNavigation({ b, manager, send, check, until, browse, scriptSource, evidence, temp });

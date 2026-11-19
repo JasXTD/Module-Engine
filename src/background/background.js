@@ -19,6 +19,7 @@ if (!globalThis.BlockAdsDebug && typeof importScripts === "function") importScri
 if (!globalThis.ModuleEngineNetworkLog && typeof importScripts === "function") importScripts("network-log.js");
 if (!globalThis.ModuleEngineThreatUpdates && typeof importScripts === "function") importScripts("../shared/update-config.js", "../blocking/evidence.js", "threat-updates.js");
 if (!globalThis.ModuleEngineCommunityUpdates && typeof importScripts === "function") importScripts("../blocking/community-lists.js", "community-updates.js");
+if (!globalThis.ModuleEngineBackupRuntime && typeof importScripts === "function") importScripts("../shared/appearance-settings.js", "../shared/backup.js", "backup-runtime.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
 const networkLog = ModuleEngineNetworkLog.create(api);
 // Automatic userscript updates are recorded in the activity log.
@@ -1681,9 +1682,10 @@ function editSettings(current, message) {
   return validateSettings(next);
 }
 
-async function processRequest(message) {
+async function processRequest(message, transaction) {
   let loaded;
   let beforeRules;
+  let beforeExtra;
   let saveAttempted = false;
   let threatStatus = { available: false, count: 0, expiresAt: null, error: "Evidence has not been checked." };
   try {
@@ -1694,7 +1696,8 @@ async function processRequest(message) {
     // saved choice says so. This request may change that choice.
     applyThreatExpiryChoice(threatStatus, loaded.settings);
     await retireInactiveThreats(threatStatus);
-    const desired = editSettings(loaded.settings, message);
+    const desired = transaction ? validateSettings(transaction.settings) : editSettings(loaded.settings, message);
+    if (transaction) beforeExtra = await api.storage.local.get(transaction.keys);
     applyThreatExpiryChoice(threatStatus, desired);
     // The generic stylesheets' exclusions come from the bundled exceptions.
     const cosmeticLoaded = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset && desired.genericCosmeticFiltering;
@@ -1724,11 +1727,13 @@ async function processRequest(message) {
     beforeRules = await readRules();
     await applyRules(target, threatStatus);
     const communityStatus = community.status;
-    const commit = { ...desired, quarantinedDomains: loaded.quarantined, protectionError: null, threatStatus, communityStatus };
+    const extra = transaction ? { ...transaction.extra, ...await transaction.prepare() } : {};
+    const commit = { ...desired, quarantinedDomains: loaded.quarantined, protectionError: null, threatStatus, communityStatus, ...extra };
     if (!same(await api.storage.local.get(Object.keys(commit)), commit)) {
       saveAttempted = true;
       await api.storage.local.set(commit);
     }
+    if (transaction && !same(await api.storage.local.get(Object.keys(commit)), commit)) throw new Error('Restored data could not be verified after saving.');
     await updateBadge(desired, Boolean(threatStatus.error));
     // Scriptlets start per frame without the registration, so a failure here is
     // reported in their status and never undoes the verified network rules.
@@ -1749,7 +1754,15 @@ async function processRequest(message) {
       try { await applyRules(beforeRules, threatStatus); } catch { rollbackFailed = true; }
     }
     if (saveAttempted) {
-      try { await api.storage.local.set(loaded.settings); } catch { rollbackFailed = true; }
+      try {
+        const previous = { ...loaded.settings, ...beforeExtra };
+        await api.storage.local.set(previous);
+        if (transaction) {
+          const absent = transaction.keys.filter(key => !Object.hasOwn(beforeExtra, key));
+          if (absent.length) await api.storage.local.remove(absent);
+          if (!same(await api.storage.local.get([...SETTING_KEYS, ...transaction.keys]), previous)) throw new Error('Storage rollback could not be verified.');
+        }
+      } catch { rollbackFailed = true; }
     }
     const detail = error instanceof Error ? error.message : String(error);
     const problem = rollbackFailed
@@ -1793,6 +1806,9 @@ api.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && SETTING_KEYS.some(key => key in changes)) flagSettings = null;
 });
 const fromExtensionPage = sender => sender.id === api.runtime.id && Boolean(sender.url?.startsWith(api.runtime.getURL("")));
+const backupHost = ModuleEngineBackupRuntime.create(api, { userscripts: userscriptHost, loadSettings, validateSettings,
+  settingKeys: SETTING_KEYS, restoreSettings: transaction => processRequest({ type: 'RESTORE_BACKUP' }, transaction) });
+let backupPending = 0;
 const PICKER_SESSION_KEY = 'elementPickerSessions';
 const PICKER_TTL = 10 * 60 * 1000;
 let pickerStartQueue = Promise.resolve();
@@ -1886,6 +1902,29 @@ async function pickerRequest(message, sender) {
 api.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only the private offscreen document answers this worker-to-document call.
   if (message?.type === 'ME_CLIPBOARD_WRITE') return false;
+  if (['BACKUP_EXPORT', 'BACKUP_PREVIEW', 'BACKUP_RESTORE'].includes(message?.type)) {
+    if (sender.id !== api.runtime.id || sender.url !== api.runtime.getURL('src/ui/backup/backup.html')) {
+      sendResponse({ ok: false, error: 'Open Backup & restore in the extension to manage backups.' }); return false;
+    }
+    if (backupPending >= 2) { sendResponse({ ok: false, error: 'A backup operation is already waiting. Try again shortly.' }); return false; }
+    backupPending++;
+    enqueue(() => backupHost.request(message)).then(sendResponse, error => sendResponse({ ok: false, error: error.message || String(error) }))
+      .finally(() => { backupPending--; });
+    return true;
+  }
+  if (message?.type === 'SAVE_APPEARANCE') {
+    if (!fromExtensionPage(sender)) { sendResponse({ ok: false, error: 'Change appearance from the extension interface.' }); return false; }
+    enqueue(async () => {
+      const theme = ModuleEngineAppearance, next = theme.normalize(message.value);
+      const saved = theme.normalize((await api.storage.local.get(theme.KEY))[theme.KEY]);
+      if (!theme.same(saved, theme.normalize(message.previous))) throw new Error('Appearance changed in another page. Try your choice again.');
+      if (theme.same(next, theme.DEFAULT)) await api.storage.local.remove(theme.KEY);
+      else await api.storage.local.set({ [theme.KEY]: next });
+      if (!theme.same(theme.normalize((await api.storage.local.get(theme.KEY))[theme.KEY]), next)) throw new Error('Appearance could not be verified after saving.');
+      return { ok: true };
+    }).then(sendResponse, error => sendResponse({ ok: false, error: error.message || String(error) }));
+    return true;
+  }
   if (['MODULES_GET', 'MODULE_SET', 'US_LIST', 'US_SAVE', 'US_ENABLE', 'US_DELETE', 'US_MENU_LIST', 'US_MENU_RUN', 'US_PREPARE_ASSETS', 'US_CANCEL_ASSETS', 'US_ASSET_READ',
     'US_FETCH_SOURCE', 'US_CHECK_UPDATE', 'US_CANCEL_SOURCE', 'US_APPLY_SOURCE', 'US_TAGS', 'US_MOVE',
     'US_UPDATE_STATE', 'US_UPDATE_SETTINGS', 'US_STAGED_REVIEW', 'US_CHECK_ALL', 'US_LINK_BYPASS'].includes(message?.type)) {
