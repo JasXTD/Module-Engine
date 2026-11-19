@@ -15,6 +15,8 @@ const ADDED_HOST = 'fresh-ad-server.example';
 // Not /.../, which EasyList syntax reads as a regular expression.
 const ADDED_PATTERN = '/fresh-ad-banner.';
 const ADDED_SITE_RULE = 'example.com##.fresh-ad-slot';
+// A scriptlet filter, which list updates carry with site hiding.
+const ADDED_SCRIPTLET_RULE = 'example.com##+js(set-constant, freshListFlag, true)';
 
 // changes: { version, title, drop: true to drop most of the list, remove, add }
 function upstream(id, { version, title, shrink = false, changes = true } = {}) {
@@ -23,11 +25,11 @@ function upstream(id, { version, title, shrink = false, changes = true } = {}) {
   if (title) text = text.replace(/^! Title: .*$/m, `! Title: ${title}`);
   if (changes && id === 'easylist') {
     const lines = text.split('\n').filter(line => line.trim() !== removedSingle.condition.urlFilter && line.trim() !== `||${REMOVED_HOST}^`);
-    lines.push(`||${ADDED_HOST}^`, ADDED_PATTERN, ADDED_SITE_RULE);
+    lines.push(`||${ADDED_HOST}^`, ADDED_PATTERN, ADDED_SITE_RULE, ADDED_SCRIPTLET_RULE);
     text = lines.join('\n');
   }
   if (shrink) text = text.split('\n').slice(0, 2000).join('\n');
   return text;
 }
 
-module.exports = { catalog, bundledRules, upstream, removedSingle, REMOVED_HOST, ADDED_HOST, ADDED_PATTERN, ADDED_SITE_RULE };
+module.exports = { catalog, bundledRules, upstream, removedSingle, REMOVED_HOST, ADDED_HOST, ADDED_PATTERN, ADDED_SITE_RULE, ADDED_SCRIPTLET_RULE };

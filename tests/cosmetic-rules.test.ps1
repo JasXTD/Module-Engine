@@ -80,4 +80,38 @@ Check ($json.procedural[2].exception -and $json.procedural[3].exception -and !$j
 Check ($result.Info.skipped['cosmetic: procedural rule needs positive site scope'] -eq 1) 'Unscoped procedural blocking is refused.'
 Check ($result.Info.skipped['cosmetic: unsupported procedural syntax'] -eq 2) 'Regex and unsupported procedural operators are reported without broadening.'
 Check ($result.Info.proceduralCosmeticRules -eq 5) 'Compiled procedural rule coverage is reported.'
+Check ($result.Info.skipped['scriptlet: unsupported scriptlet or arguments'] -eq 1 -and $result.Info.scriptletRules -eq 0) 'An unknown scriptlet is counted, not kept.'
+
+# The same lines as tests/community-convert.test.cjs, which expects the same JSON and counts from the extension's converter.
+$scriptletText = @'
+example.test##+js(set, adsBlocked, false)
+example.test,~shop.example.test##+js(aopr, detector)
+news.example.test#@#+js(set-constant, adsBlocked, false)
+quiet.example.test#@#+js()
+##+js(set, generic, true)
+#@#+js()
+wild.*##+js(nowoif)
+keep.test,wild.*##+js(nowoif)
+example.test##+js(trusted-set-constant, a, 1)
+example.test##+js(unknown)
+example.test##+js()
+example.test#?#+js(set, a, true)
+example.test#$#abort-on-property-read foo
+'@
+$scriptletList = @{ id='scriptlets'; title='Scriptlets'; text=$scriptletText; source='https://example.test/list'; license='fixture'; downloadedAtUtc='2026-10-29T00:00:00Z'; sha256=('0' * 64) }
+$scriptletResult = ConvertFrom-CommunityLists @($scriptletList)
+$expectedScriptlets = '[{"include":["example.test"],"exclude":[],"exception":false,"name":"set-constant","args":["adsBlocked","false"]},' +
+    '{"include":["example.test"],"exclude":["shop.example.test"],"exception":false,"name":"abort-on-property-read","args":["detector"]},' +
+    '{"include":["news.example.test"],"exclude":[],"exception":true,"name":"set-constant","args":["adsBlocked","false"]},' +
+    '{"include":["quiet.example.test"],"exclude":[],"exception":true,"name":"","args":[]},' +
+    '{"include":["keep.test"],"exclude":[],"exception":false,"name":"no-window-open-if","args":[]}]'
+Check ((ConvertTo-Json -InputObject @($scriptletResult.Cosmetic.scriptlets) -Compress -Depth 5) -ceq $expectedScriptlets) 'List scriptlet filters become the same scriptlet rules as in the extension.'
+Check ($scriptletResult.Info.scriptletRules -eq 5) 'Scriptlet rule coverage is reported.'
+$expectedSkips = [ordered]@{ 'cosmetic: procedural or unsafe selector' = 1; 'cosmetic: snippet or HTML filter' = 1; 'cosmetic: wildcard or invalid domain' = 1
+    'cosmetic: wildcard or invalid site dropped from a kept rule' = 1; 'scriptlet: filter without a site' = 2; 'scriptlet: no scriptlet named' = 1
+    'scriptlet: unsupported scriptlet or arguments' = 2 }
+Check ((ConvertTo-Json $scriptletResult.Info.skipped -Compress) -ceq (ConvertTo-Json $expectedSkips -Compress)) 'Generic, wildcard-only, unknown and unnamed scriptlet filters are counted, as in the extension.'
+Check (!$scriptletResult.Rules.Count -and !$scriptletResult.Cosmetic.hide.Count -and !@($scriptletResult.Cosmetic.procedural).Count) 'No scriptlet becomes a network or hiding rule.'
+$scriptletJson = ConvertTo-CosmeticJson $scriptletResult.Cosmetic | ConvertFrom-Json -AsHashtable
+Check ($scriptletJson.scriptlets.Count -eq 5 -and $scriptletJson.scriptlets[3].name -ceq '' -and $scriptletJson.scriptlets[3].args.Count -eq 0) 'Scriptlet rules survive JSON serialization.'
 Write-Host "PASS: $checks cosmetic compilation assertions (local strings only)."

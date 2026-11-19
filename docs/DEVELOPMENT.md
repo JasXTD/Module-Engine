@@ -255,7 +255,7 @@ The implementation consulted official [GM contracts](https://violentmonkey.githu
 
 The ad/tracker and unverified source of truth remains `lists/reviewed-domains.json`. Its review is explicitly **offline structure only**, not a current reputation check. Source hashes and prior rule scopes are recorded; reputation-verification and expiry fields remain unset. `lists/review-decisions.json` explains exclusions and categories. Six ad URL patterns are kept separately in `lists/browser-patterns.json`, and ad hosts recorded on named sites by `tests/site-ad-check.cjs` in `lists/site-ad-hosts.json`; both are browser-only and never exported. EasyList-format snapshots are recorded in `lists/community-lists.json` and converted into the separate community ruleset; they are never exported either. Dated browser threat evidence is a separate, manually reviewed input, `lists/reported-threats.json`; it is not exported to CyberAssist or merged into the version-1 catalog. See [the catalog contracts](../lists/README.md).
 
-Use **PowerShell 7+ and Node 22+**, with Node available on PATH. The build is offline and treats domains as data; it never resolves them or visits their sites. The PowerShell compiler sends bounded UTF-8 data to `scripts/compile-procedural.cjs`, which uses the same parser as the extension, and to `scripts/compile-generic-css.cjs`, which writes the generic stylesheets the background registers (`rules/community-generic*.css`; see [the bundle contract](../lists/README.md)). No packages or remote code are used.
+Use **PowerShell 7+ and Node 22+**, with Node available on PATH. The build is offline and treats domains as data; it never resolves them or visits their sites. The PowerShell compiler sends bounded UTF-8 data to `scripts/compile-procedural.cjs` and `scripts/compile-scriptlets.cjs`, which use the same parsers as the extension, and to `scripts/compile-generic-css.cjs`, which writes the generic stylesheets the background registers (`rules/community-generic*.css`; see [the bundle contract](../lists/README.md)). No packages or remote code are used.
 
 `node tests/generic-timing-browser.cjs chrome` measures generic hiding on an owned loopback page with eight same-origin frames: whether each frame showed a generic element before hiding it, when it was hidden, and renderer main-thread tasks from a trace. Add `--source <folder>` to measure another unpacked copy, such as a `git archive` export of an earlier commit, `--generic-off` for the floor without generic hiding, and `--out <file>` to keep the JSON.
 
@@ -285,6 +285,28 @@ Every output is staged before replacement. A failed write triggers restoration o
 - **The installed change.** After conversion, `difference()` compares the result with `rules/community.json`. Merged domain rules are compared by domain, other rules by meaning. Dropped bundled rules are switched off with `updateStaticRules`, and new or changed rules become dynamic rules from ID 1,000,001. `tests/community-updates.test.cjs` checks that the bundled rules plus the change give exactly the converted rules, domain by domain.
 - **Storage.** The background keeps the change (`communityUpdate`) apart from its site hiding data (`communityUpdateCosmetic`), and uses it only while its `baseline`, the bundled snapshot hashes, matches the release. Generic hiding stays with the packaged stylesheets.
 - **Browser test.** `node tests/community-updates-browser.cjs chrome|edge|firefox` serves edited snapshots from loopback to a copy of the extension whose `community-info.json` lists that server.
+
+### Scriptlet filters
+
+`src/blocking/scriptlets.js` holds the parser, the choice of rules for a host and the page scripts. The background loads it (`importScripts`, and Firefox's background script list), as do My lists and the build's `scripts/compile-scriptlets.cjs`. Content scripts never load it.
+
+- **Parsing.** `parseBody('+js(name, args)')` returns `{ name, args }` with the canonical name, or `{ name: '', args: [] }` for `+js()`. Each scriptlet declares its positional arguments, how many are required, its named options and a check. Unknown names, `trusted-*`, forms that would only log, unknown options and arguments that fail their check throw.
+- **Rules.** `BlockAdsCosmetic.parse()` turns `site##+js(...)` and `site#@#+js(...)` lines into rules with a `scriptlet` field, which `resolve()` skips. Both list converters send those lines to `compileScriptlets()`, the build through the Node bridge. It keeps `{ include, exclude, exception, name, args }` rules under `scriptlets` in `rules/community-cosmetic.json` and counts the rest under `skipped`. `tests/cosmetic-rules.test.ps1` and `tests/community-convert.test.cjs` require the same JSON and counts from the same lines.
+- **Page code.** `select(rules, hostname)`, `run(calls)` and `boot(select, run, rules, paused)` reach pages as source text (`Function.prototype.toString`), so they must not use anything from the module's scope. `run()` reads the page's built-ins once, when it starts, and wraps natives with `Proxy`, which keeps their native `toString` text. Each call runs in its own `try`. Nothing in it evaluates an argument, builds code from one or makes a request.
+- **Starting early.** With the optional `userScripts` permission, and in Chrome and Edge Allow User Scripts, `syncScriptlets()` keeps one MAIN-world user script, `blockads-scriptlets`, at `document_start` in all frames.
+  - Its `matches` cover the hosts with scriptlet rules. Its `excludeMatches` cover paused sites, hiding pauses and the lists' `$elemhide` sites.
+  - Its code is `code(rules, paused)`: every rule, chosen per frame by the frame's own hostname, plus the paused sites for the `location.ancestorOrigins` check.
+  - The userscript manager touches only `blockads-user-*` registrations, so the two coexist.
+  - `syncScriptlets()` runs at the end of every successful settings transaction, and a `userScripts` permission change starts one. A failure is logged once, leaves no registration and never fails the transaction.
+- **Starting late.** Otherwise `content.js` adds `installScriptlets: true` to a document's first `GET_COSMETIC_STATE` request, and to the next one only if that request failed.
+  - The background picks the frame's calls with the same pause, cosmetic and `$elemhide` checks as site hiding, and asks the browser whether the registration exists.
+  - If it does not, `scripting.executeScript` runs `run(calls)` in the frame's `MAIN` world, with `injectImmediately` and the document ID where Chrome gives one.
+  - No new permission is needed: `scripting` and host access already exist.
+- **Tests.**
+  - `node --test tests/scriptlets.test.cjs` runs the parser and each scriptlet from its source text in a simulated page. `tests/background.test.cjs` covers both ways of starting, the settings and failures with a mocked `userScripts` API.
+  - The browser checks are in `tests/scriptlets-browser.cjs`. `node tests/browser-smoke.cjs <browser> --scriptlets-only` checks the late start without userscript access.
+  - `node tests/userscripts-browser.cjs chrome|edge --scriptlets-only` and `node tests/userscripts-firefox.cjs firefox --scriptlets-only` check the early start. That includes scriptlets that run before the page's first script and `remove-node-text` on an inline script.
+  - The full blocker suite and the `--layout-only` userscript suites include these checks.
 
 ### Publishing a reported-threat update
 

@@ -22,6 +22,7 @@ const threatStatusEl = byId("threatStatus");
 const toggleCosmetic = byId("toggleCosmetic");
 const toggleGenericCosmetic = byId("toggleGenericCosmetic");
 const toggleProcedural = byId("toggleProcedural");
+const toggleScriptlets = byId("toggleScriptlets");
 const toggleNotificationPrompts = byId("toggleNotificationPrompts");
 const toggleInstallPrompts = byId("toggleInstallPrompts");
 const toggleDeceptiveButtons = byId("toggleDeceptiveButtons");
@@ -142,6 +143,8 @@ function renderUI() {
   toggleInstallPrompts.checked = settings.deceptivePromptBlocking;
   toggleDeceptiveButtons.checked = settings.deceptiveButtonBlocking;
   toggleProcedural.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;
+  toggleScriptlets.checked = settings.scriptletFiltering;
+  toggleScriptlets.disabled = busy || !settings.enabled || !settings.cosmeticFiltering;
   toggleCommunity.checked = settings.rulesets.community_ruleset;
   const updated = communityStatus?.source === "update" && communityStatus.lists.length ? communityStatus : null;
   const lists = updated?.lists || communityInfo?.lists || [];
@@ -285,6 +288,7 @@ toggleThreats.addEventListener("change", () => updateSettings({ rulesets: { thre
 toggleCosmetic.addEventListener("change", () => updateSettings({ cosmeticFiltering: toggleCosmetic.checked }));
 toggleGenericCosmetic.addEventListener("change", () => updateSettings({ genericCosmeticFiltering: toggleGenericCosmetic.checked }));
 toggleProcedural.addEventListener("change", () => updateSettings({ proceduralFiltering: toggleProcedural.checked }));
+toggleScriptlets.addEventListener("change", () => updateSettings({ scriptletFiltering: toggleScriptlets.checked }));
 toggleNotificationPrompts.addEventListener("change", () => updateSettings({ notificationPromptBlocking: toggleNotificationPrompts.checked }));
 toggleInstallPrompts.addEventListener("change", () => updateSettings({ deceptivePromptBlocking: toggleInstallPrompts.checked }));
 toggleDeceptiveButtons.addEventListener("change", () => updateSettings({ deceptiveButtonBlocking: toggleDeceptiveButtons.checked }));
@@ -380,7 +384,7 @@ allowForm.addEventListener("submit", async event => {
 });
 retryButton.addEventListener("click", () => runCommand({ type: "GET_STATE" }));
 api.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "cosmeticPausedDomains", "customCosmeticFilters", "customNetworkFilters", "flagSuspects", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus", "communityStatus", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "promptAllowedDomains"].some(key => key in changes)) return;
+  if (area !== "local" || !["enabled", "rulesets", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "scriptletFiltering", "cosmeticPausedDomains", "customCosmeticFilters", "customNetworkFilters", "flagSuspects", "whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "threatStatus", "communityStatus", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "promptAllowedDomains"].some(key => key in changes)) return;
   if (busy) refreshPending = true;
   else void runCommand({ type: "GET_STATE" }, true);
 });

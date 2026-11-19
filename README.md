@@ -23,7 +23,7 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 ## Features
 
 - **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
-- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, cosmetic hiding, advanced page hiding and a visual element picker.
+- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, cosmetic hiding, advanced page hiding, scriptlet filters and a visual element picker.
 - **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. When its evidence expires it keeps blocking until a newer list replaces it, unless you ask it to switch itself off then. A newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
 - **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
 - **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
@@ -108,7 +108,7 @@ Module Engine is the only one of these extensions that both blocks ads and runs 
 
 The others go further in their own areas:
 
-- uBlock Origin keeps its lists current and adds scriptlets and dynamic filtering.
+- uBlock Origin adds dynamic filtering, many more scriptlets and its own lists that use them.
 - uBlock Origin Lite refreshes its rules with every store release.
 - Tampermonkey and Violentmonkey cover more of the userscript API and sync scripts through cloud storage.
 
@@ -120,11 +120,11 @@ Module Engine supports Chrome and Edge 121 and later, and Firefox 128 and later.
 
 On **19 November 2026** the current code passed:
 
-- **706 Node tests**;
-- **35 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
-- **801 Chrome, 801 Edge and 794 Firefox** blocker checks, plus **61 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
+- **733 Node tests**;
+- **41 cosmetic, 237 rule/import, 342 threat and 41 requested-host assertions**;
+- **826 Chrome, 826 Edge and 819 Firefox** blocker checks, plus **61 signed-update** and **26 filter-list update** checks in each browser, run offline with disposable profiles and local test pages.
 
-That run covered the Reported Threats expiry switch, the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
+That run covered scriptlet filters, started both before and after a page's own scripts, the Reported Threats expiry switch, the update-security fixes, automatic userscript updates, release packages (also loaded in each browser), filter-list updates from the EasyList publishers, Reported Threats being off by default, signed reported-threat updates and generic hiding registered as static stylesheets. See the [verification records](docs/VERIFICATION.md) for it and for earlier dated passes, each with its own scope and limits:
 
 - the 180-day reported-threat window and the website-theme detection fix;
 - Appearance;

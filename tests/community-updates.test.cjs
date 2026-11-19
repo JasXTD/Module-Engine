@@ -6,16 +6,17 @@ const { test } = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
 const root = path.resolve(__dirname, '..');
 require('../src/shared/shared.js');
+require('../src/blocking/scriptlets.js');
 require('../src/blocking/cosmetic.js');
 require('../src/blocking/community-lists.js');
 require('../src/background/community-updates.js');
-const { ModuleEngineCommunityUpdates: updates, BlockAdsCommunityLists: lists, BlockAdsCosmetic: cosmetic } = globalThis;
+const { ModuleEngineCommunityUpdates: updates, BlockAdsCommunityLists: lists, BlockAdsCosmetic: cosmetic, BlockAdsScriptlets: scriptlets } = globalThis;
 const fixture = require('./community-update-fixture.cjs');
 const json = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const protectedDomains = [...json('rules/reviewed-domains.json').domains.filter(item => item.category !== 'unverified').map(item => item.domain),
   ...json('rules/site-ad-hosts-info.json').map(item => item.domain)];
 const convert = texts => lists.convert(fixture.catalog.lists.map(list => ({ id: list.id, title: list.title, text: texts[list.id] })),
-  { protectedDomains, compileSelector: cosmetic.compileSelector });
+  { protectedDomains, compileSelector: cosmetic.compileSelector, parseScriptlet: scriptlets.parseBody });
 
 // What a set of rules does: one fact per merged domain, one per other rule.
 function facts(rules) {

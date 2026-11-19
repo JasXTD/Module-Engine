@@ -121,6 +121,26 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
     },
     action: { async setBadgeBackgroundColor() {}, async setBadgeText({ text }) { state.badge = text; } }
   };
+  // Browser userscript access for scriptlet filters: options.userScripts { granted, on, scripts }.
+  // `on` stands for Chrome's Allow User Scripts; while off, the API throws.
+  if (options.userScripts) {
+    Object.assign(state, { userScripts: clone(options.userScripts.scripts || []), userScriptsGranted: options.userScripts.granted !== false,
+      userScriptsOn: options.userScripts.on !== false });
+    const events = name => ({ addListener(fn) { (listeners[name] ||= []).push(fn); } });
+    api.permissions = { async contains({ permissions }) { await tick(); return permissions.every(item => item === 'userScripts' && state.userScriptsGranted); },
+      onAdded: events('permissionAdded'), onRemoved: events('permissionRemoved') };
+    const available = async key => { await fault(key); if (!state.userScriptsOn) throw new Error('The userScripts API is not available.'); };
+    api.userScripts = {
+      async getScripts({ ids } = {}) { await available('userScriptsRead'); return clone(state.userScripts.filter(script => !ids || ids.includes(script.id))); },
+      async register(scripts) {
+        await available('userScriptsRegister');
+        if (scripts.some(script => state.userScripts.some(item => item.id === script.id))) throw new Error('Duplicate script ID');
+        state.userScripts.push(...clone(scripts));
+      },
+      async update(scripts) { await available('userScriptsUpdate'); state.userScripts = state.userScripts.map(item => ({ ...item, ...clone(scripts.find(script => script.id === item.id) || {}) })); },
+      async unregister({ ids } = {}) { await available('userScriptsUnregister'); state.userScripts = state.userScripts.filter(script => ids && !ids.includes(script.id)); }
+    };
+  }
   if (options.noRuleFeedback) delete api.declarativeNetRequest.onRuleMatchedDebug;
   if (options.firefox) {
     api.runtime.getBrowserInfo = async () => ({ name: 'Firefox' });
@@ -2072,6 +2092,8 @@ test('a new install updates its filter lists as a change from the bundled rules,
   assert.ok(h.state.enabled.includes('community_ruleset'), 'the bundled ruleset stays on beside the change');
   const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
   assert.ok((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.includes('.fresh-ad-slot'), 'site hiding comes from the new lists');
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE', installScriptlets: true }, { ...frame, frameId: 0 })).scriptlets, true);
+  assert.deepEqual(h.state.executions.at(-1).args, [[{ name: 'set-constant', args: ['freshListFlag', 'true'] }]], 'so do scriptlet filters');
   const log = await h.send({ type: 'GET_LOG' });
   assert.ok(log.entries.some(entry => /^Installed EasyList 202611171200 and EasyList China \d+: 2 bundled rules switched off, 3 rules added$/.test(entry.message)));
   h.listeners.ruleMatched({ rule: { ruleId: 1000002, rulesetId: '_dynamic' }, request: { url: 'https://fresh-ad-server.example/a.js', type: 'script', initiator: 'https://news.example', tabId: 1 } });
@@ -2188,4 +2210,142 @@ test('a change the browser refuses is removed again, keeping the lists that work
   assert.deepEqual(h.state.storage.communityUpdate, installed);
   assert.deepEqual([h.state.dynamic, disabledRules(h)], [dynamic, disabled]);
   assert.equal(h.state.storage.protectionError, null, 'the restored lists are verified again');
+});
+
+// Scriptlet filters: per-frame starts without userscript access, the
+// document-start registration with it, and the settings both follow.
+const scriptletText = 'example.com,~shop.example.com##+js(set, adsBlocked, false)\nexample.com##+js(nowoif)\nnews.example.com#@#+js(nowoif)';
+const scriptletFrame = (url, top = url, extra = {}) => ({ id: 'test', url, frameId: 3, documentId: 'document-1', tab: { id: 1, url: top }, ...extra });
+const pageStarts = h => h.state.executions.filter(execution => execution.world === 'MAIN' && Array.isArray(execution.args));
+const scriptletRegistration = h => h.state.userScripts.find(script => script.id === 'blockads-scriptlets');
+const startScriptlets = async (h, frame = scriptletFrame('https://www.example.com/')) =>
+  (await h.send({ type: 'GET_COSMETIC_STATE', installScriptlets: true }, frame)).scriptlets === true;
+
+test('without userscript access, a frame\'s first hiding request starts its own scriptlets in its page world', async () => {
+  const h = harness({ customCosmeticFilters: scriptletText });
+  await h.ready;
+  assert.equal(await startScriptlets(h), true);
+  assert.deepEqual(pageStarts(h).map(({ target, injectImmediately, args }) => ({ target, injectImmediately, args })), [{ target: { tabId: 1, documentIds: ['document-1'] },
+    injectImmediately: true, args: [[{ name: 'set-constant', args: ['adsBlocked', 'false'] }, { name: 'no-window-open-if', args: [] }]] }]);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, scriptletFrame('https://www.example.com/'))).scriptlets, undefined, 'requests that do not ask start nothing');
+  // A frame follows its own host: here an exception removes one call. Firefox gives no document ID.
+  assert.equal(await startScriptlets(h, scriptletFrame('https://news.example.com/', 'https://www.example.com/', { documentId: undefined, frameId: 7 })), true);
+  assert.deepEqual([pageStarts(h).at(-1).target, pageStarts(h).at(-1).args], [{ tabId: 1, frameIds: [7] }, [[{ name: 'set-constant', args: ['adsBlocked', 'false'] }]]]);
+  assert.equal(await startScriptlets(h, scriptletFrame('https://shop.example.com/')), true);
+  assert.deepEqual(pageStarts(h).at(-1).args, [[{ name: 'no-window-open-if', args: [] }]], 'an excluded site keeps only the rules without that exclusion');
+  const count = pageStarts(h).length;
+  for (const frame of [scriptletFrame('https://other.test/'), scriptletFrame('https://www.example.com/', 'https://www.example.com/', { frameId: undefined })]) {
+    assert.equal(await startScriptlets(h, frame), false, frame.url);
+  }
+  assert.equal(pageStarts(h).length, count);
+  h.state.faults.executeScript = 1;
+  assert.equal(await startScriptlets(h), false, 'a refused injection is reported as not started');
+  assert.deepEqual((await h.send({ type: 'GET_STATE' })).scriptletStatus, { mode: 'late', rules: 2, error: '' });
+});
+
+test('scriptlets follow the master switch, pauses, cosmetic hiding and their own switch', async () => {
+  const h = harness({ customCosmeticFilters: scriptletText });
+  await h.ready;
+  assert.equal(await startScriptlets(h), true);
+  for (const [patch, reset, mode] of [[{ enabled: false }, { enabled: true }, 'off'], [{ cosmeticFiltering: false }, { cosmeticFiltering: true }, 'off'],
+    [{ scriptletFiltering: false }, { scriptletFiltering: true }, 'off'], [{ whitelistedDomains: ['example.com'] }, { whitelistedDomains: [] }, 'late'],
+    [{ cosmeticPausedDomains: ['www.example.com'] }, { cosmeticPausedDomains: [] }, 'late']]) {
+    const response = await h.send({ type: 'UPDATE_SETTINGS', patch });
+    assert.equal(response.ok, true);
+    assert.equal(response.scriptletStatus.mode, mode, JSON.stringify(patch));
+    assert.equal(await startScriptlets(h), false, JSON.stringify(patch));
+    assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: reset })).ok, true);
+  }
+  // A paused top page stops its frames' scriptlets, as it stops their hiding.
+  assert.equal((await h.send({ type: 'SET_SITE_PAUSED', domain: 'top.test', paused: true })).ok, true);
+  assert.equal(await startScriptlets(h, scriptletFrame('https://www.example.com/', 'https://top.test/')), false);
+  assert.equal(await startScriptlets(h), true);
+});
+
+test('list scriptlets apply while the community layer is on; list exceptions and $elemhide sites stop them', async () => {
+  const h = harness({ customCosmeticFilters: 'list.example##+js(set, mine, true)\nlist.example##+js(aopr, ownRule)' });
+  h.state.cosmeticText = JSON.stringify({ hide: {}, allow: {}, disableAll: ['reader.list.example'], scriptlets: [
+    { include: ['list.example'], exclude: [], exception: false, name: 'set-constant', args: ['fromList', 'true'] },
+    { include: ['list.example'], exclude: [], exception: true, name: 'set-constant', args: ['mine', 'true'] },
+    { include: ['quiet.list.example'], exclude: [], exception: true, name: '', args: [] }] });
+  await h.ready;
+  assert.equal(await startScriptlets(h, scriptletFrame('https://www.list.example/')), true);
+  assert.deepEqual(pageStarts(h).at(-1).args, [[{ name: 'set-constant', args: ['fromList', 'true'] }, { name: 'abort-on-property-read', args: ['ownRule'] }]],
+    'a list exception applies to the person\'s own rule, as list hiding exceptions do');
+  assert.equal(await startScriptlets(h, scriptletFrame('https://quiet.list.example/')), false);
+  assert.equal(await startScriptlets(h, scriptletFrame('https://reader.list.example/')), false);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { rulesets: { community_ruleset: false } } })).ok, true);
+  assert.equal(await startScriptlets(h, scriptletFrame('https://www.list.example/')), true);
+  assert.deepEqual(pageStarts(h).at(-1).args, [[{ name: 'set-constant', args: ['mine', 'true'] }, { name: 'abort-on-property-read', args: ['ownRule'] }]]);
+  assert.equal(await startScriptlets(h, scriptletFrame('https://reader.list.example/')), true, 'with the lists off, their exceptions are off too');
+});
+
+test('with userscript access, scriptlets are registered to start at document start, and frames are not started again', async () => {
+  const other = { id: 'blockads-user-1', matches: ['https://example.com/*'], js: [{ code: 'void 0' }], world: 'USER_SCRIPT', runAt: 'document_idle', allFrames: false };
+  const h = harness({ customCosmeticFilters: scriptletText, whitelistedDomains: ['paused.example'] }, 5000, undefined, {}, { userScripts: { scripts: [other] } });
+  await h.ready;
+  const { js, ...script } = scriptletRegistration(h);
+  assert.deepEqual(script, { id: 'blockads-scriptlets', matches: ['*://*.example.com/*'], excludeMatches: ['*://*.paused.example/*'],
+    runAt: 'document_start', allFrames: true, world: 'MAIN' });
+  assert.match(js[0].code, /^\(function boot\(select, run, rules, paused\)/);
+  assert.ok(js[0].code.includes('"adsBlocked"') && js[0].code.endsWith(', ["paused.example"]);\n'));
+  assert.deepEqual(h.state.userScripts.find(item => item.id === other.id), other, 'the userscript manager\'s own registrations are left alone');
+  assert.equal(await startScriptlets(h), false);
+  assert.equal(pageStarts(h).length, 0, 'the registration already ran them');
+  assert.deepEqual((await h.send({ type: 'GET_STATE' })).scriptletStatus, { mode: 'early', rules: 2, error: '' });
+  // The registered code runs the same calls in a page.
+  const context = vm.createContext({});
+  vm.runInContext('globalThis.window = globalThis; globalThis.location = { hostname: "www.example.com", ancestorOrigins: null }; ' +
+    'class EventTarget { addEventListener() {} } globalThis.EventTarget = EventTarget; class Document {} globalThis.Document = Document; ' +
+    'globalThis.document = new Document(); globalThis.open = () => ({}); ' + js[0].code, context);
+  assert.equal(vm.runInContext('JSON.stringify([window.adsBlocked, window.open("/x")])', context), '[false,null]');
+  // A change updates the registration in place; the switch removes it and puts it back.
+  assert.equal((await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: scriptletText, text: 'other.test##+js(aopr, detector)' })).ok, true);
+  assert.deepEqual(scriptletRegistration(h).matches, ['*://*.other.test/*']);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { scriptletFiltering: false } })).scriptletStatus.mode, 'off');
+  assert.equal(scriptletRegistration(h), undefined);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { scriptletFiltering: true } })).scriptletStatus.mode, 'early');
+  assert.ok(scriptletRegistration(h));
+  assert.equal(h.state.userScripts.length, 2);
+  // Allow User Scripts switched off in the browser: frames are started again.
+  h.state.userScriptsOn = false;
+  assert.equal(await startScriptlets(h, scriptletFrame('https://www.other.test/')), true);
+  assert.equal((await h.send({ type: 'GET_STATE' })).scriptletStatus.mode, 'late');
+});
+
+test('a registration the browser refuses leaves none, frames start as they load, and the failure is logged once', async () => {
+  const h = harness({ customCosmeticFilters: scriptletText }, 5000, undefined, {}, { userScripts: {} });
+  h.state.faults.userScriptsRegister = 2;
+  await h.ready;
+  assert.equal(scriptletRegistration(h), undefined);
+  const failed = await h.send({ type: 'GET_STATE' });
+  assert.deepEqual(failed.scriptletStatus, { mode: 'late', rules: 2, error: 'Injected userScriptsRegister failure' });
+  assert.equal(failed.ok, true, 'the verified network rules stand');
+  assert.equal(await startScriptlets(h), true);
+  const logged = (await h.send({ type: 'GET_LOG' })).entries.filter(entry => /^Scriptlet filters could not be registered/.test(entry.message));
+  assert.equal(logged.length, 1);
+  assert.equal((await h.send({ type: 'GET_STATE' })).scriptletStatus.mode, 'early', 'the next synchronization registers them');
+  assert.ok(scriptletRegistration(h));
+});
+
+test('granting userscript access moves scriptlets to the document-start registration', async () => {
+  const h = harness({ customCosmeticFilters: scriptletText }, 5000, undefined, {}, { userScripts: { granted: false } });
+  await h.ready;
+  assert.equal(scriptletRegistration(h), undefined);
+  h.state.userScriptsGranted = true;
+  for (const listener of h.listeners.permissionAdded) listener({ permissions: ['userScripts'] });
+  assert.equal((await h.send({ type: 'GET_STATE' })).scriptletStatus.mode, 'early');
+  assert.ok(scriptletRegistration(h));
+});
+
+test('the scriptlet switch defaults to on, accepts only true or false and is logged; invalid rules are refused atomically', async () => {
+  const h = harness({ customCosmeticFilters: 'example.com##.kept' });
+  assert.equal((await h.send({ type: 'GET_STATE' })).settings.scriptletFiltering, true);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { scriptletFiltering: 'no' } })).ok, false);
+  assert.equal((await h.send({ type: 'UPDATE_SETTINGS', patch: { scriptletFiltering: false } })).ok, true);
+  assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Scriptlet filters turned off'));
+  const refused = await h.send({ type: 'SAVE_COSMETIC_FILTERS', previous: 'example.com##.kept', text: 'example.com##.kept\nexample.com##+js(trusted-set-constant, a, 1)' });
+  assert.equal(refused.ok, false);
+  assert.match(refused.error, /Line 2: "trusted-set-constant" takes arbitrary values/);
+  assert.equal(h.state.storage.customCosmeticFilters, 'example.com##.kept');
 });

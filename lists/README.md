@@ -109,6 +109,17 @@ unscoped advanced blocking are counted and skipped. Browser-native CSS validatio
 runs again before a procedure is activated. The runtime still accepts schema 2
 bundles, which contain no advanced rules.
 
+`scriptlets` contains `{include, exclude, exception, name, args}` records for
+`site##+js(...)` and `site#@#+js(...)` filters; an exception with an empty `name`
+turns every scriptlet off on its sites. `scripts/compile-scriptlets.cjs` checks them
+offline with the extension's own parser in `src/blocking/scriptlets.js`, so a
+filter whose scriptlet or arguments the extension does not support is counted and
+skipped, as are scriptlet filters without a site. Names and arguments are data:
+the extension runs only its own packaged scriptlets with them. The bundled
+snapshots contain no scriptlet filters, so the bundle has an empty list and
+`scriptletRules` in `community-info.json` is 0. A bundle without the key has no
+scriptlets.
+
 Generic selectors are also compiled into two stylesheets that the extension
 registers for http(s) frames, instead of sending the list to every frame.
 `scripts/compile-generic-css.cjs`, run offline by the builder like the procedural

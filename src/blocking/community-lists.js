@@ -22,8 +22,9 @@
   // Module Engine's own ad, tracker and threat rulesets.
   const MAX_RULES = 29000;
   const DOMAIN_CHUNK = 1000;
-  // At most this many advanced (procedural) hiding candidates, as in the build.
+  // At most this many advanced (procedural) hiding and scriptlet candidates, as in the build.
   const MAX_PROCEDURAL = 5000;
+  const MAX_SCRIPTLETS = 5000;
   // .NET whitespace: Char.IsWhiteSpace for Trim(), and the same set for \s.
   const WS = '\\t-\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000';
   const TRIM = new RegExp(`^[${WS}]+|[${WS}]+$`, 'g');
@@ -74,16 +75,36 @@
   const conditionKey = (action, priority, condition) =>
     `${action}|${priority}|` + Object.keys(condition).sort().map(key => `${key}=${[condition[key]].flat().join(',')}`).join(';');
 
+  // A list's scriptlet filters, checked as a person's own are: unknown names and
+  // unsupported arguments are counted, never approximated. Shared with the build
+  // (scripts/compile-scriptlets.cjs).
+  function compileScriptlets(candidates, parseScriptlet) {
+    if (!Array.isArray(candidates) || candidates.length > MAX_SCRIPTLETS) throw new Error('Invalid scriptlet candidate count.');
+    const rules = [], skipped = {};
+    const skip = reason => { skipped[reason] = (skipped[reason] || 0) + 1; };
+    for (const rule of candidates) {
+      if (!rule || !Array.isArray(rule.include) || !Array.isArray(rule.exclude) || typeof rule.exception !== 'boolean' || typeof rule.body !== 'string') {
+        throw new Error('Invalid scriptlet candidate.');
+      }
+      let scriptlet;
+      try { scriptlet = parseScriptlet(rule.body); } catch { skip('scriptlet: unsupported scriptlet or arguments'); continue; }
+      if (!scriptlet.name && !rule.exception) { skip('scriptlet: no scriptlet named'); continue; }
+      rules.push({ include: rule.include, exclude: rule.exclude, exception: rule.exception, name: scriptlet.name, args: scriptlet.args });
+    }
+    return { rules, skipped };
+  }
+
   // lists: [{ id, title, text }]. protectedDomains: Module Engine's own blocked
-  // domains. compileSelector: BlockAdsCosmetic.compileSelector, for advanced hiding.
-  function convert(lists, { protectedDomains = [], compileSelector } = {}) {
-    if (!Array.isArray(lists) || typeof compileSelector !== 'function') throw new Error('Invalid community list input.');
+  // domains. compileSelector: BlockAdsCosmetic.compileSelector, for advanced
+  // hiding. parseScriptlet: BlockAdsScriptlets.parseBody, for scriptlet filters.
+  function convert(lists, { protectedDomains = [], compileSelector, parseScriptlet } = {}) {
+    if (!Array.isArray(lists) || typeof compileSelector !== 'function' || typeof parseScriptlet !== 'function') throw new Error('Invalid community list input.');
     const isProtected = protectedTest(protectedDomains);
     const protectedSorted = sorted(new Set(protectedDomains));
     const skipped = {};
     const skip = reason => { skipped[reason] = (skipped[reason] || 0) + 1; };
     const hide = new Map(), allow = new Map(), generic = new Set();
-    const scoped = [], candidates = [];
+    const scoped = [], candidates = [], scriptletCandidates = [];
     const disableGeneric = new Set(), disableAll = new Set();
     const groups = new Map(), singles = new Map();
     const headers = [];
@@ -105,14 +126,18 @@
         const cosmetic = COSMETIC.exec(line);
         if (cosmetic) {
           const [, domainText, sep] = cosmetic;
-          if (!['##', '#@#', '#?#', '#@?#'].includes(sep)) { skip('cosmetic: scriptlet or HTML filter'); continue; }
+          if (!['##', '#@#', '#?#', '#@?#'].includes(sep)) { skip('cosmetic: snippet or HTML filter'); continue; }
           const selector = trim(cosmetic[3]);
-          if (selector.length > 1000 || /[{}\x00-\x1f]|\/\*|\*\//.test(selector) || selector.startsWith('+js(')) {
+          // ##+js(...) and #@#+js(...) are scriptlet filters, checked after the lists are read.
+          const isScriptlet = (sep === '##' || sep === '#@#') && selector.startsWith('+js(');
+          if (!isScriptlet && (selector.length > 1000 || /[{}\x00-\x1f]|\/\*|\*\//.test(selector) || selector.startsWith('+js('))) {
             skip('cosmetic: procedural or unsafe selector'); continue;
           }
-          const isProcedure = sep.includes('?') || PROCEDURAL.test(selector);
+          const isProcedure = !isScriptlet && (sep.includes('?') || PROCEDURAL.test(selector));
           const isException = sep.includes('@');
           if (!domainText) {
+            // A scriptlet for every site, or an exception for every site, is not taken from a list.
+            if (isScriptlet) { skip('scriptlet: filter without a site'); continue; }
             if (isProcedure) { candidates.push({ include: [], exclude: [], selector, exception: isException }); continue; }
             if (sep === '##') generic.add(selector);
             else add(allow, '*', selector);
@@ -138,6 +163,7 @@
             const partial = 'cosmetic: wildcard or invalid site dropped from a kept rule';
             skipped[partial] = (skipped[partial] || 0) + dropped;
           }
+          if (isScriptlet) { scriptletCandidates.push({ include: domains, exclude: excluded, exception: isException, body: selector }); continue; }
           if (isProcedure) { candidates.push({ include: domains, exclude: excluded, selector, exception: isException }); continue; }
           if (excluded.length) { scoped.push({ include: domains, exclude: excluded, selector, exception: sep === '#@#' }); continue; }
           for (const domain of domains) add(sep === '##' ? hide : allow, domain, selector);
@@ -265,20 +291,22 @@
       try { procedural.push({ ...rule, procedure: compileSelector(rule.selector) }); }
       catch { skip('cosmetic: unsupported procedural syntax'); }
     }
+    const scriptlets = compileScriptlets(scriptletCandidates, parseScriptlet);
+    for (const [reason, count] of Object.entries(scriptlets.skipped)) skipped[reason] = (skipped[reason] || 0) + count;
     const toObject = map => Object.fromEntries(sorted(map.keys()).map(key => [key, sorted(map.get(key))]));
     const hideObject = toObject(hide);
     return {
       rules,
       groups: groupList,
       cosmetic: { schemaVersion: 3, hide: hideObject, allow: toObject(allow), generic: sorted(generic), scoped, procedural,
-        disableGeneric: sorted(disableGeneric), disableAll: sorted(disableAll) },
+        scriptlets: scriptlets.rules, disableGeneric: sorted(disableGeneric), disableAll: sorted(disableAll) },
       info: { lists: headers, networkRules: rules.length, groupedDomains, cosmeticSites: hide.size,
         cosmeticSelectors: Object.values(hideObject).reduce((sum, list) => sum + list.length, 0),
         exceptionsLimitedForBlockAdsRules: limitedExceptions, genericCosmeticSelectors: generic.size, scopedCosmeticRules: scoped.length,
-        proceduralCosmeticRules: procedural.length, cosmeticSiteExceptions: disableGeneric.size + disableAll.size,
+        proceduralCosmeticRules: procedural.length, scriptletRules: scriptlets.rules.length, cosmeticSiteExceptions: disableGeneric.size + disableAll.size,
         skipped: Object.fromEntries(Object.keys(skipped).sort().map(reason => [reason, skipped[reason]])) }
     };
   }
 
-  globalThis.BlockAdsCommunityLists = Object.freeze({ convert, communityHost, conditionKey, MAX_RULES, DOMAIN_CHUNK });
+  globalThis.BlockAdsCommunityLists = Object.freeze({ convert, compileScriptlets, communityHost, conditionKey, MAX_RULES, DOMAIN_CHUNK });
 })();

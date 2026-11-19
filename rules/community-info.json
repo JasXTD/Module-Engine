@@ -34,6 +34,7 @@
   "genericExceptedSites": 620,
   "genericPerFrameSelectors": 0,
   "proceduralCosmeticRules": 365,
+  "scriptletRules": 0,
   "cosmeticSiteExceptions": 348,
   "skipped": {
     "cosmetic: procedural or unsafe selector": 40,

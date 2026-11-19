@@ -156,3 +156,23 @@ test('a content script injected into an already-loaded page treats an absent com
   const page = load({ readyState: 'complete' });
   assert.equal(page.requests[0].message.staticGeneric, false);
 });
+
+test('a document asks for its scriptlets in its first answered request only, and again only after a failure', async () => {
+  const page = load();
+  assert.equal(page.requests[0].message.installScriptlets, true);
+  // DOMContentLoaded asks while the first request is still unanswered: no second start.
+  await page.loaded();
+  assert.equal(page.requests[1].message.installScriptlets, undefined);
+  await page.fail(0);
+  await page.reply({}, 1);
+  await page.changed();
+  assert.equal(page.requests[2].message.installScriptlets, true, 'the failed request is retried');
+  await page.reply({});
+  await page.changed();
+  await page.reply({});
+  // Restoring the page from the back-forward cache keeps the scriptlets it already runs.
+  const before = page.requests.length;
+  page.listeners['window-pageshow']({ isTrusted: true });
+  assert.ok(page.requests.length > before);
+  assert.ok(page.requests.slice(3).every(request => request.message.installScriptlets === undefined));
+});

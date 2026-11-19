@@ -265,7 +265,7 @@ table.cmp { width: 100%; min-width: 760px; border-collapse: collapse; font-size:
     <div class="feature-grid">
       <article class="feature">
         <h3>Ad and tracker filtering</h3>
-        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList and EasyList China snapshots add element hiding and advanced hiding rules. Add blocked or always-allowed domains, request filters and your own hiding rules, or pick an element on the page.</p>
+        <p>Network rules run in the browser's own rule engine (declarativeNetRequest). Bundled EasyList and EasyList China snapshots add element hiding and advanced hiding rules. Add blocked or always-allowed domains, request filters, your own hiding rules and scriptlet filters, or pick an element on the page.</p>
         <pre class="code"><code><span class="c-literal">||ads.example^</span><span class="c-key">$third-party</span>
 news.example<span class="c-key">##</span><span class="c-string">.ad-slot</span>
 news.example<span class="c-key">##</span><span class="c-string">div:has-text(Sponsored)</span></code></pre>
@@ -341,7 +341,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
           <tr><th scope="row">Filter lists</th><td class="me">EasyList and EasyList China snapshots, plus Module Engine's own reviewed ad, tracker and reported-threat lists</td><td>uBlock filters, EasyList, EasyPrivacy, Peter Lowe's list and many optional lists</td><td>uBlock filters, EasyList, EasyPrivacy and Peter Lowe's list by default; more can be turned on</td></tr>
           <tr><th scope="row">List updates</th><td class="me">Downloaded from their publishers as often as they ask and converted on your computer; generic hiding with each release</td><td>Downloaded automatically</td><td>With each extension release</td></tr>
           <tr><th scope="row">Element hiding</th><td class="me"><span class="yes">Yes</span>Including a supported subset of advanced (procedural) rules</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
-          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="no">No</span>Not from lists. Built-in page scripts handle YouTube player data, pop-ups and notification prompts</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Scriptlet filters</th><td class="me"><span class="yes">Yes</span>23 common scriptlets with uBlock Origin's names, from your own rules or a list that uses them; the bundled EasyList snapshots have none. They start before a page's scripts once userscript access is allowed</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Element picker</th><td class="me"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Userscripts</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
           <tr><th scope="row">Licence</th><td class="me">MIT</td><td>GPLv3</td><td>GPLv3</td></tr>
@@ -350,7 +350,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
     </div>
 
     <ul class="fits" aria-label="When another extension fits better">
-      <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, scriptlets and lists that keep themselves current.</span></li>
+      <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, many more scriptlets and its own lists that use them.</span></li>
       <li><strong>You run many scripts, rare GM APIs or several computers.</strong><span>Tampermonkey and Violentmonkey cover more of the userscript API and sync through cloud storage. Module Engine holds up to 32 scripts.</span></li>
       <li><strong>You need a store install.</strong><span>Violentmonkey, Tampermonkey, Greasemonkey and both uBlock Origins install from browser stores. Module Engine is MIT-licensed but still loads from its source folder.</span></li>
     </ul>
@@ -400,10 +400,10 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
 
     <h3 class="tests-title">Latest test run</h3>
     <dl class="tests">
-      <div><dt>unit tests</dt><dd>706</dd></div>
-      <div><dt>Chrome checks</dt><dd>801</dd></div>
-      <div><dt>Edge checks</dt><dd>801</dd></div>
-      <div><dt>Firefox checks</dt><dd>794</dd></div>
+      <div><dt>unit tests</dt><dd>733</dd></div>
+      <div><dt>Chrome checks</dt><dd>826</dd></div>
+      <div><dt>Edge checks</dt><dd>826</dd></div>
+      <div><dt>Firefox checks</dt><dd>819</dd></div>
     </dl>
     <p class="section-lede">19 November 2026. Browser checks run offline, with throwaway profiles and local test pages only. Dated records are in <code>docs/VERIFICATION.md</code> in the source folder.</p>
   </div>

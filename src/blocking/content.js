@@ -11,6 +11,9 @@
   let pageSuspended = false;
   let popupGuardRequested = false;
   let popupGuardRequesting = false;
+  // Scriptlet filters start once per document, from its first answered request.
+  let scriptletsAsked = false;
+  let scriptletsAsking = false;
   const proceduralShield = BlockAdsProcedural.create({
     document,
     isAlive: () => { try { return Boolean(api.runtime.id); } catch { return false; } },
@@ -213,11 +216,15 @@
     const version = ++evaluation;
     const installPopupGuard = !popupGuardRequested && !popupGuardRequesting;
     if (installPopupGuard) popupGuardRequesting = true;
+    const installScriptlets = !scriptletsAsked && !scriptletsAsking;
+    if (installScriptlets) scriptletsAsking = true;
     try {
       const state = await api.runtime.sendMessage({
-        type: "GET_COSMETIC_STATE", installPopupGuard, staticGeneric: staticSheets || (staticKnown ? false : null)
+        type: "GET_COSMETIC_STATE", installPopupGuard, ...(installScriptlets ? { installScriptlets: true } : {}),
+        staticGeneric: staticSheets || (staticKnown ? false : null)
       });
       if (state?.popupGuard) popupGuardRequested = true;
+      if (installScriptlets && state?.ok) scriptletsAsked = true;
       if (version !== evaluation) return;
       if (!state?.ok) throw new Error(state?.error || "No cosmetic filtering state returned.");
       youtubeFallback?.setEnabled(Boolean(state.ads));
@@ -239,6 +246,7 @@
       console.warn("[Module Engine] Cosmetic settings unavailable; reload this page:", error.message);
     } finally {
       if (installPopupGuard) popupGuardRequesting = false;
+      if (installScriptlets) scriptletsAsking = false;
     }
   }
 

@@ -98,11 +98,16 @@
             <p class="muted">Hide common ad containers across sites, using the bundled lists. Site exceptions are respected. Network blocking is independent.</p>
             <label class="check"><input type="checkbox" id="proceduralFiltering" disabled /> Advanced page hiding</label>
             <p class="muted">Match text labels, child elements and their containers. Stops and restores its changes if a page exceeds the scan limits; the activity log explains why.</p>
+            <label class="check"><input type="checkbox" id="scriptletFiltering" disabled /> Scriptlet filters</label>
+            <p class="muted">Run the small page scripts that scriptlet filters name, such as <code>example.com##+js(set-constant, adsBlocked, false)</code>, to stop anti-adblock checks, pop-up scripts and ad timers on those sites. Reload a page to apply a change.</p>
+            <p id="scriptletStatus" class="muted" role="status" aria-live="polite">Reading scriptlet status…</p>
+            <div class="toolbar" id="scriptletActions" hidden><button type="button" id="scriptletAccess" hidden>Allow userscript access</button><button type="button" id="scriptletDetails" hidden>Open extension details</button></div>
             <p id="cosmeticSummary" class="muted">Reading bundled coverage…</p>
             <details id="customFilterPanel">
               <summary>Custom hiding rules</summary>
               <p class="muted" id="filterHelp">One rule per line: <code>example.com##.sponsored-card</code> hides a selector; <code>example.com#@#.sponsored-card</code> exempts that exact selector. Sites include subdomains. Up to 500 rules. No network requests are added or allowed.</p>
-              <p class="muted">Advanced example: <code>example.com##.label:has-text(Sponsored):upward(1)</code> hides the label's parent. Literal text only; no regexes or scripts. Child matching supports <code>:has()</code> with a text filter inside it. Ancestor selection accepts 1–10 levels or a CSS selector within ten levels.</p>
+              <p class="muted">Advanced example: <code>example.com##.label:has-text(Sponsored):upward(1)</code> hides the label's parent. Literal text only; no regexes. Child matching supports <code>:has()</code> with a text filter inside it. Ancestor selection accepts 1–10 levels or a CSS selector within ten levels.</p>
+              <p class="muted">Scriptlet example: <code>example.com##+js(no-setTimeout-if, adblock)</code> stops that site's timers whose code mentions "adblock". <code>example.com#@#+js()</code> turns every scriptlet off there. The user guide lists the supported scriptlets and their arguments.</p>
               <label for="customFilters">Your cosmetic filters</label>
               <textarea id="customFilters" rows="7" maxlength="100000" spellcheck="false" autocapitalize="off" aria-describedby="filterHelp filterStatus" disabled></textarea>
               <div class="toolbar"><button id="saveFilters" type="button" disabled>Save filters</button><button id="discardFilters" type="button" disabled>Discard draft</button></div>
@@ -212,6 +217,7 @@
           </section>
     </main>
   </div>
+  <script src="../../blocking/scriptlets.js"></script>
   <script src="../../blocking/cosmetic.js"></script>
   <script src="../../blocking/network.js"></script>
   <script src="../../blocking/evidence.js"></script>

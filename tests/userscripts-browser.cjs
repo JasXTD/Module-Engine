@@ -50,7 +50,7 @@ function gmFloodFixture() {
   for (const file of files) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
   const evidence = { browser: browserName, temp, started: new Date().toISOString(), checks: [], hashes: {}, deniedRequests: 0, proxyErrors: [] };
   for (const file of files) evidence.hashes[file] = createHash('sha256').update(await fs.readFile(path.join(extension, file))).digest('hex');
-  if (!['--navigation-only', '--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
+  if (!['--navigation-only', '--network-log-only', '--layout-only', '--editor-only', '--install-only', '--matching-only', '--execution-only', '--mcp-only', '--page-only', '--scriptlets-only'].some(flag => process.argv.includes(flag))) await require('./userscripts-desktop-browser.cjs').installClipboardSink(extension, evidence);
   const aliasState = {};
   const { forwardMatching, runMatching } = require('./userscripts-matching-browser.cjs');
   const proxy = http.createServer((request, response) => { if (forwardMatching(request, response, aliasState, evidence)) return; evidence.deniedRequests++; response.writeHead(403); response.end('Offline test'); });
@@ -64,6 +64,7 @@ function gmFloodFixture() {
   await new Promise(resolve => secondOrigin.listen(0, '127.0.0.1', resolve));
   let port;
   const fixtures = http.createServer((request, response) => {
+    if (require('./scriptlets-browser.cjs').serve(request, response)) return;
     if (require('./network-log-browser.cjs').networkLogFixture(request, response, fixtureState)) return;
     if (pageFixture(request, response)) return;
     if (executionFixture(request, response)) return;
@@ -188,6 +189,21 @@ function gmFloodFixture() {
     await click('userscriptsEnabled'); await ready();
     check('Userscript module is independently enabled', (await send({ type: 'US_LIST' })).enabled);
     check('Local ad canary saved to blocker', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
+    // With browser access allowed, scriptlet filters are registered for document start.
+    // The fixture's frame comes from localhost, so the ad canary is lifted meanwhile.
+    const scriptlets = async () => {
+      check('Ad canary lifted for the scriptlet fixture frame', (await send({ type: 'REMOVE_CUSTOM_DOMAIN', domain: 'localhost' })).ok);
+      try {
+        await require('./scriptlets-browser.cjs').verify({ open: url => b.open(url), evaluate: (expression, target) => b.evaluate(expression, target),
+          wait: (expression, target) => until(expression, target), close: target => b.closePage(target), send, check: (condition, description) => check(description, condition),
+          origin: 'http://127.0.0.1:' + port, frameOrigin: 'http://localhost:' + port, early: true, listsUrl: 'chrome-extension://' + b.id + '/src/ui/lists/lists.html' });
+      } finally { check('Ad canary restored after the scriptlet checks', (await send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'localhost' })).ok); }
+    };
+    if (process.argv.includes('--scriptlets-only')) {
+      await scriptlets();
+      check('No uncaught errors during scriptlet checks, including the scripts they abort', !b.events.some(event => event.method === 'Runtime.exceptionThrown'));
+      evidence.success = true; evidence.focus = 'scriptlets-only'; return;
+    }
     if (process.argv.includes('--navigation-only')) {
       await require('./navigation-browser.cjs').runNavigation({ b, manager, send, check, until, browse, scriptSource, evidence, temp });
       evidence.success = true; evidence.focus = 'navigation-only'; return;
@@ -199,6 +215,7 @@ function gmFloodFixture() {
     if (process.argv.includes('--layout-only')) {
       await require('./userscripts-layout-browser.cjs').runLayout({ b, manager, send, check, until, browse, scriptSource, evidence, temp, click, port, aliasState, fixtureState,
         base:'http://127.0.0.1:'+port, other:'http://127.0.0.1:'+secondOrigin.address().port });
+      await scriptlets();
       evidence.success=true; evidence.focus='layout-only'; return;
     }
     if (process.argv.includes('--page-only')) {
@@ -232,6 +249,7 @@ function gmFloodFixture() {
     if(!process.argv.includes('--desktop-only')) {
       await runCompatibility({ b, manager, send, check, until, browse, scriptSource, temp, evidence });
       await require('./userscripts-helpers-browser.cjs').runHelpers({ b, manager, send, check, until, browse, scriptSource, evidence });
+      await scriptlets();
     }
     if (!process.argv.includes('--skip-desktop')) await require('./userscripts-desktop-browser.cjs').runDesktop({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState, click, base: 'http://127.0.0.1:' + port });
     if(process.argv.includes('--desktop-only')) { evidence.success=true; evidence.focus='desktop-only'; return; }

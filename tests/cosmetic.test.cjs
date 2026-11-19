@@ -136,3 +136,21 @@ test('procedural operators after a space or combinator are refused instead of hi
   assert.throws(() => compileSelector(String.raw`.a\ :has-text(x)`), /Incomplete CSS escape/);
   assert.deepEqual(compileSelector('.a:has-text(x) ').ops, [{ type: 'text', value: 'x' }], 'trailing whitespace is not a combinator');
 });
+
+test('custom scriptlet rules parse beside hiding rules, never become selectors and need the scriptlet parser', () => {
+  const text = 'example.com##.ad\nexample.com,~shop.example.com##+js(set, adsBlocked, false)\nexample.com#@#+js()\nnews.example.com#@#+js(aopr, detect)';
+  // Content scripts load no scriptlet parser; a page that must check scriptlet rules says so.
+  assert.throws(() => parse(text), /Line 2: Scriptlet filters cannot be checked here/);
+  require('../src/blocking/scriptlets.js');
+  const rules = parse(text);
+  assert.deepEqual(rules.map(rule => rule.scriptlet || null), [null, { name: 'set-constant', args: ['adsBlocked', 'false'] },
+    { name: '', args: [] }, { name: 'abort-on-property-read', args: ['detect'] }]);
+  assert.deepEqual(rules[1].exclude, ['shop.example.com']);
+  assert.equal(rules[2].exception, true);
+  const resolved = resolve({}, 'www.example.com', { custom: rules });
+  assert.deepEqual([resolved.siteSelectors, resolved.exceptions, resolved.proceduralRules], [['.ad'], [], []]);
+  for (const line of ['example.com##+js()', 'example.com#?#+js(set, a, true)', 'example.com##+js(unknown-scriptlet)', '##+js(set, a, true)', 'example.com##+js(set, a, maybe)']) {
+    assert.throws(() => parse('! comment\n' + line), /^Error: Line 2: /, line);
+  }
+  assert.equal(parse(Array(LIMITS.rules).fill('example.com##+js(nowoif)').join('\n')).length, LIMITS.rules, 'scriptlet rules count toward the same limit');
+});

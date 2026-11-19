@@ -501,6 +501,7 @@ if (require.main === module) (async () => {
     if (require('./buttons-browser.cjs').serve(req, res)) return;
     if (require('./prompts-browser.cjs').serve(req, res)) return;
     if (require('./website-theme-browser.cjs').serve(req, res)) return;
+    if (require('./scriptlets-browser.cjs').serve(req, res)) return;
     requests.push(req.url);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/html');
@@ -616,6 +617,17 @@ if (require.main === module) (async () => {
       await browser.closePage(page);
       check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
         'no uncaught errors during the focused Reddit fixture checks');
+      evidence.success = true; return;
+    }
+    // Without userscript access: scriptlet filters start as each frame loads.
+    const scriptlets = () => require('./scriptlets-browser.cjs').verify({ open: url => browser.open(url), evaluate: (expression, target) => browser.evaluate(expression, target),
+      wait: (expression, target) => until(browser, expression, target), close: target => browser.closePage(target), send, check: (condition, description) => check(condition, description),
+      origin: new URL(fixtureUrl).origin, frameOrigin: `http://localhost:${server.address().port}`, early: false, popup: browser.popup,
+      listsUrl: `${browserName === 'firefox' ? 'moz' : 'chrome'}-extension://${browser.id}/src/ui/lists/lists.html` });
+    if (process.argv.includes('--scriptlets-only')) {
+      await scriptlets();
+      check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || event.method === 'log.entryAdded' && event.params.level === 'error'),
+        'no uncaught errors during the focused scriptlet checks, including the scripts they abort');
       evidence.success = true; return;
     }
     check((await match('https://doubleclick.net/test.js')).matchedRules.length > 0, 'bundled ad request matches');
@@ -967,6 +979,7 @@ if (require.main === module) (async () => {
     await browser.closePage(listsPage);
     }
     await require('./procedural-browser.cjs')({ browser, page, send, state, until, check, root });
+    await scriptlets();
     await require('./reddit-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
     await require('./prompts-browser.cjs').verify({ browser, page, send, state, until, check, temporary });
     await require('./buttons-browser.cjs').verify({ browser, page, send, state, until, check, temporary });

@@ -3,6 +3,7 @@
 
 if (!globalThis.BlockAds && typeof importScripts === "function") importScripts("../shared/shared.js");
 if (!globalThis.BlockAdsFlags && typeof importScripts === "function") importScripts("../blocking/flags.js");
+if (!globalThis.BlockAdsScriptlets && typeof importScripts === "function") importScripts("../blocking/scriptlets.js");
 if (!globalThis.BlockAdsCosmetic && typeof importScripts === "function") importScripts("../blocking/cosmetic.js");
 if (!globalThis.BlockAdsNetwork && typeof importScripts === "function") importScripts("../blocking/network.js");
 if (!globalThis.BlockAdsModules && typeof importScripts === "function") importScripts("modules.js");
@@ -72,6 +73,8 @@ const DEFAULT_SETTINGS = {
   cosmeticFiltering: true,
   genericCosmeticFiltering: true,
   proceduralFiltering: true,
+  // Scriptlet filters (site##+js(...)) from the person's rules and the lists.
+  scriptletFiltering: true,
   notificationPromptBlocking: true,
   deceptivePromptBlocking: true,
   deceptiveButtonBlocking: true,
@@ -312,7 +315,8 @@ function loadCommunityCosmetic() {
     const saved = (await api.storage.local.get([COMMUNITY_COSMETIC_KEY]))[COMMUNITY_COSMETIC_KEY];
     if (saved?.id !== update.id || !siteHidingShape(saved)) return data;
     const { hide, allow, scoped, procedural, disableGeneric, disableAll } = saved;
-    return { ...data, hide, allow, scoped, procedural, disableGeneric, disableAll };
+    // An update installed by an earlier version has no scriptlets; the bundled ones stay.
+    return { ...data, hide, allow, scoped, procedural, disableGeneric, disableAll, scriptlets: Array.isArray(saved.scriptlets) ? saved.scriptlets : data.scriptlets };
   })().catch(error => {
     communityCosmetic = null;
     console.warn("[Module Engine] Site hiding rules unavailable:", error);
@@ -401,6 +405,112 @@ async function injectPopupFrame(sender, settings, active) {
     // Restricted browser pages may reject injection; cosmetic filtering and
     // the registered top-page guard must continue independently.
     console.warn("[Module Engine] Could not guard a pop-up frame:", error);
+    return false;
+  }
+}
+
+// Scriptlet filters (scriptlets.js): the person's own ##+js() rules and the
+// community lists'. With the browser's userscript access they are registered
+// to run at document start, before the page's own scripts. Without it, each
+// frame gets them when its content script first asks for its hiding rules,
+// which can be after the page's first scripts have run.
+const SCRIPTLET_SCRIPT_ID = "blockads-scriptlets";
+// The last synchronization: "early" (registered), "late" (started per frame)
+// or "off" (no scriptlet applies), with the number of rules and any error.
+let scriptletStatus = { mode: "off", rules: 0, error: "" };
+
+function scriptletRules(settings, data) {
+  if (!settings.enabled || !settings.cosmeticFiltering || !settings.scriptletFiltering) return [];
+  const listed = settings.rulesets.community_ruleset && Array.isArray(data?.scriptlets) ? data.scriptlets : [];
+  const own = customCosmeticRules(settings.customCosmeticFilters).filter(rule => rule.scriptlet)
+    .map(({ include, exclude, exception, scriptlet }) => ({ include, exclude, exception, name: scriptlet.name, args: scriptlet.args }));
+  return [...listed, ...own];
+}
+
+// The document-start registration for these rules, or null when none would
+// run. Each frame picks its rules by its own hostname. Paused sites and sites
+// whose lists turn all hiding off are excluded, as for site hiding.
+function scriptletRegistration(settings, data, rules) {
+  const hosts = [...new Set(rules.filter(rule => !rule.exception && rule.name).flatMap(rule => rule.include))];
+  if (!hosts.length) return null;
+  const paused = [...new Set([...settings.whitelistedDomains, ...settings.cosmeticPausedDomains])];
+  const excluded = [...paused, ...(settings.rulesets.community_ruleset ? data?.disableAll || [] : [])];
+  return { id: SCRIPTLET_SCRIPT_ID, matches: sitesPatterns(hosts), excludeMatches: sitesPatterns(excluded),
+    runAt: "document_start", allFrames: true, world: "MAIN", js: [{ code: BlockAdsScriptlets.code(rules, paused) }] };
+}
+const userScriptShape = script => ({ id: script.id, matches: [...(script.matches || [])].sort(), excludeMatches: [...(script.excludeMatches || [])].sort(),
+  runAt: script.runAt || "document_idle", allFrames: Boolean(script.allFrames), world: script.world || "USER_SCRIPT",
+  js: (script.js || []).map(source => source.code ?? source.file ?? "") });
+const nativeUserScript = ({ excludeMatches, ...script }) => ({ ...script, ...(excludeMatches.length ? { excludeMatches } : {}) });
+
+// The browser's userscript API while the person allows it, else null. Chrome
+// and Edge also need Allow User Scripts in the extension's details.
+async function scriptletAccess() {
+  try {
+    if (typeof api.permissions?.contains !== "function" || !(await api.permissions.contains({ permissions: ["userScripts"] }))) return null;
+    const native = api.userScripts;
+    if (typeof native?.getScripts !== "function" || typeof native.register !== "function" || typeof native.unregister !== "function") return null;
+    await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] });
+    return native;
+  } catch {
+    return null;
+  }
+}
+
+// Brings the registration in line with these settings. The userscript manager
+// owns only its own registrations (blockads-user-*). A failure leaves none, so
+// frames get their scriptlets late rather than twice or from stale rules.
+// `loaded` is the list hiding data the settings transaction already read.
+async function syncScriptlets(settings, loaded = null) {
+  const data = settings.enabled && settings.cosmeticFiltering && settings.scriptletFiltering && settings.rulesets.community_ruleset
+    ? loaded ?? await loadCommunityCosmetic() : {};
+  const rules = scriptletRules(settings, data);
+  const desired = scriptletRegistration(settings, data, rules);
+  const count = rules.filter(rule => !rule.exception).length;
+  const native = await scriptletAccess();
+  let error = "";
+  if (native) {
+    try {
+      const [current] = await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] });
+      if (!desired) { if (current) await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); }
+      else if (!current) await native.register([nativeUserScript(desired)]);
+      else if (!same(userScriptShape(current), userScriptShape(desired))) {
+        // Updating in place keeps document-start coverage while the rules change.
+        if (typeof native.update === "function") await native.update([{ ...nativeUserScript(desired), excludeMatches: desired.excludeMatches }]);
+        else { await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); await native.register([nativeUserScript(desired)]); }
+      }
+      const [after] = await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] });
+      if (desired ? !after || !same(userScriptShape(after), userScriptShape(desired)) : after) throw new Error("The browser did not apply the scriptlet registration.");
+    } catch (failure) {
+      error = failure?.message || String(failure);
+      try { await native.unregister({ ids: [SCRIPTLET_SCRIPT_ID] }); } catch { /* Nothing is registered. */ }
+      if (error !== scriptletStatus.error) await addLog({ kind: "error", message: `Scriptlet filters could not be registered to start before page scripts; they start as pages load instead. ${error}` });
+    }
+  }
+  scriptletStatus = { mode: !desired ? "off" : native && !error ? "early" : "late", rules: count, error };
+}
+
+// Whether the document-start registration is in place. The browser is asked
+// each time: Allow User Scripts can be switched off without telling the worker.
+async function scriptletsRegistered() {
+  const native = await scriptletAccess();
+  if (!native) return false;
+  try { return (await native.getScripts({ ids: [SCRIPTLET_SCRIPT_ID] })).length > 0; } catch { return false; }
+}
+
+// Starts a frame's scriptlets without the registration, in the frame's own
+// page world, using the browser's frame and document IDs.
+async function injectScriptlets(sender, calls) {
+  if (!calls.length || !Number.isInteger(sender.frameId)) return false;
+  try {
+    await api.scripting.executeScript({
+      target: { tabId: sender.tab.id, ...(typeof sender.documentId === "string" ? { documentIds: [sender.documentId] } : { frameIds: [sender.frameId] }) },
+      world: "MAIN", injectImmediately: true, func: BlockAdsScriptlets.run, args: [calls]
+    });
+    return true;
+  } catch (error) {
+    // Restricted pages refuse injection; the page's other protection continues.
+    console.warn("[Module Engine] Could not start scriptlet filters in a frame:", error);
     return false;
   }
 }
@@ -717,6 +827,7 @@ function describeChanges(before, after) {
   if (before.cosmeticFiltering !== after.cosmeticFiltering) changes.push(`Cosmetic hiding turned ${onOff(after.cosmeticFiltering)}`);
   if (before.genericCosmeticFiltering !== after.genericCosmeticFiltering) changes.push(`Generic cosmetic filtering turned ${onOff(after.genericCosmeticFiltering)}`);
   if (before.proceduralFiltering !== after.proceduralFiltering) changes.push(`Advanced page hiding turned ${onOff(after.proceduralFiltering)}`);
+  if (before.scriptletFiltering !== after.scriptletFiltering) changes.push(`Scriptlet filters turned ${onOff(after.scriptletFiltering)}`);
   if (before.notificationPromptBlocking !== after.notificationPromptBlocking) changes.push(`Notification request protection turned ${onOff(after.notificationPromptBlocking)}`);
   if (before.deceptivePromptBlocking !== after.deceptivePromptBlocking) changes.push(`Deceptive install prompt protection turned ${onOff(after.deceptivePromptBlocking)}`);
   if (before.deceptiveButtonBlocking !== after.deceptiveButtonBlocking) changes.push(`Deceptive button protection turned ${onOff(after.deceptiveButtonBlocking)}`);
@@ -995,7 +1106,8 @@ async function runCommunityCheck() {
     } else {
       // The 2.6 MiB bundled rules are read only once newer lists have arrived.
       const bundled = await loadBundledCommunity();
-      const converted = BlockAdsCommunityLists.convert(lists, { protectedDomains: bundled.protectedDomains, compileSelector: BlockAdsCosmetic.compileSelector });
+      const converted = BlockAdsCommunityLists.convert(lists, { protectedDomains: bundled.protectedDomains, compileSelector: BlockAdsCosmetic.compileSelector,
+        parseScriptlet: BlockAdsScriptlets.parseBody });
       outcome = { ...(await enqueue(() => installCommunityUpdate(bundled, converted, checkedAt))), interval };
     }
   } catch (error) {
@@ -1026,12 +1138,12 @@ async function installCommunityUpdate(bundled, converted, checkedAt) {
   }
   const previous = await api.storage.local.get([COMMUNITY_UPDATE_KEY, COMMUNITY_COSMETIC_KEY]);
   const id = checkedAt;
-  const { hide, allow, scoped, procedural, disableGeneric, disableAll } = converted.cosmetic;
+  const { hide, allow, scoped, procedural, scriptlets, disableGeneric, disableAll } = converted.cosmetic;
   const lists = versions.map(list => ({ ...list, source: bundled.info.lists.find(item => item.id === list.id)?.source ?? null }));
   await api.storage.local.set({
     [COMMUNITY_UPDATE_KEY]: { schemaVersion: 1, id, baseline: communityBaseline(bundled.info), lists, disable: change.disable, add: change.add,
       info: { networkRules: converted.info.networkRules, cosmeticSelectors: converted.info.cosmeticSelectors } },
-    [COMMUNITY_COSMETIC_KEY]: { id, hide, allow, scoped, procedural, disableGeneric, disableAll }
+    [COMMUNITY_COSMETIC_KEY]: { id, hide, allow, scoped, procedural, scriptlets, disableGeneric, disableAll }
   });
   communityCosmetic = null;
   const applied = await processRequest({ type: "GET_STATE" });
@@ -1055,7 +1167,7 @@ function enqueue(operation) {
 }
 
 function validateSettings(settings) {
-  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects", "communityListUpdates", "retireExpiredThreats"]) {
+  for (const key of ["enabled", "cosmeticFiltering", "genericCosmeticFiltering", "proceduralFiltering", "scriptletFiltering", "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "flagSuspects", "communityListUpdates", "retireExpiredThreats"]) {
     if (typeof settings[key] !== "boolean") throw new Error(`${key} must be true or false.`);
   }
   for (const id of RULESET_IDS) {
@@ -1069,6 +1181,7 @@ function validateSettings(settings) {
     cosmeticFiltering: settings.cosmeticFiltering,
     genericCosmeticFiltering: settings.genericCosmeticFiltering,
     proceduralFiltering: settings.proceduralFiltering,
+    scriptletFiltering: settings.scriptletFiltering,
     notificationPromptBlocking: settings.notificationPromptBlocking,
     deceptivePromptBlocking: settings.deceptivePromptBlocking,
     deceptiveButtonBlocking: settings.deceptiveButtonBlocking,
@@ -1456,8 +1569,8 @@ async function processRequest(message) {
     const desired = editSettings(loaded.settings, message);
     applyThreatExpiryChoice(threatStatus, desired);
     // The generic stylesheets' exclusions come from the bundled exceptions.
-    const cosmetic = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset &&
-      desired.genericCosmeticFiltering ? await loadCommunityCosmetic() : {};
+    const cosmeticLoaded = desired.enabled && desired.cosmeticFiltering && desired.rulesets.community_ruleset && desired.genericCosmeticFiltering;
+    const cosmetic = cosmeticLoaded ? await loadCommunityCosmetic() : {};
     // An installed update replaces the bundled threats_ruleset with its own
     // dynamic rules; expired ones are removed by applyRules.
     const updatedThreats = desired.enabled && desired.rulesets.threats_ruleset && threats.rules ? threats.rules : [];
@@ -1489,6 +1602,10 @@ async function processRequest(message) {
       await api.storage.local.set(commit);
     }
     await updateBadge(desired, Boolean(threatStatus.error));
+    // Scriptlets start per frame without the registration, so a failure here is
+    // reported in their status and never undoes the verified network rules.
+    try { await syncScriptlets(desired, cosmeticLoaded ? cosmetic : null); }
+    catch (error) { scriptletStatus = { ...scriptletStatus, error: error?.message || String(error) }; console.warn("[Module Engine] Scriptlet filters were not synchronized:", error); }
     for (const change of describeChanges(loaded.settings, desired)) await addLog({ kind: "event", message: change });
     // Not awaited: the check queues its own installation after this request.
     if (threatCheckDue(desired, threatStatus)) {
@@ -1497,7 +1614,7 @@ async function processRequest(message) {
     if (communityCheckDue(desired, communityStatus)) {
       void checkCommunityLists().catch(error => console.warn("[Module Engine] Filter-list update check failed:", error));
     }
-    return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus, communityStatus };
+    return { ok: true, settings: desired, quarantinedDomains: loaded.quarantined, threatStatus, communityStatus, scriptletStatus };
   } catch (error) {
     let rollbackFailed = false;
     if (beforeRules) {
@@ -1525,6 +1642,10 @@ api.runtime.onInstalled.addListener(details => {
   return reconcile();
 });
 api.runtime.onStartup.addListener(() => { void userscriptHost.start(); return reconcile(); });
+// Userscript access lets scriptlet filters start before the page's own scripts.
+for (const event of [api.permissions?.onAdded, api.permissions?.onRemoved]) {
+  event?.addListener(change => { if (change?.permissions?.includes("userScripts")) void reconcile(); });
+}
 api.alarms.onAlarm.addListener(alarm => {
   if ([THREAT_CHECK_ALARM, THREAT_EXPIRY_ALARM].includes(alarm.name)) return reconcile();
 });
@@ -1740,6 +1861,13 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Site rules follow this frame's own host, including a leading "www.".
       const frameHost = /^https?:\/\//i.test(sender.url || "") ? urlParts(sender.url).host : "";
       const data = enabled && frameHost && settings.rulesets.community_ruleset ? await loadCommunityCosmetic() : {};
+      // A frame's first request starts its scriptlets, unless the document-start
+      // registration already ran them. They follow the frame's own host, and
+      // its top page's pauses as hiding does.
+      const scriptletCalls = message.installScriptlets === true && enabled && frameHost &&
+        !(settings.rulesets.community_ruleset ? data.disableAll || [] : []).some(domain => domainMatches(frameHost, domain))
+        ? BlockAdsScriptlets.select(scriptletRules(settings, data), frameHost) : [];
+      const scriptlets = scriptletCalls.length > 0 && !(await scriptletsRegistered()) && await injectScriptlets(sender, scriptletCalls);
       // The frame reports whether the bundled generic stylesheets reached it once
       // their companion script has run. Until then, judge from the registration.
       const staticSheets = typeof message.staticGeneric === "boolean" ? message.staticGeneric
@@ -1755,7 +1883,7 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
         procedural: settings.proceduralFiltering, enabled: enabled && !cosmetic.disableAll, ads: active && settings.rulesets.ads_ruleset,
         notificationPrompts: promptsActive && settings.notificationPromptBlocking, installPrompts: promptsActive && settings.deceptivePromptBlocking,
         deceptiveButtons: promptsActive && settings.deceptiveButtonBlocking,
-        flag: active && settings.flagSuspects, ...(popupGuard ? { popupGuard: true } : {}) });
+        flag: active && settings.flagSuspects, ...(popupGuard ? { popupGuard: true } : {}), ...(scriptlets ? { scriptlets: true } : {}) });
     }).catch(() => sendResponse({ ok: false, error: "Could not read cosmetic filtering settings." }));
     return true;
   }

@@ -168,9 +168,18 @@
         }
         if (!include.length) throw new Error("Custom rules require at least one positive site scope.");
         const selector = match[3].trim();
-        const plan = compileSelector(selector, validateSelector);
-        rules.push({ include: [...new Set(include)], exclude: [...new Set(exclude)], selector, exception: match[2].includes('@'),
-          ...(plan.ops.length || match[2].includes('?') ? { procedure: plan } : {}) });
+        const scope = { include: [...new Set(include)], exclude: [...new Set(exclude)], selector, exception: match[2].includes('@') };
+        if (selector.startsWith('+js(')) {
+          // A scriptlet filter (scriptlets.js), not a selector. resolve() skips these.
+          if (match[2] !== '##' && match[2] !== '#@#') throw new Error('Scriptlet filters use ## or #@#.');
+          if (!globalThis.BlockAdsScriptlets) throw new Error('Scriptlet filters cannot be checked here.');
+          const scriptlet = BlockAdsScriptlets.parseBody(selector);
+          if (!scriptlet.name && !scope.exception) throw new Error('Name a scriptlet: site.example##+js(name, arguments).');
+          rules.push({ ...scope, scriptlet });
+        } else {
+          const plan = compileSelector(selector, validateSelector);
+          rules.push({ ...scope, ...(plan.ops.length || match[2].includes('?') ? { procedure: plan } : {}) });
+        }
         if (rules.length > LIMITS.rules) throw new Error(`At most ${LIMITS.rules} custom cosmetic rules are supported.`);
       } catch (error) { throw new Error(`Line ${index + 1}: ${error.message}`); }
     }
@@ -235,6 +244,7 @@
     const firstCustom = rules.length;
     rules.push(...custom);
     for (const [index, rule] of rules.entries()) {
+      if (rule.scriptlet) continue;
       if ((rule.include.length && !rule.include.some(domain => matches(host, domain))) ||
           rule.exclude.some(domain => matches(host, domain))) continue;
       if (rule.exception) {

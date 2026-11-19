@@ -1,8 +1,63 @@
 # Module Engine verification
 
-These are dated results, not a promise that every live site is blocked. The latest record covers the Reported Threats expiry switch on 19 November 2026, following the 18 November update security fixes, the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
+These are dated results, not a promise that every live site is blocked. The latest record covers scriptlet filters on 19 November 2026, following that day's Reported Threats expiry switch, the 18 November update security fixes, the automatic userscript changes and the same day's release packaging, filter-list updates, the change that turns Reported Threats off by default and adds signed list updates, the repair of the native pop-up and redirect suites, static generic hiding change, reported-threat evidence window change and website-theme detection and cosmetic wildcard-site section, the 17 November Appearance section, the 16 November same-tab MCP navigation change and direction-control review security fix. The 14 November records cover advanced GM options with regex/unwrap matching, userscript lifecycle hardening, YouTube registration/player fixes, read-only MCP network access, optional network metadata capture, the source layout, editor/development tools, optional localhost MCP, the user-requested domain block, deceptive play/download buttons, notification/install prompts and blocker regressions. The 13 November records cover the initial page-script compatibility, read-only MCP debugging, the cookie revocation fix, userscript execution compatibility and broader matching. Older records describe their own source snapshots and limitations.
 
 [Installation](../README.md#getting-started) · [User guide](USER_GUIDE.md) · [Development](DEVELOPMENT.md)
+
+## Scriptlet filters — 19 November 2026
+
+The user asked for scriptlet filters, the row the project site's comparison listed as missing. A scriptlet filter, `site##+js(name, arguments)`, runs a small built-in page script on that site to stop an anti-adblock check, a pop-up or an ad request, or to set a value the page reads. [Scriptlet filters](USER_GUIDE.md#scriptlet-filters)
+
+- **Supported.** 23 scriptlets with 31 aliases, under uBlock Origin's names and argument rules, in original code. They include `set-constant`, the abort scriptlets, `json-prune`, the timer and listener defusers, `no-fetch-if`, `no-xhr-if`, `no-window-open-if`, `remove-attr`, `remove-class`, `remove-node-text`, `noeval`, the storage and cookie setters, and `alert-buster`.
+- **Refused or counted.** The `trusted-*` scriptlets, forms that would only log, the `runAt`, `log` and `debug` options, scriptlets without a site, and Adblock Plus or AdGuard snippets. The editor refuses them with a line number; from a list they are counted.
+- **Sources.** Custom hiding rules, and lists: both converters now keep `##+js()` and `#@#+js()` filters instead of skipping them. The bundled EasyList and EasyList China contain none, so the rebuilt `rules/community-cosmetic.json` and `rules/community-info.json` gain only `"scriptlets": []` and `"scriptletRules": 0`. The build reproduces them byte for byte.
+- **Starting before page scripts.** With the optional `userScripts` permission, and in Chrome and Edge Allow User Scripts, the background keeps one MAIN-world user script, `blockads-scriptlets`, at document start in all frames. Each frame picks the rules for its own host. The userscript manager's registrations are untouched.
+- **Starting without that access.** A frame's first request for its hiding rules makes the background run the frame's scriptlets in its page world with `scripting.executeScript`. No new permission is needed.
+- **Controls.** A **Scriptlet Filters** switch in the popup and My lists, on by default. Scriptlets also stop with the master switch, Cosmetic Element Hiding, site and hiding pauses and `$elemhide` sites. My lists says how they start and offers userscript access.
+
+**733 Node tests** passed, 27 of them new:
+
+- 17 for the parser, rule choice and each scriptlet run from its source text in a simulated page, plus a static check that the page code uses only its own names and page globals;
+- 7 in the background, for both ways of starting, the settings, list scriptlets, a refused registration and granting access;
+- 1 each for custom rules, the content script's request and list conversion.
+
+A list-update test also checks that a scriptlet filter in a downloaded list reaches a frame. Seven deliberate faults were each caught:
+
+- ignoring exceptions when choosing calls;
+- starting frames the registration already ran;
+- asking on every request;
+- not following objects the page creates later;
+- skipping list scriptlets as before;
+- not checking a paused top page in the document-start code;
+- a module name leaking into the page code.
+
+The PowerShell suites passed 41 cosmetic (6 new), 237 rule/import, 342 threat and 41 requested-host assertions. The new cosmetic assertions convert the same scriptlet lines as the JavaScript converter's test and require the same JSON and counts.
+
+All browser suites ran offline, in temporary profiles with loopback fixtures. The packaged files match the committed ones.
+
+| Suite | Chrome 158 | Edge 157 | Firefox 160.0.1 |
+| --- | --- | --- | --- |
+| Blocker, with scriptlets started late | 826 | 826 | 819 |
+| Userscript layout, with scriptlets started early | 759 | 759 | 721 |
+| Signed threat-list updates | 61 | 61 | 61 |
+| Filter-list updates | 26 | 26 | 26 |
+| Release packages | 9 | 9 | 10 |
+
+Each blocker suite gained 25 scriptlet checks. In each layout suite, the scriptlet checks lift the ad canary that blocks `localhost`, so the fixture can embed a frame from there, and restore it afterwards. The focused `node tests/userscripts-firefox.cjs firefox --scriptlets-only` run passed 37 checks. Its two new ones first prove that Firefox's reader of uncaught script errors sees an ordinary page error, then that no aborted script reached it.
+
+- **Started early.** The scriptlets ran before the page's first inline script in each browser. `remove-node-text` emptied an inline script before it ran, and an aborted script's error reached neither the page's error handler nor the console. A cross-origin frame ran its own site's scriptlets before its first script, and none under a paused top page.
+- **Started late.** Every scriptlet still took effect on calls the page made afterwards. In Chrome and Edge, an error handler the page had set before the scriptlets started saw an aborted script's error, while Firefox's did not. The test now accepts either, and the guide says so.
+- **Found along the way.** `json-prune` left holes when it removed array items; it now takes them out. The guide first said Firefox lacks `location.ancestorOrigins`, but Firefox 160 provides it, so the paused-parent check works there too.
+- **Firefox blocker suite.** It stopped at the known flaky element-picker concurrent-exception step in its first three runs, each time after the scriptlet checks had passed. Three trees were then run alternately, each from a frozen copy:
+  - main without the change;
+  - this change;
+  - this change with the scriptlet checks left out of the run.
+
+  Each passed once in three. This change passed with 819 checks, and both runs without the scriptlet checks with 794. The failure rate does not depend on the change.
+- **Firefox release package.** Its first run timed out while starting WebDriver BiDi, before any check. Firefox had not updated itself and no test browser was left running. The second run passed.
+- **Same files.** The blocker, layout and focused runs recorded the packaged files they tested, and those match the committed files. The update and package suites started after the last change to a packaged file.
+
+Not verified: live sites and real anti-adblock scripts; lists that use scriptlets, since none is bundled; scriptlets in about:blank frames, which run none; a browser without `location.ancestorOrigins`.
 
 ## Reported Threats expiry switch — 19 November 2026
 

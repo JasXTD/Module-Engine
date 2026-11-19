@@ -34,6 +34,38 @@ let protectionVerified = false;
 let checkingThreats = false;
 let communityStatus = null;
 let checkingLists = false;
+// How scriptlet filters start ("early", "late" or "off"), from the background,
+// and whether the optional userscript permission is granted.
+let scriptletStatus = null;
+let userScriptsGranted = null;
+const isFirefox = /Firefox\//.test(navigator.userAgent);
+
+async function checkUserScriptAccess() {
+  try { userScriptsGranted = await api.permissions.contains({ permissions: ["userScripts"] }); } catch { userScriptsGranted = false; }
+  render();
+}
+function renderScriptlets() {
+  const status = scriptletStatus, count = status?.rules ?? 0;
+  const rules = `${count.toLocaleString()} scriptlet ${count === 1 ? "rule starts" : "rules start"}`;
+  let text, access = false, details = false;
+  if (!settings || !status) text = "Reading scriptlet status…";
+  else if (!settings.enabled || !settings.cosmeticFiltering) text = "Scriptlet filters are paused with page hiding.";
+  else if (!settings.scriptletFiltering) text = "Off: no scriptlet filter runs.";
+  else if (status.mode === "off") text = "No scriptlet filters are in use. Add one to your custom hiding rules below.";
+  else if (status.mode === "early") text = `${rules} before each page's own scripts.`;
+  else {
+    text = `${rules} as each page loads, which can be after the page's first scripts. `;
+    if (!userScriptsGranted) { text += "Allow userscript access so they start first."; access = true; }
+    else if (isFirefox) text += "This version of Firefox cannot start them first.";
+    else { text += "To start them first, turn on Allow User Scripts in this extension's details, then come back to this page."; details = true; }
+    if (status.error) text += ` The browser refused the early start: ${status.error}`;
+  }
+  byId("scriptletStatus").textContent = text;
+  byId("scriptletAccess").hidden = !access;
+  byId("scriptletDetails").hidden = !details;
+  byId("scriptletActions").hidden = !access && !details;
+  byId("scriptletAccess").disabled = byId("scriptletDetails").disabled = busy;
+}
 
 // The EasyList snapshots in use, bundled or updated, and the last check.
 function renderFilterLists() {
@@ -319,7 +351,9 @@ function render() {
   }
   byId("genericCosmetics").checked = Boolean(settings?.genericCosmeticFiltering);
   byId("proceduralFiltering").checked = Boolean(settings?.proceduralFiltering);
-  for (const id of ["genericCosmetics", "proceduralFiltering", "customFilters"]) byId(id).disabled = busy || !settings;
+  byId("scriptletFiltering").checked = Boolean(settings?.scriptletFiltering);
+  for (const id of ["genericCosmetics", "proceduralFiltering", "scriptletFiltering", "customFilters"]) byId(id).disabled = busy || !settings;
+  renderScriptlets();
   for (const id of ["saveFilters", "discardFilters"]) byId(id).disabled = busy || !settings || !filterDraftDirty;
   renderFlags(filter);
   for (const section of document.querySelectorAll("section[data-list]")) {
@@ -383,6 +417,7 @@ async function execute(message) {
     const response = await api.runtime.sendMessage(message);
     if (response?.settings) settings = response.settings;
     if (response?.communityStatus) communityStatus = response.communityStatus;
+    if (response?.scriptletStatus) scriptletStatus = response.scriptletStatus;
     if (response?.threatStatus) {
       threatStatus = response.threatStatus;
       void loadThreatEvidence();
@@ -456,6 +491,24 @@ byId("saveNetworkFilters").addEventListener("click", async () => {
 });
 byId("genericCosmetics").addEventListener("change", () => run({ type: "UPDATE_SETTINGS", patch: { genericCosmeticFiltering: byId("genericCosmetics").checked } }));
 byId("proceduralFiltering").addEventListener("change", () => run({ type: "UPDATE_SETTINGS", patch: { proceduralFiltering: byId("proceduralFiltering").checked } }));
+byId("scriptletFiltering").addEventListener("change", () => run({ type: "UPDATE_SETTINGS", patch: { scriptletFiltering: byId("scriptletFiltering").checked } }));
+byId("scriptletAccess").addEventListener("click", () => {
+  // Request directly in the trusted gesture, before any asynchronous work.
+  const permission = api.permissions.request({ permissions: ["userScripts"] });
+  void (async () => {
+    try { userScriptsGranted = await permission; } catch { userScriptsGranted = false; }
+    await run({ type: "GET_STATE" });
+  })();
+});
+byId("scriptletDetails").addEventListener("click", () => {
+  void api.tabs.create({ url: (/Edg\//.test(navigator.userAgent) ? "edge" : "chrome") + "://extensions/?id=" + api.runtime.id });
+});
+// Access changes in the browser's own pages; check again on return.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden || scriptletStatus?.mode !== "late") return;
+  void checkUserScriptAccess();
+  void run({ type: "GET_STATE" });
+});
 byId("customFilters").addEventListener("input", () => {
   filterDraftDirty = true;
   byId("filterStatus").textContent = "Unsaved draft. Save to apply it to open pages.";
@@ -475,7 +528,8 @@ byId("saveFilters").addEventListener("click", async () => {
     });
     if (await run({ type: "SAVE_COSMETIC_FILTERS", text, previous: filterDraftBase })) {
       filterDraftDirty = false;
-      byId("filterStatus").textContent = `Saved ${rules.length} rules. Open pages update automatically.`;
+      byId("filterStatus").textContent = `Saved ${rules.length} rules. Open pages update automatically` +
+        (rules.some(rule => rule.scriptlet) ? "; reload them to apply scriptlet filters." : ".");
       render();
     } else byId("filterStatus").textContent = byId("notice").textContent;
   } catch (error) { byId("filterStatus").textContent = error.message; }
@@ -506,10 +560,11 @@ api.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if ("adFlags" in changes) void refreshFlags();
   if (changes.protectionError?.newValue) { protectionVerified=false; render(); }
-  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "communityStatus", "communityListUpdates", "retireExpiredThreats", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
+  if ([...Object.keys(LISTS), "enabled", "rulesets", "threatStatus", "communityStatus", "communityListUpdates", "retireExpiredThreats", "genericCosmeticFiltering", "proceduralFiltering", "scriptletFiltering", "cosmeticFiltering", "customCosmeticFilters", "customNetworkFilters"].some(key => key in changes)) void run({ type: "GET_STATE" });
 });
 (async () => {
   render();
+  void checkUserScriptAccess();
   await loadThreatEvidence();
   try {
     const response = await fetch(api.runtime.getURL("rules/community-info.json"));

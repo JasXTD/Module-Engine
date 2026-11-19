@@ -53,6 +53,12 @@ function ConvertTo-ProceduralRules($Candidates) {
     return Invoke-CosmeticCompiler 'compile-procedural.cjs' (ConvertTo-Json -InputObject @($Candidates) -Depth 5 -Compress) 'Procedural'
 }
 
+# Scriptlet filters are checked by the extension's own parser; see compile-scriptlets.cjs.
+function ConvertTo-ScriptletRules($Candidates) {
+    if (!$Candidates.Count) { return @{ rules=@(); skipped=@{} } }
+    return Invoke-CosmeticCompiler 'compile-scriptlets.cjs' (ConvertTo-Json -InputObject @($Candidates) -Depth 5 -Compress) 'Scriptlet'
+}
+
 # Generic selectors become two static stylesheets that the extension registers
 # instead of sending them to every frame. Selectors some site exempts form the
 # second sheet, which is not injected on those sites; see compile-generic-css.cjs.
@@ -136,6 +142,7 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     $generic = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $scoped = [Collections.Generic.List[object]]::new()
     $proceduralCandidates = [Collections.Generic.List[object]]::new()
+    $scriptletCandidates = [Collections.Generic.List[object]]::new()
     $disableGeneric = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $disableAll = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $groups = [ordered]@{}
@@ -153,15 +160,20 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             $cosmetic = $CommunityCosmetic.Match($line)
             if ($cosmetic.Success) {
                 $sep = $cosmetic.Groups['sep'].Value
-                if ($sep -cnotin @('##','#@#','#?#','#@?#')) { & $skip 'cosmetic: scriptlet or HTML filter'; continue }
+                if ($sep -cnotin @('##','#@#','#?#','#@?#')) { & $skip 'cosmetic: snippet or HTML filter'; continue }
                 $domainText = $cosmetic.Groups['domains'].Value
                 $selector = $cosmetic.Groups['body'].Value.Trim()
-                if ($selector.Length -gt 1000 -or $selector -match '[{}\x00-\x1f]|/\*|\*/' -or $selector.StartsWith('+js(')) {
+                # ##+js(...) and #@#+js(...) are scriptlet filters, checked after the lists are read.
+                $scriptletBody = $selector.StartsWith('+js(', [StringComparison]::Ordinal)
+                $isScriptlet = ($sep -ceq '##' -or $sep -ceq '#@#') -and $scriptletBody
+                if (!$isScriptlet -and ($selector.Length -gt 1000 -or $selector -match '[{}\x00-\x1f]|/\*|\*/' -or $scriptletBody)) {
                     & $skip 'cosmetic: procedural or unsafe selector'; continue
                 }
-                $isProcedure = $sep.Contains('?') -or $CommunityProcedural.IsMatch($selector)
+                $isProcedure = !$isScriptlet -and ($sep.Contains('?') -or $CommunityProcedural.IsMatch($selector))
                 $isException = $sep.Contains('@')
                 if (!$domainText) {
+                    # A scriptlet for every site, or an exception for every site, is not taken from a list.
+                    if ($isScriptlet) { & $skip 'scriptlet: filter without a site'; continue }
                     if ($isProcedure) {
                         $proceduralCandidates.Add([ordered]@{ include=@(); exclude=@(); selector=$selector; exception=$isException })
                         continue
@@ -192,6 +204,10 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
                 if ($invalid -or ($dropped -and !$domains.Count)) { & $skip 'cosmetic: wildcard or invalid domain'; continue }
                 # Counted per dropped site, not per rule: the rule itself is kept.
                 if ($dropped) { $partial = 'cosmetic: wildcard or invalid site dropped from a kept rule'; $skipped[$partial] = $dropped + ($skipped[$partial] ?? 0) }
+                if ($isScriptlet) {
+                    $scriptletCandidates.Add([ordered]@{ include=@($domains); exclude=@($excluded); exception=$isException; body=$selector })
+                    continue
+                }
                 if ($isProcedure) {
                     $proceduralCandidates.Add([ordered]@{ include=@($domains); exclude=@($excluded); selector=$selector; exception=$isException })
                     continue
@@ -329,6 +345,8 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     foreach ($value in $hideMap.Values) { $selectorCount += $value.Count }
     $procedural = ConvertTo-ProceduralRules $proceduralCandidates
     foreach ($reason in $procedural.skipped.Keys) { $skipped[$reason] = ($skipped[$reason] ?? 0) + $procedural.skipped[$reason] }
+    $scriptlets = ConvertTo-ScriptletRules $scriptletCandidates
+    foreach ($reason in $scriptlets.skipped.Keys) { $skipped[$reason] = ($skipped[$reason] ?? 0) + $scriptlets.skipped[$reason] }
     $skippedSorted = [ordered]@{}
     foreach ($key in ($skipped.Keys | Sort-Object)) { $skippedSorted[$key] = $skipped[$key] }
     $allowMap = & $toMap $allow
@@ -336,7 +354,7 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
     return @{
         Rules = $rules
         Cosmetic = [ordered]@{ schemaVersion=3; hide=$hideMap; allow=$allowMap; generic=@($generic); scoped=@($scoped); procedural=@($procedural.rules)
-            disableGeneric=@($disableGeneric); disableAll=@($disableAll); genericStatic=$sheets.Static }
+            scriptlets=@($scriptlets.rules); disableGeneric=@($disableGeneric); disableAll=@($disableAll); genericStatic=$sheets.Static }
         Stylesheets = $sheets.Stylesheets
         Info = [ordered]@{ schemaVersion = 1; lists = $infoLists; networkRules = $rules.Count; groupedDomains = $groupedHosts
             cosmeticSites = $hideMap.Count; cosmeticSelectors = $selectorCount; exceptionsLimitedForBlockAdsRules = $limitedExceptions
@@ -345,6 +363,7 @@ function ConvertFrom-CommunityLists($Lists, [string[]]$ProtectedDomains = @()) {
             genericExceptedSelectors = $sheets.Counts.excepted; genericExceptedSites = $sheets.Counts.exceptedSites
             genericPerFrameSelectors = $sheets.Counts.perFrame
             proceduralCosmeticRules = $procedural.rules.Count
+            scriptletRules = $scriptlets.rules.Count
             cosmeticSiteExceptions = $disableGeneric.Count + $disableAll.Count
             skipped = $skippedSorted }
     }
@@ -376,7 +395,7 @@ function ConvertTo-CosmeticJson($Cosmetic) {
         $lines = foreach ($key in $Cosmetic[$name].Keys) { '    ' + (ConvertTo-Json -InputObject $key -Compress) + ': ' + (ConvertTo-Json -InputObject @($Cosmetic[$name][$key]) -Compress) }
         "  `"$name`": {" + ($lines ? "`n" + ($lines -join ",`n") + "`n  }" : '}')
     }
-    $extra = foreach ($name in @('schemaVersion','generic','scoped','procedural','disableGeneric','disableAll','genericStatic')) {
+    $extra = foreach ($name in @('schemaVersion','generic','scoped','procedural','scriptlets','disableGeneric','disableAll','genericStatic')) {
         '  "' + $name + '": ' + (ConvertTo-Json -InputObject $Cosmetic[$name] -Compress -Depth 32)
     }
     return "{`n" + (@($sections) + @($extra) -join ",`n") + "`n}"
