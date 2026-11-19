@@ -5,12 +5,16 @@
   'use strict';
   const api = globalThis.browser || chrome, protocol = ModuleEngineDebugProtocol, review = BlockAdsScriptReview, el = id => document.getElementById(id);
   const TITLE = document.title, ACTIONS = { apply: 'apply', applyEnable: 'apply_enable', reject: 'reject', revert: 'revert' };
+  // Firefox also requires consent for information sent to another local app.
+  // Keep this in sync with gecko.data_collection_permissions.optional.
+  const MCP_DATA = ['browsingActivity', 'websiteContent', 'technicalAndInteraction'];
   let session = null, connecting = false, reads = 0, deciding = null;
+  let consentReady = false, dataConsent = false, disposed = false;
   const proposals = new Map(), nodes = new Map(), bidiReviews = new Map();
   function notice(message, error = false) { el('status').textContent = message; el('status').className = 'notice' + (error ? ' error' : ''); }
   const changesApproved = () => Boolean(session?.ready && session.scopes.includes(protocol.CHANGES));
   function render() {
-    el('connect').disabled = connecting || Boolean(session);
+    el('connect').disabled = !consentReady || disposed || connecting || Boolean(session);
     el('disconnect').disabled = !session && !connecting;
     el('pairingCode').disabled = el('scopes').disabled = connecting || Boolean(session);
     el('connectionBadge').textContent = session?.ready ? (changesApproved() ? 'Connected · changes need your review' : 'Connected · read-only') : connecting ? 'Connecting' : 'Disconnected';
@@ -18,6 +22,12 @@
     el('proposalsCard').hidden = !changesApproved() && !proposals.size;
   }
   async function post(current, route, body, keepalive = false) {
+    // Check again before each delivery, including a read that completed after
+    // permission revocation. The best-effort disconnect carries no read data.
+    if (!keepalive && dataConsent) {
+      if (!await api.permissions.contains({ data_collection: MCP_DATA })) throw new Error('Firefox data sharing permission was removed. Connect again to continue.');
+      if (session !== current || disposed || current.controller.signal.aborted) throw new Error('Debug connection ended.');
+    }
     const response = await fetch(current.origin + route, { method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + current.token }, body: JSON.stringify(body),
       signal: keepalive ? AbortSignal.timeout(1000) : current.controller.signal, keepalive });
@@ -192,14 +202,22 @@
   }
   el('proposals').addEventListener('click', decide); el('decisions').addEventListener('click', decide);
   el('connectForm').addEventListener('submit', async event => {
-    event.preventDefault(); if (connecting || session || !event.isTrusted) return;
+    event.preventDefault(); if (!consentReady || disposed || connecting || session || !event.isTrusted) return;
     let current;
     try {
       const code = protocol.pairing(el('pairingCode').value.trim());
       const requested = ['status', ...(el('shareScripts').checked ? ['scripts'] : []), ...(el('shareLogs').checked ? ['logs'] : []),
         ...(el('shareNetwork').checked ? ['network'] : []), ...(el('shareChanges').checked ? [protocol.CHANGES] : [])];
       current = { ...code, controller: new AbortController(), pending: new Map(), scopes: [] };
-      session = current; connecting = true; render(); notice('Connecting to the local MCP server…');
+      session = current; connecting = true; render();
+      if (dataConsent) {
+        notice('Allow optional data sharing in Firefox to connect to your MCP client.');
+        // Called in the trusted submit handler before any await so Firefox
+        // retains user activation. Denial and cancellation send no browser data.
+        if (!await api.permissions.request({ data_collection: MCP_DATA })) throw new Error('Data sharing was not granted. MCP remains disconnected.');
+        if (session !== current || disposed) return;
+      }
+      notice('Connecting to the local MCP server…');
       current.timer = setTimeout(() => { if (session === current) disconnect('Connection timed out. Get a new pairing code and try again.', true); }, 8000);
       const paired = await post(current, '/pair', { scopes: requested, browser: /Edg\//.test(navigator.userAgent) ? 'Edge' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : 'Chromium' });
       if (session !== current) return;
@@ -239,6 +257,15 @@
     } catch (error) { if (!current || session === current) disconnect(error.message, true); }
   });
   el('disconnect').addEventListener('click', () => disconnect());
-  addEventListener('pagehide', () => disconnect());
+  api.permissions.onRemoved.addListener(removed => {
+    if (dataConsent && removed.data_collection?.some(type => MCP_DATA.includes(type)))
+      disconnect('Firefox data sharing permission was removed. Connect again to continue.', true);
+  });
+  addEventListener('pagehide', () => { disposed = true; disconnect(); });
+  // Detect before a click; awaiting this inside submit would lose activation.
+  api.permissions.getAll().then(permissions => {
+    if (disposed) return;
+    dataConsent = Array.isArray(permissions.data_collection); consentReady = true; render();
+  }).catch(() => { if (!disposed) notice('Browser permissions could not be checked. Reload this page before connecting.', true); });
   render();
 })();

@@ -167,7 +167,7 @@ function build(args) {
   for (const { name, archive } of results) fs.writeFileSync(path.join(out, name), archive);
   fs.writeFileSync(path.join(out, 'SHA256SUMS'), results.map(({ name, sha256 }) => `${sha256}  ${name}`).join('\n') + '\n');
   for (const { name, files: count, archive } of results) console.log(`${path.join(path.relative(root, out) || out, name)}: ${count} files, ${(archive.length / 1048576).toFixed(1)} MiB`);
-  if (!updateUrl) console.log('The Firefox package has no update_url; pass --firefox-update-url so a signed copy can update itself.');
+  if (!updateUrl) console.log('The Firefox package uses AMO-managed updates. Use --firefox-update-url only for self-distribution.');
   return results;
 }
 

@@ -66,6 +66,18 @@ test('archives are reproducible and SHA256SUMS lists them', () => {
   assert.equal(first.read('SHA256SUMS').toString('utf8'), Object.values(names).map(name => `${sha(first.read(name))}  ${name}`).join('\n') + '\n');
 });
 
+test('the default Firefox upload uses AMO updates and declares optional MCP data sharing', () => {
+  const out = temp('module-engine-listed-');
+  run(script, 'build', '--out', out);
+  const entries = packaging.unzip(fs.readFileSync(path.join(out, names.firefox)));
+  const gecko = JSON.parse(entries.get('manifest.json')()).browser_specific_settings.gecko;
+  assert.equal(gecko.update_url, undefined);
+  assert.deepEqual(gecko.data_collection_permissions, { required: ['none'],
+    optional: ['browsingActivity', 'websiteContent', 'technicalAndInteraction'] });
+  assert.ok(entries.has('src/ui/backup/backup.html'));
+  assert.ok(![...entries.keys()].some(file => /^(\.claude|\.artifacts|verification|tests|scripts)\//.test(file)));
+});
+
 test('the archive format round-trips and its checksums are standard CRC-32', () => {
   const entries = [{ name: 'b/two.txt', data: Buffer.from('second') }, { name: 'a.txt', data: Buffer.alloc(0) }, { name: 'manifest.json', data: Buffer.from('{}') }];
   const read = packaging.unzip(packaging.zip(entries));

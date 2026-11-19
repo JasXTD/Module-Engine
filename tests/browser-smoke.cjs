@@ -377,6 +377,10 @@ async function firefox(extension, profile, denyPort, { ruleFeedback = true, down
               node.querySelectorAll('moz-checkbox').length === 0 && /clipboard/i.test(text) && /notifications/i.test(text) && /download/i.test(text) && button && !button.disabled) {
             button.click(); info.accepted = true;
           }
+          if (${Boolean(accept && kind === 'mcp-data')} && panel.state === 'open' && text.includes('Module Engine') &&
+              /requests additional data collection/i.test(text) && /browsing activity|web ?site content|technical and interaction data/i.test(text) && button && !button.disabled) {
+            button.click(); info.accepted = true;
+          }
           return JSON.stringify(info);
         })()`));
       },

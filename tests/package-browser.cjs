@@ -5,7 +5,7 @@
    Firefox. Checks the installed manifest, the verified protection state, native
    blocking and the extension pages.
 
-   node tests/package-browser.cjs [chrome|edge|firefox] [--headed]
+   node tests/package-browser.cjs [chrome|edge|firefox] [--headed] [--listed]
 
    Node 22+; no packages. */
 'use strict';
@@ -22,11 +22,13 @@ const { unzip } = require('../scripts/package-extension.cjs');
 const root = path.resolve(__dirname, '..');
 const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const UPDATE_URL = 'https://raw.githubusercontent.com/owner/Module-Engine/main/updates/firefox/updates.json';
+const listed = process.argv.includes('--listed');
 
 (async () => {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-package-${browserName}-`));
   const dist = path.join(temporary, 'dist'), extension = path.join(temporary, 'extension');
-  execFileSync(process.execPath, [path.join(root, 'scripts/package-extension.cjs'), 'build', '--out', dist, '--firefox-update-url', UPDATE_URL], { stdio: 'pipe' });
+  execFileSync(process.execPath, [path.join(root, 'scripts/package-extension.cjs'), 'build', '--out', dist,
+    ...(listed ? [] : ['--firefox-update-url', UPDATE_URL])], { stdio: 'pipe' });
   const manifest = JSON.parse(await fs.readFile(path.join(root, 'manifest.json'), 'utf8'));
   const target = browserName === 'firefox' ? 'firefox' : 'chromium';
   const archive = path.join(dist, `module-engine-${manifest.version}-${target}.zip`);
@@ -64,8 +66,12 @@ const UPDATE_URL = 'https://raw.githubusercontent.com/owner/Module-Engine/main/u
     } else {
       // Firefox reports every manifest field it knows, with null for absent ones.
       check(installed.background.service_worker == null && installed.minimum_chrome_version == null, 'the Firefox package carries no Chrome keys');
-      check(installed.browser_specific_settings.gecko.update_url === UPDATE_URL && installed.browser_specific_settings.gecko.id === manifest.browser_specific_settings.gecko.id,
-        'the Firefox package keeps its add-on ID and names its update address');
+      check((listed ? installed.browser_specific_settings.gecko.update_url == null : installed.browser_specific_settings.gecko.update_url === UPDATE_URL) &&
+        installed.browser_specific_settings.gecko.id === manifest.browser_specific_settings.gecko.id,
+        'the Firefox package keeps its add-on ID and uses the selected update channel');
+      check(JSON.stringify(installed.browser_specific_settings.gecko.data_collection_permissions.required) === '["none"]' &&
+        installed.browser_specific_settings.gecko.data_collection_permissions.optional.length === 3,
+        'Firefox recognizes the optional MCP data declaration');
     }
     const state = await send({ type: 'GET_STATE' });
     check(state.ok && !state.error, 'the packaged background verifies its protection state');
@@ -80,6 +86,10 @@ const UPDATE_URL = 'https://raw.githubusercontent.com/owner/Module-Engine/main/u
     const manager = await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/manager/manager.html')"));
     await until('Modules & scripts', () => browser.evaluate("document.readyState === 'complete' && document.querySelectorAll('h1, h2').length > 0", manager));
     check(true, 'Modules & scripts loads from the package');
+    const backup = await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/backup/backup.html')"));
+    await until('Backup & restore', () => browser.evaluate("document.readyState === 'complete' && Boolean(document.querySelector('h1'))", backup));
+    const exported = await browser.evaluate("(globalThis.browser||chrome).runtime.sendMessage({type:'BACKUP_EXPORT'})", backup);
+    check(exported.ok && JSON.parse(exported.text).format === 'module-engine-backup', 'the released Backup page exports through its authorized background');
     check(!browser.events.some(event => event.method === 'Runtime.exceptionThrown' || (event.method === 'log.entryAdded' && event.params.level === 'error')),
       'no uncaught errors in the extension pages');
     evidence.success = true;

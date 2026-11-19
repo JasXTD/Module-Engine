@@ -3,6 +3,18 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { processClient } = require('./mcp-client.cjs');
+async function approveMCPData(b, page, evidence) {
+  if (!b.userscriptPermissionPrompt) return;
+  const permission = "browser.permissions.contains({data_collection:['browsingActivity','websiteContent','technicalAndInteraction']})";
+  for (let i = 0; i < 100; i++) {
+    if (await b.evaluate(permission, page)) return;
+    const prompt = await b.userscriptPermissionPrompt(true, 'mcp-data');
+    evidence.mcpDataPrompt = prompt;
+    if (prompt.accepted) return;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  throw new Error('The owned Firefox MCP data consent prompt could not be approved: ' + JSON.stringify(evidence.mcpDataPrompt));
+}
 async function runMCP({ b, manager, send, check, until, browse, scriptSource, evidence, temp, fixtureState,
   transport = process.argv.includes('--mcp-http') ? 'http' : 'stdio' }) {
   const serverHashes = {};
@@ -30,6 +42,7 @@ async function runMCP({ b, manager, send, check, until, browse, scriptSource, ev
     (evidence.mcpPairingWaits ||= []).push({ transport, waits });
     await b.evaluate('(()=>{document.getElementById("pairingCode").value=' + JSON.stringify(connection.pairingCode) + ';document.getElementById("shareScripts").checked=' + scopes.includes('scripts') + ';document.getElementById("shareLogs").checked=' + scopes.includes('logs') + ';document.getElementById("shareNetwork").checked=' + scopes.includes('network') + ';document.getElementById("shareChanges").checked=' + scopes.includes('changes') + ';})()', page);
     await click('connect', page);
+    await approveMCPData(b, page, evidence);
     await until('document.getElementById("connectionBadge").textContent.includes("Connected")', page);
     check('MCP pairing clears its secret from the field', await b.evaluate('document.getElementById("pairingCode").value===""', page));
   };
@@ -48,6 +61,13 @@ async function runMCP({ b, manager, send, check, until, browse, scriptSource, ev
     await b.evaluate('document.getElementById("connectForm").dispatchEvent(new Event("submit",{bubbles:true,cancelable:true}))', page);
     check('Synthetic page submit does not connect', (await client.tool('connection')).connected === false);
     await pair(page);
+    if (b.userscriptPermissionPrompt) {
+      await b.evaluate("browser.permissions.remove({data_collection:['browsingActivity']})", page);
+      await until('document.getElementById("connectionBadge").textContent==="Disconnected"', page);
+      check('Revoking Firefox data consent disconnects MCP and refuses browser reads', (await client.tool('status')).ok === false);
+      await pair(page);
+      check('Explicit Firefox consent reapproval reconnects MCP', (await client.tool('status')).ok);
+    }
     const before = await b.evaluate('(globalThis.browser||chrome).storage.local.get(null)', manager);
     const status = await client.tool('status'); check('MCP sees active blocker and userscripts', status.ok && status.blocking.enabled && status.blocking.nativeEnabledRulesets.length > 0 && status.userscripts.active);
     const scripts = await client.tool('list_scripts'); check('MCP script list has metadata without source bodies', scripts.scripts.some(s => s.id === scriptId) && scripts.scripts.every(s => !('source' in s)));
@@ -126,4 +146,4 @@ async function runMCPTransports(context) {
   evidence.mcpUnexpectedErrors=errors.filter(e=>!expected(e)&&!unloaded(e));
   check('MCP transports and network reads have no unexpected uncaught runtime errors',evidence.mcpUnexpectedErrors.length===0);
 }
-module.exports = { runMCP, runMCPTransports };
+module.exports = { runMCP, runMCPTransports, approveMCPData };

@@ -36,6 +36,7 @@ async function runNavigation({ b, manager, send, check, until, browse, scriptSou
     await get('d.getElementById("pairingCode").value=' + JSON.stringify(connection.pairingCode) + ';' +
       ['Scripts', 'Logs', 'Network', 'Changes'].map(name => 'd.getElementById("share' + name + '").checked=' + scopes.includes(name.toLowerCase()) + ';').join(''));
     await click('#connect');
+    await require('./mcp-browser.cjs').approveMCPData(b, owner, evidence);
     await wait('d.getElementById("connectionBadge").classList.contains("active")');
     check('Pairing works through the native packaged-page sender check', (await client.tool('status')).ok);
     check('The pairing secret is cleared from the UI', await get('return d.getElementById("pairingCode").value===""'));

@@ -1,0 +1,699 @@
+{
+  "browser": "chrome",
+  "temp": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-X4s84Y",
+  "started": "2026-11-19T20:20:14.329Z",
+  "checks": [
+    "Fresh manager keeps blocking on and userscripts off",
+    "New permission has not been granted automatically",
+    "Optional permission UI is visible",
+    "Native permission granted by manager button",
+    "Browser access recognized",
+    "Userscript module is independently enabled",
+    "Local ad canary saved to blocker",
+    "Real stdio MCP initializes",
+    "Only seven read-only tools are advertised",
+    "MCP cannot inspect an unpaired browser",
+    "Owned diagnostic script saved",
+    "Owned diagnostic script enabled",
+    "Network metadata sharing is unchecked by default",
+    "MCP has a persistent manager sidebar entry",
+    "Synthetic page submit does not connect",
+    "MCP pairing clears its secret from the field",
+    "MCP sees active blocker and userscripts",
+    "MCP script list has metadata without source bodies",
+    "MCP retrieves the exact installed source",
+    "MCP checks matching without visiting URL",
+    "Unexpected write-like arguments are rejected",
+    "MCP inspection leaves persisted configuration identical",
+    "MCP results never expose stored capability tokens or values",
+    "MCP captures a page-bridge userscript exception",
+    "The captured script actually ran in the page world",
+    "Diagnostic URL omits query and fragment",
+    "Ad canary remains blocked during MCP connection",
+    "Activity reads are bounded",
+    "Debug UI records agent read names",
+    "Existing script/log approval does not grant network access",
+    "MCP approval has not started native capture",
+    "Network sidebar routes MCP within its tab",
+    "MCP sidebar routes Network within its tab",
+    "MCP pairing clears its secret from the field",
+    "A network read reports stopped capture without starting it",
+    "Reading a stopped log does not write or clear session storage",
+    "Network-only approval cannot read installed source or diagnostic logs",
+    "Local ad canary stays blocked while MCP and capture run",
+    "Live MCP read sees metadata without taking ownership or stopping capture",
+    "MCP returns native method, status, type and timing",
+    "MCP retains redirects, HTTP errors and network failures",
+    "MCP metadata excludes credentials, queries, fragments, headers and bodies",
+    "MCP combines request filters without making requests",
+    "MCP entry limit selects newest matching records and reports omitted matches",
+    "MCP rejects capture controls or oversized reads: {\"start\":true}",
+    "MCP rejects capture controls or oversized reads: {\"clear\":true}",
+    "MCP rejects capture controls or oversized reads: {\"stop\":true}",
+    "MCP rejects capture controls or oversized reads: {\"limit\":101}",
+    "MCP advertises no capture control tool",
+    "Network MCP reads leave captured session data identical",
+    "MCP page lists the read without persisting request contents",
+    "Disconnect revokes network reads immediately",
+    "MCP pairing clears its secret from the field",
+    "Reconnecting without network consent cannot inherit it",
+    "Debug page has no horizontal overflow at 1280",
+    "Debug page has no horizontal overflow at 390",
+    "Disconnect immediately revokes subsequent reads",
+    "MCP pairing clears its secret from the field",
+    "A read-only server connects read-only and says why",
+    "Status-only approval refuses script source",
+    "Status-only approval refuses logs",
+    "Status-only approval refuses network metadata",
+    "MCP pairing clears its secret from the field",
+    "New debug session starts with empty captured errors",
+    "Closing Debug page prevents browser data delivery",
+    "Ad blocker remains active after MCP shutdown",
+    "Owned MCP script removed",
+    "Owned MCP process stops without unexpected output",
+    "A --allow-changes server adds three review-gated tools",
+    "Change proposals are unchecked by default",
+    "The connection tells the agent changes need a separate approval",
+    "Pending changes appear only with change approval",
+    "Source with syntax errors returns diagnostics and never reaches the review",
+    "A new script proposal is pending",
+    "The review shows sites, the unverified note and the exact source",
+    "The tab title counts pending proposals",
+    "A proposal leaves the library untouched",
+    "A script-dispatched click cannot apply a proposal",
+    "Apply saves exactly the reviewed source, turned off",
+    "The tab title clears when nothing is pending",
+    "An applied script that stays off does not run",
+    "An edit shows the current and proposed source side by side",
+    "Apply & enable saves and turns on the reviewed edit",
+    "The enabled edit runs while the ad canary stays blocked",
+    "Revert restores the previous source, turned off",
+    "An enable proposal shows the code it would run",
+    "Rejecting leaves the script off",
+    "The activity log records each decision",
+    "Bidi warnings do not become syntax errors or hide the proposal",
+    "MCP escapes hidden controls in source, metadata, heading and note",
+    "Apply and enable starts disabled until controls are acknowledged",
+    "Synthetic acknowledgment cannot unlock enabling",
+    "Trusted acknowledgment enables the exact original source bytes",
+    "Acknowledged script runs while the local ad remains blocked",
+    "A different proposal cannot inherit acknowledgment",
+    "An enable-only proposal also requires acknowledgment",
+    "A pending proposal has no horizontal overflow at 1280",
+    "A pending proposal has no horizontal overflow at 390",
+    "Disconnect discards pending proposals and their count",
+    "Owned proposal script removed",
+    "Owned proposal script removed",
+    "Owned --allow-changes process stops without unexpected output",
+    "MCP transports and network reads have no unexpected uncaught runtime errors",
+    "Deny proxy has no unexpected socket errors"
+  ],
+  "hashes": {
+    "manifest.json": "59c0309a66265ccb1b7ce67bf974ea211af0caf79d2c2375dd317d8a5c2490cc",
+    "LICENSE": "432c0e6bee81acac67da3c1cd349de60d8184378122b0bec9c8eb0b5fe851f81",
+    "src/appearance/website-theme.js": "6a733406f0dd5090b46ab64c3bdf6907da711944e429661b697a19f871b984ea",
+    "src/background/background.js": "38934902256190c7ca459f9688b32cc563a3b8002afc687e089f651216255e2c",
+    "src/background/backup-runtime.js": "ce5f17ea6322b177a55d96de73a4277cb4a4e6fe2da5b47afec803f57a52ae16",
+    "src/background/community-updates.js": "e9b19c6b0bfd73d6ca10e7e76843b9575568e770213e812e54b94c5efde95bc5",
+    "src/background/debug-runtime.js": "1efa2f4693fce02dae529395fa3de60c04c33db5e8ead7e251861530f72e2ed6",
+    "src/background/modules.js": "e86e68e054d4302606aff7a9469a0678f95d944b4f2bb26a743b52a18a0635c4",
+    "src/background/network-log.js": "bd2ee515130dfd3b6f62b4b6f4ec16c1d019e84f603784a98a198eb0d57ee4f4",
+    "src/background/threat-updates.js": "11943d9fdec7a7e017dd4a049b208dd3532e6dc6c3c775bbfd574f2fd156a87e",
+    "src/blocking/buttons.js": "e5412490ec2dc24f7d15972b1eadc115ac39b4f5a713af8d1e3ea4b6743cec42",
+    "src/blocking/community-lists.js": "5c2384de83a81f5fa8c2089740da1f41186634926d423523dab8c807c4b8bf61",
+    "src/blocking/content.js": "cbd02ecf013d23c534ab749455760ec1e555afc652361125d59967a210182136",
+    "src/blocking/cosmetic.js": "1af606b2e7274d64be24f197b5ab58a48b8804af8a384a2dab6f9583f2fab799",
+    "src/blocking/evidence.js": "92f5e82bf652e0988adfabc6b39d08dd9c8d0efbee048649f5aa306e87d1bb2a",
+    "src/blocking/flags.js": "2656545e8ba8cc27e8fedf7a0d67c1fafa82071089892b7e2d6c5ab3857b5603",
+    "src/blocking/generic-static.js": "47359bac96062e43bab82eb3df29aa1de8adf7ee38e84442880dfb2eb51df2e1",
+    "src/blocking/network.js": "a6eb413357eba4b612db90245fea190478938a6163234d5f61958976a756152f",
+    "src/blocking/notification-guard.js": "c8257c83c9fd1a13633e037bf4be1ad4fdf7403e39c885267bd11b8328a1aacc",
+    "src/blocking/overlays.js": "26fd183d7e74520195eda5e661580123c08eb9a07556fa2a243fad6336333472",
+    "src/blocking/picker-core.js": "a872e3a4c4a91a24174700a2d162c5f4c4cc368f2356fba88bbb1ddb43e1075c",
+    "src/blocking/picker.js": "5a0ee94e83a82743e503d482bd526279a58be9a0ee9232466bf7e5bc6ffa5627",
+    "src/blocking/popups.js": "fc65cb70bce15a045ebc61955e45e28da0c8fb29c289ba9551a2c0d545330bd8",
+    "src/blocking/procedural.js": "0744c44ae2091d333364058885156acfc4e49856a81b849f5e4e9c4dac183cdb",
+    "src/blocking/prompts.js": "e0510454f1260759b14dbd1b849e2467ac0ef17eafb32000111376c95fb99378",
+    "src/blocking/reddit.js": "a771a6c804176ed7fa9716dacee7c15b4ba90ba566eb36d651e9e92ea075e83f",
+    "src/blocking/scriptlets.js": "8dd79ec57b2f0ebd87c8672a046cd0392b28a6958dcf9b52e898369d72397c4b",
+    "src/blocking/youtube-fallback.js": "41718421cd999f8ba1774eba6a1c24eaf69c3abbc517636ab66c557b5488a43d",
+    "src/blocking/youtube.js": "08aaf232bea285d500ef0941f4d1fa81d9224c2f0b162a10fdbc1e4696504db1",
+    "src/shared/appearance-settings.js": "d9fc31cdffb78fbe0032fbbe995ab93ed551a351bd1ec4e9dfab91bf0da75ce0",
+    "src/shared/backup.js": "cc6071fe2959d302d0ee6a08d7c80ed57787e52a0837408cdaec9411b452a502",
+    "src/shared/debug-protocol.js": "e832e9a528112dc103bdcce50a5f9981232fc94d7b85f46f8f4f0323b8f2ebd9",
+    "src/shared/shared.js": "233f8811ca425f3bc68454d4fc0b51a118f7a4cd057b85c7074a3e0f414810cf",
+    "src/shared/update-config.js": "18e296bddecc3dc81b2d3740500ff8775283ae07bcd28bdf8d953075c473f674",
+    "src/ui/appearance/appearance.css": "8f7cfbddcb99b30227a8e48bfc71f667215ab730ee685bbe77d8fe861a72e297",
+    "src/ui/appearance/appearance.html": "03d1d99dd63272e959ea33498d7bb6c3e8a583c1c5f3b91cb932cd06646eba24",
+    "src/ui/appearance/appearance.js": "e56e1b892eeb911c6e26ffe251eea65aecf642981f33e5f1443656e219709490",
+    "src/ui/backup/backup.css": "c2a73f7d088d6a114e0c78e719b5f51b9b98a9221ed39b17ca9329673f50ef6b",
+    "src/ui/backup/backup.html": "61d37ae317e60c22733f5c0571b3755691487b63a4a248d535d8c18082f97604",
+    "src/ui/backup/backup.js": "cf5eb15176d09c359db27abec4bc218c15ddefd855a435b28516b09001a9c918",
+    "src/ui/lists/lists.html": "7b581e0dbf748dc35b8ec3a5521696e3b34ef0e9384ad5ef75d16e44319c920b",
+    "src/ui/lists/lists.js": "42e43712e17b8c47ae1ff559cbd5be20d774bffd0b116f546f1797c458eb8db5",
+    "src/ui/log/log.css": "89676dd265630f2875c38b2d2847ccb986ef84cefdec706f7af23f81a457d54e",
+    "src/ui/log/log.html": "ab775f966aec27abe5e4de08babd1882c046dc16685cfaaf2d1d716633b056db",
+    "src/ui/log/log.js": "298ef29e48f3b9dc939d40a29a4fb9ed287013be77188b66c8e6b4fff98b3694",
+    "src/ui/manager/manager.css": "2d22fb01843bca44a45542afc1f26d4e3e5a759db2778a141b5cf060432946d4",
+    "src/ui/manager/manager.html": "801a12ebb2e988a62f39a85087040b71052a7dbc4a5ebacfaa7636c1b42f7bd3",
+    "src/ui/manager/manager.js": "b09a80635b816525cb41bb0d4ed1242d7ace60607470bc66d78218371ea5dc74",
+    "src/ui/manager/userscripts-completion.js": "6694e3ed6378474502a834d46e683595769a8f1d0da10f87c9873b6721d97e5b",
+    "src/ui/manager/userscripts-editor-worker.js": "149883c0455f2628f7b51d750bbc34d339e92e992b76d052b83f5727a27c7908",
+    "src/ui/manager/userscripts-editor.js": "2249e5c352b80d9fbd91e354893846df71dadcb500be09025f2b5bafc4036c86",
+    "src/ui/manager/userscripts-external.js": "6a576b34dcbe659554047623679829dced105ae8493138f05025c6fe07534a90",
+    "src/ui/mcp/debug.css": "f71c2664dc4394f1d4bef7ddf4ed92cd3cc5d5510f187c41ccd2795833177ecc",
+    "src/ui/mcp/debug.html": "0e883eba6b4db0122b638013ba79413b3970db47dfb17731d30a62edba280001",
+    "src/ui/mcp/debug.js": "0065bd755ad8e6a4562c948b56849c8b9884ed9501017c0da1320da670a3d6b7",
+    "src/ui/network/network.css": "24f6c3dfcb4728659d89d01a1ac6e600b296c6b97b72db5199861399d1e12e82",
+    "src/ui/network/network.html": "b8a0dd96ea7f5a209c4928b0364457fe6215845509f5e94ee36b1ebeead64251",
+    "src/ui/network/network.js": "ebac0a1a962a29cf342c25b6adc38ca52e6c8e22770509f6adf97f24f6110b74",
+    "src/ui/popup/popup.css": "3cdaa6cf547cad2c56d719d45fe4d781449315c8102a708816be2445bb43fd49",
+    "src/ui/popup/popup.html": "89cbf2a272afa9d700e06f6cb4dc95a53cdbd17a20699363c32c71dbe5dff9c4",
+    "src/ui/popup/popup.js": "b1a26d780094e2a2e6cf2994a60aa6223fa13bbac325cb6b415139696532e243",
+    "src/ui/shared/navigation.js": "8f5b8004068ca0c4de677a37ff23cfa7bdaf43107e0f315d5117b09f4cac43af",
+    "src/ui/shared/script-review.css": "b5ce9a6b6da1fed4178c83f2c4ebe2e900939dc47e784d0a831f90df03b23d77",
+    "src/ui/shared/script-review.js": "f37b4a40adc48aa14a4109a5b0e765ca182654a87f11f53f01afc37640f8cefd",
+    "src/ui/shared/theme.js": "d4ac3dba82cc795c97ba57608c24a47dd2cc16c1c6f2ca4f10f2ecabe2d1b1d6",
+    "src/ui/shared/ui.css": "d2c1c2e9d817eb796cf614d1ad6f72c4c6a851ca5ad62612247cba7408bbf78d",
+    "src/userscripts/clipboard.html": "b8db6e3853bcd4188349bb054d489dee7356ef1a91799827424e4f9ee87377fb",
+    "src/userscripts/clipboard.js": "20077559139d326a64b944918462fd77dc63a7d3df858997021f73a016b86294",
+    "src/userscripts/userscripts-actions.js": "9b7ef225d23c932c39c3a967669ce743d6698aeefd19db751dd74b4ab2e6f135",
+    "src/userscripts/userscripts-core.js": "9a5f497daac05906225096262ae40331cf97c17b6c595c386c4760021588d9e4",
+    "src/userscripts/userscripts-lint.js": "6f011f5006af583cf81614ae55bd0d0e3a37c7e0f2c2478139a9c674a7774735",
+    "src/userscripts/userscripts-matching.js": "adce5194ed6fb32bfbd5ad131146dbfc3bc020b0c354e5c4dececae85cda3148",
+    "src/userscripts/userscripts-network.js": "5fc1621fe885f7b8d08caf751b5ffa550a85d4bc3feda0bbe56cc891b8169ce0",
+    "src/userscripts/userscripts-offscreen.js": "f4f1ce4282e6c64bbe4998225d426a14e5377b4fdd7c2ccb8e494c9d51630b1a",
+    "src/userscripts/userscripts-page.js": "e762bfa28b4d53a8f4a2e1b3869f73a8dd67b8052176d3df20dfad30d10dc028",
+    "src/userscripts/userscripts-runtime.js": "47f8c4e70e16f01b94b83b93b099825f2be7df2f37f521ae15d79d30aee5f42c",
+    "src/userscripts/userscripts-updates.js": "e04da2a6efbc0cb8d66931d3d92761307fd48a108827d66519e848c69c1e714d",
+    "src/userscripts/userscripts-xhr.js": "1474f3ec37d188c88dbbfd1938481e6d939f822ba713712512a6e793a5103edf",
+    "icons/icon128.png": "fe313d3ad0715a33e2079b6dc078bad930fe142490d4ba40748e84e99fd104de",
+    "icons/icon16.png": "5a2228b9b7f74a1231b59093907c54d244f2b26bbc67887552b27b46c04ad87a",
+    "icons/icon48.png": "8dad16da824d63b433238e9be229828e387d550ccf526509f73a26afa10d53fe",
+    "rules/ads.json": "9e824086797f284ed53f1149609cb8ca3cbf1ed4dc54f6cd62841adc20ef979f",
+    "rules/community-cosmetic.json": "17ca4009213e2f7382da47022f776ac9e05260e2d07927c8512efb5377ae0a0d",
+    "rules/community-generic-excepted.css": "b57123ae56f175df57f0d4141a051af9220493ba396b1367f94862ffc0dd177e",
+    "rules/community-generic.css": "a36320779b9f1393bda2737b9359b103d31a7813161b310ae02dcb8b714f36d6",
+    "rules/community-info.json": "0f1521ad531520da4d100c5959a9366bb1d91e8b063999ebe5f651bc3b08bc99",
+    "rules/community.json": "bff8700b3f3eff69cb7b7f9560706ef1e44fb8eb03750b0fa05516cb5d9a526b",
+    "rules/malware.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "rules/reviewed-domains.json": "c71fd950c7a39a00d6d27bf88cb67bc1d710a37f9214d781d999161a6b4fa5ec",
+    "rules/site-ad-hosts-info.json": "4f1e047fd8efe0abec9437fe438c1f02bf9289d4475b719184853fe163f7b903",
+    "rules/threat-evidence.json": "f5ad15e5dd6717374f899b56b229c5aff0030806a66ed27be654f847c50ceca1",
+    "rules/threat-policy.json": "977446804c449600d26ca20478c850e55af18c688f65a8d71c288dcbf022c4e5",
+    "rules/threats.json": "80cd5a22894719b1cdb9d9780b870a735121f5c6b31c3b3b6484a4e4029b1dac",
+    "rules/trackers.json": "281bc5a1dd9c3cbe2d44d26e70c3065287e73b213b16c3b6f2c740084c128a5d",
+    "vendor/acorn/acorn.js": "8d2da0e1fe4258b4b990ef3f4691c2ab67fc19a92c37f933e1600e97d8ec20e1",
+    "vendor/acorn/LICENSE": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7",
+    "vendor/publicsuffix/LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "vendor/publicsuffix/provenance.json": "26c1b30fa717beaf478f604dc55bb92bfb311084cdece5608f97ec8dcf9945c7",
+    "vendor/publicsuffix/suffixes.js": "13a92053d42e95d9bfeb080abcd3bfb33b98f80ad9ad9e5d1984c1016d08d0b9",
+    "docs/MCP.md": "789a2f7bd60701d62f8d23cc6fb4ef80c196bce15405f222af37eaa43cb69527",
+    "lists/community/ublock-filters.txt": "0d649d0bb58d3c7fc16aee7d408288723bcf6f813a2191e9b69aa4a768968882"
+  },
+  "deniedRequests": 64,
+  "proxyErrors": [],
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/158.0.8127.37",
+    "revision": "@b8c2be851f62f6a394ec57955d7f31335d7cb6d4",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+    "jsVersion": "15.8.62.31"
+  },
+  "permissionToggles": [
+    {
+      "before": {
+        "x": 690.5,
+        "y": 270.7578125
+      },
+      "after": {
+        "x": 690.5,
+        "y": 270.7578125
+      },
+      "backgroundBeforeWait": {
+        "ok": true,
+        "enabled": false,
+        "active": false,
+        "available": true,
+        "needsPermission": false,
+        "error": "",
+        "revision": 0,
+        "scripts": []
+      }
+    }
+  ],
+  "mcpRuns": [
+    {
+      "protocol": "2025-11-25",
+      "readOnly": true,
+      "process": "stdio",
+      "serverHashes": {
+        "mcp/server.cjs": "d30e56a0dd942c730da9899a4c35c776663a207ca95c23c253d320be6c90acd4",
+        "mcp/rpc.cjs": "7d8cb5c8f2e464991c897db54f14b76d52b95170d86ff6b68addfed4f3192567",
+        "mcp/http.cjs": "deeeadb3f0943d58cdb595720a03141e0dc01ca0bc23c9841af6747ba45a4b18",
+        "src/shared/debug-protocol.js": "e832e9a528112dc103bdcce50a5f9981232fc94d7b85f46f8f4f0323b8f2ebd9"
+      },
+      "screenshots": [
+        "debug-stdio-1280.png",
+        "debug-stdio-390.png"
+      ],
+      "checks": 61,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "stderr": ""
+      }
+    },
+    {
+      "transport": "stdio",
+      "checks": 34,
+      "screenshots": [
+        "debug-changes-stdio-1280.png",
+        "debug-changes-stdio-390.png"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "stderr": ""
+      }
+    }
+  ],
+  "mcpPairingWaits": [
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 1
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    },
+    {
+      "transport": "stdio",
+      "waits": 0
+    }
+  ],
+  "mcpNetwork": [
+    {
+      "transport": "stdio",
+      "result": {
+        "ok": true,
+        "entries": [
+          {
+            "id": 1,
+            "requestId": "93",
+            "url": "http://127.0.0.1:61115/net/page",
+            "method": "GET",
+            "type": "main_frame",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "",
+            "observedAt": 1795119617429.596,
+            "startedAt": 1795119617429.596,
+            "sentAt": 1795119617429.72,
+            "responseAt": 1795119617431.393,
+            "endedAt": 1795119617433.276,
+            "state": "complete",
+            "statusCode": 200,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 3,
+            "requestId": "95",
+            "url": "http://127.0.0.1:61115/net/post",
+            "method": "POST",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617527.524,
+            "startedAt": 1795119617527.524,
+            "sentAt": 1795119617527.677,
+            "responseAt": 1795119617529.136,
+            "endedAt": 1795119617529.351,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 4,
+            "requestId": "96",
+            "url": "http://127.0.0.1:61115/net/redirect",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617530.461,
+            "startedAt": 1795119617530.461,
+            "sentAt": 1795119617530.591,
+            "responseAt": null,
+            "endedAt": 1795119617531.55,
+            "state": "redirect",
+            "statusCode": 302,
+            "fromCache": false,
+            "redirectTo": "http://127.0.0.1:61115/net/final",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 5,
+            "requestId": "96",
+            "url": "http://127.0.0.1:61115/net/final",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617531.955,
+            "startedAt": 1795119617531.955,
+            "sentAt": 1795119617532.053,
+            "responseAt": 1795119617532.831,
+            "endedAt": 1795119617533.006,
+            "state": "complete",
+            "statusCode": 201,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 6,
+            "requestId": "97",
+            "url": "http://127.0.0.1:61115/net/http-error",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617533.86,
+            "startedAt": 1795119617533.86,
+            "sentAt": 1795119617533.958,
+            "responseAt": 1795119617534.823,
+            "endedAt": 1795119617534.982,
+            "state": "complete",
+            "statusCode": 418,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "",
+            "partial": false
+          },
+          {
+            "id": 7,
+            "requestId": "98",
+            "url": "http://127.0.0.1:61115/net/fail",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617535.786,
+            "startedAt": 1795119617535.786,
+            "sentAt": 1795119617535.93,
+            "responseAt": null,
+            "endedAt": 1795119617538.555,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_EMPTY_RESPONSE",
+            "partial": false
+          },
+          {
+            "id": 8,
+            "requestId": "99",
+            "url": "http://localhost:61115/net/ad.js",
+            "method": "GET",
+            "type": "xmlhttprequest",
+            "tabId": 1084583833,
+            "frameId": 0,
+            "initiator": "http://127.0.0.1:61115",
+            "observedAt": 1795119617539.948,
+            "startedAt": 1795119617539.948,
+            "sentAt": null,
+            "responseAt": null,
+            "endedAt": 1795119617540.189,
+            "state": "error",
+            "statusCode": null,
+            "fromCache": false,
+            "redirectTo": "",
+            "error": "net::ERR_BLOCKED_BY_CLIENT",
+            "partial": false
+          }
+        ],
+        "matched": 7,
+        "truncated": false,
+        "capture": {
+          "active": false,
+          "tabId": null,
+          "startedAt": null,
+          "expiresAt": null,
+          "count": 11,
+          "bytes": 4466,
+          "dropped": 0,
+          "limit": 2000,
+          "byteLimit": 2097152,
+          "available": true,
+          "error": ""
+        },
+        "readLimit": 100,
+        "readByteLimit": 131072,
+        "redaction": "URL credentials, query strings and fragments omitted. No headers, cookies or bodies. URL paths may contain private information.",
+        "coverage": "Browser-reported metadata only; some events may be missing. A failed request does not establish blocker ownership. Capture is controlled only in the Network page."
+      }
+    }
+  ],
+  "mcp": {
+    "protocol": "2025-11-25",
+    "readOnly": true,
+    "process": "stdio",
+    "serverHashes": {
+      "mcp/server.cjs": "d30e56a0dd942c730da9899a4c35c776663a207ca95c23c253d320be6c90acd4",
+      "mcp/rpc.cjs": "7d8cb5c8f2e464991c897db54f14b76d52b95170d86ff6b68addfed4f3192567",
+      "mcp/http.cjs": "deeeadb3f0943d58cdb595720a03141e0dc01ca0bc23c9841af6747ba45a4b18",
+      "src/shared/debug-protocol.js": "e832e9a528112dc103bdcce50a5f9981232fc94d7b85f46f8f4f0323b8f2ebd9"
+    },
+    "screenshots": [
+      "debug-stdio-1280.png",
+      "debug-stdio-390.png"
+    ]
+  },
+  "mcpProcessExit": {
+    "code": 0,
+    "signal": null,
+    "stderr": ""
+  },
+  "mcpChanges": {
+    "transport": "stdio",
+    "checks": "review-gated proposals",
+    "screenshots": [
+      "debug-changes-stdio-1280.png",
+      "debug-changes-stdio-390.png"
+    ]
+  },
+  "mcpChangesExit": {
+    "code": 0,
+    "signal": null,
+    "stderr": ""
+  },
+  "mcpExpectedErrors": [
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 460,
+      "columnNumber": 66,
+      "scriptId": "20",
+      "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 460,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 374,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 448,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 449,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "16",
+            "url": "chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:461:67\n    at start (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:375:26)\n    at runUserScript (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:449:25)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:450:5\n    at client (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:74:5)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)",
+        "objectId": "3619864873294635719.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:461:67\n    at start (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:375:26)\n    at runUserScript (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:449:25)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:450:5\n    at client (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:74:5)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…clccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    },
+    {
+      "exceptionId": 1,
+      "text": "Uncaught",
+      "lineNumber": 460,
+      "columnNumber": 66,
+      "scriptId": "20",
+      "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 460,
+            "columnNumber": 66
+          },
+          {
+            "functionName": "start",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 374,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "runUserScript",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 448,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 449,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "client",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 73,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js",
+            "lineNumber": 74,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "listen",
+            "scriptId": "16",
+            "url": "chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71",
+            "lineNumber": 15,
+            "columnNumber": 8
+          }
+        ]
+      },
+      "exception": {
+        "type": "object",
+        "subtype": "error",
+        "className": "Error",
+        "description": "Error: Owned offline debug error\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:461:67\n    at start (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:375:26)\n    at runUserScript (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:449:25)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:450:5\n    at client (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:74:5)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)",
+        "objectId": "-8022158279348890114.2.1",
+        "preview": {
+          "type": "object",
+          "subtype": "error",
+          "description": "Error: Owned offline debug error\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:461:67\n    at start (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:375:26)\n    at runUserScript (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:449:25)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:450:5\n    at client (blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:74:5)\n    at blockads-userscript-MCP-owned-error.4c6365b4ce2027a1.user.js:75:5\n    at HTMLDocument.listen (chrome-extension://djclfolmmhaoepkoeipfibmdgkclccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)",
+          "overflow": false,
+          "properties": [
+            {
+              "name": "stack",
+              "type": "string",
+              "value": "Error: Owned offline debug error\n    at blockads-u…clccck/af8504e6-b3c8-45ac-82b4-fded2813af71:16:9)"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "value": "Owned offline debug error"
+            }
+          ]
+        }
+      },
+      "executionContextId": 2
+    }
+  ],
+  "mcpClosedPageErrors": [],
+  "mcpUnexpectedErrors": [],
+  "success": true,
+  "focus": "mcp-only",
+  "cleanup": {
+    "browserPid": 30004,
+    "forced": false,
+    "leftoverPids": [],
+    "closed": true
+  },
+  "finished": "2026-11-19T20:20:21.804Z"
+}

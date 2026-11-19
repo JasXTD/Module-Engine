@@ -26,6 +26,7 @@ async function runChanges({ b, manager, send, check, until, browse, scriptSource
     check('The connection tells the agent changes need a separate approval', connection.changesOffered === true && /Propose script changes/.test(connection.instructions));
     await b.evaluate('(()=>{document.getElementById("pairingCode").value=' + JSON.stringify(connection.pairingCode) + ';for(const [id,on] of [["shareScripts",true],["shareLogs",true],["shareNetwork",false],["shareChanges",true]])document.getElementById(id).checked=on;})()', page);
     await click('connect', page);
+    await require('./mcp-browser.cjs').approveMCPData(b, page, evidence);
     await until('document.getElementById("connectionBadge").textContent==="Connected · changes need your review"', page);
     check('Pending changes appear only with change approval', await b.evaluate('!document.getElementById("proposalsCard").hidden', page));
 
