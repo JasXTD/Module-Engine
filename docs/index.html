@@ -319,9 +319,9 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
         </thead>
         <tbody>
           <tr><th scope="row">Chrome and Edge</th><td class="me"><span class="yes">Yes</span>Manifest V3, version 121+</td><td><span class="yes">Yes</span>Chrome build is Manifest V3</td><td><span class="yes">Yes</span>Manifest V3</td><td><span class="no">No</span>Firefox only</td></tr>
-          <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span>Version 128+</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><th scope="row">Firefox</th><td class="me"><span class="yes">Yes</span>Version 142+</td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><th scope="row">Safari</th><td class="me"><span class="no">No</span></td><td>Not listed</td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
-          <tr><th scope="row">How you get it</th><td class="me">Load the source folder; not in any store</td><td>Chrome, Edge and Firefox stores</td><td>Browser stores and the App Store</td><td>Firefox Add-ons</td></tr>
+          <tr><th scope="row">How you get it</th><td class="me">Store availability pending; load from source</td><td>Chrome, Edge and Firefox stores</td><td>Browser stores and the App Store</td><td>Firefox Add-ons</td></tr>
           <tr><th scope="row">Script updates</th><td class="me">Checked daily. Installed automatically when they need no new access, otherwise after your review</td><td>Automatic, from each script's metadata</td><td>Automatic</td><td>Automatic since version 4.7</td></tr>
           <tr><th scope="row">Cloud sync</th><td class="me">None; scripts stay in this browser</td><td>Dropbox, OneDrive, Google Drive, WebDAV</td><td>Google Drive, Dropbox, OneDrive, WebDAV, browser sync</td><td>Not listed</td></tr>
           <tr><th scope="row">Built-in ad blocking</th><td class="me"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
@@ -354,7 +354,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
     <ul class="fits" aria-label="When another extension fits better">
       <li><strong>You use Firefox and want the strongest blocker.</strong><span>uBlock Origin adds dynamic filtering, many more scriptlets, HTML filtering and its other lists, such as Privacy, Badware risks and Quick fixes. Module Engine bundles only uBlock filters, the main list, and converts what it can of it.</span></li>
       <li><strong>You run many scripts, rare GM APIs or several computers.</strong><span>Tampermonkey and Violentmonkey cover more of the userscript API and sync through cloud storage. Module Engine holds up to 32 scripts.</span></li>
-      <li><strong>You need a store install.</strong><span>Violentmonkey, Tampermonkey, Greasemonkey and both uBlock Origins install from browser stores. Module Engine is MIT-licensed but still loads from its source folder.</span></li>
+      <li><strong>You need a store install.</strong><span>Violentmonkey, Tampermonkey, Greasemonkey and both uBlock Origins install from browser stores. Module Engine's store availability is pending; you can load its source folder.</span></li>
     </ul>
   </div>
 </section>
@@ -362,7 +362,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
 <section class="band" id="install" aria-labelledby="install-title">
   <div class="wrap">
     <h2 id="install-title">Install from source</h2>
-    <p class="section-lede">Module Engine isn't in any store yet. <a href="https://github.com/JasXTD/Module-Engine">Get the source from GitHub</a>, then load the folder that contains <code>manifest.json</code>.</p>
+    <p class="section-lede">Store availability is pending. Download and extract a package from the <a href="https://github.com/JasXTD/Module-Engine/releases/latest">GitHub release</a>, then load the folder that contains <code>manifest.json</code>.</p>
     <div class="install-grid">
       <article class="install" aria-labelledby="install-chromium">
         <h3 id="install-chromium">Chrome and Edge</h3>
@@ -418,7 +418,7 @@ news.example<span class="c-key">##</span><span class="c-string">div:has-text(Spo
   <div class="wrap">
     <div>
       <h2>Module Engine</h2>
-      <p>Formerly BlockAds Shield. The bundled EasyList and EasyList China filters are by the EasyList authors, under the <a href="https://easylist.to/pages/licence.html" rel="noopener">EasyList licence</a>. The bundled uBlock filters are by the uBlock Origin authors, under the <a href="https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE" rel="noopener">GNU GPL version 3</a>. Module Engine's own source is MIT-licensed; other bundled data and code keep their own licences.</p>
+      <p>The bundled EasyList and EasyList China filters are by the EasyList authors, under the <a href="https://easylist.to/pages/licence.html" rel="noopener">EasyList licence</a>. The bundled uBlock filters are by the uBlock Origin authors, under the <a href="https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE" rel="noopener">GNU GPL version 3</a>. Module Engine's own source is MIT-licensed; other bundled data and code keep their own licences.</p>
       <p><a href="https://github.com/JasXTD/Module-Engine">GitHub</a> · <a href="https://github.com/JasXTD/Module-Engine/blob/main/docs/USER_GUIDE.md">User guide</a> · <a href="https://github.com/JasXTD/Module-Engine/blob/main/PRIVACY.md">Privacy policy</a> · <a href="https://github.com/JasXTD/Module-Engine/issues">Report an issue</a></p>
       <p>This page loads nothing from other sites.</p>
     </div>

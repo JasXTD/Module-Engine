@@ -23,7 +23,7 @@
   <strong>Chrome &amp; Edge 121+ · Firefox 142+</strong> · MIT-licensed source
 </p>
 
-Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved debugging that is read-only by default; it needs an installed Node runtime but no packages. Formerly **BlockAds Shield**.
+Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved debugging that is read-only by default; it needs an installed Node runtime but no packages.
 
 ## Screenshots
 
@@ -53,7 +53,7 @@ See the [user guide](docs/USER_GUIDE.md) for controls, permissions and compatibi
 
 ## Getting started
 
-The extension is currently installed from source. It requires Chrome/Edge **121+** or Firefox **142+**; the optional userscript module also needs the browser's native `userScripts` API and permission controls.
+Store availability is pending. You can install from source using the [GitHub release packages](https://github.com/JasXTD/Module-Engine/releases/latest). It requires Chrome/Edge **121+** or Firefox **142+**; the optional userscript module also needs the browser's native `userScripts` API and permission controls.
 
 ### Chrome and Edge
 
