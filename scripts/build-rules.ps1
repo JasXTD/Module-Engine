@@ -87,7 +87,7 @@ try {
             $date = [DateTime]::MinValue
             if ((ConvertTo-ReviewedHostname $domain) -cne $domain -or !$siteSeen.Add($domain) -or $catalogDomains.Contains($domain) -or
                 ![DateTime]::TryParseExact($observed, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$date) -or
-                $date -gt [DateTime]::UtcNow.Date -or $evidencePath -cnotmatch '^verification/[A-Za-z0-9._/-]+\.json$' -or
+                $date -gt [DateTime]::UtcNow.Date -or $evidencePath -cnotmatch '^lists/evidence/[A-Za-z0-9._/-]+\.json$' -or
                 $evidencePath.Contains('..') -or !(Test-Path -LiteralPath (Join-Path $PSScriptRoot "..\$evidencePath") -PathType Leaf)) {
                 throw "Invalid site ad host entry: $domain"
             }

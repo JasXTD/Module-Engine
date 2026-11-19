@@ -1,12 +1,29 @@
-<img src="icons/icon128.png" alt="Module Engine icon" width="64" height="64">
+<p align="center">
+  <img src="icons/icon128.png" alt="Module Engine icon" width="128" height="128">
+</p>
 
-# Module Engine
+<h1 align="center">Module Engine</h1>
 
-A modular browser extension for **Chrome, Edge and Firefox**, combining local ad blocking with an optional userscript manager.
+<p align="center">
+  <strong>Local ad blocking and userscripts, each with its own switch.</strong><br>
+  A modular, open-source browser extension for Chrome, Edge and Firefox.
+</p>
+
+<p align="center">
+  <a href="https://jasxtd.github.io/Module-Engine/">Website</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#getting-started">Install</a> ·
+  <a href="#using-the-modules">Quick start</a> ·
+  <a href="docs/USER_GUIDE.md">User guide</a> ·
+  <a href="#how-it-compares">Comparison</a> ·
+  <a href="PRIVACY.md">Privacy</a>
+</p>
+
+<p align="center">
+  <strong>Chrome &amp; Edge 121+ · Firefox 142+</strong> · MIT-licensed source
+</p>
 
 Module Engine uses the browser's Manifest V3 APIs and bundled filter data. Ad blocking and userscripts run entirely in the extension. An optional local MCP server provides explicitly approved debugging that is read-only by default; it needs an installed Node runtime but no packages. Formerly **BlockAds Shield**.
-
-The [project site](site/index.html) gives a one-page overview with install steps and a comparison with Violentmonkey, Tampermonkey, Greasemonkey and uBlock Origin. Open it in any browser; it loads nothing from other sites.
 
 ## Screenshots
 
@@ -22,22 +39,17 @@ These show the dark theme with the default lime accent in Chrome. The scripts ar
 
 ## Features
 
-- **Independent modules:** pause ad blocking without disabling userscripts, or keep the userscript module off entirely.
-- **Ad and tracker filtering:** bundled network rules, EasyList and EasyList China kept up to date from their publishers, uBlock filters bundled with each release, cosmetic hiding, advanced page hiding, scriptlet filters and a visual element picker.
-- **Reported threats (opt-in):** blocks the exact hosts named in dated public security reports, with the evidence shown in My lists. When its evidence expires it keeps blocking until a newer list replaces it, unless you ask it to switch itself off then. A newer list can arrive as a signed update ([how updates are checked](docs/USER_GUIDE.md#controls-and-scope)).
-- **Custom controls:** blocked domains, allowed domains, per-site exceptions and scoped request filters.
-- **Pop-up protection:** an optional per-site guard for pop-ups, embedded-frame takeovers and scripted page changes, including server-redirect chains stopped before their first request. Ordinary links and video controls remain usable; see the [scope and compatibility limits](docs/USER_GUIDE.md). New tabs whose first page load was confirmed blocked are closed automatically. Existing, pinned and uncertain tabs stay open ([details](docs/USER_GUIDE.md#controls-and-scope)).
-- **Reddit app prompts:** Page hiding removes recognized app-promotion overlays and releases their click and scroll locks. Coverage is tested with offline fixtures; live Reddit layouts can vary.
-- **Prompt protection:** blocks new page notification requests and hides recognized notification reminders and install-to-play/download overlays. Separate switches and trusted-site exceptions keep ad blocking active. See [coverage and limits](docs/USER_GUIDE.md#notification-and-install-prompts).
-- **Deceptive button protection:** stops recognized play/download actions inside ad placements, external links covering real video players and Play links to installers/scripts. Ordinary downloads remain available; this is conservative detection, not a file scanner. See [controls and limits](docs/USER_GUIDE.md#deceptive-play-and-download-buttons).
-- **Userscripts:** import, edit, enable and export `.user.js` files, or install them from a URL or an opened `.user.js` link after review. Daily `@downloadURL`/`@updateURL` checks install a newer version only when it needs no new access; any other waits for your approval ([installs and updates](docs/USER_GUIDE.md#installing-and-updating-scripts)). Scripts get GM storage, listeners, page commands, DOM/tab helpers, clipboard writes, notifications, downloads, scoped cookie access, extended URL matching, cached dependencies/resources and bounded cross-origin HTTP requests. Execution supports `unsafeWindow` in the selected world, `@top-level-await` and `@unwrap` with any supported scope; see the [compatibility limits](docs/USER_GUIDE.md#execution-compatibility).
-- **Script installation and updates:** install from a direct URL, then check for updates yourself or wait for the daily check. An update from the same address that needs no new sites, permissions, servers or dependencies installs on its own and stays on. Every other replacement shows its source and access for approval first. Saved values are retained either way, and **Install updates that need no new access** can be turned off.
-- **Editor tools:** syntax highlighting and errors, metadata suggestions, tags and execution order. An optional authenticated localhost helper tracks one external `.user.js` file; changes enter a draft only when you choose. See [editing and external-file setup](docs/USER_GUIDE.md#editing-and-organizing-scripts).
-- **Local activity and review:** inspect extension events, supported blocked-request logs and suspected-ad flags before choosing what to block.
-- **Appearance:** choose a system, light or dark theme and an accent colour (seven presets or any custom colour) for the popup and every Module Engine page. Accent text and edges adjust to stay readable in both themes. Optionally, light websites follow the dark theme too, with per-site exceptions. See [appearance](docs/USER_GUIDE.md#appearance).
-- **Backup & restore:** download a local JSON copy of settings, custom lists, appearance, scripts, saved values and cached dependencies. Review it before replacing a browser's setup; restored scripts stay off until you enable them. See [backup and restore](docs/USER_GUIDE.md#backup--restore).
-- **MCP debugging:** let an agent inspect module status, scripts, URL matching and bounded activity/errors through an explicitly approved local session. Stdio is the default; authenticated localhost HTTP is optional. See [setup and capture limits](docs/MCP.md).
-- **Agent script proposals (opt-in):** with `--allow-changes` and a separate approval, an agent can propose new scripts, edits and on/off changes. Each one waits on the MCP page with the same access and source review as a URL install; nothing is saved until you apply it, applied scripts stay off unless you choose Apply & enable, and agents cannot delete scripts. See [script change proposals](docs/MCP.md#script-change-proposals).
+- **Independent modules:** control ad blocking and userscripts separately, with per-site exceptions.
+- **Ad and tracker blocking:** bundled EasyList, EasyList China and uBlock filters, plus custom network rules, page hiding and a visual element picker.
+- **Page protection:** controls for pop-ups, unwanted prompts and deceptive play/download buttons, plus an optional list of reported threat hosts. [Coverage and limits](docs/USER_GUIDE.md#controls-and-scope).
+- **Userscript manager:** create, import, organize and update scripts with reviewed site scopes and permissions, local values and cached dependencies. [Supported APIs](docs/USER_GUIDE.md#modules-and-userscripts).
+- **Editor tools:** syntax highlighting, error checks, metadata suggestions, tags, execution order and optional external-file editing.
+- **Appearance:** system, light or dark themes, custom accent colours and optional dark website styling.
+- **Backup & restore:** export settings and scripts to local JSON; preview a replacement before restoring. Restored scripts start disabled.
+- **Local diagnostics:** activity logs and optional network metadata capture, with filters and JSON export.
+- **Optional MCP:** share approved diagnostics with a local client and review proposed script changes before applying them. [MCP setup](docs/MCP.md).
+
+See the [user guide](docs/USER_GUIDE.md) for controls, permissions and compatibility details.
 
 ## Getting started
 
@@ -64,29 +76,14 @@ Use **Reload** on that page after source changes. A temporary add-on must be loa
 
 Ad blocking and userscripts have separate switches. Userscripts start disabled.
 
-Open **Modules & scripts** to import or create a script. Review its source and site scope, grant userscript access if prompted, save it, then enable **Run this script** and reload a matching page. Chrome and Edge may also require **Allow User Scripts** on the browser's extension-details page.
+1. Open **Modules & scripts**, allow userscript access and turn on the module.
+2. Create a script, import a `.user.js` file or choose **Install from URL**.
+3. Review the code, site matches and requested access. Save the script, then prepare and review any dependencies.
+4. Enable **Run this script** and reload a matching page.
 
-Saving an edited script disables it until you enable it again. Disabling a script prevents future registrations, revokes live APIs and cancels its network requests; reload open pages to remove code that has already run.
+Saving code changes pauses the script until you enable it again. After disabling a script, reload open pages to remove code that has already run.
 
-The editor highlights source and reports syntax errors with **Go to error**. Add local tags or author `@tag` metadata, search/filter the library, and use **Earlier** / **Later** to set script start order within each timing phase. Saving tags alone keeps the script enabled. See [editing and organization](docs/USER_GUIDE.md#editing-and-organizing-scripts).
-
-For a hosted script, choose **Install from URL**, paste its direct HTTPS source URL, then **Fetch for review**. Review the code and access before choosing **Install script**. Later, select the script and choose **Check for updates**. **Apply update** uses the reviewed bytes, preserves saved values and pauses the script until you enable it again. See [installation and update limits](docs/USER_GUIDE.md#installing-and-updating-scripts).
-
-Scripts can add commands to the extension popup for their page. Legacy GM reads are synchronous once saved values load; that initial loading can delay `document-start`. Modern GM storage methods return promises, and stored values remain JSON-compatible and private to each script.
-
-Chrome and Edge support 10 isolated userscript worlds in one document. Keep overlapping script scopes within that limit; the library can still hold 32 scripts for different sites.
-
-Page scripts can combine real `unsafeWindow` access with granted GM APIs. Wrapped `@inject-into auto` tries page first, with isolated fallback when page startup is blocked. Page code can observe or invoke the script's granted helpers; use `content` for isolation. Older saved auto scripts keep isolation until individually re-enabled. Page bridges also consume an isolated world; raw `@unwrap` auto remains isolated. See [execution behavior and limits](docs/USER_GUIDE.md#execution-compatibility).
-
-URL scopes support host wildcards, ports, IPv6, internationalized hosts, fragments, `.tld` suffixes and regex includes/excludes, including lookarounds, named groups and backreferences evaluated with bounded work. See [matching rules and examples](docs/USER_GUIDE.md#userscript-url-matching) for the supported syntax and limits. Suffix data is bundled locally; matching makes no network requests.
-
-For scripts with `@require` or `@resource`, save the script, choose **Prepare dependencies**, and review the cached contents before enabling it. Nothing downloads on import, save or startup. Scripts with a network grant can use `GM_xmlhttpRequest` or `GM.xmlHttpRequest`; the manager displays their destination scope.
-
-Scripts can grant `GM_addElement` / `GM.addElement` to create DOM elements, or `GM_openInTab` / `GM.openInTab` to open HTTP(S) tabs and close their own tabs through a returned handle. Both API styles return synchronously. See the [helper options, lifecycle and compatibility limits](docs/USER_GUIDE.md#element-and-tab-helpers).
-
-The manager supports a focused subset of userscript metadata and GM APIs. Updates are checked daily. By default, one from the same address that needs no new access installs on its own, and any other waits for your review. Compatibility with Violentmonkey and Tampermonkey scripts is partial. See the [compatibility table and request limits](docs/USER_GUIDE.md#modules-and-userscripts).
-
-Clipboard, notification and download helpers need an exact `@grant` plus optional browser access. Select the script and choose **Allow helper access**. Both legacy and modern spellings are supported; downloads use HTTP(S), `@connect` scope, a 16 MiB cap and unique filenames unless `conflictAction` asks to overwrite or prompt. HTTP requests support FormData, ReadableStream bodies, `user`/`password` Basic authentication, upload progress, 8 MiB bodies/responses and up to five checked redirects. Upload progress needs helper access; Firefox also needs it to follow redirects. See [request options and limits](docs/USER_GUIDE.md#userscript-http-requests) and [desktop helper behavior](docs/USER_GUIDE.md#clipboard-notifications-and-downloads).
+[Editing and organization](docs/USER_GUIDE.md#editing-and-organizing-scripts) · [Installs and updates](docs/USER_GUIDE.md#installing-and-updating-scripts) · [Compatibility and APIs](docs/USER_GUIDE.md#modules-and-userscripts)
 
 ## Logs, network capture and MCP
 
@@ -96,7 +93,7 @@ Open **Modules & scripts → Network** for optional request/response metadata ca
 
 ## How it compares
 
-Module Engine is the only one of these extensions that both blocks ads and runs userscripts. This was checked against each project's own pages and recent reporting on 18 November 2026. The [project site](site/index.html#compare) has the detailed tables and sources.
+Module Engine is the only one of these extensions that both blocks ads and runs userscripts. This was checked against each project's own pages and recent reporting on 18 November 2026. The [project site](https://jasxtd.github.io/Module-Engine/#compare) has the detailed tables and sources.
 
 | Extension | Blocks ads | Runs userscripts | Chrome and Edge | Firefox | Licence |
 | --- | --- | --- | --- | --- | --- |
@@ -138,15 +135,17 @@ That run covered the bundled uBlock filters and its scriptlet rules, which start
 
 ## Privacy and limits
 
-Module Engine has no telemetry. Settings, script source, cached dependencies, script values and activity records stay in browser extension storage. Explicit dependency preparation downloads the listed files without cookies. While Community lists is on, EasyList and EasyList China are downloaded from their publishers as often as they ask (EasyList China asks daily). While Reported Threats is on, a release that names an update folder downloads its signed list once a day. While Userscripts and **Check installed scripts daily** are on, each script with an update address is downloaded from that address once a day. None of these downloads carries cookies or a referrer. Enabled scripts can read matching pages; a network grant can send data and use destination cookies unless `anonymous: true` is set. The separate cookie grant and optional permission allow reading and changing cookies, including HttpOnly cookies, within the documented host/store limits. Review code, dependencies and API access before enabling a script.
+- **Local storage:** no telemetry. Settings, scripts, values and logs are stored in the browser. Exported backups are unencrypted local JSON files.
+- **Downloads:** enabled list and script updates, and dependency preparation, contact their publishers.
+- **Userscripts:** enabled scripts can access matching pages and transmit data according to their code and granted access. Review scripts and dependencies first.
+- **Optional MCP:** approved information goes to your local client, which may forward it to its configured AI provider.
+- **Limits:** filtering can miss ads or affect legitimate pages. The optional reported-threat list uses dated evidence and is not comprehensive malware protection.
 
-The bundled EasyList and EasyList China snapshots are from 19 October 2026, and the uBlock filters snapshot from 19 November 2026. While the Community lists layer is on, Module Engine downloads newer copies of EasyList and EasyList China as often as their publishers ask and converts them on your computer. Network rules and site hiding follow the new copies; generic hiding changes only with a new release. uBlock filters is never downloaded: it changes only with a new release, and its scriptlet rules run by default as each page loads. You can turn these updates off in My lists. Ad filtering can miss ads, affect legitimate pages or vary by site. The reported-threat layer is off until you turn it on. It uses dated evidence and disables itself 180 days after the earliest reported observation; the bundled policy expires on **28 February 2027 at 00:00 UTC**. A release can name an update folder from which a newer, signed list installs itself. This version names none, so it keeps the bundled list. It is not comprehensive malware protection.
-
-Permission purposes and the distinction between site pauses, allowed domains and custom blocks are documented in the [user guide](docs/USER_GUIDE.md#permissions).
+[Privacy policy](PRIVACY.md) · [Permissions](docs/USER_GUIDE.md#permissions) · [MCP sharing](docs/MCP.md)
 
 ## Documentation
 
-- [Project site](site/index.html): a one-page overview, install steps and the comparison with other extensions.
+- [Project site](https://jasxtd.github.io/Module-Engine/): a one-page overview, install steps and the comparison with other extensions.
 - [User guide](docs/USER_GUIDE.md): modules, controls, custom filters, permissions and the element picker.
 - [Development](docs/DEVELOPMENT.md): source organization, rule builds and local working files.
 - [Releasing](docs/RELEASING.md): store and Firefox packages, and how installed copies update.
@@ -168,7 +167,7 @@ pwsh -NoProfile -File tests/threat-rules.test.ps1
 pwsh -NoProfile -File tests/requested-ad-hosts.test.ps1
 ```
 
-Browser test commands and offline isolation details are in [Verification](docs/VERIFICATION.md#verification). Keep raw working output in `.artifacts/`; reviewed historical evidence remains under `verification/`.
+Browser test commands and offline isolation details are in [Verification](docs/VERIFICATION.md#verification). Raw output in `.artifacts/` and `verification/`, and design drafts in `design/`, stay local and are ignored by Git. Required rule-build evidence lives in `lists/evidence/`.
 
 ## Attribution and licensing
 

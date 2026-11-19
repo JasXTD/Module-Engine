@@ -131,8 +131,8 @@ try {
             'catalog-unverified' { $site.hosts[0].domain = $catalogUnverified.domain }
             'future' { $site.hosts[0].observedOnUtc = '2099-01-01' }
             'date' { $site.hosts[0].observedOnUtc = '2026-02-30' }
-            'evidence-path' { $site.hosts[0].evidence = 'verification/../manifest.json' }
-            'evidence-missing' { $site.hosts[0].evidence = 'verification/missing/none.json' }
+            'evidence-path' { $site.hosts[0].evidence = 'lists/evidence/../../manifest.json' }
+            'evidence-missing' { $site.hosts[0].evidence = 'lists/evidence/missing/none.json' }
             'unknown-field' { $site.hosts[0].command = 'inert-text' }
             'missing-field' { $site.hosts[0].Remove('role') }
             'kind' { $site.reviewKind = 'remote-feed' }

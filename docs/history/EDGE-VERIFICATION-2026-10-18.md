@@ -32,9 +32,9 @@ Personal Edge sessions, installed extensions, browser policies, sandbox configur
 
 ## Evidence and limits
 
-- [Edge results](../../verification/2026-10-18/dated-threats/edge.json), [Chrome regression results](../../verification/2026-10-18/dated-threats/chrome.json), [Firefox regression results](../../verification/2026-10-18/dated-threats/firefox.json).
-- [Edge validation summary](../../verification/2026-10-18/dated-threats/edge-validation.json) includes protected-file hashes, source identity and cleanup checks.
-- [Edge active popup](../../verification/2026-10-18/dated-threats/edge-popup-final.png), [error state](../../verification/2026-10-18/dated-threats/edge-popup-error.png), [long-domain state](../../verification/2026-10-18/dated-threats/edge-popup-long-domain.png).
+- [Edge results](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/edge.json), [Chrome regression results](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/chrome.json), [Firefox regression results](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/firefox.json).
+- [Edge validation summary](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/edge-validation.json) includes protected-file hashes, source identity and cleanup checks.
+- [Edge active popup](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/edge-popup-final.png), [error state](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/edge-popup-error.png), [long-domain state](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/dated-threats/edge-popup-long-domain.png).
 - The original launcher failure is preserved as `verification/2026-10-18/dated-threats/edge-launcher-before-fix.json`.
 - Pre-change harness, documentation and evidence copies are under `.artifacts/edge-verification-20261018-123016/`.
 

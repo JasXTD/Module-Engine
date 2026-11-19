@@ -9,4 +9,4 @@ These documents preserve dated findings and decisions. They describe the version
 - [Edge verification — 18 October 2026](EDGE-VERIFICATION-2026-10-18.md)
 - [Live-site observations — 18 October 2026](LIVE-SITE-VERIFICATION-2026-10-18.md)
 
-The original verification records remain under [`verification/`](../../verification/), including records referenced by the list builder. Moving these reports does not change their findings or grant permission to visit any listed site.
+The original verification records remain under [`verification/`](https://github.com/JasXTD/Module-Engine/tree/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/), including records referenced by the list builder. Moving these reports does not change their findings or grant permission to visit any listed site.

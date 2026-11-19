@@ -1,5 +1,7 @@
 # Local snapshots, working logs and scratch exports
 /.artifacts/
+/verification/
+/design/
 *.log
 
 # Local backup downloads can contain private script values

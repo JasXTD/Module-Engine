@@ -1,7 +1,0 @@
-{
-  "browser": "firefox",
-  "success": false,
-  "checks": 692,
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-XXhzUa\\evidence.json",
-  "error": "AssertionError [ERR_ASSERTION]: the real toolbar popup opens at 16 by 8\n    at check (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:553:54)\n    at verifyPages (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\pages-browser.cjs:149:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:1079:5"
-}

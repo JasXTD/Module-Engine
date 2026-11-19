@@ -121,5 +121,5 @@ A future promotion requires dated primary evidence for the precise hostname and 
 
 ## Validation
 
-Validation results are recorded in [verification/2026-10-18/passive-review-validation.json](../../verification/2026-10-18/passive-review-validation.json). The final checks cover all 73 unique entries, source references and evidence dates, source-catalog identity, unchanged protected files, and the existing offline rule/import regression suite. Browser runtime was not rerun for these documentation-only changes; the earlier Chrome/Firefox results remain in [the implementation report](CHANGES-2026-10-18.md).
+Validation results are recorded in [verification/2026-10-18/passive-review-validation.json](https://github.com/JasXTD/Module-Engine/blob/5206c62e0f7aeb5b4793c7fbd0719610b06db7a5/verification/2026-10-18/passive-review-validation.json). The final checks cover all 73 unique entries, source references and evidence dates, source-catalog identity, unchanged protected files, and the existing offline rule/import regression suite. Browser runtime was not rerun for these documentation-only changes; the earlier Chrome/Firefox results remain in [the implementation report](CHANGES-2026-10-18.md).
 

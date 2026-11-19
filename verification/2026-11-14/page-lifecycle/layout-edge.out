@@ -1,7 +1,0 @@
-{
-  "browser": "edge",
-  "success": false,
-  "checks": 492,
-  "error": "Error: Timed out: document.getElementById(\"connectionBadge\").textContent.includes(\"Connected\")\nManager: Helper access granted. Reload the script’s page before trying it again.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:83:11)\n    at async pair (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\mcp-browser.cjs:23:5)\n    at async Object.runNetworkReads (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\mcp-network-browser.cjs:11:34)\n    at async runMCP (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\mcp-browser.cjs:61:5)\n    at async Object.runLayout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-layout-browser.cjs:27:44)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:196:7",
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-YgHkoq\\evidence.json"
-}

@@ -7,49 +7,49 @@
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "210x150 ad frame (acceptable.a-ads.com, static.a-ads.com) inserted by the pubadx.one tag",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "aotter.net",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "ad requests and ID syncs (bb8, r2d2) from the aotter ad SDK",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "aottercdn.com",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "aotter ad SDK script (static.aottercdn.com/trek/sdk) loaded through Google Tag Manager",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "insecure-brief.com",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "script loaded by the political-effort.com pop-up script",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "political-effort.com",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "script loaded by the page that opens a pop-up on any click and shows a 300x250 ad frame",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "pubadx.one",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "ad loader (platform.pubadx.one/v2/tag.js) loaded by the page, with impression pings from imp9",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     },
     {
       "domain": "zealous-deposit.pro",
       "observedOnUtc": "2026-10-19",
       "site": "uukanshu.cc",
       "role": "contacted from inside the ad frames (proxy log)",
-      "evidence": "verification/2026-10-19/uukanshu/chapter-page-before.json"
+      "evidence": "lists/evidence/uukanshu-chapter-page-2026-10-19.json"
     }
   ]
 }

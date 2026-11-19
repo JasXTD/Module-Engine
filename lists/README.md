@@ -193,13 +193,15 @@ This browser-only format does not change the shared reviewed-domain v1 contract.
 `site-ad-hosts.json` (`reviewKind: observed-site-ad-hosts`) records ad hosts seen on a
 named site by the opt-in `tests/site-ad-check.cjs`. Each entry has the canonical
 `domain`, the UTC date `observedOnUtc`, the `site` it was seen on, its observed `role`, and
-the `evidence` file under `verification/` that records the request. The builder turns each
+the committed `evidence` file under `lists/evidence/` that records the request. Raw browser
+output stays in the ignored `verification/` folder; copy reviewed build inputs into
+`lists/evidence/` before adding them to the catalog. The builder turns each
 entry into an ad rule (ids from 1001, `||domain^`, page loads included so a click pop-up to
 the host is blocked too). Like the URL patterns, the list is browser-only: it is not part of
 the v1 catalog and is never exported to CyberAssist.
 
 The builder refuses unknown or missing fields, non-canonical or duplicate hosts, future or
-invalid dates, evidence paths outside `verification/` or to missing files, and any host
+invalid dates, evidence paths outside `lists/evidence/` or to missing files, and any host
 already in the v1 catalog, so an `unverified` catalog entry cannot be activated through
 this list. A recorded ad role is not a malware verdict, and generated-looking ad domains
 may be replaced by their network; recheck the site and add the new host when that happens.

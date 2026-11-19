@@ -1,7 +1,0 @@
-{
-  "browser": "chrome",
-  "success": false,
-  "checks": 397,
-  "error": "Error: {\"exceptionId\":1,\"text\":\"Uncaught (in promise) Error: Native cookie write timed out after submission; its outcome is unknown and it may still complete. It will not be retried.\",\"lineNumber\":104,\"columnNumber\":32,\"scriptId\":\"16\",\"stackTrace\":{\"callFrames\":[{\"functionName\":\"send\",\"scriptId\":\"16\",\"url\":\"blockads-userscript-46834f2b-841f-454a-877b-7e0ddf57d40b.user.js\",\"lineNumber\":103,\"columnNumber\":31}]},\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"Error\",\"description\":\"Error: Native cookie write timed out after submission; its outcome is unknown and it may still complete. It will not be retried.\\n    at send (blockads-userscript-46834f2b-841f-454a-877b-7e0ddf57d40b.user.js:104:32)\",\"objectId\":\"-2568800524134755281.2.1\"}}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:208:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:102:5)\n    at async Object.runLayout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-layout-browser.cjs:16:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:191:7",
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-chrome-mPV0zb\\evidence.json"
-}

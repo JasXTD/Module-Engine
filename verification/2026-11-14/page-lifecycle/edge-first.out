@@ -1,7 +1,0 @@
-{
-  "browser": "edge",
-  "success": false,
-  "checks": 78,
-  "error": "Error: Timed out: (globalThis.browser||chrome).runtime.sendMessage({type:\"US_MENU_LIST\",tabId:687278112}).then(r=>r.commands?.filter(c=>c.menuId===\"life\")).then(m=>m?.length===1)\nManager: Helper access granted. Reload the script’s page before trying it again.\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:83:11)\n    at async runPage (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-page-browser.cjs:182:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\userscripts-browser.cjs:201:7",
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-userscripts-edge-YMOUTZ\\evidence.json"
-}

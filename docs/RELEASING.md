@@ -61,8 +61,7 @@ The command-line alternative to the Developer Hub upload is Mozilla's `web-ext s
 Commit the release changes before archiving so the source matches the upload. Replace `1.9.0` with the release's actual version:
 
 ```powershell
-$sourceEvidence = @((Get-Content -Raw lists/site-ad-hosts.json | ConvertFrom-Json).hosts.evidence | Sort-Object -Unique)
-git archive --format=zip --output=dist/module-engine-1.9.0-source.zip HEAD LICENSE README.md manifest.json src icons lists rules vendor scripts docs tests mcp development $sourceEvidence
+git archive --format=zip --output=dist/module-engine-1.9.0-source.zip HEAD LICENSE PRIVACY.md README.md manifest.json src icons lists rules vendor scripts docs tests mcp development
 ```
 
 Extract the source, then run `node scripts/package-extension.cjs build` from its root to reproduce the upload. No npm packages, downloads or bundler are required; Node 22+ is used. JavaScript is shipped readable. Included prebuilt rule files are also reproducible offline with PowerShell 7+: `pwsh -NoProfile -File scripts/build-rules.ps1`, followed by the same packaging command. The list inputs, catalogs, compiler scripts and third-party provenance/licences are included. See [Development](DEVELOPMENT.md#reviewed-catalog-and-rule-builds) and [Mozilla's source-submission guide](https://extensionworkshop.com/documentation/publish/source-code-submission/).

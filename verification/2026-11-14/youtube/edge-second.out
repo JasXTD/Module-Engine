@@ -1,7 +1,0 @@
-{
-  "browser": "edge",
-  "success": false,
-  "checks": 11,
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-edge-o6RGZv\\evidence.json",
-  "error": "Error: Condition timed out: v.muted && v.playbackRate === 16 && v.currentTime > 1.9\nPlayer state: {\"className\":\"html5-video-player ad-showing\",\"muted\":true,\"rate\":16,\"time\":0,\"duration\":2,\"ready\":4,\"seekable\":[[0,0]],\"controls\":\"\"}\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:448:9)\n    at async wait (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\youtube-browser.cjs:70:13)\n    at async Object.verify (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\youtube-browser.cjs:88:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:574:7"
-}

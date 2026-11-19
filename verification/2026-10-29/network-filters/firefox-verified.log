@@ -1,7 +1,0 @@
-{
-  "browser": "firefox",
-  "success": false,
-  "checks": 0,
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-firefox-eD4sM5\\evidence.json",
-  "error": "Error: Firefox BiDi startup timed out\n    at Timeout._onTimeout (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:269:45)\n    at listOnTimeout (node:internal/timers:685:17)\n    at process.processTimers (node:internal/timers:618:7)"
-}

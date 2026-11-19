@@ -1,6 +1,0 @@
-# Offline rule test output
-
-```text
-Built 109 ad rules (7 from site checks; 2 user requests), 80 tracker rules, 24 exact reported-threat rules (expire 2026-11-30T00:00:00Z); 73 unverified domains are observation only; 9223 community rules and 22449 site hiding rules from 2 list(s).
-PASS: 338 threat evidence/build assertions. Isolated fixture directory: C:\Users\Tommy\AppData\Local\Temp\blockads-threat-rules-3eb9fecc13444b0baca7e69e387a6d95
-```

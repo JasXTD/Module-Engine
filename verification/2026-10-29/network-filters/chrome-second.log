@@ -1,7 +1,0 @@
-{
-  "browser": "chrome",
-  "success": false,
-  "checks": 401,
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-verify-chrome-O1sfxJ\\evidence.json",
-  "error": "Error: Condition timed out: document.getElementById('networkFilters').value === \"! Original local request-matching fixtures\\n||cdn.request-probe.test/unit-block/*$script,third-party,domain=publisher-fixture.test|~quiet.publisher-fixture.test\\n@@||cdn.request-probe.test/unit-block/allowed.js$script,domain=publisher-fixture.test\\n||case.request-probe.test/Upper.js|$script,match-case\\n||uncased.request-probe.test/Banner$script\\n||first.request-probe.test^$image,first-party\\n||third.request-probe.test^$script,third-party\\n||negative.request-probe.test^$~image,~stylesheet\\n|https://absolute.request-probe.test:8443/path.js|$script\\n||www.scope.request-probe.test^$script\\n||bücher.request-probe.test^$script\\n||frame.request-probe.test^$subdocument\\n@@||hard.request-probe.test^\\n@@||msbenefit.com^\\n||invalid.example^$redirect=script\"\nEditor state: {\"busy\":false,\"dirty\":false,\"valid\":true,\"baseCurrent\":true,\"status\":\"Network filters saved and verified. Reload affected pages.\",\"notice\":\"\"}\n    at until (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:335:9)\n    at async input (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-browser.cjs:23:5)\n    at async verifyNetwork (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\network-browser.cjs:107:3)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:714:5"
-}

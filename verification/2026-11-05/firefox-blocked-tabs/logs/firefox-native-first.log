@@ -1,7 +1,0 @@
-{
-  "browser": "firefox",
-  "success": false,
-  "checks": 2,
-  "error": "Error: {\"columnNumber\":114,\"exception\":{\"type\":\"error\"},\"lineNumber\":0,\"stackTrace\":{\"callFrames\":[{\"columnNumber\":114,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html\"},{\"columnNumber\":139,\"functionName\":\"\",\"lineNumber\":0,\"url\":\"moz-extension://d73f30ed-9a72-486f-84f7-8a1d16be7021/popup.html\"}]},\"text\":\"TypeError: can't access property \\\"id\\\", tabs[0] is undefined\"}\n    at Object.evaluate (C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\browser-smoke.cjs:316:46)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Tommy\\Desktop\\BlockAds\\tests\\blocked-tabs-browser.cjs:88:23",
-  "evidence": "C:\\Users\\Tommy\\AppData\\Local\\Temp\\blockads-tabs-firefox-s3H8eq\\evidence.json"
-}
