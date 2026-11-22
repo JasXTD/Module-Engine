@@ -58,29 +58,30 @@ The command-line alternative to the Developer Hub upload is Mozilla's `web-ext s
 
 ## Reviewer source archive
 
-Commit the release changes before archiving so the source matches the upload. Replace `1.9.0` with the release's actual version:
+Commit the release changes before archiving so the source matches the upload. Use the version from the committed manifest for the archive name.
 
 ```powershell
-git archive --format=zip --output=dist/module-engine-1.9.0-source.zip HEAD LICENSE PRIVACY.md README.md manifest.json src icons lists rules vendor scripts docs tests mcp development
+$version = (git show HEAD:manifest.json | ConvertFrom-Json).version
+git archive --format=zip --output="dist/module-engine-$version-source.zip" HEAD LICENSE PRIVACY.md README.md manifest.json src icons lists rules vendor scripts docs tests mcp development
 ```
 
 Extract the source, then run `node scripts/package-extension.cjs build` from its root to reproduce the upload. No npm packages, downloads or bundler are required; Node 22+ is used. JavaScript is shipped readable. Included prebuilt rule files are also reproducible offline with PowerShell 7+: `pwsh -NoProfile -File scripts/build-rules.ps1`, followed by the same packaging command. The list inputs, catalogs, compiler scripts and third-party provenance/licences are included. See [Development](DEVELOPMENT.md#reviewed-catalog-and-rule-builds) and [Mozilla's source-submission guide](https://extensionworkshop.com/documentation/publish/source-code-submission/).
 
-## AMO version notes for 1.9.0
+## AMO version notes for 1.9.1
 
-Copy the following into the version notes:
+Use these notes for the 1.9.1 submission.
 
 ```text
-Module Engine 1.9.0 provides local ad and tracker blocking, custom network and page-hiding filters, and an optional userscript manager with explicit site scopes and permissions.
+Module Engine 1.9.1 fixes six security and privacy issues.
 
-- Bundled EasyList, EasyList China and uBlock filters provide the starting filter data. EasyList and EasyList China can update from their publishers; uBlock filters update with extension releases.
-- Userscripts can be created, imported and reviewed before enabling. The manager supports local script values, cached dependencies, tags, ordering and reviewed access changes during updates.
-- Backup & restore exports settings, custom filters, appearance, scripts, values and prepared dependencies to a local JSON file. Restore previews the replacement and leaves restored scripts disabled until reviewed and enabled again.
-- Optional local MCP debugging shares only approved scopes with the selected client. Firefox data-sharing permission is requested before connecting and revocation disconnects the session.
-- The Firefox release requires Firefox 142 or later and omits Chromium-only offscreen permission. Chrome and Edge requirements remain unchanged.
+- Userscript requests and downloads from private tabs and Firefox containers require anonymous mode.
+- Cookie operations check the calling document's partition. Deletion checks the selected cookie's domain and expires only the authorized cookie.
+- Private browsing stays out of the Network and Activity logs. Previously recorded browsing entries with unknown privacy status are discarded.
+- Late pop-up guards and scriptlets run only in the document that requested them.
+- Backup restore shows changes to protection settings, site lists and userscript update preferences, along with the exact custom filters being replaced.
 ```
 
-## AMO notes to reviewer for 1.9.0
+## AMO notes to reviewer for 1.9.1
 
 Copy the following into Notes to Reviewer. Upload the matching source ZIP in the source-code step.
 
@@ -93,5 +94,5 @@ To test Backup & restore, download a backup, change a saved setting, select the 
 
 The extension has no project telemetry or required data collection. Filter updates download lists from their publishers. User-installed scripts may access their matched pages and transmit data according to their source and granted access. Optional MCP debugging connects only after in-page approval and Firefox's optional data-consent prompt. It sends the selected status, script information and diagnostic/request metadata to the user's local MCP client, which may forward it to its configured AI service. No AI account is required for the blocker or userscript manager. MCP is off unless explicitly paired; source ZIP docs/MCP.md explains the optional Node-based server and client setup.
 
-The matching source ZIP contains readable JavaScript, bundled rule inputs, compiler scripts and third-party licences/provenance. From its extracted root, run node scripts/package-extension.cjs build using Node 22+; no npm install or network download is needed. To regenerate the bundled rules first, run pwsh -NoProfile -File scripts/build-rules.ps1 with PowerShell 7+, then the packaging command. The Firefox upload is dist/module-engine-1.9.0-firefox.zip. Build and testing details are in docs/RELEASING.md, docs/DEVELOPMENT.md and docs/VERIFICATION.md.
+The matching source ZIP contains readable JavaScript, bundled rule inputs, compiler scripts and third-party licences/provenance. From its extracted root, run node scripts/package-extension.cjs build using Node 22+. To regenerate the bundled rules first, run pwsh -NoProfile -File scripts/build-rules.ps1 with PowerShell 7+, then the packaging command. The Firefox upload is dist/module-engine-1.9.1-firefox.zip. Build and testing details are in docs/RELEASING.md, docs/DEVELOPMENT.md and docs/VERIFICATION.md.
 ```
