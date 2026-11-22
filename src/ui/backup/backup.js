@@ -41,6 +41,19 @@
         if (!index) cell.scope = 'row'; cell.textContent = String(value); row.append(cell); });
       return row;
     }));
+    byId('protectionChanges').textContent = result.changes.join('\n');
+    byId('protectionChanges').hidden = result.changes.length === 0;
+    byId('noProtectionChanges').hidden = Boolean(result.changes.length || result.filters.length);
+    byId('filterChanges').hidden = result.filters.length === 0;
+    byId('filterChanges').replaceChildren(...result.filters.map(filter => {
+      const details = document.createElement('details'), summary = document.createElement('summary');
+      summary.textContent = 'Compare ' + filter.label.toLowerCase(); details.append(summary);
+      for (const [title, value] of [['This browser', filter.before], ['Backup', filter.after]]) {
+        const heading = document.createElement('h4'), rules = document.createElement('pre');
+        heading.textContent = title; rules.textContent = value || '(empty)'; details.append(heading, rules);
+      }
+      return details;
+    }));
     byId('scriptNames').replaceChildren(...result.incoming.scripts.map(script => {
       const item = document.createElement('li');
       item.textContent = script.name + ' · ' + countLabel(script.values, 'saved value') + ' · ' +

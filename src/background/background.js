@@ -21,7 +21,7 @@ if (!globalThis.ModuleEngineThreatUpdates && typeof importScripts === "function"
 if (!globalThis.ModuleEngineCommunityUpdates && typeof importScripts === "function") importScripts("../blocking/community-lists.js", "community-updates.js");
 if (!globalThis.ModuleEngineBackupRuntime && typeof importScripts === "function") importScripts("../shared/appearance-settings.js", "../shared/backup.js", "backup-runtime.js");
 const api = typeof browser !== "undefined" ? browser : chrome;
-const networkLog = ModuleEngineNetworkLog.create(api);
+const networkLog = ModuleEngineNetworkLog.create(api, { regularTransfer: BlockAdsUserScriptNetwork.regularTransfer });
 // Automatic userscript updates are recorded in the activity log.
 const userscriptHost = BlockAdsUserScripts.create(api, { log: entry => addLog(entry) });
 const moduleHost = BlockAdsModules.create({
@@ -158,7 +158,13 @@ function loadLog() {
   logLoad ??= (async () => {
     try {
       const stored = (await api.storage.session.get(LOG_KEY))[LOG_KEY];
-      return Array.isArray(stored) ? stored.slice(-LOG_LIMIT) : [];
+      if (stored?.schemaVersion === 2 && Array.isArray(stored.entries)) return stored.entries.slice(-LOG_LIMIT);
+      if (Array.isArray(stored)) {
+        // The installation event writes the filtered log. A read through MCP
+        // must neither disclose unclassified browsing activity nor write data.
+        return stored.slice(-LOG_LIMIT).filter(entry => entry && typeof entry === 'object' && !('tabId' in entry || 'site' in entry || 'host' in entry));
+      }
+      return [];
     } catch {
       return [];
     }
@@ -174,7 +180,7 @@ async function addLog(entry) {
     // Batch writes: a busy page can produce many blocks per second.
     logSaveTimer ??= setTimeout(async () => {
       logSaveTimer = null;
-      try { await api.storage.session.set({ [LOG_KEY]: await loadLog() }); }
+      try { await api.storage.session.set({ [LOG_KEY]: { schemaVersion: 2, entries: await loadLog() } }); }
       catch (error) { console.warn("[Module Engine] Could not save the activity log:", error); }
     }, 500);
   } catch (error) {
@@ -406,14 +412,13 @@ function urlParts(value) {
 
 async function injectPopupFrame(sender, settings, active) {
   const topHost = urlParts(sender.tab?.url).host;
-  if (!active || !topHost || !Number.isInteger(sender.frameId) ||
+  if (!active || !topHost || !Number.isInteger(sender.frameId) || typeof sender.documentId !== "string" || !sender.documentId ||
       !settings.popupBlockedDomains.some(domain => domainMatches(topHost, domain))) return false;
   try {
-    // Registered scripts cover matching frames at document_start. This targeted
-    // injection also reaches cross-origin child frames, using the browser's tab
-    // and frame metadata rather than any page-supplied hostname.
+    // Registered scripts cover matching frames at document_start. Targeting the
+    // sending document also covers cross-origin children without following a navigation.
     await api.scripting.executeScript({
-      target: { tabId: sender.tab.id, frameIds: [sender.frameId] },
+      target: { tabId: sender.tab.id, documentIds: [sender.documentId] },
       files: ["src/blocking/popups.js"],
       world: "MAIN"
     });
@@ -619,10 +624,10 @@ async function scriptletsRegistered(hostname) {
 // Starts a frame's scriptlets without the registration, in the frame's own
 // page world, using the browser's frame and document IDs.
 async function injectScriptlets(sender, calls) {
-  if (!calls.length || !Number.isInteger(sender.frameId)) return false;
+  if (!calls.length || !Number.isInteger(sender.frameId) || typeof sender.documentId !== "string" || !sender.documentId) return false;
   try {
     await api.scripting.executeScript({
-      target: { tabId: sender.tab.id, ...(typeof sender.documentId === "string" ? { documentIds: [sender.documentId] } : { frameIds: [sender.frameId] }) },
+      target: { tabId: sender.tab.id, documentIds: [sender.documentId] },
       world: "MAIN", injectImmediately: true, func: BlockAdsScriptlets.run, args: [calls]
     });
     return true;
@@ -648,7 +653,7 @@ async function isDynamicBlock(ruleId) {
 // logged as blocked requests.
 async function logRuleMatch({ rule, request }) {
   try {
-    if (!(await matchedBlock(rule))) return;
+    if (!networkLog.regularTab(request.tabId, request.incognito) || !(await matchedBlock(rule))) return;
     const { host, path } = urlParts(request.url);
     const source = request.initiator || request.documentUrl || request.originUrl || "";
     // Installed list updates run as dynamic rules in their own ID ranges.
@@ -880,7 +885,7 @@ async function closeBlockedPopup(item) {
     // successful responses, or rule changes invalidate this exact candidate.
     blockedPopupTabs.delete(item.id);
     await api.tabs.remove(item.id);
-    await addLog({ kind: "event", message: "Closed a new pop-up tab after blocking its destination",
+    if (tab.incognito === false) await addLog({ kind: "event", message: "Closed a new pop-up tab after blocking its destination",
       host: urlParts(request.url).host, tabId: item.id });
   } catch (error) {
     if (blockedPopupTabs.get(item.id) === item) blockedPopupTabs.delete(item.id);
@@ -935,7 +940,7 @@ async function changeNetworkRules(update) {
   finally { networkRuleUpdates--; }
 }
 
-function describeChanges(before, after) {
+function describeChanges(before, after, includeFilterCounts = true) {
   const changes = [];
   const onOff = value => value ? "on" : "off";
   if (before.enabled !== after.enabled) changes.push(`Protection turned ${onOff(after.enabled)}`);
@@ -949,8 +954,8 @@ function describeChanges(before, after) {
   if (before.notificationPromptBlocking !== after.notificationPromptBlocking) changes.push(`Notification request protection turned ${onOff(after.notificationPromptBlocking)}`);
   if (before.deceptivePromptBlocking !== after.deceptivePromptBlocking) changes.push(`Deceptive install prompt protection turned ${onOff(after.deceptivePromptBlocking)}`);
   if (before.deceptiveButtonBlocking !== after.deceptiveButtonBlocking) changes.push(`Deceptive button protection turned ${onOff(after.deceptiveButtonBlocking)}`);
-  if (before.customCosmeticFilters !== after.customCosmeticFilters) changes.push(`Saved ${customCosmeticRules(after.customCosmeticFilters).length} custom cosmetic rules`);
-  if (before.customNetworkFilters !== after.customNetworkFilters) changes.push(`Saved ${customNetworkRules(after.customNetworkFilters).length} custom network rules`);
+  if (includeFilterCounts && before.customCosmeticFilters !== after.customCosmeticFilters) changes.push(`Saved ${customCosmeticRules(after.customCosmeticFilters).length} custom cosmetic rules`);
+  if (includeFilterCounts && before.customNetworkFilters !== after.customNetworkFilters) changes.push(`Saved ${customNetworkRules(after.customNetworkFilters).length} custom network rules`);
   if (before.flagSuspects !== after.flagSuspects) changes.push(`Flagging suspected ads turned ${onOff(after.flagSuspects)}`);
   if (before.communityListUpdates !== after.communityListUpdates) changes.push(`Automatic filter-list updates turned ${onOff(after.communityListUpdates)}`);
   if (before.retireExpiredThreats !== after.retireExpiredThreats) changes.push(`Stopping reported threats when their evidence expires turned ${onOff(after.retireExpiredThreats)}`);
@@ -961,8 +966,9 @@ function describeChanges(before, after) {
     ["popupBlockedDomains", "Pop-up blocking turned on for", "Pop-up blocking turned off for"],
     ["allowedDomains", "Always allowed", "No longer always allowed"]];
   for (const [key, added, removed] of lists) {
-    for (const domain of after[key].filter(item => !before[key].includes(item))) changes.push(`${added} ${domain}`);
-    for (const domain of before[key].filter(item => !after[key].includes(item))) changes.push(`${removed} ${domain}`);
+    const oldDomains = new Set(before[key]), newDomains = new Set(after[key]);
+    for (const domain of newDomains) if (!oldDomains.has(domain)) changes.push(`${added} ${domain}`);
+    for (const domain of oldDomains) if (!newDomains.has(domain)) changes.push(`${removed} ${domain}`);
   }
   return changes;
 }
@@ -1806,7 +1812,7 @@ api.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && SETTING_KEYS.some(key => key in changes)) flagSettings = null;
 });
 const fromExtensionPage = sender => sender.id === api.runtime.id && Boolean(sender.url?.startsWith(api.runtime.getURL("")));
-const backupHost = ModuleEngineBackupRuntime.create(api, { userscripts: userscriptHost, loadSettings, validateSettings,
+const backupHost = ModuleEngineBackupRuntime.create(api, { userscripts: userscriptHost, loadSettings, validateSettings, describeChanges,
   settingKeys: SETTING_KEYS, restoreSettings: transaction => processRequest({ type: 'RESTORE_BACKUP' }, transaction) });
 let backupPending = 0;
 const PICKER_SESSION_KEY = 'elementPickerSessions';
@@ -1968,7 +1974,7 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "LOG_EVENT") {
     // Content scripts report only fixed event names; the site comes from the browser.
-    if (sender.id === api.runtime.id && Number.isInteger(sender.tab?.id) && Object.hasOwn(CONTENT_EVENTS, message.event)) {
+    if (sender.id === api.runtime.id && sender.tab?.incognito === false && Number.isInteger(sender.tab.id) && Object.hasOwn(CONTENT_EVENTS, message.event)) {
       const site = urlParts(sender.tab.url).host;
       void (async () => {
         await addLog({ kind: "event", message: CONTENT_EVENTS[message.event](message), site, tabId: sender.tab.id });

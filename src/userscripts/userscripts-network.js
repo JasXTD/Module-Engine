@@ -46,9 +46,17 @@
       return origin.protocol === own.protocol && origin.host === own.host;
     } catch { return false; }
   };
+  // Firefox can deliver all webRequest events after fetch has already resolved.
+  // Keep only the opaque fragment of a recently completed regular hop.
+  const recentRegular = new Map();
+  function regularTransfer(details) {
+    const marker = details.url.slice(details.url.lastIndexOf('#') + 1);
+    return (observed.get(details.url)?.regularTab === true || recentRegular.get(marker) > Date.now()) && extensionRequest(details);
+  }
   function configure(browserAPI) {
     if (api === browserAPI) return;
     api = browserAPI;
+    recentRegular.clear();
     guardReady = undefined;
     offscreen = globalThis.BlockAdsOffscreen?.create(api);
     const listener = details => {
@@ -211,6 +219,16 @@
       if (asset.sha256 !== sha256 || pin && pin !== sha256) fail('Cached dependency integrity check failed. Prepare it again.');
     }
   }
+  function validateForSender(details, metadata, sender, download = false) {
+    const request = validate(details, metadata, sender.url, download);
+    // Background fetch and upload XHR use the regular profile's cookie jar.
+    const tab = sender.tab;
+    if (!request.anonymous && (tab?.incognito !== false ||
+        typeof api.runtime.getBrowserInfo === 'function' && tab.cookieStoreId !== 'firefox-default')) {
+      fail('This tab cannot use the background cookie store. Set anonymous: true for this request or download.');
+    }
+    return { ...request, regularTab: tab?.incognito === false };
+  }
   function validate(details, metadata, pageURL, download = false) {
     if (!details || typeof details !== 'object' || Array.isArray(details)) fail('Use a request details object.');
     const allowed = ['url', 'method', 'headers', 'body', 'formData', 'upload', 'redirect', 'timeout', 'anonymous', 'responseType', 'overrideMimeType', 'user', 'password'];
@@ -281,13 +299,14 @@
   }
   async function hop(details, signal, emit, limit) {
     await ensureObserver();
-    const key = details.url + '#me-us-' + (details.upload ? 'xhr-' + (details.anonymous ? 'anon-' : '') : 'fetch-') + crypto.randomUUID();
+    const marker = 'me-us-' + (details.upload ? 'xhr-' + (details.anonymous ? 'anon-' : '') : 'fetch-') + crypto.randomUUID();
+    const key = details.url + '#' + marker;
     let resolve, reject;
     const headers = new Promise((yes, no) => { resolve = yes; reject = no; });
     // Normal responses do not await this promise; consume cancellation there too.
     void headers.catch(() => {});
     const abort = () => reject(signal.reason || new Error('Request aborted.'));
-    const pending = { resolve }; observed.set(key, pending); signal.addEventListener('abort', abort, { once: true });
+    const pending = { resolve, regularTab: details.regularTab }; observed.set(key, pending); signal.addEventListener('abort', abort, { once: true });
     try {
       signal.throwIfAborted();
       let response;
@@ -321,7 +340,13 @@
         return { status, location };
       }
       return { response };
-    } finally { observed.delete(key); signal.removeEventListener('abort', abort); }
+    } finally {
+      observed.delete(key); signal.removeEventListener('abort', abort);
+      if (details.regularTab) {
+        recentRegular.set(marker, Date.now() + 30000);
+        if (recentRegular.size > 256) recentRegular.delete(recentRegular.keys().next().value);
+      }
+    }
   }
   function redirected(details, status, location) {
     const url = destination(new URL(location, details.url).href, details.scope || { connects: [] }, details.scope?.pageURL || details.url);
@@ -370,5 +395,5 @@
         error: timeout ? 'Request timed out.' : controller.signal.aborted ? 'Request aborted.' : String(error?.message || error) });
     } finally { clearTimeout(timer); release?.(); transfers.delete(transfer); }
   }
-  globalThis.BlockAdsUserScriptNetwork = Object.freeze({ LIMITS, prepare, fetchSource, verify, validate, request, configure, encode, decode, makeBody, reserve, redirected });
+  globalThis.BlockAdsUserScriptNetwork = Object.freeze({ LIMITS, prepare, fetchSource, verify, validate, validateForSender, regularTransfer, request, configure, encode, decode, makeBody, reserve, redirected });
 })();

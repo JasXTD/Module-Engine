@@ -87,7 +87,7 @@ Saving code changes pauses the script until you enable it again. After disabling
 
 ## Logs, network capture and MCP
 
-Open **Modules & scripts → Network** for optional request/response metadata capture. Choose all browser traffic or one tab, then **Start new capture**. Filter requests, inspect timing/errors, pause the live view or export filtered JSON. Capture is local, off by default and bounded; it does not collect headers or bodies. See [network capture and its limits](docs/USER_GUIDE.md#network-log).
+Open **Modules & scripts → Network** for optional request/response metadata capture. Choose all regular traffic or one regular tab, then **Start new capture**. Filter requests, inspect timing/errors, pause the live view or export filtered JSON. Capture is local, off by default and bounded; it does not collect headers or bodies. See [network capture and its limits](docs/USER_GUIDE.md#network-log).
 
 **MCP** is a sidebar entry as well as a button on Modules & scripts. Approve **Captured network request metadata** to let an agent use `module_engine_get_network_log`. Start capture yourself in a separate Network tab; the MCP tool can only read sanitized metadata. See [network approval and filters](docs/MCP.md#reading-captured-network-requests).
 

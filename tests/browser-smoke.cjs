@@ -55,7 +55,7 @@ function protocol(write) {
   };
 }
 
-async function chromium(extension, profile, denyPort, { headless = true, networkMode = 'offline', downloadDirectory } = {}) {
+async function chromium(extension, profile, denyPort, { headless = true, networkMode = 'offline', downloadDirectory, enableInIncognito } = {}) {
   if (!['offline', 'live-public'].includes(networkMode)) throw new Error('Unknown browser network mode');
   if (downloadDirectory) {
     await fs.mkdir(path.join(profile, 'Default'), { recursive: true });
@@ -171,7 +171,7 @@ async function chromium(extension, profile, denyPort, { headless = true, network
     const processes = await rpc.send('SystemInfo.getProcessInfo');
     browserPid = processes.processInfo.find(item => item.type === 'browser')?.id;
     if (!Number.isInteger(browserPid) || browserPid <= 0) throw new Error('Browser did not identify its process');
-    const { id } = await rpc.send('Extensions.loadUnpacked', { path: extension });
+    const { id } = await rpc.send('Extensions.loadUnpacked', { path: extension, enableInIncognito });
     const attach = async url => {
       const { targetId } = await rpc.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await rpc.send('Target.attachToTarget', { targetId, flatten: true });

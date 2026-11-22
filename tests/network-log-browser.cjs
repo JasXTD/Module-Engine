@@ -10,7 +10,7 @@ function networkLogFixture(request, response, state) {
   if (url.pathname === '/net/fail') { request.socket.destroy(); return true; }
   if (url.pathname === '/net/slow') { (state.networkPending ||= []).push(response); return true; }
   const headers = { 'Cache-Control': 'no-store', 'Content-Type': 'application/json', 'X-Fixture-Secret': 'private-response-header' };
-  if (['/net/page','/net/other','/net/script'].includes(url.pathname)) {
+  if (['/net/page','/net/other','/net/script','/net/script-private'].includes(url.pathname)) {
     response.writeHead(200, { ...headers, 'Content-Type': 'text/html; charset=utf-8' });
     response.end('<!doctype html><html><head><title>Owned network fixture</title></head><body><h1>Local network fixture</h1></body></html>');
   } else if (url.pathname === '/net/redirect') {
@@ -103,15 +103,41 @@ async function runNetworkLog({ b, manager, send, check, until, browse, scriptSou
     check('Resuming Live view displays captured entries', await get('entries.length===latest.length', logger));
     const grants = '// @grant GM.setValue\n// @grant GM.getValue\n// @grant GM.xmlHttpRequest\n';
     const source = scriptSource('Network capture coexistence', grants, `
-      (async()=>{try{await GM.setValue('network-fixture',42);const r=await GM.xmlHttpRequest({url:location.origin+'/net/gm',method:'GET'});
-      document.body.dataset.networkGM=String(await GM.getValue('network-fixture'))+':'+r.status;}catch(e){document.body.dataset.networkGM='error:'+e.message}})();`, '// @connect 127.0.0.1\n// @run-at document-end\n').replace('// @match http://127.0.0.1/*','// @match http://127.0.0.1/net/script');
+      (async()=>{try{
+        if(location.pathname==='/net/script-private'){
+          let denied=false;
+          try{await GM.xmlHttpRequest({url:location.origin+'/net/private-denied'});}catch(error){denied=/anonymous/.test(error.message);}
+          const r=await GM.xmlHttpRequest({url:location.origin+'/net/private-gm',anonymous:true});
+          document.body.dataset.networkGM=denied+':'+r.status;return;
+        }
+        await GM.setValue('network-fixture',42);const r=await GM.xmlHttpRequest({url:location.origin+'/net/gm',method:'GET'});
+        document.body.dataset.networkGM=String(await GM.getValue('network-fixture'))+':'+r.status;
+      }catch(e){document.body.dataset.networkGM='error:'+e.message}})();`, '// @connect 127.0.0.1\n// @run-at document-end\n').replace('// @match http://127.0.0.1/*','// @match http://127.0.0.1/net/script*');
     const saved = await send({type:'US_SAVE',source}); check('Coexistence userscript saves',saved.ok); scriptIds.push(saved.selectedId);
     const script=saved.scripts.find(s=>s.id===saved.selectedId);check('Coexistence userscript enables', (await send({type:'US_ENABLE',id:script.id,revision:script.revision,enabled:true})).ok);
     const scriptPage = await open(base+'/net/script');
     await until("document.body.dataset.networkGM==='42:201'",scriptPage);
     check('Native GM storage and HTTP work during capture',await get("document.body.dataset.networkGM==='42:201'",scriptPage));
     await until("latest.some(r=>r.url.endsWith('/net/gm')&&r.state==='complete')",logger);
-    check('Background userscript HTTP traffic is observable in all-browser scope', (await readRows(logger)).some(r=>r.url.endsWith('/net/gm')));
+    check('Regular background userscript HTTP traffic is observable', (await readRows(logger)).some(r=>r.url.endsWith('/net/gm')));
+    if (evidence.browser === 'chrome') {
+      const url = base + '/net/script-private';
+      const windowId = await get('chrome.windows.create({url:' + JSON.stringify(url) + ',incognito:true,focused:false}).then(w=>w.id)', manager);
+      try {
+        const privateId = await until('chrome.tabs.query({windowId:' + windowId + '}).then(tabs=>tabs.find(t=>t.incognito && t.status==="complete")?.id)', manager);
+        const sample = await until('chrome.scripting.executeScript({target:{tabId:' + privateId + '},func:()=>document.body?.dataset.networkGM}).then(rows=>rows[0]?.result)', manager);
+        check('Incognito GM HTTP rejects regular credentials and delivers an anonymous request', sample === 'true:201' &&
+          fixtureState.networkHits.some(hit => hit.path === '/net/private-gm') && !fixtureState.networkHits.some(hit => hit.path === '/net/private-denied'));
+        const regularId = await tabId(base + '/net/page');
+        for (const id of [privateId, regularId]) await get('chrome.scripting.executeScript({target:{tabId:' + id + '},func:()=>chrome.runtime.sendMessage({type:"LOG_EVENT",event:"procedural-filter-limit"})})', manager);
+        const activity = await until('chrome.runtime.sendMessage({type:"GET_LOG"}).then(r=>r.entries.some(e=>e.tabId===' + regularId + ' && e.message?.startsWith("Advanced page hiding stopped")) && r.entries)', manager);
+        check('Activity records the regular tab and excludes the incognito tab', activity.every(row => row.tabId !== privateId));
+        await fetchFrom(page, '/net/after-private');
+        await until("latest.some(r=>r.url.endsWith('/net/after-private')&&r.state==='complete')", logger);
+        check('Private navigation and its background request stay out of Network capture', (await readRows(logger)).every(row =>
+          row.tabId !== privateId && !row.url.endsWith('/net/private-gm') && row.url !== url));
+      } finally { await get('chrome.windows.remove(' + windowId + ')', manager); }
+    }
     // Keep a native response in flight across Clear; completing it must not repopulate the log.
     await get("(()=>{globalThis.slowDone=false;fetch('/net/slow').then(r=>r.text()).then(()=>slowDone=true);return true;})()",page);
     await until("latest.some(r=>r.url.endsWith('/net/slow'))",logger);

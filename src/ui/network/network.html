@@ -33,7 +33,7 @@
       <section class="card capture-card" aria-labelledby="captureHeading">
         <div class="capture-heading"><h2 id="captureHeading">Capture traffic</h2><span id="captureCount" class="muted">0 entries</span></div>
         <div class="capture-controls">
-          <label for="captureScope">Capture from<select id="captureScope" disabled><option value="all">All browser traffic</option></select></label>
+          <label for="captureScope">Capture from<select id="captureScope" disabled><option value="all">All regular traffic</option></select></label>
           <button id="refreshTabs" disabled title="Refresh available tabs"><span class="ic ic-refresh" aria-hidden="true"></span>Refresh tabs</button>
           <button id="startCapture" class="primary" disabled><span class="ic ic-play" aria-hidden="true"></span>Start new capture</button>
           <button id="stopCapture" disabled><span class="ic ic-pause" aria-hidden="true"></span>Stop</button>
@@ -62,7 +62,7 @@
       <details class="card coverage"><summary>What this log can show</summary>
         <p>Browser-reported HTTP(S) requests and responses, including WebSocket handshakes. A row describes one request or redirect hop. Some browser, cache and blocked-request events may be unavailable; this is not a complete packet capture.</p>
         <p>Other apps, response bodies, request bodies, headers and WebSocket messages are outside this log. A failed request is not proof of a Module Engine block; the browser error is shown when available.</p>
-        <p>Capture is off by default. A background restart stops capture. Retained entries use session memory and are cleared when the extension is reloaded or the browser restarts. URL paths can still contain private information; review exports before sharing.</p>
+        <p>Capture is off by default. Private tabs and requests whose context cannot be verified are excluded. A background restart stops capture. Retained entries use session memory and are cleared when the extension is reloaded or the browser restarts. URL paths can still contain private information; review exports before sharing.</p>
       </details>
     </main>
   </div>

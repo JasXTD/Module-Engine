@@ -133,9 +133,12 @@ function gmFloodFixture() {
   const browse = async pathname => b.open('http://127.0.0.1:' + port + pathname);
   try {
     await fs.mkdir(path.join(temp, 'exports'));
-    b = await chromium(extension, path.join(temp, 'profile'), proxy.address().port, { headless: !process.argv.includes('--native-helper-prompt'), downloadDirectory: path.join(temp, 'exports') });
+    const testPrivate = browserName === 'chrome' && process.argv.includes('--network-log-only');
+    b = await chromium(extension, path.join(temp, 'profile'), proxy.address().port, { headless: !process.argv.includes('--native-helper-prompt'),
+      downloadDirectory: path.join(temp, 'exports'), enableInIncognito: testPrivate });
     evidence.version = b.version;
     manager = await b.open('chrome-extension://' + b.id + '/src/ui/manager/manager.html');
+    if (testPrivate) check('The disposable extension can observe actual incognito tabs', await b.evaluate('chrome.extension.isAllowedIncognitoAccess()', manager));
     await b.evaluate("globalThis.__moduleTestClicks=[];for(const type of ['pointerdown','pointerup','click'])document.addEventListener(type,event=>{globalThis.__moduleTestClicks.push({type,id:event.target.closest('button,input,a')?.id,trusted:event.isTrusted,discardDisabled:document.getElementById('discardDraft').disabled,dialog:document.getElementById('confirmDialog').open,scroll:scrollY});},true)", manager);
     await ready();
     check('Fresh manager keeps blocking on and userscripts off', await b.evaluate("document.getElementById('blockingEnabled').checked&&!document.getElementById('userscriptsEnabled').checked", manager));

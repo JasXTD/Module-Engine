@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const backup = ModuleEngineBackup, appearance = ModuleEngineAppearance;
-  function create(api, { userscripts, loadSettings, validateSettings, settingKeys, restoreSettings }) {
+  function create(api, { userscripts, loadSettings, validateSettings, settingKeys, describeChanges, restoreSettings }) {
     const options = { settingKeys, validateSettings };
     const extraKeys = [appearance.KEY, BlockAdsUserScriptUpdates.KEY];
     async function checked(text) {
@@ -25,8 +25,20 @@
         }
         const baseline = await backup.digest({ settings, extra, library: transaction.library });
         const checksum = await backup.digest(file);
-        if (message.type === 'BACKUP_PREVIEW') return { ok: true, baseline, checksum, createdAt: file.createdAt,
-          extensionVersion: file.extensionVersion, incoming: backup.summary(file.data), current: backup.summary(data) };
+        if (message.type === 'BACKUP_PREVIEW') {
+          const changes = describeChanges(settings, file.data.settings, false);
+          for (const [key, label] of Object.entries({ interceptLinks: 'Userscript link interception',
+            autoCheck: 'Automatic userscript update checks', autoApply: 'Automatic userscript update installation' })) {
+            if (data.updates[key] !== file.data.updates[key]) changes.push(label + ' turned ' + (file.data.updates[key] ? 'on' : 'off'));
+          }
+          const filters = [];
+          for (const [key, label] of [['customNetworkFilters', 'Custom request filters'], ['customCosmeticFilters', 'Custom hiding and scriptlet filters']]) {
+            if (settings[key] !== file.data.settings[key]) filters.push({ label,
+              before: BlockAdsUserScriptCore.escapeBidi(settings[key]), after: BlockAdsUserScriptCore.escapeBidi(file.data.settings[key]) });
+          }
+          return { ok: true, baseline, checksum, createdAt: file.createdAt, extensionVersion: file.extensionVersion,
+            changes, filters, incoming: backup.summary(file.data), current: backup.summary(data) };
+        }
         if (message.baseline !== baseline || message.checksum !== checksum) {
           throw new Error('Saved data or the backup changed after the review. Choose the file again to review the latest state.');
         }

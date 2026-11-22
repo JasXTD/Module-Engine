@@ -6,7 +6,7 @@ Module Engine requires no account and has no project telemetry or analytics. Its
 
 ## Data kept in your browser
 
-Settings, custom filters, userscript source, cached dependencies, script values and activity records are stored locally in the browser. Optional network capture is off by default and records bounded request metadata, such as URLs, timing and errors. It does not capture request headers or bodies.
+Settings, custom filters, userscript source, cached dependencies, script values and activity records are stored locally in the browser. Both the activity log and network capture exclude private-tab observations. Optional network capture is off by default and records bounded request metadata, such as URLs, timing and errors. It does not capture request headers or bodies.
 
 ## Downloads and userscripts
 

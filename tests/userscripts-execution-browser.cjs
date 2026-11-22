@@ -111,6 +111,8 @@ async function runExecution({ b, manager, send, check, until, browse, scriptSour
     const ownSite = await b.evaluate('location.protocol+"//"+location.hostname', cookies);
     evidence.ownPartitionList = await request(cookies, 'list', { partitionKey: { topLevelSite: ownSite } });
     check('Cookie lists can address the calling tab’s own top-level partition', evidence.ownPartitionList.ok);
+    const wrongAncestor = await request(cookies, 'list', { partitionKey: { topLevelSite: ownSite, hasCrossSiteAncestor: true } });
+    check('A top-level document cannot select the cross-site ancestor partition', !wrongAncestor.ok && /partition/.test(wrongAncestor.error));
     const firstParty = await request(cookies, 'list', { firstPartyDomain: '' });
     check('firstPartyDomain is accepted only by Firefox', evidence.browser === 'firefox' ? firstParty.ok : !firstParty.ok && /only in Firefox/.test(firstParty.error));
     await b.evaluate('history.pushState({},"","/execution/outside-cookie-scope")', cookies);
@@ -129,8 +131,16 @@ async function runExecution({ b, manager, send, check, until, browse, scriptSour
       // Firefox containers: inherit the source container, or honor an index.
       // The cookies permission is granted above; Firefox requires it for this.
       const origin = await b.evaluate('location.origin', cookies);
-      await save('Firefox containers', '/execution/container-*', '// @grant GM.openInTab\n',
-        'const tag=location.pathname.split("-").pop();GM.openInTab(location.origin+"/execution/target-"+tag,tag==="explicit"?{container:2,active:false}:{active:false});');
+      await save('Firefox containers', '/execution/container-*', '// @grant GM.openInTab\n// @grant GM.xmlHttpRequest\n// @connect self\n', `
+        const tag = location.pathname.split('-').pop();
+        GM.openInTab(location.origin + '/execution/target-' + tag, tag === 'explicit' ? { container: 2, active: false } : { active: false });
+        if (tag === 'inherit') (async () => {
+          const url = location.origin + '/execution/store-check';
+          let denied = false;
+          try { await GM.xmlHttpRequest({ url }); } catch (error) { denied = /anonymous/.test(error.message); }
+          const response = await GM.xmlHttpRequest({ url, anonymous: true });
+          document.documentElement.dataset.storeCheck = denied + ':' + response.status;
+        })().catch(error => { document.documentElement.dataset.storeCheck = error.message; });`);
       const opened = api + '.tabs.query({}).then(tabs=>tabs.filter(tab=>/\\/execution\\/(container|target)-/.test(tab.url)))';
       await b.evaluate(api + '.tabs.create({url:' + JSON.stringify(origin + '/execution/container-inherit') + ',cookieStoreId:"firefox-container-1",active:false}).then(()=>true)', manager);
       await page('/execution/container-explicit');
@@ -139,6 +149,9 @@ async function runExecution({ b, manager, send, check, until, browse, scriptSour
       evidence.firefoxContainers = stores;
       check('Firefox GM.openInTab keeps the source tab’s container', stores['container-inherit'] === 'firefox-container-1' && stores['target-inherit'] === 'firefox-container-1');
       check('Firefox GM.openInTab honors an explicit container index', stores['container-explicit'] === 'firefox-default' && stores['target-explicit'] === 'firefox-container-2');
+      const containerTab = await b.evaluate(opened + '.then(tabs=>tabs.find(tab=>tab.url.endsWith("/execution/container-inherit")).id)', manager);
+      evidence.containerRequest = await until(api + '.scripting.executeScript({target:{tabId:' + containerTab + '},func:()=>document.documentElement.dataset.storeCheck}).then(rows=>rows[0]?.result)');
+      check('Firefox container blocks credentialed HTTP and permits the anonymous request', evidence.containerRequest === 'true:200');
       await b.evaluate(opened + '.then(tabs=>' + api + '.tabs.remove(tabs.filter(tab=>tab.cookieStoreId!=="firefox-default"||/target-/.test(tab.url)).map(tab=>tab.id))).then(()=>true)', manager);
     }
     check('Ad blocker remains enabled during execution compatibility tests', (await send({ type: 'GET_STATE' })).settings.enabled);

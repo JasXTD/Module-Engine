@@ -16,11 +16,14 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
   // Automatic filter-list updates stay off unless a test sets them: they would
   // download and write in the background of unrelated tests.
   const state = { session, storage: clone({ communityListUpdates: false, ...initial }), enabled: manifest.declarative_net_request.rule_resources.filter(rule => rule.enabled).map(rule => rule.id), dynamic: [], scripts: [], executions: [], removedTabs: [], badge: '', faults: {} };
-  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], updateRequests: [], listRequests: [], tabs: { 1: { id:1, url:'https://www.example.com/page' } },
+  Object.assign(state, { now: Date.parse(now), policyText, alarms: {}, fetches: [], updateRequests: [], listRequests: [], tabs: { 1: { id:1, url:'https://www.example.com/page', incognito:false } },
     cosmeticText: JSON.stringify({ hide: { 'example.com': ['.ad-box', '#banner'], 'news.example': ['.promo'] },
       allow: { 'shop.example.com': ['.ad-box'] } }) });
   class Clock extends Date { static now() { return state.now; } }
-  const event = name => ({ addListener(fn) { listeners[name] = fn; } });
+  const event = name => ({ addListener(fn) {
+    const previous = listeners[name];
+    listeners[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn;
+  } });
   const tick = () => new Promise(resolve => setImmediate(resolve));
   async function fault(key) {
     await tick();
@@ -29,6 +32,7 @@ function harness(initial = {}, limit = 5000, now = '2026-10-18T04:00:00Z', sessi
   const api = {
     tabs: {
       onCreated: event('tabCreated'), onUpdated: event('tabUpdated'), onRemoved: event('tabRemoved'),
+      async query() { return clone(Object.values(state.tabs)); },
       async get(id) { await fault('tabRead'); if (!state.tabs[id]) throw new Error('Missing tab'); return clone(state.tabs[id]); },
       async update(id, patch) { await tick(); Object.assign(state.tabs[id], patch); return clone(state.tabs[id]); },
       async remove(id) { await fault('tabRemove'); state.removedTabs.push(id); delete state.tabs[id]; listeners.tabRemoved?.(id); }
@@ -1139,7 +1143,7 @@ test('page filter verification accepts full extension URLs in readback', async (
 const settle = async () => { for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve)); };
 
 function popupNavigation(h, tabId = 20, changes = {}, requestChanges = {}) {
-  const tab = { id: tabId, openerTabId: 1, url: 'about:blank', status: 'loading', pinned: false, ...changes };
+  const tab = { id: tabId, openerTabId: 1, url: 'about:blank', status: 'loading', pinned: false, incognito: false, ...changes };
   h.state.tabs[tabId] = tab;
   h.listeners.tabCreated?.(clone(tab));
   const request = { tabId, frameId: 0, type: 'main_frame', requestId: String(tabId), url: 'https://blocked.example/ad', ...requestChanges };
@@ -1252,7 +1256,9 @@ test('blocked popup cleanup bounds candidates and preserves tabs without native 
   assert.deepEqual(h.state.removedTabs, [84]);
   const unsupported = harness({ customBlockedDomains: ['blocked.example'] }, 5000, '2026-10-18T04:00:00Z', {}, { noRuleFeedback: true });
   await unsupported.ready;
-  assert.equal(unsupported.listeners.tabCreated, undefined);
+  const untouched = popupNavigation(unsupported);
+  untouched.match(); untouched.fail(); await settle();
+  assert.deepEqual(unsupported.state.removedTabs, []);
   assert.equal((await unsupported.send({ type: 'GET_STATE' })).ok, true);
 });
 
@@ -1417,11 +1423,29 @@ test('Firefox bounds redirect history while preserving the network block', async
   firefoxAbort(h, popup); await settle(); assert.deepEqual(h.state.removedTabs, []);
   assert.ok(h.state.dynamic.some(rule => rule.action.type === 'block'));
 });
-const youtubeTab = { id: 'test', url: 'https://www.youtube.com/watch?v=x', tab: { id: 7, url: 'https://www.youtube.com/watch?v=x' } };
+const youtubeTab = { id: 'test', url: 'https://www.youtube.com/watch?v=x', tab: { id: 7, incognito: false, url: 'https://www.youtube.com/watch?v=x' } };
+
+test('activity logging excludes private and unknown tabs and discards unclassified legacy activity', async () => {
+  const h = harness({}, 5000, undefined, { activityLog: [
+    { kind: 'event', message: 'Configuration saved' }, { kind: 'blocked', tabId: 7, host: 'legacy.test' }] });
+  await h.ready;
+  for (const incognito of [true, undefined]) {
+    const tab = { id: 7, incognito, url: 'https://fixture.test/' };
+    h.listeners.tabCreated(tab);
+    await h.send({ type: 'LOG_EVENT', event: 'youtube-ad-skipped' }, { ...youtubeTab, tab });
+    h.listeners.ruleMatched({ rule: { ruleId: 1, rulesetId: 'trackers_ruleset' },
+      request: { url: tab.url, type: 'script', tabId: tab.id } });
+  }
+  await settle();
+  assert.deepEqual((await h.send({ type: 'GET_LOG' })).entries.map(entry => entry.message), ['Configuration saved']);
+  await h.listeners.installed({ reason: 'update' }); await settle();
+  assert.equal(JSON.stringify(h.state.session.activityLog).includes('legacy.test'), false);
+});
 
 test('activity log records blocks with layer, server, path and site, but not site-pause allows', async () => {
   const h = harness({ customBlockedDomains: ['custom.example'], whitelistedDomains: ['paused.example'] });
   await h.ready;
+  h.listeners.tabCreated({ id: 3, incognito: false });
   const allow = h.state.dynamic.find(rule => rule.action.type !== 'block');
   const block = h.state.dynamic.find(rule => rule.action.type === 'block');
   h.listeners.ruleMatched({ rule: { ruleId: 1005, rulesetId: 'ads_ruleset' },
@@ -1438,7 +1462,7 @@ test('activity log records blocks with layer, server, path and site, but not sit
     { kind: 'blocked', layer: 'Custom block', ruleId: block.id, host: 'custom.example', path: '/x.png', type: 'image', site: 'news.example', tabId: 3 }
   ]);
   assert.ok(!JSON.stringify(entries).includes('secret'), 'query strings are not stored');
-  assert.equal(h.state.session.activityLog.length, entries.length, 'log is saved to session storage');
+  assert.equal(h.state.session.activityLog.entries.length, entries.length, 'log is saved to session storage');
 });
 
 test('activity log omits allow and header-rule matches from packaged, dynamic and session rules', async () => {
@@ -1448,7 +1472,7 @@ test('activity log omits allow and header-rule matches from packaged, dynamic an
   const allow = community.find(rule => rule.action.type === 'allow'), block = community.find(rule => rule.action.type === 'block');
   const sandbox = h.state.dynamic.find(rule => rule.action.type === 'modifyHeaders');
   assert.ok(allow && block && sandbox);
-  const request = { url: 'https://cdn.example/a.js', type: 'script', tabId: 3, initiator: 'https://news.example' };
+  const request = { url: 'https://cdn.example/a.js', type: 'script', tabId: 3, incognito: false, initiator: 'https://news.example' };
   for (const rule of [{ rulesetId: 'community_ruleset', ruleId: allow.id }, { rulesetId: '_dynamic', ruleId: sandbox.id },
     { rulesetId: '_session', ruleId: 950000001 }, { rulesetId: 'community_ruleset', ruleId: block.id }]) h.listeners.ruleMatched({ rule, request });
   await settle();
@@ -1546,13 +1570,15 @@ test('per-site pop-up blocking registers the page script only for chosen sites, 
 test('cross-origin frames receive the pop-up guard from browser sender metadata', async () => {
   const h = harness({ popupBlockedDomains: ['uukanshu.cc'] });
   await h.ready;
-  const frame = { id: 'test', url: 'https://ads.shared.example/frame', frameId: 7,
+  const frame = { id: 'test', url: 'https://ads.shared.example/frame', frameId: 7, documentId: 'popup-document',
     tab: { id: 9, url: 'https://www.uukanshu.cc/book/1.html' } };
   const result = await h.send({ type: 'GET_COSMETIC_STATE', installPopupGuard: true }, frame);
   assert.deepEqual([result.ok, result.popupGuard], [true, true]);
   assert.deepEqual(h.state.executions, [{
-    target: { tabId: 9, frameIds: [7] }, files: ['src/blocking/popups.js'], world: 'MAIN'
+    target: { tabId: 9, documentIds: ['popup-document'] }, files: ['src/blocking/popups.js'], world: 'MAIN'
   }]);
+  const unidentified = await h.send({ type: 'GET_COSMETIC_STATE', installPopupGuard: true }, { ...frame, documentId: undefined });
+  assert.equal(unidentified.popupGuard, undefined);
   await h.send({ type: 'GET_COSMETIC_STATE' }, { ...frame, frameId: 8, tab: { id: 9, url: 'https://other.example/' } });
   assert.equal(h.state.executions.length, 1, 'a frame outside the selected top site is not injected');
 });
@@ -2111,7 +2137,7 @@ test('a new install updates its filter lists as a change from the bundled rules,
   assert.ok(h.state.enabled.includes('community_ruleset'), 'the bundled ruleset stays on beside the change');
   const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
   assert.ok((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.includes('.fresh-ad-slot'), 'site hiding comes from the new lists');
-  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE', installScriptlets: true }, { ...frame, frameId: 0 })).scriptlets, true);
+  assert.equal((await h.send({ type: 'GET_COSMETIC_STATE', installScriptlets: true }, { ...frame, frameId: 0, documentId: 'updated-list-document' })).scriptlets, true);
   assert.deepEqual(h.state.executions.at(-1).args, [[{ name: 'set-constant', args: ['freshListFlag', 'true'] }]], 'so do scriptlet filters');
   const log = await h.send({ type: 'GET_LOG' });
   assert.ok(log.entries.some(entry => /^Installed EasyList 202611171200 and EasyList China \d+: 2 bundled rules switched off, 3 rules added$/.test(entry.message)));
@@ -2251,7 +2277,8 @@ const scriptletRegistrations = h => h.state.userScripts.filter(script => /^block
 const scriptletRegistration = h => { const found = scriptletRegistrations(h); assert.ok(found.length <= 1, 'one site, one group'); return found[0]; };
 // Runs registered code in a bare page whose frame has this hostname.
 function runRegistered(code, hostname) {
-  const context = vm.createContext({});
+  // A plain VM global preserves throwing page getters on Node 26 as well.
+  const context = vm.createContext(vm.constants?.DONT_CONTEXTIFY);
   vm.runInContext(`globalThis.window = globalThis; globalThis.location = { hostname: ${JSON.stringify(hostname)}, ancestorOrigins: null }; ` +
     'class EventTarget { addEventListener() {} } globalThis.EventTarget = EventTarget; class Document {} globalThis.Document = Document; ' +
     'globalThis.document = new Document(); globalThis.open = () => ({}); ' + code, context);
@@ -2267,9 +2294,10 @@ test('without userscript access, a frame\'s first hiding request starts its own 
   assert.deepEqual(pageStarts(h).map(({ target, injectImmediately, args }) => ({ target, injectImmediately, args })), [{ target: { tabId: 1, documentIds: ['document-1'] },
     injectImmediately: true, args: [[{ name: 'set-constant', args: ['adsBlocked', 'false'] }, { name: 'no-window-open-if', args: [] }]] }]);
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE' }, scriptletFrame('https://www.example.com/'))).scriptlets, undefined, 'requests that do not ask start nothing');
-  // A frame follows its own host: here an exception removes one call. Firefox gives no document ID.
-  assert.equal(await startScriptlets(h, scriptletFrame('https://news.example.com/', 'https://www.example.com/', { documentId: undefined, frameId: 7 })), true);
-  assert.deepEqual([pageStarts(h).at(-1).target, pageStarts(h).at(-1).args], [{ tabId: 1, frameIds: [7] }, [[{ name: 'set-constant', args: ['adsBlocked', 'false'] }]]]);
+  // Browsers that omit the document ID cannot safely receive late MAIN-world code.
+  const executions = pageStarts(h).length;
+  assert.equal(await startScriptlets(h, scriptletFrame('https://news.example.com/', 'https://www.example.com/', { documentId: undefined, frameId: 7 })), false);
+  assert.equal(pageStarts(h).length, executions, 'no MAIN code targets a reusable frame ID');
   assert.equal(await startScriptlets(h, scriptletFrame('https://shop.example.com/')), true);
   assert.deepEqual(pageStarts(h).at(-1).args, [[{ name: 'no-window-open-if', args: [] }]], 'an excluded site keeps only the rules without that exclusion');
   const count = pageStarts(h).length;
@@ -2475,6 +2503,20 @@ const backupPreview = async (h, text) => {
   assert.equal(result.ok, true, result.error); return result;
 };
 const backupRestore = (h, text, preview) => backupSend(h, { type: 'BACKUP_RESTORE', text, baseline: preview.baseline, checksum: preview.checksum });
+test('restore preview discloses equal-count domain moves, filter replacements and protection switches', async () => {
+  const h = harness({ customBlockedDomains: ['review.example'], customNetworkFilters: '||old.example^' });
+  const file = JSON.parse(await backupExport(h));
+  Object.assign(file.data.settings, { customBlockedDomains: [], allowedDomains: ['review.example'], customNetworkFilters: '||new.example^' });
+  file.data.settings.rulesets.threats_ruleset = !file.data.settings.rulesets.threats_ruleset;
+  file.data.updates.autoApply = !file.data.updates.autoApply;
+  const preview = await backupPreview(h, JSON.stringify(file));
+  assert.equal(preview.incoming.domains, preview.current.domains);
+  assert.equal(preview.incoming.networkFilters, preview.current.networkFilters);
+  for (const message of ['Always allowed review.example', 'Custom block removed review.example', 'Reported threat layer turned', 'Automatic userscript update installation turned']) {
+    assert.ok(preview.changes.some(change => change.includes(message)), message);
+  }
+  assert.deepEqual(preview.filters, [{ label: 'Custom request filters', before: '||old.example^', after: '||new.example^' }]);
+});
 const backupScript = '// ==UserScript==\n// @name Backup fixture\n// @namespace tests\n// @match https://example.test/*\n// ==/UserScript==\nthrow new Error("not executed during restore");';
 const savedSetup = h => clone(Object.fromEntries(Object.entries(h.state.storage).filter(([key]) => !['protectionError', 'threatStatus', 'communityStatus'].includes(key))));
 

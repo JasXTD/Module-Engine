@@ -55,6 +55,10 @@
     }
     return { site: url.protocol + '//' + domain, domain };
   }
+  function cookieHostAllowed(host, own, metadata) {
+    return host === own || metadata.connects.some(rule => rule === '*' ||
+      rule !== 'self' && (host === rule.replace(/^\*\./, '') || host.endsWith('.' + rule.replace(/^\*\./, ''))));
+  }
   function cookieOptions(method, input, metadata, pageURL, context = {}) {
     const shared = ['url', 'name', 'storeId', 'partitionKey', 'firstPartyDomain'];
     const options = {
@@ -68,8 +72,7 @@
     if (details.url !== undefined && (typeof details.url !== 'string' || details.url.length > 4096 || /[\s\u0000-\u001f]/.test(details.url))) throw new Error('Use an absolute HTTP(S) cookie URL without credentials.');
     const url = new URL(details.url ?? pageURL);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Use an absolute HTTP(S) cookie URL without credentials.');
-    const allowed = host => host === own.hostname || metadata.connects.some(rule => rule === '*' || rule === 'self' && host === own.hostname ||
-      rule !== 'self' && (host === rule.replace(/^\*\./, '') || host.endsWith('.' + rule.replace(/^\*\./, ''))));
+    const allowed = host => cookieHostAllowed(host, own.hostname, metadata);
     if (!allowed(url.hostname)) throw new Error('Cookie destination requires an explicit @connect entry; the default is the current host.');
     url.hash = ''; details.url = url.href;
     for (const name of ['name', 'value', 'domain', 'path', 'storeId']) if (details[name] !== undefined &&
@@ -109,7 +112,8 @@
     // A subframe's partition is keyed by its tab's top-level page. Without a
     // tab URL, partition options fail closed instead of using the frame's site.
     const topURL = sender.frameId === 0 ? pageURL : sender.tab?.url;
-    const details = cookieOptions(method, input, metadata, pageURL, { topURL: topURL ?? 'about:invalid', firefox: typeof api.runtime.getBrowserInfo === 'function' });
+    const firefox = typeof api.runtime.getBrowserInfo === 'function';
+    const details = cookieOptions(method, input, metadata, pageURL, { topURL: topURL ?? 'about:invalid', firefox });
     const check = async () => {
       if (!api.cookies || !await api.permissions.contains({ permissions: ['cookies'] })) throw new Error('Allow cookie access in Modules & scripts before using GM_cookie.');
       await verify();
@@ -119,20 +123,66 @@
     const store = stores.find(item => item.tabIds.includes(sender.tab.id));
     if (!store || details.storeId !== undefined && details.storeId !== store.id) throw new Error('Cookies are restricted to the calling tab’s cookie store.');
     details.storeId = store.id;
+    let key = details.partitionKey;
+    if (key) {
+      if (typeof api.cookies.getPartitionKey === 'function') {
+        if (!sender.documentId) throw new Error('This browser cannot verify the calling document’s cookie partition.');
+        const { partitionKey } = await api.cookies.getPartitionKey({ tabId: sender.tab.id, frameId: sender.frameId, documentId: sender.documentId });
+        if (partitionKey?.topLevelSite !== key.topLevelSite || typeof partitionKey.hasCrossSiteAncestor !== 'boolean' ||
+            key.hasCrossSiteAncestor !== undefined && key.hasCrossSiteAncestor !== partitionKey.hasCrossSiteAncestor) {
+          throw new Error('The requested cookie partition does not match the calling frame.');
+        }
+        key = details.partitionKey = partitionKey;
+      } else {
+        const origin = new URL(pageURL).origin;
+        if (!firefox || sender.frameId !== 0 || new URL(details.url).origin !== origin || key.hasCrossSiteAncestor === true) {
+          throw new Error('This browser cannot verify the requested cookie partition.');
+        }
+        // A top document accessing its own origin has no cross-site ancestor.
+        // Give Firefox the real origin so its native site/port rules choose the
+        // partition, including on older versions without the ancestor-bit field.
+        key = { topLevelSite: key.topLevelSite, hasCrossSiteAncestor: false };
+        details.partitionKey = { topLevelSite: origin };
+      }
+    }
+    const inPartition = cookie => {
+      if ((cookie.firstPartyDomain || '') !== (details.firstPartyDomain || '')) return false;
+      const actual = cookie.partitionKey;
+      if (!key) return !actual?.topLevelSite;
+      return (actual?.topLevelSite === key.topLevelSite || actual?.topLevelSite === details.partitionKey.topLevelSite) &&
+        (actual.hasCrossSiteAncestor ?? (firefox ? false : undefined)) === key.hasCrossSiteAncestor;
+    };
     await check();
-    if (method !== 'list') onWriteDispatch();
-    const result = await api.cookies[method === 'list' ? 'getAll' : method === 'delete' ? 'remove' : 'set'](details);
-    if (method !== 'list') {
-      // Once submitted, a native write cannot be cancelled. Preserve its actual
-      // outcome; a later revocation must not turn success into a false failure.
-      if (method === 'set' && !result) throw new Error('The browser did not set the cookie.');
+    if (method === 'delete') {
+      const cookie = await api.cookies.get(details);
+      await check();
+      if (!cookie) return { ok: true };
+      if (!inPartition(cookie)) throw new Error('The selected cookie is outside the calling partition.');
+      const domain = cookie.domain.replace(/^\./, '').toLowerCase();
+      if (!cookieHostAllowed(domain, new URL(pageURL).hostname, metadata)) {
+        throw new Error('Deleting a parent-domain cookie requires an explicit @connect entry for that domain.');
+      }
+      // remove(url, name) would select again and could delete a different domain
+      // or path after the read. Expire precisely the identity we authorized.
+      const expired = { ...details, name: cookie.name, path: cookie.path, value: '', expirationDate: 1,
+        secure: cookie.secure, httpOnly: cookie.httpOnly, sameSite: cookie.sameSite };
+      if (!cookie.hostOnly) expired.domain = domain;
+      onWriteDispatch();
+      await api.cookies.set(expired);
       return { ok: true };
     }
+    if (method === 'set') {
+      onWriteDispatch();
+      // Once submitted, a native write cannot be cancelled. Preserve its actual
+      // outcome; a later revocation must not turn success into a false failure.
+      if (!await api.cookies.set(details)) throw new Error('The browser did not set the cookie.');
+      return { ok: true };
+    }
+    const result = await api.cookies.getAll(details);
     await check();
     // Browsers can return partitioned entries alongside unpartitioned cookies.
     // Keep only the partition this call was allowed to address.
-    const cookies = result.filter(cookie => (!cookie.partitionKey?.topLevelSite || cookie.partitionKey.topLevelSite === details.partitionKey?.topLevelSite) &&
-      (!cookie.firstPartyDomain || cookie.firstPartyDomain === details.firstPartyDomain));
+    const cookies = result.filter(inPartition);
     if (cookies.length > 256 || new TextEncoder().encode(JSON.stringify(cookies)).length > 1048576) throw new Error('Cookie results exceed 256 entries or 1 MiB. Narrow the URL or name filter.');
     return { ok: true, cookies };
   }
@@ -323,7 +373,7 @@
         file = normalize('download', { name, saveAs, conflictAction });
         // Reject before transferring: Firefox has not implemented this native value.
         if (file.conflictAction === 'prompt' && typeof api.runtime.getBrowserInfo === 'function') throw new Error('Firefox does not support conflictAction "prompt". Use saveAs: true to choose the destination.');
-        details = BlockAdsUserScriptNetwork.validate(networkDetails, metadata, connection.sender.url, true);
+        details = BlockAdsUserScriptNetwork.validateForSender(networkDetails, metadata, connection.sender, true);
         if (details.method !== 'GET' || details.responseType !== 'blob' || details.body !== undefined || details.formData || details.upload) throw new Error('Downloads require a GET request for binary data.');
       } else details = normalize(kind, message.details);
       const current = [...jobs.values()];

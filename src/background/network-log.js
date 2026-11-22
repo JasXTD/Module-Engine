@@ -37,12 +37,36 @@
       error: value.error ? errorCode(value.error) : '', partial: value.partial === true
     };
   }
-  function create(api, { now = Date.now, setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
+  function create(api, { now = Date.now, setTimer = setTimeout, clearTimer = clearTimeout, regularTransfer = () => false } = {}) {
     let rows = [], bytes = 0, dropped = 0, sequence = 0, revision = 0;
-    let capture = null, scope = null, reason = 'Capture is off.', restored = false, restoring = null;
+    let capture = null, scope = null, reason = 'Capture is off.', restored = false, restoring = null, legacyStored = false;
     let dirty = false, saving = null, saveTimer = null, storageError = '', closed = false;
     let commands = Promise.resolve(), pendingCommands = 0;
     const sizes = new Map(), current = new Map(), ports = new Set(), listeners = [];
+    // Chromium omits the private flag on webRequest events. Keep only regular
+    // tab IDs so that classification is synchronous, including on busy pages.
+    const regularTabs = new Set();
+    let changedDuringQuery = new Set();
+    const remember = tab => {
+      if (tab.incognito === false) regularTabs.add(tab.id);
+      else regularTabs.delete(tab.id);
+    };
+    const created = tab => { changedDuringQuery?.add(tab.id); remember(tab); };
+    const updated = (_id, _change, tab) => created(tab);
+    const removed = id => {
+      changedDuringQuery?.add(id); regularTabs.delete(id);
+      if (capture?.tabId === id) stop('Capture stopped because its selected tab closed.');
+    };
+    api.tabs.onCreated?.addListener(created);
+    api.tabs.onUpdated?.addListener(updated);
+    api.tabs.onRemoved?.addListener(removed);
+    const tabSnapshot = (async () => {
+      try {
+        for (const tab of await api.tabs.query({})) if (!changedDuringQuery.has(tab.id)) remember(tab);
+      } catch { /* Unknown tabs stay excluded until the browser identifies them. */ }
+      finally { changedDuringQuery = null; }
+    })();
+    const regularTab = (id, incognito) => Number.isInteger(id) && id >= 0 && (incognito === false || incognito !== true && regularTabs.has(id));
     const stages = ['onBeforeRequest', 'onSendHeaders', 'onResponseStarted', 'onBeforeRedirect', 'onCompleted', 'onErrorOccurred'];
     let available = stages.every(name => typeof api.webRequest?.[name]?.addListener === 'function') &&
       Boolean(api.runtime.onConnect && api.storage?.session?.get && api.storage.session.set);
@@ -77,7 +101,7 @@
       if (saving) await saving;
       if (!dirty) return;
       dirty = false;
-      const snapshot = { schemaVersion: 1, entries: rows.map(row => ({ ...row })), dropped, tabId: scope };
+      const snapshot = { schemaVersion: 2, entries: rows.map(row => ({ ...row })), dropped, tabId: scope };
       const write = Promise.resolve().then(() => api.storage.session.set({ [KEY]: snapshot }));
       saving = write;
       try { await write; storageError = ''; }
@@ -94,7 +118,10 @@
       if (restored) return;
       restoring ??= (async () => {
         const stored = (await api.storage.session.get(KEY))[KEY];
-        if (stored?.schemaVersion === 1 && Array.isArray(stored.entries)) {
+        // Older rows have no privacy provenance. MCP reads only the filtered
+        // view. Extension updates and the local Network page retire the data.
+        legacyStored = stored?.schemaVersion === 1;
+        if (stored?.schemaVersion === 2 && Array.isArray(stored.entries)) {
           for (const value of stored.entries.slice(-LIMIT)) {
             const row = cleanEntry(value);
             if (row) { row.id = ++sequence; rows.push(row); resized(row); }
@@ -107,14 +134,27 @@
       })().catch(error => { restoring = null; throw new Error('Could not read the retained network log. Try again.', { cause: error }); });
       await restoring;
     }
+    async function purgeLegacy() {
+      await restore();
+      if (legacyStored) { await api.storage.session.remove(KEY); legacyStored = false; }
+    }
     function observe(stage, details) {
-      if (!capture || closed) return;
+      if (!capture || closed || details.incognito === true) return;
       if (now() >= capture.expiresAt) { stop('Capture stopped after 30 minutes.'); return; }
       if (capture.tabId !== null && details.tabId !== capture.tabId) return;
       const url = safeURL(details.url), requestId = bounded(details.requestId, 128);
       if (!url || !requestId) return;
       const time = stamp(details.timeStamp) ?? now();
       let row = current.get(requestId);
+      if (!regularTab(details.tabId, details.incognito)) {
+        // Background fetches share a browser context even for private callers.
+        // Admit only a broker-identified regular transfer, then its own events.
+        const continuing = stage !== 'onBeforeRequest' && row?.tabId === -1 && !FINAL.has(row.state) && row.url === url;
+        if (details.tabId !== -1 || !(regularTransfer(details) || continuing)) {
+          if (stage === 'onBeforeRequest') current.delete(requestId);
+          return;
+        }
+      }
       if (stage === 'onBeforeRequest') {
         if (row && !row.cleared && !FINAL.has(row.state)) { row.state = 'interrupted'; resized(row); }
         row = null;
@@ -164,13 +204,15 @@
     }
     async function command(session, message) {
       if (!available) throw new Error(unavailable);
-      await restore();
+      await purgeLegacy();
       if (!ports.has(session)) throw new Error('Network page closed.');
       if (message.type === 'start') {
         if (capture) throw new Error('Stop the current capture before starting a new one.');
+        await tabSnapshot;
         if (message.tabId !== null) {
           const tab = await api.tabs.get(message.tabId);
-          if (!safeURL(tab.url)) throw new Error('Choose a tab with an HTTP(S) page.');
+          if (tab.incognito !== false || !safeURL(tab.url)) throw new Error('Choose a regular tab with an HTTP(S) page.');
+          remember(tab);
         }
         if (!ports.has(session)) throw new Error('Network page closed.');
         // Retry a failed write before replacing retained entries.
@@ -220,6 +262,10 @@
       });
     };
     api.runtime.onConnect?.addListener(connect);
+    const onInstalled = details => {
+      if (details?.reason === 'update') commands = commands.then(purgeLegacy).catch(error => console.warn('Could not retire the old network log:', error));
+    };
+    api.runtime.onInstalled?.addListener(onInstalled);
     if (available) try {
       for (const stage of stages) {
         const listener = details => { observe(stage, details); };
@@ -232,9 +278,8 @@
       for (const [event, listener] of listeners) event.removeListener(listener);
       listeners.length = 0;
     }
-    const removed = tabId => { if (capture?.tabId === tabId) stop('Capture stopped because its selected tab closed.'); };
-    api.tabs.onRemoved?.addListener(removed);
     return {
+      regularTab,
       // Internal read capability only: the MCP adapter validates arguments and
       // separate consent before invoking it. Do not route through UI commands:
       // even expiry observation here must not stop capture or schedule a save.
@@ -270,6 +315,8 @@
         closed = true; stop('Capture stopped.');
         for (const session of [...ports]) disconnect(session);
         api.runtime.onConnect?.removeListener?.(connect); api.tabs.onRemoved?.removeListener?.(removed);
+        api.runtime.onInstalled?.removeListener?.(onInstalled);
+        api.tabs.onCreated?.removeListener?.(created); api.tabs.onUpdated?.removeListener?.(updated);
         for (const [event, listener] of listeners) event.removeListener(listener);
         await flush();
       }

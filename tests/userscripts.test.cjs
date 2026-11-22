@@ -27,12 +27,25 @@ function harness(initial, options = {}) {
   const fault = name => { if (state.faults[name]) { state.faults[name]--; throw new Error('Injected ' + name + ' failure'); } };
   const event = key => ({ addListener: callback => { const previous = state.hooks[key]; state.hooks[key] = (...args) => { previous?.(...args); callback(...args); }; } });
   const api = {
-    cookies: Object.fromEntries(['getAllCookieStores', 'getAll', 'set', 'remove'].map(method => [method, async details => {
+    cookies: Object.fromEntries(['getAllCookieStores', 'get', 'getAll', 'set', 'remove', ...(options.firefox ? [] : ['getPartitionKey'])].map(method => [method, async details => {
       state.cookieCalls.push({ method, details: clone(details) }); fault('cookie');
       if (options.cookieCall) await options.cookieCall(method, details);
       if (method === 'getAllCookieStores') return clone(state.cookieStores);
+      if (method === 'getPartitionKey') return { partitionKey: { topLevelSite: 'https://example.test', hasCrossSiteAncestor: options.crossSiteAncestor ?? false } };
       if (method === 'getAll') return clone(state.cookieJar);
-      if (method === 'set') { const cookie = { ...details, domain: new URL(details.url).hostname }; state.cookieJar.push(cookie); return clone(cookie); }
+      if (method === 'get') {
+        const cookie = state.cookieJar.find(item => item.name === details.name);
+        return cookie ? { domain: new URL(details.url).hostname, path: '/', hostOnly: true, ...clone(cookie) } : null;
+      }
+      if (method === 'set') {
+        const domain = details.domain || new URL(details.url).hostname;
+        if (details.expirationDate === 1) {
+          state.cookieJar = state.cookieJar.filter(cookie => !(cookie.name === details.name &&
+            (cookie.domain || new URL(details.url).hostname).replace(/^\./, '') === domain && (cookie.path || '/') === details.path));
+          return null;
+        }
+        const cookie = { ...details, domain, hostOnly: !details.domain }; state.cookieJar.push(cookie); return clone(cookie);
+      }
       state.cookieJar = state.cookieJar.filter(cookie => cookie.name !== details.name); return clone(details);
     }])),
     scripting: { async executeScript({ target, world, func, injectImmediately }) {
@@ -97,13 +110,14 @@ function harness(initial, options = {}) {
     const response = await command({ type: 'US_ENABLE', id: script.id, revision: script.revision, enabled: true });
     return response.scripts.find(item => item.id === script.id);
   };
-  const sender = () => ({ id: 'test', tab: { id: 7 }, frameId: 0, url: 'https://example.test/page' });
+  const senderTab = id => ({ id, incognito: false, ...(options.firefox ? { cookieStoreId: 'firefox-default' } : {}) });
+  const sender = () => ({ id: 'test', tab: senderTab(7), frameId: 0, url: 'https://example.test/page' });
   const value = (id, operation, args = {}, from = sender()) => new Promise(resolve => {
     const script = state.data.userscriptManager?.scripts.find(item => item.id === id);
     state.hooks.message({ type: 'US_VALUE', id, token: script?.token, operation, ...args }, from, resolve);
   });
   function realm(id, tabId = 7, extra = {}) {
-    const from = { ...sender(), tab: { id: tabId }, documentId: crypto.randomUUID(), ...extra.sender };
+    const from = { ...sender(), tab: senderTab(tabId), documentId: crypto.randomUUID(), ...extra.sender };
     state.frames.set(from.tab.id + ':' + from.frameId, { url: from.url });
     const events = new Map(), errors = [], ports = [], messages = [];
     const listeners = () => {
@@ -243,8 +257,8 @@ test('partitioned cookies are addressable only within the calling tab’s own to
   h.state.cookieJar = [{ name: 'plain' }, { name: 'own', partitionKey: { topLevelSite: 'https://example.test', hasCrossSiteAncestor: false } },
     { name: 'foreign', partitionKey: { topLevelSite: 'https://other.test' } }];
   assert.deepEqual(json(await r.run('cookie.modern.list({})')).map(cookie => cookie.name), ['plain'], 'no partition unless requested');
-  assert.deepEqual(json(await r.run('cookie.modern.list({partitionKey:{topLevelSite:"https://example.test"}})')).map(cookie => cookie.name), ['plain', 'own']);
-  assert.deepEqual(h.state.cookieCalls.at(-1).details.partitionKey, { topLevelSite: 'https://example.test' });
+  assert.deepEqual(json(await r.run('cookie.modern.list({partitionKey:{topLevelSite:"https://example.test"}})')).map(cookie => cookie.name), ['own']);
+  assert.deepEqual(h.state.cookieCalls.at(-1).details.partitionKey, { topLevelSite: 'https://example.test', hasCrossSiteAncestor: false });
   await r.run('cookie.modern.set({name:"chip",value:"1",secure:true,partitionKey:{topLevelSite:"https://example.test",hasCrossSiteAncestor:false}})');
   assert.deepEqual(h.state.cookieCalls.at(-1).details.partitionKey, { topLevelSite: 'https://example.test', hasCrossSiteAncestor: false });
   const { cookieOptions } = BlockAdsUserScriptActions, meta = core.parse(source('Partition', '// @grant GM_cookie\n'));
@@ -268,6 +282,60 @@ test('cookie grants cannot be borrowed from another script or an unwrapped regis
     assert.equal(result.ok, false); assert.match(result.error, /not allowed/);
   }
   assert.equal(h.state.cookieCalls.length, 0);
+});
+
+test('partitioned cookie reads and writes use the browser’s complete frame key', async () => {
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], crossSiteAncestor: true });
+  const site = 'https://example.test';
+  h.state.cookieJar = [false, true].map(bit => ({ name: String(bit), partitionKey: { topLevelSite: site, hasCrossSiteAncestor: bit } }));
+  const result = await r.context.cookie.modern.list({ partitionKey: { topLevelSite: site } });
+  assert.deepEqual(json(result).map(cookie => cookie.name), ['true']);
+  const frame = h.state.cookieCalls.find(call => call.method === 'getPartitionKey').details;
+  assert.equal(frame.tabId, 7); assert.equal(frame.frameId, 0); assert.ok(frame.documentId);
+  for (const method of ['list', 'set', 'delete']) {
+    await assert.rejects(r.context.cookie.modern[method]({ name: 'fixture', partitionKey: { topLevelSite: site, hasCrossSiteAncestor: false } }), /partition/);
+  }
+  delete h.api.cookies.getPartitionKey;
+  await assert.rejects(r.context.cookie.modern.list({ partitionKey: { topLevelSite: site } }), /cannot verify/);
+  assert.equal(h.state.cookieCalls.some(call => call.method === 'set' || call.method === 'remove'), false);
+});
+
+test('Firefox without native frame keys limits partitioned cookies to a top document on its own origin', async () => {
+  const { h, r, script } = await cookieRealm({ firefox: true, helperPermissions: ['cookies'] }, '// @connect child.example.test\n');
+  const site = 'https://example.test', partitionKey = { topLevelSite: site, hasCrossSiteAncestor: false };
+  h.state.cookieJar = [
+    { name: 'plain' }, { name: 'legacy', partitionKey: { topLevelSite: site } },
+    { name: 'own', partitionKey }, { name: 'other-ancestor', partitionKey: { ...partitionKey, hasCrossSiteAncestor: true } }
+  ];
+  const cookies = r.context.cookie.modern;
+  assert.deepEqual(json(await cookies.list({ partitionKey })).map(cookie => cookie.name), ['legacy', 'own']);
+  await assert.rejects(cookies.delete({ name: 'other-ancestor', partitionKey }), /outside the calling partition/);
+  await assert.rejects(cookies.set({ name: 'fixture', partitionKey: { ...partitionKey, hasCrossSiteAncestor: true } }), /cannot verify/);
+  await assert.rejects(cookies.list({ url: 'https://child.example.test/', partitionKey }), /cannot verify/);
+  const frame = h.realm(script.id, 8, { sender: { frameId: 1, tab: { id: 8, url: site + '/', incognito: false, cookieStoreId: 'firefox-default' } } });
+  await eventually(() => frame.context.cookie);
+  await assert.rejects(frame.context.cookie.modern.list({ partitionKey }), /cannot verify/);
+  assert.equal(h.state.cookieCalls.some(call => call.method === 'set' || call.method === 'remove'), false);
+});
+
+test('cookie deletion authorizes and expires the selected domain and path', async () => {
+  const { h, r } = await cookieRealm({ helperPermissions: ['cookies'] }, '// @connect child.other.test\n');
+  const details = { url: 'https://child.other.test/account/view', name: 'preference' };
+  const parent = { name: details.name, domain: '.other.test', path: '/account', hostOnly: false, secure: true };
+  const child = { ...parent, domain: 'child.other.test', hostOnly: true };
+  h.state.cookieJar = [parent];
+  await assert.rejects(r.context.cookie.modern.delete(details), /parent-domain/);
+  assert.deepEqual(h.state.cookieJar, [parent]);
+  h.state.cookieJar = [child, parent, { ...child, path: '/' }];
+  await r.context.cookie.modern.delete(details);
+  assert.deepEqual(h.state.cookieJar, [parent, { ...child, path: '/' }]);
+  assert.equal(h.state.cookieCalls.some(call => call.method === 'remove'), false);
+  assert.equal(h.state.cookieCalls.at(-1).details.path, '/account');
+  const granted = await cookieRealm({ helperPermissions: ['cookies'] }, '// @connect other.test\n');
+  granted.h.state.cookieJar = [parent];
+  await granted.r.context.cookie.modern.delete(details);
+  assert.equal(granted.h.state.cookieCalls.at(-1).details.domain, 'other.test');
+  assert.deepEqual(granted.h.state.cookieJar, []);
 });
 test('cookie list filters partitions, bounds output, and loses access after revocation or history scope changes', async () => {
   const { h, r, script } = await cookieRealm({ helperPermissions: ['cookies'] });
@@ -315,7 +383,7 @@ test('submitted cookie writes preserve native success after access is revoked', 
   for (const method of ['set', 'delete']) for (const reason of ['permission', 'scope', 'pagehide', 'navigation']) {
     await t.test(method + ' after ' + reason, async () => {
       let release, entered = false;
-      const nativeMethod = method === 'delete' ? 'remove' : 'set', gate = new Promise(resolve => { release = resolve; });
+      const nativeMethod = 'set', gate = new Promise(resolve => { release = resolve; });
       const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async operation => {
         if (operation === nativeMethod) { entered = true; await gate; }
       } });
@@ -345,13 +413,14 @@ test('submitted cookie writes preserve native success after access is revoked', 
 test('submitted cookie writes preserve native failures after document suspension', async () => {
   for (const method of ['set', 'delete']) {
     let release, entered = false;
-    const nativeMethod = method === 'delete' ? 'remove' : 'set', gate = new Promise(resolve => { release = resolve; });
+    const gate = new Promise(resolve => { release = resolve; });
     const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async operation => {
-      if (operation === nativeMethod) { entered = true; await gate; throw new Error('Native cookie write refused'); }
+      if (operation === 'set') { entered = true; await gate; throw new Error('Native cookie write refused'); }
     } });
+    if (method === 'delete') h.state.cookieJar = [{ name: 'refused', value: 'owned' }];
     const rejected = assert.rejects(r.run('cookie.modern.' + method + '({name:"refused"})'), /Native cookie write refused/);
     await eventually(() => entered); r.event('pagehide'); release();
-    await rejected; assert.equal(h.state.cookieJar.length, 0); await h.host.setEnabled(false);
+    await rejected; assert.equal(h.state.cookieJar.length, method === 'delete' ? 1 : 0); await h.host.setEnabled(false);
   }
 });
 
@@ -393,7 +462,7 @@ test('a revoked submitted cookie write still has a deadline and cannot stall shu
   let release, entered = false;
   const gate = new Promise(resolve => { release = resolve; });
   const { h, r } = await cookieRealm({ helperPermissions: ['cookies'], cookieCall: async method => {
-    if (method === 'remove') { entered = true; await gate; }
+    if (method === 'set') { entered = true; await gate; }
   } });
   h.state.cookieJar = [{ name: 'submitted-delete', value: 'owned' }];
   const rejected = assert.rejects(r.run('cookie.modern.delete({name:"submitted-delete"})'), /outcome is unknown/);
@@ -403,7 +472,7 @@ test('a revoked submitted cookie write still has a deadline and cannot stall shu
     await rejected; await disabled;
     assert.equal(h.state.cookieJar.length, 1);
     release(); await eventually(() => h.state.cookieJar.length === 0);
-    assert.equal(h.state.cookieCalls.filter(call => call.method === 'remove').length, 1);
+    assert.equal(h.state.cookieCalls.filter(call => call.method === 'set' && call.details.expirationDate === 1).length, 1);
   } finally { release(); await h.host.setEnabled(false); }
 });
 
@@ -692,6 +761,40 @@ async function desktopRealm(options) {
   await eventually(() => realm.messages.some(message => message.type === 'ready'));
   return { h, script, realm, api: realm.context.desktop, connectionId: realm.messages.find(message => message.type === 'ready').connectionId };
 }
+test('HTTP, upload and download helpers require anonymous transport outside the regular cookie store', async t => {
+  const { base, state } = await loopback(t);
+  for (const [firefox, tab] of [[false, { incognito: true }], [false, {}],
+    [true, { incognito: false, cookieStoreId: 'firefox-container-1' }], [true, { incognito: false }]]) {
+    const h = harness(undefined, { firefox });
+    const script = await h.enable(await h.save('Store isolation',
+      '// @grant GM.xmlHttpRequest\n// @grant GM.download\n// @connect 127.0.0.1\n', 'globalThis.helpers=GM;'));
+    const realm = h.realm(script.id, 7, { sender: { tab: { id: 7, ...tab } } });
+    await eventually(() => realm.messages.some(message => message.type === 'ready'));
+    const helpers = realm.context.helpers, url = base + '/usnet/bytes.bin', before = state.hits.length;
+    await assert.rejects(helpers.xmlHttpRequest({ url }), /anonymous/);
+    await assert.rejects(helpers.xmlHttpRequest({ url, method: 'POST', data: 'fixture', upload: { onprogress() {} } }), /anonymous/);
+    await assert.rejects(helpers.download({ url, name: 'fixture.bin' }), /anonymous/);
+    assert.equal(state.hits.length, before);
+    assert.equal((await helpers.xmlHttpRequest({ url, anonymous: true })).status, 200);
+    realm.event('pagehide'); await h.host.setEnabled(false);
+  }
+});
+test('delayed background network events retain only verified regular request markers', async t => {
+  const h = harness(), network = BlockAdsUserScriptNetwork, calls = [];
+  t.mock.method(globalThis, 'fetch', async url => { calls.push(url); return new Response('fixture'); });
+  const url = 'https://example.test/path', initiator = h.api.runtime.getURL('');
+  for (const incognito of [false, true, undefined]) {
+    const sender = { tab: { incognito }, url };
+    const details = network.validateForSender({ url, anonymous: true }, { connects: ['self'] }, sender);
+    await network.request(details, new AbortController(), () => {});
+  }
+  assert.deepEqual(calls.map(url => network.regularTransfer({ url, initiator })), [true, false, false]);
+  assert.equal(network.regularTransfer({ url: calls[0], initiator: 'https://example.test' }), false);
+  assert.equal(network.regularTransfer({ url, initiator }), false);
+  const now = Date.now();
+  t.mock.method(Date, 'now', () => now + 31000);
+  assert.equal(network.regularTransfer({ url: calls[0], initiator }), false);
+});
 function completeDownload(h, id) {
   h.state.downloads.get(id).state = 'complete';
   h.state.hooks.downloadChanged({ id, state: { current: 'complete' } });

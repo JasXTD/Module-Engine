@@ -25,7 +25,7 @@ function controls() {
   if (!state) return;
   byId('captureCount').textContent = `${state.count.toLocaleString()} entries · ${(state.bytes / 1024).toFixed(1)} KiB` + (state.dropped ? ` · ${state.dropped.toLocaleString()} older entries discarded` : '');
   byId('captureHint').textContent = state.active
-    ? `${state.ownsCapture ? 'This page owns the capture.' : 'Another Network page owns the capture.'} Recording ${state.tabId === null ? 'all browser traffic' : 'tab ' + state.tabId} until ${new Date(state.expiresAt).toLocaleTimeString()}.` + (!byId('liveView').checked ? ' Live view is paused; capture continues.' : '')
+    ? `${state.ownsCapture ? 'This page owns the capture.' : 'Another Network page owns the capture.'} Recording ${state.tabId === null ? 'regular traffic' : 'tab ' + state.tabId} until ${new Date(state.expiresAt).toLocaleTimeString()}.` + (!byId('liveView').checked ? ' Live view is paused; capture continues.' : '')
     : 'Starting a new capture clears the previous one. Switching sections keeps it running. Capture stops when this tab closes or after 30 minutes.';
 }
 function apply(result, force = false) {
@@ -63,11 +63,11 @@ function optionList(select, items) {
   select.dataset.options = signature;
 }
 async function tabs() {
-  const items = (await api.tabs.query({})).filter(tab => /^https?:\/\//.test(tab.url || '')).map(tab => {
+  const items = (await api.tabs.query({})).filter(tab => tab.incognito === false && /^https?:\/\//.test(tab.url || '')).map(tab => {
     let host = '(unknown)'; try { host = new URL(tab.url).host; } catch { /* A tab can navigate while queried. */ }
     return [String(tab.id), `Tab ${tab.id} · ${host}`];
   });
-  optionList(byId('captureScope'), [['all', 'All browser traffic'], ...items]);
+  optionList(byId('captureScope'), [['all', 'All regular traffic'], ...items]);
 }
 function filtered() {
   const query = byId('textFilter').value.trim().toLowerCase(), tab = byId('tabFilter').value;

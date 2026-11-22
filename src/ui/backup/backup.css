@@ -9,6 +9,7 @@
 .review-table th:first-child { width: 42%; }
 .backup-scripts { margin: 0; padding-left: 22px; max-height: 260px; overflow: auto; overflow-wrap: anywhere; }
 .backup-scripts li { padding: 5px 0; }
+#protectionChanges, #filterChanges pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; }
 .confirm-restore { display: flex; align-items: flex-start; gap: 10px; }
 .confirm-restore input { flex: 0 0 auto; margin-top: 3px; }
 #review { scroll-margin-top: 16px; }

@@ -681,7 +681,7 @@
         if (requests.has(key) || active.length >= 32 || active.filter(item => item.connection === connection).length >= 4 ||
             active.filter(item => item.connection.sender.tab.id === sender.tab.id).length >= 8 ||
             active.filter(item => item.connection.scriptId === script.id).length >= 8) throw new Error('Too many active userscript network requests.');
-        const details = network.validate(message.details, metadata, sender.url), controller = new AbortController();
+        const details = network.validateForSender(message.details, metadata, sender), controller = new AbortController();
         const job = { connection, controller }; requests.set(key, job);
         // Authorize synchronously with other state changes, then release the
         // runner. Accepted requests are never retried after a worker restart.

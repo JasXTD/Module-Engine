@@ -13,7 +13,8 @@ function page(before = '') {
     async json() { return JSON.parse(this.body); }
     async text() { return this.body; }
   }
-  const context = vm.createContext({ Response, URL, location: { origin: 'https://www.youtube.com' } });
+  const context = vm.createContext(vm.constants?.DONT_CONTEXTIFY);
+  Object.assign(context, { Response, URL, location: { origin: 'https://www.youtube.com' } });
   context.window = context;
   vm.runInContext(before, context);
   vm.runInContext(source, context, { filename: 'src/blocking/youtube.js' });

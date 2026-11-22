@@ -13,10 +13,13 @@ function fixture(t, stored = {}, configure = () => {}) {
   let now = 1000, serial = 0, request = 0;
   const timers = new Map(), state = { stored: clone(stored), reads: 0, writes: [], failRead: 0, failWrite: 0, getTab: null, writeGate: null };
   const api = { runtime: { id: 'owned', getURL: file => 'chrome-extension://owned/' + file, onConnect: event() },
-    tabs: { onRemoved: event(), get: async id => state.getTab ? state.getTab(id) : { id, url: 'https://page.example.test/' } },
+    tabs: { onCreated: event(), onUpdated: event(), onRemoved: event(),
+      query: async () => [7, 8].map(id => ({ id, incognito: false })),
+      get: async id => state.getTab ? state.getTab(id) : { id, url: 'https://page.example.test/', incognito: false } },
     storage: { session: {
       async get() { state.reads++; if (state.failRead) { state.failRead--; throw Error('Owned read failure'); } return clone(state.stored); },
-      async set(value) { if (state.writeGate) await state.writeGate; if (state.failWrite) { state.failWrite--; throw Error('Owned write failure'); } state.writes.push(clone(value)); Object.assign(state.stored, clone(value)); }
+      async set(value) { if (state.writeGate) await state.writeGate; if (state.failWrite) { state.failWrite--; throw Error('Owned write failure'); } state.writes.push(clone(value)); Object.assign(state.stored, clone(value)); },
+      async remove(key) { delete state.stored[key]; }
     } }, webRequest: Object.fromEntries(['onBeforeRequest','onSendHeaders','onResponseStarted','onBeforeRedirect','onCompleted','onErrorOccurred'].map(name => [name,event()])) };
   configure(api);
   const host = create(api, { now: () => now, setTimer(fn, delay) { const id = ++serial; timers.set(id,{fn,time:now+delay}); return id; }, clearTimer: id => timers.delete(id) });
@@ -116,12 +119,33 @@ test('entry and byte bounds evict older rows and report the loss', async t => {
   await f.send(p,'stop');assert.ok(Buffer.byteLength(JSON.stringify(f.state.stored))<BYTE_LIMIT);
 });
 test('storage restores only bounded metadata and never resumes capture', async t => {
-  const stored={[KEY]:{schemaVersion:1,tabId:7,active:true,entries:[{url:'https://user:secret@example.test/a?q=private',requestId:'x',state:'request',observedAt:900,startedAt:900,headers:['secret']}],dropped:2}};
+  const stored={[KEY]:{schemaVersion:2,tabId:7,active:true,entries:[{url:'https://user:secret@example.test/a?q=private',requestId:'x',state:'request',observedAt:900,startedAt:900,headers:['secret']}],dropped:2}};
   const f=fixture(t,stored),p=f.port(),result=await f.send(p,'read');
   assert.equal(result.status.active,false);assert.equal(result.entries[0].state,'interrupted');assert.equal(result.entries[0].url,'https://example.test/a');assert.equal(result.status.dropped,2);assert.equal(result.status.tabId,7);
 });
+test('only verified regular traffic reaches the Network page, retained storage and MCP', async t => {
+  const f = fixture(t, { [KEY]: { schemaVersion: 1, entries: [{ url: 'https://legacy.test/' }] } });
+  const p = f.port();
+  assert.deepEqual((await f.host.read()).entries, []);
+  assert.equal(f.state.stored[KEY].schemaVersion, 1, 'the MCP read leaves storage alone');
+  assert.deepEqual((await f.send(p, 'read')).entries, []);
+  assert.equal(KEY in f.state.stored, false, 'the local Network page retires unclassified rows');
+  f.state.getTab = id => ({ id, incognito: true, url: 'https://fixture.test/' });
+  assert.equal((await f.send(p, 'start', { tabId: 9 })).ok, false);
+  assert.equal((await f.send(p, 'start', { tabId: null })).ok, true);
+  f.api.tabs.onCreated.fire({ id: 9, incognito: true });
+  f.api.tabs.onCreated.fire({ id: 10, incognito: false });
+  for (const [tabId, incognito] of [[9, undefined], [7, true], [11, undefined], [-1, undefined], [-1, false], [10, undefined]]) {
+    f.fire('onCompleted', { requestId: String(tabId), tabId, incognito });
+  }
+  f.api.tabs.onRemoved.fire(10);
+  f.fire('onCompleted', { requestId: 'closed', tabId: 10 });
+  assert.deepEqual((await f.send(p, 'stop')).entries.map(entry => entry.tabId), [10]);
+  assert.deepEqual(f.state.stored[KEY].entries.map(entry => entry.tabId), [10]);
+  assert.deepEqual((await f.host.read()).entries.map(entry => entry.tabId), [10]);
+});
 test('failed reads do not overwrite the retained log and can be retried', async t => {
-  const f=fixture(t,{[KEY]:{schemaVersion:1,entries:[{url:'https://example.test/kept',state:'complete'}]}}),p=f.port();f.state.failRead=1;
+  const f=fixture(t,{[KEY]:{schemaVersion:2,entries:[{url:'https://example.test/kept',state:'complete'}]}}),p=f.port();f.state.failRead=1;
   assert.equal((await f.send(p,'start',{tabId:null})).ok,false);assert.equal(f.state.writes.length,0);
   assert.equal((await f.send(p,'read')).entries[0].url,'https://example.test/kept');
 });
@@ -163,7 +187,7 @@ test('per-page pending commands are bounded while a native tab lookup is unresol
   p.onMessage.fire({id:100,type:'start',tabId:7});await tick();
   p.onMessage.fire({id:101,type:'read'});p.onMessage.fire({id:102,type:'clear'});
   assert.equal(p.sent.find(r=>r.id===102).ok,false);assert.equal(f.state.writes.length,0);
-  release({id:7,url:'https://example.test/'});await tick();
+  release({id:7,url:'https://example.test/',incognito:false});await tick();
   assert.equal((await f.send(p,'read')).status.active,true);
 });
 
@@ -182,7 +206,7 @@ test('WebSocket handshake metadata contains no frames or protocol headers', asyn
 });
 
 test('read capability restores sanitized entries without capture, timers or writes', async t => {
-  const f=fixture(t,{[KEY]:{schemaVersion:1,entries:[{url:'https://user:secret@example.test/retained?q=secret#private',method:'GET',state:'complete',headers:['secret'],body:'secret'}]}});
+  const f=fixture(t,{[KEY]:{schemaVersion:2,entries:[{url:'https://user:secret@example.test/retained?q=secret#private',method:'GET',state:'complete',headers:['secret'],body:'secret'}]}});
   const before=clone(f.state.stored),result=await f.host.read();
   assert.equal(result.ok,true);assert.equal(result.capture.active,false);assert.equal(result.entries[0].url,'https://example.test/retained');
   assert.equal(/secret|headers|body/.test(JSON.stringify(result.entries)),false);assert.deepEqual(f.state.stored,before);assert.equal(f.state.writes.length,0);assert.equal(f.timers.size,0);
@@ -210,7 +234,7 @@ test('network read byte budget leaves room for the MCP transport and reports tru
 });
 
 test('a read failure preserves retained data and cannot silently enable or clear capture', async t => {
-  const f=fixture(t,{[KEY]:{schemaVersion:1,entries:[{url:'https://example.test/kept',state:'complete'}]}});f.state.failRead=1;
+  const f=fixture(t,{[KEY]:{schemaVersion:2,entries:[{url:'https://example.test/kept',state:'complete'}]}});f.state.failRead=1;
   await assert.rejects(f.host.read(),/Could not read/);assert.equal(f.state.writes.length,0);
   assert.equal((await f.host.read()).entries[0].url,'https://example.test/kept');assert.equal(f.timers.size,0);
 });
