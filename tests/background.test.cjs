@@ -1465,6 +1465,22 @@ test('activity log records blocks with layer, server, path and site, but not sit
   assert.equal(h.state.session.activityLog.entries.length, entries.length, 'log is saved to session storage');
 });
 
+test('activity log distinguishes request filters from domain blocks even when the browser reuses a rule ID', async () => {
+  const h = harness({ customBlockedDomains: ['media.example'] });
+  await h.ready;
+  const request = { url: 'https://media.example/sponsor/banner.png', type: 'image', tabId: 1 };
+  const matched = async () => {
+    h.listeners.ruleMatched({ rule: { rulesetId: '_dynamic', ruleId: 1 }, request });
+    await settle();
+  };
+  await matched();
+  await h.send({ type: 'REMOVE_CUSTOM_DOMAIN', domain: 'media.example' });
+  await h.send({ type: 'SAVE_NETWORK_FILTERS', previous: '', text: '||media.example/sponsor/*$image' });
+  await matched();
+  const entries = (await h.send({ type: 'GET_LOG' })).entries.filter(entry => entry.kind === 'blocked');
+  assert.deepEqual(entries.map(entry => entry.layer), ['Custom block', 'Custom request filter']);
+});
+
 test('activity log omits allow and header-rule matches from packaged, dynamic and session rules', async () => {
   const h = harness({ popupBlockedDomains: ['video.example'] });
   await h.ready;
@@ -1687,15 +1703,39 @@ test('the same domain cannot be both custom-blocked and always allowed', async (
   const h = harness();
   await h.ready;
   await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'both.example' });
-  const rejected = await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'www.both.example' });
+  const rejected = await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'both.example' });
   assert.equal(rejected.ok, false);
   assert.match(rejected.error, /both\.example is in both/);
+  assert.match((await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'www.both.example' })).error, /covered by the custom block on both\.example/);
   assert.deepEqual(h.state.storage.allowedDomains ?? [], []);
   await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'other.example' });
   assert.equal((await h.send({ type: 'ADD_CUSTOM_DOMAIN', domain: 'other.example' })).ok, false);
   assert.deepEqual(h.state.storage.customBlockedDomains, ['both.example']);
   assert.deepEqual((await h.send({ type: 'GET_LOG' })).allowedDomains, ['other.example']);
   assert.equal((await h.send({ type: 'ADD_ALLOWED_DOMAIN', domain: 'bad^host' })).ok, false);
+});
+
+test('block and allow decisions preserve the flagged www server through save, reload and removal', async () => {
+  for (const [add, remove, list, action] of [
+    ['ADD_CUSTOM_DOMAIN', 'REMOVE_CUSTOM_DOMAIN', 'customBlockedDomains', 'block'],
+    ['ADD_ALLOWED_DOMAIN', 'REMOVE_ALLOWED_DOMAIN', 'allowedDomains', 'allow']
+  ]) {
+    const h = harness({ [list]: ['legacy.example'] });
+    await h.ready;
+    loaded(h, 'https://www.scope.example/ads/banner.js');
+    await settle();
+    const [flag] = (await h.send({ type: 'GET_FLAGS' })).flags;
+    assert.equal(flag.site, 'www.scope.example');
+    assert.equal((await h.send({ type: add, domain: flag.site })).ok, true);
+    assert.equal((await h.send({ type: 'FLAG_ACTION', site: flag.site, action: 'remove' })).ok, true);
+    const restarted = harness(h.state.storage);
+    const state = await restarted.send({ type: 'GET_STATE' });
+    assert.deepEqual(state.settings[list], ['legacy.example', 'www.scope.example']);
+    assert.deepEqual(restarted.state.dynamic.filter(rule => rule.action.type === action).flatMap(rule => rule.condition.requestDomains),
+      ['legacy.example', 'www.scope.example']);
+    await restarted.send({ type: remove, domain: 'https://WWW.Scope.Example./path' });
+    assert.deepEqual(restarted.state.storage[list], ['legacy.example']);
+  }
 });
 
 test('lists-page removals are exact, unlike Resume which also removes covering parents', async () => {
@@ -1747,7 +1787,7 @@ test('suspected ads that loaded are flagged per site with reasons, pages and sam
   const h = harness();
   await h.ready;
   loaded(h, AD_SCRIPT);
-  loaded(h, 'https://www.political-effort.com/acWdZ-y.Pf2gQh9iM_Tkcl5mMnj-QpzqMrTsQ_zuNvTwQx2-NzzAUBzCM_DEMFxGNHy-ZJpKcL2M1_1ObPH', { page: 'https://m.xsw.tw/1/', firefox: true });
+  loaded(h, 'https://www.political-effort.com/acWdZ-y.Pf2gQh9iM_Tkcl5mMnj-QpzqMrTsQ_zuNvTwQx2-NzzAUBzCM_DEMFxGNHy-ZJpKcL2M1_1ObPH', { tabId: 5, page: 'https://m.xsw.tw/1/', firefox: true });
   loaded(h, 'https://imp9.pubadx.one/ad', { type: 'image' });
   await settle();
   const flags = await flagsOf(h);
@@ -1789,6 +1829,30 @@ test('ordinary, first-party, browser-internal, paused, allowed and switched-off 
   await settle();
   assert.equal((await h.send({ type: 'GET_FLAGS' })).flags.length, 1, 'turning flagging back on resumes it');
   assert.ok((await h.send({ type: 'GET_LOG' })).entries.some(entry => entry.message === 'Flagging suspected ads turned off'));
+});
+
+test('cross-origin request flags respect the top tab and frame pauses and identify the visited page', async () => {
+  const h = harness({ whitelistedDomains: ['paused.example'] });
+  await h.ready;
+  for (const firefox of [false, true]) {
+    const tabId = firefox ? 8 : 7;
+    h.state.tabs[tabId] = { id: tabId, incognito: false, url: 'https://news.paused.example./' };
+    const request = (page, url = 'https://cdn.example/ads/creative.js') => loaded(h, url, { page, tabId, firefox });
+    request('https://player.example/');
+    await settle();
+    assert.deepEqual(await flagsOf(h), {});
+    h.state.tabs[tabId].url = 'https://news.example/';
+    request('https://player.paused.example/');
+    request('https://player.example/', 'https://news.example/ads/first-party.js');
+    await settle();
+    assert.deepEqual(await flagsOf(h), {});
+    request('https://player.example/');
+    await settle();
+    assert.deepEqual((await flagsOf(h))['cdn.example'].pages, ['news.example']);
+    await h.send({ type: 'FLAG_ACTION', action: 'clear' });
+  }
+  const events = (await h.send({ type: 'GET_LOG' })).entries.filter(entry => entry.message?.startsWith('Flagged '));
+  assert.deepEqual(events.map(entry => entry.site), ['news.example', 'news.example']);
 });
 
 test('flag decisions: ignore stops counting, unignore resumes, remove and clear delete, and only extension pages may act', async () => {
@@ -2121,6 +2185,9 @@ const listCheck = async h => { const result = await h.send({ type: 'CHECK_LIST_U
 
 test('a new install updates its filter lists as a change from the bundled rules, with the new site hiding', async () => {
   const h = listHarness({ initial: { communityListUpdates: undefined } });
+  h.state.cosmeticText = JSON.stringify({ ...STATIC_BUNDLE, generic: [...STATIC_BUNDLE.generic, '.formerly-allowed'],
+    allow: { ...STATIC_BUNDLE.allow, '*': ['.formerly-allowed'] } });
+  h.server.texts.easylist += '\nexample.com#@#.generic\n';
   await listsSettled(h);
   assert.deepEqual(h.state.listRequests.map(request => request.url).sort(), Object.keys(LIST_SOURCES).sort());
   for (const { init } of h.state.listRequests) assert.deepEqual([init.credentials, init.referrerPolicy, init.cache], ['omit', 'no-referrer', 'no-store']);
@@ -2137,6 +2204,14 @@ test('a new install updates its filter lists as a change from the bundled rules,
   assert.ok(h.state.enabled.includes('community_ruleset'), 'the bundled ruleset stays on beside the change');
   const frame = { id: 'test', url: 'https://www.example.com/', tab: { id: 1, url: 'https://www.example.com/' } };
   assert.ok((await h.send({ type: 'GET_COSMETIC_STATE' }, frame)).siteSelectors.includes('.fresh-ad-slot'), 'site hiding comes from the new lists');
+  assert.ok(h.state.scripts.find(script => script.id === 'community-generic').excludeMatches.includes('*://*.example.com/*'));
+  const openFrame = await h.send({ type: 'GET_COSMETIC_STATE', staticGeneric: true }, frame);
+  assert.equal(openFrame.genericStatic, false);
+  assert.ok(!openFrame.genericSelectors.includes('.generic') && openFrame.genericSelectors.includes('.formerly-allowed'));
+  const other = await h.send({ type: 'GET_COSMETIC_STATE', staticGeneric: true }, { ...frame, url: 'https://unaffected.example/' });
+  assert.equal(other.genericStatic, true);
+  assert.ok(other.genericSelectors.includes('.formerly-allowed'), 'a removed global exception is restored even alongside the original CSS');
+  assert.ok(!other.genericSelectors.includes('.generic'), 'the unaffected frame still uses CSS for the compiled selector');
   assert.equal((await h.send({ type: 'GET_COSMETIC_STATE', installScriptlets: true }, { ...frame, frameId: 0, documentId: 'updated-list-document' })).scriptlets, true);
   assert.deepEqual(h.state.executions.at(-1).args, [[{ name: 'set-constant', args: ['freshListFlag', 'true'] }]], 'so do scriptlet filters');
   const log = await h.send({ type: 'GET_LOG' });
@@ -2503,6 +2578,20 @@ const backupPreview = async (h, text) => {
   assert.equal(result.ok, true, result.error); return result;
 };
 const backupRestore = (h, text, preview) => backupSend(h, { type: 'BACKUP_RESTORE', text, baseline: preview.baseline, checksum: preview.checksum });
+test('restore preview identifies appearance-only changes including equal-count website exceptions', async () => {
+  const before = { mode: 'dark', accent: '#123456', websites: false, websiteExceptions: ['old.example', 'stable.example'] };
+  const after = { ...before, accent: '#654321', websites: true, websiteExceptions: ['new.example', 'stable.example'] };
+  const h = harness({ appearance: before });
+  const file = JSON.parse(await backupExport(h));
+  file.data.appearance = after;
+  const text = JSON.stringify(file), preview = await backupPreview(h, text);
+  assert.deepEqual(preview.changes, ['Accent color changed from #123456 to #654321', 'Darken websites turned on',
+    'Website theme exception added new.example', 'Website theme exception removed old.example']);
+  assert.deepEqual(h.state.storage.appearance, before);
+  assert.equal((await backupRestore(h, text, preview)).ok, true);
+  assert.deepEqual(h.state.storage.appearance, after);
+  assert.deepEqual((await backupPreview(h, text)).changes, []);
+});
 test('restore preview discloses equal-count domain moves, filter replacements and protection switches', async () => {
   const h = harness({ customBlockedDomains: ['review.example'], customNetworkFilters: '||old.example^' });
   const file = JSON.parse(await backupExport(h));

@@ -45,7 +45,7 @@ BlockAdsDebug.create(api, {
   // Records the user's decisions on agent proposals, never the proposals themselves.
   log: entry => addLog(entry)
 });
-const { normalizeDomain, normalizeDomains, domainMatches, sameSite } = BlockAds;
+const { normalizeDomain, normalizeRequestHost, normalizeDomains, domainMatches, sameSite } = BlockAds;
 const RULESET_IDS = ["ads_ruleset", "trackers_ruleset", "threats_ruleset", "community_ruleset"];
 const THREAT_CHECK_ALARM = "reported-threats-check";
 const THREAT_EXPIRY_ALARM = "reported-threats-expiry";
@@ -96,6 +96,7 @@ const DEFAULT_SETTINGS = {
   allowedDomains: []
 };
 const DOMAIN_LIST_KEYS = ["whitelistedDomains", "customBlockedDomains", "popupBlockedDomains", "allowedDomains", "cosmeticPausedDomains", "promptAllowedDomains"];
+const domainNormalizer = key => key === "customBlockedDomains" || key === "allowedDomains" ? normalizeRequestHost : normalizeDomain;
 // Always-allowed domains override every list rule (1-3, including community
 // $important) but not reported threats (5) or custom blocks (50).
 const ALLOWED_DOMAIN_PRIORITY = 4;
@@ -128,7 +129,7 @@ let operationQueue = Promise.resolve();
 // failure must never affect protection, so every path here catches its errors.
 const LOG_KEY = "activityLog";
 const LOG_LIMIT = 1000;
-const LAYER_NAMES = { ads_ruleset: "Ads", trackers_ruleset: "Trackers", threats_ruleset: "Reported threat", community_ruleset: "Community lists", _dynamic: "Custom block" };
+const LAYER_NAMES = { ads_ruleset: "Ads", trackers_ruleset: "Trackers", threats_ruleset: "Reported threat", community_ruleset: "Community lists" };
 // Fixed messages that content scripts may add; they never supply free text.
 const CONTENT_EVENTS = {
   "procedural-filter-limit": () => "Advanced page hiding stopped on this page after reaching a scan limit; CSS and network filtering remain active",
@@ -152,7 +153,7 @@ function customCosmeticRules(text) {
 }
 let logLoad = null;
 let logSaveTimer = null;
-let dynamicBlockIds = null;
+let dynamicBlockLayers = null;
 
 function loadLog() {
   logLoad ??= (async () => {
@@ -224,9 +225,9 @@ function flagContext() {
   return flagSettings;
 }
 
-async function recordFlag({ host, pageHost, reasons, path, tabId }) {
+async function recordFlag({ host, pageHost, frameHost = pageHost, reasons, path, tabId }) {
   const context = await flagContext();
-  if (!context.enabled || context.paused.some(domain => domainMatches(pageHost, domain)) ||
+  if (!context.enabled || context.paused.some(domain => domainMatches(pageHost, domain) || domainMatches(frameHost, domain)) ||
       context.allowed.some(domain => domainMatches(host, domain))) return;
   const flags = await loadFlags();
   // A review decision applies to the exact server that produced the signal.
@@ -262,20 +263,19 @@ async function recordFlag({ host, pageHost, reasons, path, tabId }) {
 // Only requests that actually loaded reach this event; blocked ones never do.
 async function flagRequest(details) {
   try {
-    const pageUrl = details.initiator || details.documentUrl || details.originUrl || "";
-    if (details.tabId < 0 || !/^https?:\/\//i.test(pageUrl)) return;
-    const pageHost = urlParts(pageUrl).host;
-    const reasons = BlockAdsFlags.requestSignals({ url: details.url, type: details.type, pageHost });
+    const frameUrl = details.initiator || details.documentUrl || details.originUrl || "";
+    if (details.tabId < 0 || details.incognito === true || !/^https?:\/\//i.test(frameUrl)) return;
+    const frameHost = urlParts(frameUrl).host;
+    const reasons = BlockAdsFlags.requestSignals({ url: details.url, type: details.type, pageHost: frameHost });
     if (!reasons.length) return;
-    // Private-tab observations must never enter the persistent flag store.
-    // Chromium omits incognito from webRequest events; use the browser's tab.
-    if (details.incognito === true) return;
-    if (details.incognito !== false) {
-      const tab = await api.tabs.get(details.tabId).catch(() => null);
-      if (tab?.incognito !== false) return;
-    }
+    // The initiator can be a cross-origin frame. The tab supplies the visited
+    // site for its pause and the flag, and verifies that it is a regular tab.
+    const tab = await api.tabs.get(details.tabId).catch(() => null);
+    if (tab?.incognito !== false || !/^https?:\/\//i.test(tab.url || "")) return;
+    const pageHost = urlParts(tab.url).host;
     const { host, path } = urlParts(details.url);
-    await recordFlag({ host, pageHost, reasons, path, tabId: details.tabId });
+    if (!pageHost || sameSite(host, pageHost)) return;
+    await recordFlag({ host, pageHost, frameHost, reasons, path, tabId: details.tabId });
   } catch (error) {
     console.warn("[Module Engine] Could not check a request for ad patterns:", error);
   }
@@ -323,7 +323,8 @@ function loadCommunityCosmetic() {
     if (saved?.id !== update.id || !siteHidingShape(saved)) return data;
     const { hide, allow, scoped, procedural, disableGeneric, disableAll } = saved;
     // An update installed by an earlier version has no scriptlets; the bundled ones stay.
-    return { ...data, hide, allow, scoped, procedural, disableGeneric, disableAll, scriptlets: Array.isArray(saved.scriptlets) ? saved.scriptlets : data.scriptlets };
+    return { ...data, bundledGlobalExceptions: data.allow["*"] || [], hide, allow, scoped, procedural, disableGeneric, disableAll,
+      scriptlets: Array.isArray(saved.scriptlets) ? saved.scriptlets : data.scriptlets };
   })().catch(error => {
     communityCosmetic = null;
     console.warn("[Module Engine] Site hiding rules unavailable:", error);
@@ -335,7 +336,9 @@ function loadCommunityCosmetic() {
 const stringList = value => Array.isArray(value) && value.every(item => typeof item === "string");
 const selectorMap = value => Boolean(value) && typeof value === "object" && !Array.isArray(value) && Object.values(value).every(stringList);
 function siteHidingShape(saved) {
-  return Boolean(saved) && selectorMap(saved.hide) && selectorMap(saved.allow) && Array.isArray(saved.scoped) && Array.isArray(saved.procedural) &&
+  const scopedRules = rules => Array.isArray(rules) && rules.every(rule => typeof rule?.selector === "string" &&
+    typeof rule.exception === "boolean" && stringList(rule.include) && stringList(rule.exclude));
+  return Boolean(saved) && selectorMap(saved.hide) && selectorMap(saved.allow) && scopedRules(saved.scoped) && scopedRules(saved.procedural) &&
     stringList(saved.disableGeneric) && stringList(saved.disableAll);
 }
 
@@ -404,7 +407,7 @@ async function loadBundledCommunity() {
 function urlParts(value) {
   try {
     const url = new URL(value);
-    return { host: url.hostname, path: url.pathname.slice(0, 150) };
+    return { host: url.hostname.replace(/\.$/, ""), path: url.pathname.slice(0, 150) };
   } catch {
     return { host: "", path: "" };
   }
@@ -638,12 +641,12 @@ async function injectScriptlets(sender, calls) {
   }
 }
 
-// Dynamic rules include site-pause allow rules; only custom blocks are logged.
-async function isDynamicBlock(ruleId) {
-  dynamicBlockIds ??= api.declarativeNetRequest.getDynamicRules()
-    .then(rules => new Set(rules.filter(rule => rule.action.type === "block").map(rule => rule.id)))
-    .catch(error => { dynamicBlockIds = null; throw error; });
-  return (await dynamicBlockIds).has(ruleId);
+// Installed list updates have reserved IDs. Of our own block rules, only the
+// request-filter compiler emits the custom network priority.
+function dynamicBlockLayer(rule) {
+  if (isThreatRule(rule)) return LAYER_NAMES.threats_ruleset;
+  if (ModuleEngineCommunityUpdates.isListRule(rule)) return LAYER_NAMES.community_ruleset;
+  return rule.priority === BlockAdsNetwork.PRIORITY ? "Custom request filter" : "Custom block";
 }
 
 // Chrome and Edge report rule matches while the extension is loaded unpacked.
@@ -653,15 +656,13 @@ async function isDynamicBlock(ruleId) {
 // logged as blocked requests.
 async function logRuleMatch({ rule, request }) {
   try {
-    if (!networkLog.regularTab(request.tabId, request.incognito) || !(await matchedBlock(rule))) return;
+    if (!networkLog.regularTab(request.tabId, request.incognito)) return;
+    const layer = await matchedBlockLayer(rule);
+    if (!layer) return;
     const { host, path } = urlParts(request.url);
     const source = request.initiator || request.documentUrl || request.originUrl || "";
-    // Installed list updates run as dynamic rules in their own ID ranges.
-    const updated = rule.rulesetId === "_dynamic" ? { id: rule.ruleId } : null;
-    const layer = updated && isThreatRule(updated) ? "threats_ruleset"
-      : updated && ModuleEngineCommunityUpdates.isListRule(updated) ? "community_ruleset" : rule.rulesetId;
     await addLog({
-      kind: "blocked", layer: LAYER_NAMES[layer] || rule.rulesetId, ruleId: rule.ruleId,
+      kind: "blocked", layer, ruleId: rule.ruleId,
       host, path, type: request.type, site: urlParts(source).host, tabId: request.tabId
     });
   } catch (error) {
@@ -735,11 +736,22 @@ function readPackagedPopupRules(resource) {
   }
   return packagedPopupRules.get(resource.id);
 }
-async function matchedBlock(rule) {
-  if (!Number.isInteger(rule?.ruleId)) return false;
-  if (rule.rulesetId === "_dynamic") return isDynamicBlock(rule.ruleId);
+async function matchedBlockLayer(rule) {
+  if (!Number.isInteger(rule?.ruleId)) return null;
+  if (rule.rulesetId === "_dynamic") {
+    if (networkRuleUpdates) return null;
+    const snapshot = dynamicBlockLayers ??= api.declarativeNetRequest.getDynamicRules()
+      .then(rules => new Map(rules.filter(item => item.action.type === "block").map(item => [item.id, dynamicBlockLayer(item)])));
+    try {
+      const layers = await snapshot;
+      return snapshot === dynamicBlockLayers ? layers.get(rule.ruleId) : null;
+    } catch (error) {
+      if (snapshot === dynamicBlockLayers) dynamicBlockLayers = null;
+      throw error;
+    }
+  }
   const resource = api.runtime.getManifest().declarative_net_request.rule_resources.find(item => item.id === rule.rulesetId);
-  return Boolean(resource && (await readPackagedPopupRules(resource)).blockIds.has(rule.ruleId));
+  return resource && (await readPackagedPopupRules(resource)).blockIds.has(rule.ruleId) ? LAYER_NAMES[resource.id] || resource.id : null;
 }
 
 // Three-valued, deliberately partial DNR check: true, false, or unknown (null).
@@ -897,7 +909,7 @@ async function popupRuleMatched({ rule, request }) {
   if (!item) return;
   const pending = item.request;
   try {
-    if (await matchedBlock(rule) && popupCandidate(item.id) === item && item.request === pending) {
+    if (await matchedBlockLayer(rule) && popupCandidate(item.id) === item && item.request === pending) {
       pending.blocked = true;
       await closeBlockedPopup(item);
     }
@@ -935,6 +947,7 @@ async function changeNetworkRules(update) {
   // Rule IDs may be reused. Never correlate a pending event against a different
   // rule action while settings are being applied or rolled back.
   blockedPopupTabs.clear();
+  dynamicBlockLayers = null;
   networkRuleUpdates++;
   try { return await update(); }
   finally { networkRuleUpdates--; }
@@ -1110,7 +1123,6 @@ async function retireInactiveThreats(status) {
   }
   const updated = (await api.declarativeNetRequest.getDynamicRules()).filter(isThreatRule);
   if (updated.length) {
-    dynamicBlockIds = null;
     await changeNetworkRules(() => api.declarativeNetRequest.updateDynamicRules({ removeRuleIds: updated.map(rule => rule.id), addRules: [] }));
     if ((await api.declarativeNetRequest.getDynamicRules()).some(isThreatRule)) {
       throw new Error("The browser did not remove inactive reported-threat rules.");
@@ -1324,7 +1336,7 @@ function validateSettings(settings) {
     flagSuspects: settings.flagSuspects,
     communityListUpdates: settings.communityListUpdates,
     retireExpiredThreats: settings.retireExpiredThreats,
-    ...Object.fromEntries(DOMAIN_LIST_KEYS.map(key => [key, normalizeDomains(settings[key])]))
+    ...Object.fromEntries(DOMAIN_LIST_KEYS.map(key => [key, normalizeDomains(settings[key], domainNormalizer(key))]))
   };
   // A custom block always wins, so allowing a domain it covers would have no effect.
   for (const domain of valid.allowedDomains) {
@@ -1349,10 +1361,11 @@ async function loadSettings() {
   // separately and visibly so one entry cannot poison every future update.
   for (const key of DOMAIN_LIST_KEYS) {
     const entries = Array.isArray(settings[key]) ? settings[key] : [settings[key]];
+    const normalize = domainNormalizer(key);
     settings[key] = [];
     for (const entry of entries) {
       try {
-        settings[key].push(normalizeDomain(entry));
+        settings[key].push(normalize(entry));
       } catch {
         const description = `${key}: ${String(entry)}`;
         if (!quarantined.includes(description)) quarantined.push(description);
@@ -1432,16 +1445,16 @@ const sitesPatterns = domains => {
 
 // Sites where the bundled generic stylesheets are not injected, or null when they
 // are not registered. Generic hiding stays off on paused and generichide/elemhide
-// sites. A custom exception for a bundled generic selector cannot be expressed in
-// a stylesheet, so its sites receive generic selectors in their frame state.
+// sites. Frames with custom or updated exceptions the packaged CSS cannot
+// honor receive their generic selectors in the frame state.
 function genericSheetScope(settings, data) {
   const bundle = BlockAdsCosmetic.staticBundle(data);
-  if (!bundle || !settings.enabled || !settings.cosmeticFiltering || !settings.rulesets.community_ruleset ||
+  if (!bundle || bundle.exclusions.has("*") || !settings.enabled || !settings.cosmeticFiltering || !settings.rulesets.community_ruleset ||
       !settings.genericCosmeticFiltering) return null;
   const customSites = customCosmeticRules(settings.customCosmeticFilters)
-    .filter(rule => rule.exception && bundle.generic.has(rule.selector)).flatMap(rule => rule.include);
+    .filter(rule => rule.exception && bundle.inSheet(rule.selector, false)).flatMap(rule => rule.include);
   const base = [...settings.whitelistedDomains, ...settings.cosmeticPausedDomains,
-    ...(data.disableGeneric || []), ...(data.disableAll || []), ...customSites];
+    ...(data.disableGeneric || []), ...(data.disableAll || []), ...bundle.exclusions, ...customSites];
   return { base, excepted: [...base, ...bundle.sites] };
 }
 
@@ -1557,7 +1570,6 @@ async function readRules() {
 async function applyRules(target, threatStatus) {
   const current = await readRules();
   if (!same(current.dynamic, target.dynamic)) {
-    dynamicBlockIds = null;
     await changeNetworkRules(() => api.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: current.dynamic.map(rule => rule.id), addRules: target.dynamic
     }));
@@ -1657,9 +1669,9 @@ function editSettings(current, message) {
     const domain = normalizeDomain(message.domain);
     next.promptAllowedDomains = current.promptAllowedDomains.filter(item => item !== domain);
   } else if (message.type === "ADD_CUSTOM_DOMAIN") {
-    next.customBlockedDomains = [...current.customBlockedDomains, normalizeDomain(message.domain)];
+    next.customBlockedDomains = [...current.customBlockedDomains, message.domain];
   } else if (message.type === "REMOVE_CUSTOM_DOMAIN") {
-    const domain = normalizeDomain(message.domain);
+    const domain = normalizeRequestHost(message.domain);
     next.customBlockedDomains = current.customBlockedDomains.filter(item => item !== domain);
   } else if (message.type === "REMOVE_PAUSED_SITE" || message.type === "REMOVE_POPUP_SITE") {
     // Exact removal for the lists page; the popup's Resume/switch also removes covering parents.
@@ -1667,9 +1679,9 @@ function editSettings(current, message) {
     const domain = normalizeDomain(message.domain);
     next[key] = current[key].filter(item => item !== domain);
   } else if (message.type === "ADD_ALLOWED_DOMAIN") {
-    next.allowedDomains = [...current.allowedDomains, normalizeDomain(message.domain)];
+    next.allowedDomains = [...current.allowedDomains, message.domain];
   } else if (message.type === "REMOVE_ALLOWED_DOMAIN") {
-    const domain = normalizeDomain(message.domain);
+    const domain = normalizeRequestHost(message.domain);
     next.allowedDomains = current.allowedDomains.filter(item => item !== domain);
   } else if (message.type === "SET_SITE_POPUPS") {
     const domain = normalizeDomain(message.domain);

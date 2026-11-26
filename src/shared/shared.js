@@ -2,7 +2,7 @@
 (() => {
   "use strict";
 
-  function normalizeDomain(input) {
+  function canonicalHost(input, foldWWW) {
     if (typeof input !== "string" || !input.trim()) {
       throw new Error("Enter a hostname or an HTTP(S) URL.");
     }
@@ -20,8 +20,8 @@
       throw new Error("Use an HTTP(S) address without a username or password.");
     }
     // URL converts internationalized names to ASCII/punycode for DNR.
-    // Retain the original www/apex scope for existing exceptions.
-    const hostname = url.hostname.toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
+    const host = url.hostname.toLowerCase().replace(/\.$/, "");
+    const hostname = foldWWW ? host.replace(/^www\./, "") : host;
     const labels = hostname.split(".");
     if (hostname.length > 253 ||
         (labels.length < 2 && hostname !== "localhost") ||
@@ -31,9 +31,14 @@
     return hostname;
   }
 
-  function normalizeDomains(values) {
+  // Site switches share their historical www/apex scope. Server decisions
+  // start at the selected hostname and cover only it and its subdomains.
+  const normalizeDomain = input => canonicalHost(input, true);
+  const normalizeRequestHost = input => canonicalHost(input, false);
+
+  function normalizeDomains(values, normalize = normalizeDomain) {
     if (!Array.isArray(values)) throw new Error("The domain list must be an array.");
-    return [...new Set(values.map(normalizeDomain))].sort();
+    return [...new Set(values.map(normalize))].sort();
   }
 
   function domainMatches(hostname, domain) {
@@ -97,6 +102,6 @@
   }
 
   globalThis.BlockAds = Object.freeze({
-    normalizeDomain, normalizeDomains, domainMatches, whitelistScope, sameSite, siteOf, readListBytes
+    normalizeDomain, normalizeRequestHost, normalizeDomains, domainMatches, whitelistScope, sameSite, siteOf, readListBytes
   });
 })();

@@ -83,10 +83,16 @@ async function runBackup({ b, manager, send, check, until, browse, scriptSource,
     reviewFile.data.settings.rulesets.threats_ruleset = !file.data.settings.rulesets.threats_ruleset;
     reviewFile.data.settings.customNetworkFilters = '||review.example^';
     reviewFile.data.updates.autoApply = !file.data.updates.autoApply;
+    reviewFile.data.appearance.accent = '#123456';
+    reviewFile.data.appearance.websites = !file.data.appearance.websites;
+    reviewFile.data.appearance.websiteExceptions.push('preview.example');
+    reviewFile.data.appearance.websiteExceptions.sort();
     await choose(JSON.stringify(reviewFile));
     check('Review names the changed threat layer, allowed domain and update policy', await get(
       "['Reported threat layer turned','Always allowed review.example','Automatic userscript update installation turned'].every(s=>document.getElementById('protectionChanges').textContent.includes(s))", backupPage));
     check('Review shows the exact replacement request filter', await get("document.querySelector('#filterChanges pre:last-child').textContent==='||review.example^'", backupPage));
+    check('Review discloses accent, website darkening and the affected hostname', await get(
+      "['#123456','Darken websites turned','Website theme exception added preview.example'].every(s=>document.getElementById('protectionChanges').innerText.includes(s))", backupPage));
     check('Review displays escaped script names without executing markup', await get("document.getElementById('scriptNames').textContent.includes('Backup <fixture> ✓')&&!document.querySelector('#scriptNames fixture')", backupPage));
     check('Restore requires acknowledgment', await get("!document.getElementById('review').hidden&&document.getElementById('restoreBackup').disabled&&document.activeElement.id==='reviewHeading'", backupPage));
     check('Review leaves the current library unchanged', JSON.stringify(await get("(globalThis.browser||chrome).storage.local.get('userscriptManager').then(r=>r.userscriptManager)")) === JSON.stringify(original));

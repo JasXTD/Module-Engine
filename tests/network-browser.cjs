@@ -146,6 +146,14 @@ module.exports=async function verifyNetwork({browser,page,send,state,match,until
   const blockedPath='/blocked-probe.network?blocked='+Date.now();
   const loadScript=probe=>browser.evaluate(`new Promise(resolve=>{const script=document.createElement('script');script.src=${JSON.stringify('http://localhost:'+port+probe)};script.onload=()=>{script.remove();resolve('loaded');};script.onerror=()=>{script.remove();resolve('blocked');};document.body.append(script);})`,page);
   check(await loadScript(blockedPath)==='blocked' && !requests.includes(blockedPath),'a real matching loopback script is blocked before the server receives it');
+  if ((await send({type:'GET_LOG'})).blockLogging) {
+    const logPage = await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/log/log.html')"));
+    await browser.evaluate("document.getElementById('textFilter').value='/blocked-probe.network';document.getElementById('textFilter').dispatchEvent(new Event('input'))", logPage);
+    await until(browser, "document.querySelector('#summaryTable tbody a')?.hash==='#requestFiltering'", logPage);
+    check(await browser.evaluate("document.querySelector('#summaryTable tbody').innerText.includes('Custom request filter') && !document.querySelector('#summaryTable tbody a[href$=\"#listBlocked\"]')", logPage),
+      'a matched request filter links to its editor in the activity log');
+    await browser.closePage(logPage);
+  }
   const fetchPath='/blocked-probe.network?fetch='+Date.now();
   check(await browser.evaluate(`fetch(${JSON.stringify('http://localhost:'+port+fetchPath)}).then(response=>response.ok)`,page) && requests.includes(fetchPath),'the same loopback endpoint remains available to an excluded resource type');
   const allowedPath='/blocked-probe.network?allowed='+Date.now();

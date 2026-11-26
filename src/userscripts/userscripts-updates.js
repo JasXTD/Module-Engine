@@ -74,6 +74,11 @@
           (entry.outcome === 'staged') !== (entry.staged !== undefined)) continue;
       const result = { base: entry.base, checkedAt: entry.checkedAt, outcome: entry.outcome,
         ...(entry.message ? { message: entry.message } : {}), ...(entry.version ? { version: entry.version } : {}) };
+      const failure = entry.lastFailure;
+      if (['staged', 'available'].includes(entry.outcome) && Number.isSafeInteger(failure?.time) && failure.time >= 0 &&
+          typeof failure.message === 'string' && failure.message.length <= LIMITS.message) {
+        result.lastFailure = { time: failure.time, message: failure.message };
+      }
       if (entry.staged !== undefined) {
         let size;
         try {
@@ -204,6 +209,13 @@
         const library = await readLibrary(), bases = await prune(next, library);
         // A script edited, re-linked or deleted during the download keeps no stale result.
         if (bases.get(script.id) !== base) return;
+        const previous = next.scripts[script.id];
+        if (result.outcome === 'error' && previous && ['staged', 'available'].includes(previous.outcome)) {
+          // A failed check has no new candidate. Keep the original version,
+          // download time, bytes and reason it needs review.
+          previous.lastFailure = { time: now(), message: errorText(result.message) };
+          return;
+        }
         const entry = { base, checkedAt: now(), outcome: result.outcome,
           ...(result.message ? { message: errorText(result.message) } : {}), ...(result.version ? { version: result.version } : {}) };
         if (result.staged) {
@@ -247,7 +259,8 @@
           if (signal.aborted) break;
           if (!targets(script).download) continue;
           const base = await baseline(script), entry = settings.scripts[script.id], time = now();
-          if (!force && entry?.base === base && entry.checkedAt <= time && time - entry.checkedAt < LIMITS.interval) continue;
+          const lastCheck = entry?.lastFailure?.time ?? entry?.checkedAt;
+          if (!force && entry?.base === base && lastCheck <= time && time - lastCheck < LIMITS.interval) continue;
           let result;
           try { result = await check(script, signal); }
           catch (error) { if (signal.aborted) break; result = { outcome: 'error', message: errorText(error) }; }
@@ -291,7 +304,8 @@
       for (const script of library.scripts) {
         const entry = settings.scripts[script.id], current = entry?.base === await baseline(script);
         scripts[script.id] = { ...targets(script), ...(current ? { checkedAt: entry.checkedAt, outcome: entry.outcome,
-          ...(entry.message ? { message: entry.message } : {}), ...(entry.version ? { available: entry.version } : {}) } : {}) };
+          ...(entry.message ? { message: entry.message } : {}), ...(entry.version ? { available: entry.version } : {}),
+          ...(entry.lastFailure ? { lastFailure: entry.lastFailure } : {}) } : {}) };
       }
       return { ok: true, interceptLinks: settings.interceptLinks, autoCheck: settings.autoCheck, autoApply: settings.autoApply, error: settings.error || '',
         checking: Boolean(run), scripts };

@@ -211,15 +211,39 @@
   // A frame whose root element has GENERIC_OFF_ATTRIBUTE ignores both sheets.
   const GENERIC_OFF_ATTRIBUTE = "data-me-generic-off";
   const bundles = new WeakMap();
+  const suffixesOf = host => host.split(".").map((_, i, labels) => labels.slice(i).join("."));
   function staticBundle(data) {
     const value = data?.genericStatic;
     if (!value || typeof value !== "object") return null;
-    if (!bundles.has(value)) {
+    if (!bundles.has(data)) {
       const lists = ["excepted", "exceptedSites", "perFrame"].map(key => value[key]);
-      bundles.set(value, lists.every(list => Array.isArray(list) && list.every(item => typeof item === "string"))
-        ? { excepted: lists[0], sites: new Set(lists[1]), perFrame: lists[2], generic: new Set(data.generic || []) } : null);
+      if (!lists.every(list => Array.isArray(list) && list.every(item => typeof item === "string"))) return null;
+      const compiled = new Set(data.generic || []), perFrame = new Set(value.perFrame);
+      // The compiler omits globally excepted selectors from both sheets. If a
+      // later list removes one of those exceptions, send that selector by message.
+      for (const selector of data.bundledGlobalExceptions ?? data.allow?.["*"] ?? []) {
+        if (compiled.has(selector)) perFrame.add(selector);
+      }
+      for (const selector of perFrame) compiled.delete(selector);
+      const sites = new Set(value.exceptedSites), excepted = new Set(value.excepted);
+      const inSheet = (selector, skipsExcepted) => compiled.has(selector) && !(skipsExcepted && excepted.has(selector));
+      // An updated exception can affect a selector already baked into CSS.
+      // Exclude its sites at registration as well as revoking CSS in open frames.
+      const exclusions = new Set();
+      const checkSite = (site, selectors) => {
+        const skipsExcepted = suffixesOf(site).some(suffix => sites.has(suffix));
+        if (selectors.some(selector => inSheet(selector, skipsExcepted))) exclusions.add(site);
+      };
+      if (data.bundledGlobalExceptions) {
+        // The packaged registrations already account for their own list.
+        for (const [site, selectors] of Object.entries(data.allow)) checkSite(site, selectors);
+        for (const rule of [...data.scoped, ...data.procedural]) {
+          if (rule.exception) for (const site of rule.include.length ? rule.include : ["*"]) checkSite(site, [rule.selector]);
+        }
+      }
+      bundles.set(data, { excepted, sites, perFrame, inSheet, exclusions });
     }
-    return bundles.get(value);
+    return bundles.get(data);
   }
 
   // `staticSheets`: the bundled generic stylesheets were injected into this frame.
@@ -227,40 +251,31 @@
   // whether they may stay active.
   function resolve(data, hostname, { generic = true, custom = [], staticSheets = false } = {}) {
     const host = hostname.toLowerCase().replace(/\.$/, "");
-    const labels = host.split(".");
-    const suffixes = labels.map((_, i) => labels.slice(i).join("."));
+    const suffixes = suffixesOf(host);
     const hide = new Set(), allow = new Set(data.allow?.["*"] || []), procedures = new Map(), scopedGeneric = [];
     const disableAll = (data.disableAll || []).some(domain => matches(host, domain));
     const disableGeneric = !generic || (data.disableGeneric || []).some(domain => matches(host, domain));
     const bundle = staticSheets && !disableGeneric ? staticBundle(data) : null;
-    let customGenericException = false;
     for (const name of ["hide", "allow"]) {
       const target = name === "hide" ? hide : allow;
       for (const suffix of suffixes) {
         if (Object.hasOwn(data[name] || {}, suffix)) for (const selector of data[name][suffix]) target.add(selector);
       }
     }
-    const rules = [...(data.scoped || []), ...(data.procedural || [])];
-    const firstCustom = rules.length;
-    rules.push(...custom);
-    for (const [index, rule] of rules.entries()) {
+    for (const rule of [...(data.scoped || []), ...(data.procedural || []), ...custom]) {
       if (rule.scriptlet) continue;
       if ((rule.include.length && !rule.include.some(domain => matches(host, domain))) ||
           rule.exclude.some(domain => matches(host, domain))) continue;
-      if (rule.exception) {
-        allow.add(rule.selector);
-        // The bundle already accounts for list exceptions; a stylesheet cannot
-        // leave out one selector for a user's own exception.
-        if (index >= firstCustom && bundle?.generic.has(rule.selector)) customGenericException = true;
-      }
+      if (rule.exception) allow.add(rule.selector);
       else if (rule.procedure) procedures.set(rule.selector, rule.procedure);
       else if (rule.include.length) hide.add(rule.selector);
       else if (!disableGeneric) scopedGeneric.push(rule.selector);
     }
-    const genericStatic = Boolean(bundle) && !disableAll && !customGenericException;
+    const skipsExcepted = bundle && suffixes.some(suffix => bundle.sites.has(suffix));
+    const genericStatic = Boolean(bundle) && !disableAll && ![...allow].some(selector => bundle.inSheet(selector, skipsExcepted));
     // An elemhide frame applies no hiding at all, so it receives no generic selectors.
     const generics = disableGeneric || disableAll ? [] : !genericStatic ? data.generic || []
-      : [...bundle.perFrame, ...(suffixes.some(suffix => bundle.sites.has(suffix)) ? bundle.excepted : [])];
+      : [...bundle.perFrame, ...(skipsExcepted ? bundle.excepted : [])];
     const genericHide = new Set(disableAll ? [] : [...generics, ...scopedGeneric]);
     return { disableAll, disableGeneric, genericStatic, exceptions: [...allow],
       proceduralRules: disableAll ? [] : [...procedures].filter(([selector]) => !allow.has(selector)).map(([selector, plan]) => ({ selector, plan })),

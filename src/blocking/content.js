@@ -327,10 +327,12 @@
   });
   window.addEventListener('pageshow', event => { if (event.isTrusted) { pageSuspended = false; void evaluateAndApply(); } });
 
-  // React immediately when user toggles settings in the popup
+  // communityStatus publishes the active list ID after its rules have been applied.
   if (api.storage && api.storage.onChanged) {
     api.storage.onChanged.addListener((changes, area) => {
-      if (area === "local" && ["enabled", "rulesets", "cosmeticFiltering", "flagSuspects",
+      if (area !== "local") return;
+      const status = changes.communityStatus;
+      if (status?.oldValue?.id !== status?.newValue?.id || ["enabled", "rulesets", "cosmeticFiltering", "flagSuspects",
         "whitelistedDomains", "popupBlockedDomains", "genericCosmeticFiltering", "proceduralFiltering", "customCosmeticFilters", "cosmeticPausedDomains",
         "notificationPromptBlocking", "deceptivePromptBlocking", "deceptiveButtonBlocking", "promptAllowedDomains"].some(key => key in changes)) evaluateAndApply();
     });

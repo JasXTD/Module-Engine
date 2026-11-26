@@ -2172,9 +2172,11 @@ for (const [label, change] of [
   ['source quota', text => text + ' '.repeat(core.LIMITS.source)]
 ]) test('rejects ' + label + ' before registration', () => assert.throws(() => core.parse(change(source()))));
 test('icon and update metadata is explained visibly; parsing fetches nothing', () => {
-  const parsed = core.parse(source('No downloads', '// @updateURL https://example.test/update\n// @icon https://example.test/icon.png\n'));
-  assert.equal(parsed.warnings.length, 2);
+  const parsed = core.parse(source('No downloads', '// @updateURL https://example.test/update\n// @downloadURL https://example.test/script.user.js\n// @icon https://example.test/icon.png\n'));
+  assert.equal(parsed.warnings.length, 3);
   assert.ok(parsed.warnings.some(warning => /@updateURL .*Install from URL/.test(warning)));
+  assert.ok(parsed.warnings.some(warning => warning.includes('@downloadURL')));
+  assert.doesNotMatch(parsed.warnings.join(' '), /every update needs your review/i);
 });
 test('metadata parsing stays linear on padded sources without a closing marker', () => {
   // These inputs took several seconds each with a multiline backtracking regex.

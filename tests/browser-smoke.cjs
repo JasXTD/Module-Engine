@@ -1112,8 +1112,13 @@ if (require.main === module) (async () => {
     await until(browser, `!document.querySelector('section[data-list="allowedDomains"] input').disabled`, listsPage);
     await browser.evaluate(`(() => { const form = document.querySelector('section[data-list="allowedDomains"] form');
       form.querySelector('input').value = 'https://www.lists-allow.example/path'; form.requestSubmit(); return true; })()`, listsPage);
-    await until(browser, `[...document.querySelectorAll('section[data-list="allowedDomains"] tbody td')].some(cell => cell.textContent === 'lists-allow.example')`, listsPage);
-    check((await state()).settings.allowedDomains.includes('lists-allow.example'), 'lists page adds an always-allowed domain');
+    await until(browser, `[...document.querySelectorAll('section[data-list="allowedDomains"] tbody td')].some(cell => cell.textContent === 'www.lists-allow.example')`, listsPage);
+    check((await state()).settings.allowedDomains.includes('www.lists-allow.example'), 'lists page preserves the chosen server');
+    for (const host of ['www.lists-allow.example', 'lists-allow.example', 'sibling.lists-allow.example']) {
+      const result = await match('https://' + host + '/image.png', 'image', 'https://publisher.example/');
+      check(result.matchedRules.some(rule => rule.rulesetId === '_dynamic') === (host === 'www.lists-allow.example'),
+        'the native allow rule has the expected scope on ' + host);
+    }
     await send({ type: 'SET_SITE_PAUSED', domain: 'paused-parent.example', paused: true });
     await send({ type: 'SET_SITE_PAUSED', domain: 'shop.paused-parent.example', paused: true });
     await until(browser, `${rowsOf('whitelistedDomains')} === 2`, listsPage);
@@ -1126,7 +1131,7 @@ if (require.main === module) (async () => {
     check(await browser.evaluate(`document.querySelectorAll('#siteHosts tbody tr').length === 1 && ${rowsOf('allowedDomains')} === 0 &&
       document.getElementById('notice').hidden && document.documentElement.scrollWidth <= innerWidth`, listsPage),
       'lists page filter narrows every table, with no error or horizontal overflow');
-    await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'lists-allow.example' });
+    await send({ type: 'REMOVE_ALLOWED_DOMAIN', domain: 'www.lists-allow.example' });
     await send({ type: 'REMOVE_PAUSED_SITE', domain: 'paused-parent.example' });
 
     // Flagging: an ad-like request that loads is flagged, never blocked; the lists page decides.

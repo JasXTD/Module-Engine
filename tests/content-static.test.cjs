@@ -157,6 +157,30 @@ test('a content script injected into an already-loaded page treats an absent com
   assert.equal(page.requests[0].message.staticGeneric, false);
 });
 
+test('an open page replaces its CSS on a community list revision and ignores routine status checks', async () => {
+  const page = load({ readyState: 'complete' });
+  const reply = selector => page.reply({ genericStatic: false, staticAssumed: false, siteSelectors: [selector] });
+  const revision = (before, after) => page.listeners.storage({
+    communityStatus: { oldValue: { id: before }, newValue: { id: after } }
+  }, 'local');
+  await reply('.bundled');
+  revision(null, 'update-one');
+  assert.equal(page.requests.length, 2);
+  await reply('.updated');
+  assert.ok(page.style().includes('.updated') && !page.style().includes('.bundled'));
+  revision('update-one', 'update-one');
+  assert.equal(page.requests.length, 2);
+  revision('update-one', null);
+  assert.equal(page.requests.length, 3);
+  await reply('.bundled');
+  assert.ok(page.style().includes('.bundled') && !page.style().includes('.updated'));
+  revision(null, 'rejected-update');
+  revision('rejected-update', null);
+  await reply('.bundled');
+  await page.reply({ genericStatic: false, staticAssumed: false, siteSelectors: ['.stale'] }, page.requests.length - 2);
+  assert.ok(page.style().includes('.bundled') && !page.style().includes('.stale'), 'a late update reply cannot undo rollback');
+});
+
 test('a document asks for its scriptlets in its first answered request only, and again only after a failure', async () => {
   const page = load();
   assert.equal(page.requests[0].message.installScriptlets, true);

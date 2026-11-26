@@ -281,7 +281,7 @@ function decisionButton(label, title, onClick) {
 async function decide(site, list) {
   const question = list === "block"
     ? `Block ${site} and its subdomains on every site?`
-    : `Always allow ${site}? It will not be flagged again.`;
+    : `Always allow ${site} and its subdomains on every site?`;
   if (!confirm(question)) return;
   const added = await run({ type: list === "block" ? "ADD_CUSTOM_DOMAIN" : "ADD_ALLOWED_DOMAIN", domain: site });
   if (added) await run({ type: "FLAG_ACTION", site, action: "remove" });

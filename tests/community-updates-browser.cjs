@@ -30,19 +30,22 @@ const NEWER = '202611171200';
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), `blockads-list-updates-${browserName}-`));
   const extension = path.join(temporary, 'extension');
   for (const file of extensionFiles) await fs.cp(path.join(root, file), path.join(extension, file), { recursive: true });
-  const served = { easylist: fixture.upstream('easylist', { version: NEWER }) + '\n127.0.0.1##.fresh-ad-slot\n', 'easylist-china': fixture.upstream('easylist-china') };
+  const served = { easylist: fixture.upstream('easylist', { version: NEWER }) + '\n127.0.0.1##.fresh-ad-slot\n127.0.0.1#@#.ADBAR\n', 'easylist-china': fixture.upstream('easylist-china') };
   const requests = [];
-  const server = http.createServer((req, res) => {
+  let releaseLists;
+  const pageReady = new Promise(resolve => { releaseLists = resolve; });
+  const server = http.createServer(async (req, res) => {
     const list = /^\/lists\/([a-z-]+)\.txt$/.exec(req.url)?.[1];
     if (list) {
       requests.push({ list, cookie: req.headers.cookie ?? null, referer: req.headers.referer ?? null });
+      await pageReady;
       if (!served[list]) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(served[list]);
       return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
-    res.end('<!doctype html><title>List fixture</title><div class="fresh-ad-slot">Fresh ad</div><div id="normal">Normal content</div>');
+    res.end('<!doctype html><title>List fixture</title><div class="fresh-ad-slot">Fresh ad</div><div class="ADBAR">Excepted by update</div><div id="normal">Normal content</div>');
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -81,6 +84,11 @@ const NEWER = '202611171200';
     const disabled = async () => [...await browser.evaluate("api.declarativeNetRequest.getDisabledRuleIds({ rulesetId: 'community_ruleset' })")].sort((a, b) => a - b);
     const listIds = async () => (await browser.evaluate('api.declarativeNetRequest.getDynamicRules()')).filter(rule => rule.id > 1000000).map(rule => rule.id);
 
+    const openPage = await browser.open(origin + '/before-update');
+    const display = (page, selector) => browser.evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).display`, page);
+    await until('bundled generic CSS before the download', async () => (await display(openPage, '.ADBAR')) === 'none');
+    check((await display(openPage, '.fresh-ad-slot')) !== 'none', 'the new site rule starts inactive');
+    releaseLists();
     const installed = await until('the new profile to update its lists', async () => { const current = await state(); return current.communityStatus?.source === 'update' && current; });
     check(installed.settings.communityListUpdates === true, 'automatic filter-list updates are on in a new profile');
     check(JSON.stringify(requests.map(request => request.list).sort()) === JSON.stringify(['easylist', 'easylist-china']), 'both lists were downloaded from their listed sources');
@@ -99,9 +107,11 @@ const NEWER = '202611171200';
     check((await matched(`https://pattern.example/x${fixture.ADDED_PATTERN}gif`)).includes('_dynamic:1000003'), 'a pattern added upstream matches');
 
     const page = await browser.open(origin + '/page');
-    const display = selector => browser.evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).display`, page);
-    await until('the new site hiding rule', async () => (await display('.fresh-ad-slot')) === 'none');
-    check((await display('#normal')) !== 'none', 'site hiding from the new lists hides only its own element');
+    for (const tab of [openPage, page]) {
+      await until('updated site hiding and generic exception', async () =>
+        (await display(tab, '.fresh-ad-slot')) === 'none' && (await display(tab, '.ADBAR')) !== 'none');
+      check((await display(tab, '#normal')) !== 'none', 'the updated rules apply selectively in ' + (tab === openPage ? 'an already-open page' : 'a new page'));
+    }
 
     const lists = await browser.open(await browser.evaluate("api.runtime.getURL('src/ui/lists/lists.html')"));
     const text = id => browser.evaluate(`document.getElementById(${JSON.stringify(id)}).textContent`, lists);
@@ -132,6 +142,7 @@ const NEWER = '202611171200';
     evidence.error = error.stack || String(error);
     process.exitCode = 1;
   } finally {
+    releaseLists();
     if (browser) evidence.close = await browser.close().catch(error => ({ error: String(error) }));
     server.close(); deny.close();
     await fs.writeFile(path.join(temporary, 'evidence.json'), JSON.stringify(evidence, null, 2));

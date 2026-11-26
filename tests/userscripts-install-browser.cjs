@@ -104,6 +104,9 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     tab.extensionPage = true;
     check('A .user.js link opens a literal, read-only review in the same tab', await b.evaluate('document.getElementById("installTitle").textContent==="Install from link"&&document.getElementById("reviewAfter").readOnly&&document.getElementById("reviewAfter").value===' + JSON.stringify(linked('1.0')) + '&&!location.hash', tab));
     check('Opening a link installs nothing by itself', !(await send({ type: 'US_LIST' })).scripts.some(script => script.metadata.name === 'Offline linked updates'));
+    const reviewHelp = await b.evaluate('document.getElementById("reviewEffect").textContent', tab);
+    check('Install review explains automatic installation and which updates need review', /automatically/i.test(reviewHelp) &&
+      /no new access/i.test(reviewHelp) && !/every update needs your review/i.test(reviewHelp));
     check('The review shows the declared download and version URLs', await b.evaluate('document.getElementById("reviewChanges").textContent.includes(' + JSON.stringify('Downloads: ' + nextURL + '\nVersion check: ' + metaURL) + ')', tab));
     await click('applySource', tab);
     await settle('!document.getElementById("installDialog").open&&!document.getElementById("refresh").disabled', tab, 'install from link');
@@ -145,6 +148,8 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
     check('The library marks the script with a pending update', await b.evaluate('Boolean(document.querySelector(\'.script-item[data-id="' + script.id + '"] .script-state.update\'))', manager));
     await clickRow(script.id);
     await until('!document.getElementById("reviewUpdate").hidden&&document.getElementById("updateResult").textContent.includes("1.0 → 2.0")');
+    check('The linked script help explains automatic installs and manual approval', await b.evaluate(
+      '/automatically/i.test(document.getElementById("updateHelp").innerText)&&/review/i.test(document.getElementById("updateHelp").innerText)', manager));
     for (const [name, selector] of [['update-pane', '#scriptUpdates'], ['update-settings', '.update-settings']]) {
       if (b.send) for (const width of [1280, 390]) {
         await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false }, manager);
@@ -159,6 +164,11 @@ async function runInstallation({ b, manager, send, check, until, browse, temp, e
       }
     }
     if (b.send) await b.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 1000, deviceScaleFactor: 1, mobile: false }, manager);
+    fixtureState.sources['/usnet/link.meta.js'] = { status: 503, body: '' };
+    await click('checkAll');
+    await until('!document.getElementById("checkAll").disabled && document.getElementById("updateResult").textContent.includes("503")');
+    check('A failed recheck is reported while the downloaded update stays ready for review', await b.evaluate(
+      '!document.getElementById("reviewUpdate").hidden && document.getElementById("status").textContent.includes("1 check failed")', manager));
     const hits = fixtureState.hits.length;
     await click('reviewUpdate'); await dialogReady();
     check('Review update opens the downloaded bytes without another download', /^Downloaded /.test(await status()) && fixtureState.hits.length === hits &&

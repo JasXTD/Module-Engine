@@ -69,7 +69,7 @@
       if (INFORMATIONAL.has(key) || /^(name|description):[\w-]+$/.test(key)) {
         informational[key] = value;
         if (['icon', 'icon64'].includes(key)) warnings.push('@' + key + ' does not trigger icon downloads.');
-        if (key === 'downloadURL') warnings.push('@downloadURL supplies updates after you install this script through Install from URL. Every update needs your review.');
+        if (key === 'downloadURL') warnings.push('@downloadURL supplies updates after you install this script from a URL.');
         if (key === 'updateURL') warnings.push('@updateURL is used to check the version after you install this script through Install from URL.');
         continue;
       }

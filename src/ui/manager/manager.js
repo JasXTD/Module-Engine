@@ -13,6 +13,7 @@
   let installation = null;
   // Background update results are review data only; the library stays the source of truth.
   let updateState = null, checkingAll = false;
+  const updatePolicy = 'With “Install updates that need no new access” on, eligible updates from the same URL install automatically. Other updates wait for your review.';
   let helperPermissions = [], allowedPermissions = new Set();
   let editorKey = 0;
   const externalEditor = ModuleEngineExternalEditor.create({
@@ -283,7 +284,7 @@
     const version = script?.metadata.explicitVersion || 'unversioned';
     result.textContent = !linked || !info ? ''
       : info.outcome === 'applied' ? 'Updated automatically to ' + info.available + ' ' + when(info.checkedAt) + '; it asked for no new access. Reload open pages to run it.'
-      : info.outcome === 'staged' ? 'Update ready: ' + version + ' → ' + info.available + '. Downloaded ' + when(info.checkedAt) + '; nothing changes until you apply it.' + (info.message ? ' ' + info.message : '')
+      : info.outcome === 'staged' ? 'Update ready: ' + version + ' → ' + info.available + '. Downloaded ' + when(info.checkedAt) + '.' + (info.message ? ' ' + info.message : '')
       : info.outcome === 'available' ? 'Version ' + info.available + ' is available (found ' + when(info.checkedAt) + '). Reviewing it downloads the source again.'
       : info.outcome === 'current' ? 'Up to date' + (info.available ? ' (offered version ' + info.available + ')' : '') + ' · checked ' + when(info.checkedAt) + '.'
       : info.outcome === 'error' ? 'Last check failed ' + when(info.checkedAt) + ': ' + info.message
@@ -291,6 +292,7 @@
       : !info.automatic ? 'Automatic checks need an @version. Use Check for updates to review changes.'
       : !updateState.autoCheck ? 'Daily checks are off. Check for updates at any time.'
       : !library?.enabled ? 'Daily checks run while Userscripts is on.' : 'Not checked yet. Daily checks run in the background.';
+    if (info?.lastFailure) result.textContent += ' Last check failed ' + when(info.lastFailure.time) + ': ' + info.lastFailure.message;
     result.hidden = !result.textContent;
     result.className = info?.outcome === 'error' ? 'error-text' : ready !== null ? 'update-ready' : 'muted';
     el('reviewUpdate').hidden = !linked || ready === null;
@@ -298,6 +300,7 @@
     el('linkDownload').hidden = linked || !info?.suggested;
     el('linkDownload').disabled = blocked || !library;
     el('checkUpdate').hidden = el('updateHelp').hidden = !linked;
+    el('updateHelp').textContent = updatePolicy + ' An update you apply manually keeps saved values and pauses the script.';
     el('checkUpdate').disabled = blocked || !linked;
   }
   function renderInstallation() {
@@ -330,8 +333,7 @@
     el('reviewBidi').replaceChildren(BlockAdsScriptReview.bidiWarning(review.source).node);
     for (const id of ['reviewBefore', 'reviewAfter']) { el(id).setSelectionRange(0, 0); el(id).scrollTop = 0; el(id).scrollLeft = 0; }
     el('reviewEffect').textContent = (old ? 'Applying replaces the current source, including local edits, and keeps saved script values. ' : 'Installing adds a paused script to your library. ')
-      + 'Review the code and any dependencies, then turn on Run this script. Later checks use the update source shown above; every update needs your review. '
-      + next.warnings.join(' ');
+      + 'Review the code and any dependencies, then turn on Run this script. ' + updatePolicy + ' ' + next.warnings.join(' ');
   }
   const destination = script => { try { return updates.targets(script).download || script.sourceURL; } catch { return script.sourceURL; } };
   async function fetchInstallation() {
@@ -494,7 +496,7 @@
       updateState = await send({ type: 'US_CHECK_ALL' });
       const { checked, cancelled, applied = 0 } = updateState.result, scripts = library?.scripts || [];
       const ready = scripts.filter(item => updateReady(item) !== null).length;
-      const failed = scripts.filter(item => updateInfo(item)?.outcome === 'error').length;
+      const failed = scripts.map(updateInfo).filter(info => info?.outcome === 'error' || info?.lastFailure).length;
       notice(cancelled ? 'Update checks were cancelled.' : 'Checked ' + checked + (checked === 1 ? ' script. ' : ' scripts. ')
         + (applied ? applied + (applied === 1 ? ' update was' : ' updates were') + ' installed automatically. ' : '')
         + (ready ? ready + (ready === 1 ? ' update is' : ' updates are') + ' ready to review.' : 'No updates are waiting.')

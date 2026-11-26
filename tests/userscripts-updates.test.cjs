@@ -178,6 +178,34 @@ test('scheduled checks without @updateURL download the source and stage only str
   assert.ok(!web.hits.some(hit => hit.url.startsWith('/three')), 'scripts without @version are not downloaded');
 });
 
+test('a failed daily recheck retains the downloaded review across restart and retries on schedule', async t => {
+  const { base, state: web } = await server(t), url = base + '/update.user.js';
+  const h = setup(t, { userscriptManager: libraryOf([record(1, script('1'), url)]) });
+  await h.host.setSettings({ autoApply: false });
+  const next = script('2'), selection = { id: id(1), revision: 1 };
+  web.routes['/update.user.js'] = { body: next };
+  await h.host.runChecks();
+  const downloaded = await h.host.stagedReview(selection);
+  h.advance(DAY);
+  web.routes['/update.user.js'] = { status: 503 };
+  await h.host.runChecks();
+  const restarted = setup(t, h.state.data, { time: h.now() });
+  const info = (await restarted.host.view()).scripts[id(1)];
+  assert.deepEqual([info.outcome, info.available], ['staged', '2']);
+  assert.match(info.lastFailure.message, /503/);
+  assert.equal(info.lastFailure.time, h.now());
+  assert.deepEqual(await restarted.host.stagedReview(selection), downloaded, 'same bytes, URL and download time');
+  assert.equal((await restarted.host.runChecks()).checked, 0);
+  assert.equal(web.hits.length, 2);
+  restarted.advance(DAY);
+  web.routes['/update.user.js'] = { body: script('3') };
+  await restarted.host.runChecks();
+  assert.equal((await restarted.host.stagedReview(selection)).review.source, script('3'));
+  assert.equal((await restarted.host.view()).scripts[id(1)].lastFailure, undefined);
+  restarted.state.data.userscriptManager.scripts[0].sourceURL = base + '/other.user.js';
+  await assert.rejects(restarted.host.stagedReview(selection), /no longer current/);
+});
+
 test('module, setting and force controls decide whether a run contacts any host', async t => {
   const { base, state: web } = await server(t);
   web.routes['/a.user.js'] = { body: script('1.0') };

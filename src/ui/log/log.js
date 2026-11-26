@@ -77,9 +77,15 @@ function render() {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = "Allow";
-      button.title = `Never block ${item.host} with the ad, tracker or community lists`;
+      button.title = `Allow ${item.host} through ad, tracker, community and custom request filters`;
       button.addEventListener("click", () => allowServer(item.host, button));
       action.append(button);
+    }
+    if (item.layers.has("Custom request filter")) {
+      const link = document.createElement("a");
+      link.href = "../lists/lists.html#requestFiltering";
+      link.textContent = "Edit custom request filters";
+      action.append(document.createElement("br"), link);
     }
     summary.append(row);
   }
@@ -121,7 +127,7 @@ async function request(type, details = {}) {
 }
 
 async function allowServer(host, button) {
-  if (!confirm(`Always allow ${host}? The ad, tracker and community lists will no longer block it on any site.`)) return;
+  if (!confirm(`Always allow ${host} and its subdomains through ad, tracker, community and custom request filters on every site?`)) return;
   button.disabled = true;
   try {
     await request("ADD_ALLOWED_DOMAIN", { domain: host });

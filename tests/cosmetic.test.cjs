@@ -99,6 +99,33 @@ test('pauses, generichide, elemhide and own exceptions revoke the bundled styles
   assert.deepEqual(resolve({ generic: ['.base'] }, 'news.test', sheets).genericSelectors, ['.base']);
   assert.equal(resolve({ ...data, genericStatic: { excepted: [1], exceptedSites: [], perFrame: [] } }, 'news.test', sheets).genericStatic, false);
 });
+
+test('updated and scoped exceptions override exactly the generic selectors a frame received as CSS', () => {
+  const data = { generic: ['.base', '.other', '.excepted'], genericStatic: {
+    excepted: ['.excepted'], exceptedSites: ['original.test'], perFrame: [] },
+    allow: { 'moved.test': ['.excepted'], 'sub.original.test': ['.base'] },
+    scoped: [{ exception: true, include: ['news.test'], exclude: ['keep.news.test'], selector: '.base' }] };
+  const frame = host => resolve(data, host, { staticSheets: true });
+  for (const [host, allowed] of [['sub.moved.test', '.excepted'], ['sub.original.test', '.base'], ['news.test', '.base']]) {
+    const state = frame(host);
+    assert.equal(state.genericStatic, false, host);
+    assert.deepEqual(state.genericSelectors, data.generic.filter(selector => selector !== allowed));
+  }
+  assert.deepEqual(frame('original.test').genericSelectors, ['.excepted'], 'a removed exception restores the selector');
+  assert.equal(frame('keep.news.test').genericStatic, true);
+  assert.equal(frame('unrelated.test').genericStatic, true);
+});
+
+test('adding and removing global exceptions switches between compiled CSS and per-frame hiding', () => {
+  const data = { generic: ['.compiled', '.omitted'], genericStatic: { excepted: [], exceptedSites: [], perFrame: [] },
+    bundledGlobalExceptions: ['.omitted'], scoped: [], procedural: [], allow: { '*': ['.compiled'] } };
+  const updated = resolve(data, 'any.example', { staticSheets: true });
+  assert.equal(updated.genericStatic, false);
+  assert.deepEqual(updated.genericSelectors, ['.omitted']);
+  const restored = resolve({ ...data, allow: {} }, 'any.example', { staticSheets: true });
+  assert.equal(restored.genericStatic, true);
+  assert.deepEqual(restored.genericSelectors, ['.omitted']);
+});
 test('hiding CSS splits long selector lists below the browser per-rule selector limit', () => {
   const { hidingCss } = globalThis.BlockAdsCosmetic;
   const selectors = [...Array.from({ length: 700 }, (_, i) => `.s${i}`), 'x'.repeat(1000), ...Array.from({ length: 400 }, (_, i) => `#long-selector-name-${i}`)];

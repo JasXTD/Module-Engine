@@ -27,6 +27,13 @@
         const checksum = await backup.digest(file);
         if (message.type === 'BACKUP_PREVIEW') {
           const changes = describeChanges(settings, file.data.settings, false);
+          const before = data.appearance, after = file.data.appearance;
+          if (before.mode !== after.mode) changes.push(`Theme changed from ${before.mode} to ${after.mode}`);
+          if (before.accent !== after.accent) changes.push(`Accent color changed from ${before.accent} to ${after.accent}`);
+          if (before.websites !== after.websites) changes.push('Darken websites turned ' + (after.websites ? 'on' : 'off'));
+          const previousSites = new Set(before.websiteExceptions), incomingSites = new Set(after.websiteExceptions);
+          for (const host of incomingSites) if (!previousSites.has(host)) changes.push('Website theme exception added ' + host);
+          for (const host of previousSites) if (!incomingSites.has(host)) changes.push('Website theme exception removed ' + host);
           for (const [key, label] of Object.entries({ interceptLinks: 'Userscript link interception',
             autoCheck: 'Automatic userscript update checks', autoApply: 'Automatic userscript update installation' })) {
             if (data.updates[key] !== file.data.updates[key]) changes.push(label + ' turned ' + (file.data.updates[key] ? 'on' : 'off'));
