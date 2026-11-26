@@ -1,6 +1,6 @@
 # Module Engine privacy policy
 
-Updated 23 November 2026 for Module Engine 1.9.1 and its optional local helpers.
+Reviewed 26 November 2026 for Module Engine 1.9.2 and its optional local helpers.
 
 Module Engine requires no account and has no project telemetry or analytics. Its core features work without sending your settings, scripts or browsing activity to the developer. The optional connections described below have separate controls.
 

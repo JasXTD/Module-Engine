@@ -835,7 +835,7 @@
       require: metadata.requires, resources: metadata.resources, connect: metadata.connects, tags: metadata.tags,
       unwrap: metadata.unwrap, topLevelAwait: metadata.topLevelAwait, ...metadata.informational },
       uuid: script.id, injectInto: metadata.world === 'MAIN' ? 'page' : 'content', scriptMetaStr: metadata.metaStr,
-      scriptWillUpdate: false, scriptHandler: 'Module Engine', version: '1.9.1',
+      scriptWillUpdate: false, scriptHandler: 'Module Engine', version: '1.9.2',
       scriptSource: script.source };
     // Site code can read page-world runtime data, so page-world GM_info gets
     // the identity-derived pageUUID. Content worlds keep the install ID.

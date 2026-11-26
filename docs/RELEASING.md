@@ -67,21 +67,24 @@ git archive --format=zip --output="dist/module-engine-$version-source.zip" HEAD 
 
 Extract the source, then run `node scripts/package-extension.cjs build` from its root to reproduce the upload. No npm packages, downloads or bundler are required; Node 22+ is used. JavaScript is shipped readable. Included prebuilt rule files are also reproducible offline with PowerShell 7+: `pwsh -NoProfile -File scripts/build-rules.ps1`, followed by the same packaging command. The list inputs, catalogs, compiler scripts and third-party provenance/licences are included. See [Development](DEVELOPMENT.md#reviewed-catalog-and-rule-builds) and [Mozilla's source-submission guide](https://extensionworkshop.com/documentation/publish/source-code-submission/).
 
-## AMO version notes for 1.9.1
+## AMO version notes for 1.9.2
 
-Use these notes for the 1.9.1 submission.
+Use these notes for the 1.9.2 submission.
 
 ```text
-Module Engine 1.9.1 fixes six security and privacy issues.
+Module Engine 1.9.2 fixes eight issues in filtering, userscript updates and backup previews.
 
-- Userscript requests and downloads from private tabs and Firefox containers require anonymous mode.
-- Cookie operations check the calling document's partition. Deletion checks the selected cookie's domain and expires only the authorized cookie.
-- Private browsing stays out of the Network and Activity logs. Previously recorded browsing entries with unknown privacy status are discarded.
-- Late pop-up guards and scriptlets run only in the document that requested them.
-- Backup restore shows changes to protection settings, site lists and userscript update preferences, along with the exact custom filters being replaced.
+- Blocking or allowing a host such as www.example.com keeps the www prefix when you save the entry.
+- Requests from a paused site or frame no longer create flags. Other flags identify the site you visited.
+- Updated filter-list exceptions can unhide elements covered by bundled hiding rules.
+- Open tabs apply page-hiding changes when a filter list updates or rolls back.
+- The Activity log distinguishes custom request filters from custom domain blocks.
+- Userscript install and update screens explain when updates can install automatically and when they need approval.
+- If a userscript update check fails, the previously downloaded update stays available for review alongside the error.
+- Backup previews show accent color changes, the dark-website setting and the individual hosts added to or removed from its exception list.
 ```
 
-## AMO notes to reviewer for 1.9.1
+## AMO notes to reviewer for 1.9.2
 
 Copy the following into Notes to Reviewer. Upload the matching source ZIP in the source-code step.
 
@@ -94,5 +97,5 @@ To test Backup & restore, download a backup, change a saved setting, select the 
 
 The extension has no project telemetry or required data collection. Filter updates download lists from their publishers. User-installed scripts may access their matched pages and transmit data according to their source and granted access. Optional MCP debugging connects only after in-page approval and Firefox's optional data-consent prompt. It sends the selected status, script information and diagnostic/request metadata to the user's local MCP client, which may forward it to its configured AI service. No AI account is required for the blocker or userscript manager. MCP is off unless explicitly paired; source ZIP docs/MCP.md explains the optional Node-based server and client setup.
 
-The matching source ZIP contains readable JavaScript, bundled rule inputs, compiler scripts and third-party licences/provenance. From its extracted root, run node scripts/package-extension.cjs build using Node 22+. To regenerate the bundled rules first, run pwsh -NoProfile -File scripts/build-rules.ps1 with PowerShell 7+, then the packaging command. The Firefox upload is dist/module-engine-1.9.1-firefox.zip. Build and testing details are in docs/RELEASING.md, docs/DEVELOPMENT.md and docs/VERIFICATION.md.
+The matching source ZIP contains readable JavaScript, bundled rule inputs, compiler scripts and third-party licences/provenance. From its extracted root, run node scripts/package-extension.cjs build using Node 22+. To regenerate the bundled rules first, run pwsh -NoProfile -File scripts/build-rules.ps1 with PowerShell 7+, then the packaging command. The Firefox upload is dist/module-engine-1.9.2-firefox.zip. Build and testing details are in docs/RELEASING.md, docs/DEVELOPMENT.md and docs/VERIFICATION.md.
 ```
